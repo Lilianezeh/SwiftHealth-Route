@@ -98,7 +98,7 @@ Sixteen stories define the MVP; each has a test that tells us when it is done.
 | FR-25 | Emergency section shows nearby 24-hour pharmacies (listings with is\_24\_hours confirmed on site), nearest first | Must |
 | FR-26 | SwiftRescue (emergency) page shows: "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112." | Must |
 | FR-27 | Find blood: lists blood banks and hospitals with blood bank services, nearest first, with blood groups they usually supply (stored as services, with the date confirmed), hours, Call and Directions, and the note "Stock changes daily; call to confirm before you go" | Must |
-| FR-28 | Donate blood: lists blood banks and centres that accept donors, with donation hours, Call and Directions; filter by blood group they are short of where the centre shares it | Must |
+| FR-28 | Donate blood: lists blood banks and centres that accept donors, with donation hours, Call and Directions | Must |
 | FR-29 | Donate blood page shows basic donor eligibility and preparation guidance, based on National Blood Service Agency guidance and reviewed by the medical advisor, ending with "The blood bank will confirm if you can donate" | Must |
 
 **Reporting problems**
@@ -213,7 +213,7 @@ The MVP launches only when all of these are true:
 
 ## Out of scope for the MVP
 
-Public user accounts, patient reviews, native Android app, appointment and lab booking, pharmacy stock and delivery, a donor registry where people sign up to be contacted when their blood group is needed, Igbo language, USSD, and any diagnosis or symptom checking. These are planned in later phases as set out in the Project Overview. Phase 3 also adds, once partnerships are confirmed: hospital bed and service availability, ambulance requests, live blood stock from partner blood banks, and the donor registry (with explicit consent under the NDPA, opt-out at any time, and its own table).
+Public user accounts, patient reviews, native Android app, appointment and lab booking, pharmacy stock and delivery, a donor registry where people sign up to be contacted when their blood group is needed, Igbo language, USSD, and any diagnosis or symptom checking. These are planned in later phases as set out in the Project Overview. Phase 3 also adds, once partnerships are confirmed: hospital bed and service availability, ambulance requests, live blood stock from partner blood banks, groups needed by donation centres, and the donor registry (with explicit consent under the NDPA, opt-out at any time, and its own table).
 
 ## Open questions
 

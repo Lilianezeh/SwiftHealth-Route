@@ -122,8 +122,7 @@ FR-27, US-15. **API:** `GET /blood/banks`, `GET /meta`.
 FR-28, FR-29, US-16. **API:** `GET /blood/donation-centres`.
 1. Heading "Donate blood" + same tab switch.
 2. Short eligibility guide (content reviewed by the medical advisor, based on National Blood Service Agency guidance): who can usually donate, what to bring, how to prepare. Ends: "The blood bank will confirm if you can donate."
-3. Optional filter: "Centres that need my blood group".
-4. List of donation centres: name, donation hours, groups needed, Call + Directions.
+3. List of donation centres: name, donation hours, Call + Directions.
 
 ### 2.8 Report a problem — `/report/[id]`
 FR-20, FR-21, US-08. **API:** `GET /listings/{slug}` (for the name), `POST /reports`.

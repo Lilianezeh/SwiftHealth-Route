@@ -191,9 +191,9 @@ Returns published blood banks and hospitals with a blood bank service. Each item
 `blood_groups` come from the listing's `services` whose names are blood groups. With `blood_group`, only listings offering that group are returned.
 
 ### GET /blood/donation-centres
-FR-28, US-16. **Query:** `blood_group` (optional: centres that list this group as needed), `lat`, `lng`, `limit`, `offset`.
+FR-28, US-16. **Query:** `lat`, `lng`, `limit`, `offset`.
 
-Returns published listings with a `Blood donation` service, as `ListingSummary` plus `donation_hours` (their opening hours) and `groups_needed` (optional).
+Returns published listings with a `Blood donation` service, as `ListingSummary` plus `donation_hours` (their opening hours). Groups needed by a centre are not in the MVP (Phase 3).
 
 ### POST /reports
 FR-20 to FR-22, US-08. Report a problem. No login. Rate limited to 5 per IP per hour (429).
