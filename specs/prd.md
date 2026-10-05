@@ -98,7 +98,7 @@ Sixteen stories define the MVP; each has a test that tells us when it is done.
 | FR-25 | Emergency section shows nearby 24-hour pharmacies (listings with is\_24\_hours confirmed on site), nearest first | Must |
 | FR-26 | SwiftRescue (emergency) page shows: "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112." | Must |
 | FR-27 | Find blood: lists blood banks and hospitals with blood bank services, nearest first, with blood groups they usually supply (stored as services, with the date confirmed), hours, Call and Directions, and the note "Stock changes daily; call to confirm before you go" | Must |
-| FR-28 | Donate blood: lists blood banks and centres that accept donors, with donation hours, Call and Directions; filter by blood group they are short of where the centre shares it | Must |
+| FR-28 | Donate blood: lists blood banks and centres that accept donors, with donation hours, Call and Directions | Must |
 | FR-29 | Donate blood page shows basic donor eligibility and preparation guidance, based on National Blood Service Agency guidance and reviewed by the medical advisor, ending with "The blood bank will confirm if you can donate" | Must |
 
 **Reporting problems**
@@ -132,7 +132,7 @@ Every listing moves through five statuses, and only Published listings are visib
 | FR-30 | Staff log in with email and password plus a one-time code (two-factor) | Must |
 | FR-31 | Add and edit listings with all fields in the data model; GPS pin can be set from the verifier's phone location | Must |
 | FR-32 | Verification log: for each check, record method (call or visit), date, result, person reached, notes and optional photo | Must |
-| FR-33 | Re-check cycle set per category: emergency contacts every \[14–30\] days, other listings every \[30–60\] days | Must |
+| FR-33 | Re-check cycle set per category: emergency contacts every 14 days, other listings every 45 days | Must |
 | FR-34 | Dashboard shows listings by status, re-checks due this week, overdue re-checks, and open reports | Must |
 | FR-35 | Report queue: view, assign, resolve, or dismiss reports; reports urgent-flagged by FR-22 appear at the top | Must |
 | FR-36 | When a published listing fails re-check, it moves to Hidden automatically and the editor is notified | Must |
@@ -213,13 +213,13 @@ The MVP launches only when all of these are true:
 
 ## Out of scope for the MVP
 
-Public user accounts, patient reviews, native Android app, appointment and lab booking, pharmacy stock and delivery, a donor registry where people sign up to be contacted when their blood group is needed, Igbo language, USSD, and any diagnosis or symptom checking. These are planned in later phases as set out in the Project Overview. Phase 3 also adds, once partnerships are confirmed: hospital bed and service availability, ambulance requests, live blood stock from partner blood banks, and the donor registry (with explicit consent under the NDPA, opt-out at any time, and its own table).
+Public user accounts, patient reviews, native Android app, appointment and lab booking, pharmacy stock and delivery, a donor registry where people sign up to be contacted when their blood group is needed, Igbo language, USSD, and any diagnosis or symptom checking. These are planned in later phases as set out in the Project Overview. Phase 3 also adds, once partnerships are confirmed: hospital bed and service availability, ambulance requests, live blood stock from partner blood banks, groups needed by donation centres, and the donor registry (with explicit consent under the NDPA, opt-out at any time, and its own table).
 
 ## Open questions
 
 - [ ] Which pilot area do we start with?
-- [ ] Exact re-check cycles for emergency and other listings?
+- [x] Exact re-check cycles for emergency and other listings? Decided in FR-33: 14 days and 45 days.
 - [ ] Will we show fees at launch if few facilities share them?
 - [ ] Who is the medical advisor and who reviews legal terms?
 - [ ] Final domain (swifthealth.ng or similar)?
-- [ ] Featured listing price?
+- [ ] Featured listing price? Placeholder: ₦5,000.00 per month (to be confirmed).
