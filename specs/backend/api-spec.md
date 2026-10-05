@@ -306,7 +306,7 @@ Verifier (own draft), editor, admin. `draft` → `pending_review`.
 **Rules:** requires at least one passing `call` **and** one passing `visit`, else 400.
 
 ### POST /listings/{listing_id}/publish
-FR-36. Editor, admin. `pending_review` or `recheck_due` → `published`.
+FR-33. Editor, admin. `pending_review` or `recheck_due` → `published`.
 **Rules:** requires a passing check within the last 14 days, else 400. Sets `last_verified_at` = latest passing check, `next_check_due` = now + category `recheck_days`. Audit entry `publish`.
 
 ### POST /listings/{listing_id}/hide

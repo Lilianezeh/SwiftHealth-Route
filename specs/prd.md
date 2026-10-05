@@ -132,7 +132,7 @@ Every listing moves through five statuses, and only Published listings are visib
 | FR-30 | Staff log in with email and password plus a one-time code (two-factor) | Must |
 | FR-31 | Add and edit listings with all fields in the data model; GPS pin can be set from the verifier's phone location | Must |
 | FR-32 | Verification log: for each check, record method (call or visit), date, result, person reached, notes and optional photo | Must |
-| FR-33 | Re-check cycle set per category: emergency contacts every \[14–30\] days, other listings every \[30–60\] days | Must |
+| FR-33 | Re-check cycle set per category: emergency contacts every 14 days, other listings every 45 days | Must |
 | FR-34 | Dashboard shows listings by status, re-checks due this week, overdue re-checks, and open reports | Must |
 | FR-35 | Report queue: view, assign, resolve, or dismiss reports; reports urgent-flagged by FR-22 appear at the top | Must |
 | FR-36 | When a published listing fails re-check, it moves to Hidden automatically and the editor is notified | Must |
@@ -218,8 +218,8 @@ Public user accounts, patient reviews, native Android app, appointment and lab b
 ## Open questions
 
 - [ ] Which pilot area do we start with?
-- [ ] Exact re-check cycles for emergency and other listings?
+- [x] Exact re-check cycles for emergency and other listings? Decided in FR-33: 14 days and 45 days.
 - [ ] Will we show fees at launch if few facilities share them?
 - [ ] Who is the medical advisor and who reviews legal terms?
 - [ ] Final domain (swifthealth.ng or similar)?
-- [ ] Featured listing price?
+- [ ] Featured listing price? Placeholder: ₦5,000.00 per month (to be confirmed).

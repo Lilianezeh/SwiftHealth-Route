@@ -66,7 +66,7 @@ Sketches go in `docs/screens/`.
 3. How it works: Search → Verified listing → Call or get directions.
 4. How we verify: call, visit, re-check, last-verified date (links to `/how-we-verify`).
 5. Who it's for: residents · facilities.
-6. Pricing: Residents — free, always. Facilities — free verified listing; Featured listing ₦[__]/month (shown with 2 decimals only when not whole, e.g. ₦5,000 or ₦5,000.50). Sponsors — fund SwiftRescue.
+6. Pricing: Residents — free, always. Facilities — free verified listing; Featured listing ₦5,000/month (placeholder) (shown with 2 decimals only when not whole, e.g. ₦5,000 or ₦5,000.50). Sponsors — fund SwiftRescue.
 7. Call to action for facilities: **List your facility**.
 **API:** none (static), except the small API-status check during development.
 
