@@ -2,10 +2,24 @@
 
 One entry per day. Keep it short and honest.
 
-## Day 1 — [2026-10-04]
+## To do later
+
+Open reminders. Each says when it is due. Remove a line once it is done.
+
+- **Search feature:** treat is_24_hours listings as always open (no 23:59 gap).
+- **Auth Task 4:** add `httpx2>=2.13` to `backend/requirements.txt` to remove the
+  Starlette TestClient deprecation warning ("install httpx2 instead").
+- **Auth Task 4:** split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`.
+  Each runs only when its own folder or its own workflow file changes. `backend.yml` gets the
+  `postgres:16` service and `TEST_DATABASE_URL`.
+- **pwdlib change:** the passlib warning ("'crypt' is deprecated and slated for removal in Python 3.13")
+  goes away with the later move from passlib to pwdlib (needs a re-seed, since seed users are bcrypt-hashed).
+
+## Day 1 — 2026-10-04
 - **Built:** Repo skeleton, Docker Compose, spike for open-now + nearest search.
 - **Broke / fixed:** [ ]
 - **Learned:** [ ]
+- **AI use:** [ ]
 - **Tomorrow:** [ ]
 
 ## Day 2 — 2026-10-05
@@ -20,5 +34,4 @@ One entry per day. Keep it short and honest.
 - **Learned:** [write this in your own words, e.g. what a migration is, why the seed never overwrites]
 - **AI use:** Claude Code planned and wrote the migration, seed, repositories and tests;
   I reviewed the plan, chose the options, and approved each file.
-- **To do later:** In the search feature, treat is_24_hours listings as always open (no 23:59 gap).
 - **Tomorrow:** Auth and roles (login, one-time code, JWT, role and ownership checks).
