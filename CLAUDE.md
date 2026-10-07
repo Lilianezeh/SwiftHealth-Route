@@ -61,7 +61,8 @@ user_reports, audit_entries. Models live in backend/app/models/ (one file per ta
 ## The hard part
 "Open now, nearest first" search (backend/app/services/search_service.py, hours.py): distance from the user,
 opening hours in Africa/Lagos time including hours that cross midnight (check yesterday's row),
-and excluding listings that are overdue for re-check or reported "not working" by 2 users in 7 days.
+and excluding listings reported "not working" by 2 users in 7 days. Overdue listings are not excluded: they stay
+visible with `verification_due: true` until the nightly job moves them to `recheck_due`, which hides them.
 The reference logic is spikes/open_now_nearest.py. Its three tests live in backend/tests/unit/test_search_service.py.
 
 ## Commands
