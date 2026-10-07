@@ -92,7 +92,11 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 - Python: type hints everywhere; follow the layers above; raise HTTPException only in routes (services raise
   clear domain errors that routes translate). Use Depends() for session and current user.
 - Async wherever code waits on I/O (database, httpx, routes and services using them); CPU-only code (security.py,
-  rate limiter) stays sync; call password hashing through `run_in_threadpool`; never call sync DB code from an async route.
+  the RateLimiter class) stays sync; call password hashing through `run_in_threadpool`; never call sync DB code from
+  an async route. Rule of thumb: a function is async only if it awaits the database or an outside service, or calls
+  something that does. Pure logic stays plain def, even inside services. Exception: in-memory shared state used from
+  a dependency (like the rate limiter) uses async def without await, so it runs on the event loop and can't race.
+  Comment why wherever this is used.
 - Use the patterns from the FastAPI docs at fastapi.tiangolo.com/learn (Tutorial - User Guide, plus Concurrency and
   async/await and Async Tests for async code). If something needs a pattern from elsewhere, ask me first and explain it.
 - File names say their layer: `listing_service.py`, `listing_repository.py`, `paystack.py`, `listing.py` (schema/model).
