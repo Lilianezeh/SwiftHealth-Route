@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +11,8 @@ class Settings(BaseSettings):
     jwt_secret: str = "dev-only-secret"
     jwt_minutes: int = 60 * 12
     cors_origins: str = "http://localhost:3000"
+    # Proxies in front of the API that append to X-Forwarded-For. Not yet checked on Render (see LOG.md).
+    trusted_proxy_count: int = Field(default=1, ge=1)
     paystack_secret_key: str = ""
     cloudinary_url: str = ""
     resend_api_key: str = ""

@@ -52,7 +52,11 @@ Branch: `feature/auth-and-roles`. Every commit and test references FR-30 and NFR
    `HTTPException`. `get_current_user` calls `auth_service.get_user_for_token`, never the repository.
 6. **Rate limit.** In memory, per IP, 10 calls per 15 minutes, in `core/rate_limit.py`. It applies to
    `/auth/login` and to `/auth/verify-code`, with a separate counter for each endpoint. Every call counts, not only
-   failures. The client IP comes from `X-Forwarded-For` (Render sets it), else the socket address. Limits: it resets
+   failures. The client IP comes from `X-Forwarded-For`, counted from the end (a client can send its own copy of the
+   header, which sits at the start of the list), else the socket address. `TRUSTED_PROXY_COUNT` (default 1) says how
+   many proxies append to the header. Render's documentation says to read the client IP from `X-Forwarded-For` but
+   does not say which entry to trust, and it says traffic passes through Cloudflare and Render's load balancers, so
+   the right count is not confirmed. It must be checked on a real Render request (roadmap phase 4). Limits: it resets
    on restart and is per process, which is fine for one Render instance.
 7. **Ownership.** `services/access_service.py` has `ensure_can_edit_listing(user, listing)`, which raises
    `NotAllowedError`. Editor and admin: any listing. Verifier: only if `created_by == user.id` and

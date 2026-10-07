@@ -7,6 +7,12 @@ One entry per day. Keep it short and honest.
 Open reminders. Each says when it is due. Remove a line once it is done.
 
 - **Search feature:** treat is_24_hours listings as always open (no 23:59 gap).
+- **Auth, Render deploy (roadmap phase 4):** log one real `X-Forwarded-For` header from a request through Render and
+  set `TRUSTED_PROXY_COUNT` to match. Render's docs say traffic passes through Cloudflare and Render's load
+  balancers but not which entry to trust. A count that is too high trusts an entry the client can fake, so the limit
+  can be dodged. A count that is too low counts a proxy address as the client, so every visitor shares one limit.
+- **Rate limiter, if traffic grows:** sweep old IPs. An IP that stops calling keeps its list of timestamps in memory
+  until it calls again (`core/rate_limit.py`).
 - **Auth Task 2b and 4a:** the Starlette TestClient deprecation warning ("install httpx2 instead") goes away
   when the tests move to `httpx.AsyncClient`. Add `httpx2` only if some test still needs `TestClient`.
 - **Auth Task 4:** split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`.

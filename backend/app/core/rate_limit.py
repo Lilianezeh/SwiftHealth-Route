@@ -4,10 +4,10 @@ The counters live in this process only: they reset on restart and are not shared
 That is fine for one Render instance (see decision 6 in the auth requirements).
 """
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from datetime import timedelta
 
-from fastapi import HTTPException, Request, status
+from fastapi import Request
 
 MAX_CALLS = 10
 WINDOW = timedelta(minutes=15)
@@ -51,36 +51,24 @@ class RateLimiter:
         self.call_times_by_ip.clear()
 
 
-def get_client_ip(request: Request) -> str:
-    """The first X-Forwarded-For entry (Render sets it), else the socket address, else "unknown"."""
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
+def get_client_ip(request: Request, trusted_proxy_count: int) -> str:
+    """The client address recorded by our own proxies, else the socket address, else "unknown".
+
+    Every proxy in front of the API appends the address it received the request from to X-Forwarded-For.
+    A client can send its own X-Forwarded-For too, and that text stays at the start of the list, so the first
+    entry cannot be trusted. We count from the end instead: with one proxy the last entry is the client, with
+    two proxies it is the second from the end, and so on. `trusted_proxy_count` must be at least 1.
+    """
+    header = request.headers.get("x-forwarded-for", "")
+    entries = [entry.strip() for entry in header.split(",") if entry.strip()]
+    if len(entries) >= trusted_proxy_count:
+        return entries[-trusted_proxy_count]
     if request.client:
         return request.client.host
     return "unknown"
 
 
-def build_rate_limit_dependency(limiter: RateLimiter) -> Callable[[Request], Awaitable[None]]:
-    """Makes a FastAPI dependency that answers 429 when the client is over the limit.
-
-    It is `async def` without any `await`, so it runs on the event loop: two requests can never
-    update the counters at the same time (a plain `def` dependency would run in a thread).
-    """
-
-    async def check_rate_limit(request: Request) -> None:
-        if not limiter.allow(get_client_ip(request)):
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Too many attempts. Try again in a few minutes.",
-            )
-
-    return check_rate_limit
-
-
-# One limiter per endpoint, so the two counters are separate.
+# One limiter per endpoint, so the two counters are separate. The dependencies that use them are in
+# api/dependencies.py, because answering 429 is HTTP work.
 login_limiter = RateLimiter(MAX_CALLS, WINDOW)
 verify_code_limiter = RateLimiter(MAX_CALLS, WINDOW)
-
-login_rate_limit = build_rate_limit_dependency(login_limiter)
-verify_code_rate_limit = build_rate_limit_dependency(verify_code_limiter)

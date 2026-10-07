@@ -14,7 +14,8 @@ step is really done.
 | `CLAUDE.md` | "loads the user from the database" instead of "role from the JWT" (done in Task 0) |
 | `backend/requirements.txt` | `python-jose` to `pyjwt` (done in Task 0); `httpx` stays (no `httpx2`, see Task 4a) |
 | `backend/app/core/security.py` | `verify_password`, `create_access_token(user_id)`, `decode_access_token`, `create_challenge_token(user_id, code, expires_delta)`, `decode_challenge_token`, `generate_login_code`, `hash_login_code(user_id, code)` |
-| `backend/app/core/rate_limit.py` | `RateLimiter(max_calls, window)`; `login_rate_limit`, `verify_code_rate_limit` dependencies (429) |
+| `backend/app/core/rate_limit.py` | `RateLimiter(max_calls, window)`, `get_client_ip(request, trusted_proxy_count)`, one limiter per endpoint |
+| `backend/app/api/dependencies.py` | also `login_rate_limit`, `verify_code_rate_limit` (429, so `HTTPException` stays in the HTTP layer) |
 | `backend/app/integrations/termii.py` | `send_sms(phone, message)`; no key logs the code. Exact endpoint and fields from the official Termii docs, not guessed |
 | `backend/app/schemas/auth.py` | `LoginRequest`, `LoginResponse`, `VerifyCodeRequest`, `TokenResponse`, `UserRead` |
 | `backend/app/repositories/user_repository.py` | add `get_by_id`, `set_last_login` |
@@ -40,6 +41,8 @@ step is really done.
 ### Task 2: Rate limiter (done, `5355fea`)
 - [x] Write the tests in `tests/unit/test_rate_limit.py`.
 - [x] Implement `core/rate_limit.py` (sync `RateLimiter`; `async def` dependencies, see decision 11), run, commit.
+- [x] Follow-up fixes: client IP counted from the end of `X-Forwarded-For` (`TRUSTED_PROXY_COUNT`), and the 429
+  dependencies moved to `api/dependencies.py`.
 
 ### Task 2b: convert database, repositories, seed and tests to async
 Decision 11 in [requirements.md](requirements.md). Done before Task 3 so the Termii client and everything after it

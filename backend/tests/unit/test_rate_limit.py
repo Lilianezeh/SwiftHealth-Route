@@ -1,12 +1,9 @@
 """Tests for core/rate_limit.py. Requirements: FR-30 (login and one-time code), NFR-06 (rate limiting)."""
 from datetime import timedelta
 
-import anyio
-import pytest
-from fastapi import HTTPException
 from starlette.requests import Request
 
-from app.core.rate_limit import RateLimiter, build_rate_limit_dependency, get_client_ip
+from app.core.rate_limit import RateLimiter, get_client_ip
 
 FIFTEEN_MINUTES = timedelta(minutes=15)
 
@@ -79,24 +76,34 @@ def test_reset_clears_all_counts():
     assert limiter.allow("1.1.1.1")
 
 
-def test_client_ip_comes_from_x_forwarded_for():
-    request = make_request({"X-Forwarded-For": "203.0.113.5, 10.1.1.1"}, socket_ip="10.0.0.1")
-    assert get_client_ip(request) == "203.0.113.5"
+def test_client_ip_is_the_last_entry_added_by_our_proxy():
+    # A client can send its own X-Forwarded-For. The proxy appends the real address, so the first entry is
+    # whatever the client claimed and must be ignored.
+    request = make_request({"X-Forwarded-For": "6.6.6.6, 203.0.113.5"})
+    assert get_client_ip(request, trusted_proxy_count=1) == "203.0.113.5"
 
 
-def test_client_ip_falls_back_to_socket_address():
-    assert get_client_ip(make_request(socket_ip="10.0.0.1")) == "10.0.0.1"
+def test_client_ip_skips_one_entry_per_extra_trusted_proxy():
+    request = make_request({"X-Forwarded-For": "6.6.6.6, 203.0.113.5, 172.16.0.9"})
+    assert get_client_ip(request, trusted_proxy_count=2) == "203.0.113.5"
+
+
+def test_fake_header_cannot_change_the_client_ip():
+    real_request = make_request({"X-Forwarded-For": "203.0.113.5"})
+    faked_request = make_request({"X-Forwarded-For": "6.6.6.6, 203.0.113.5"})
+    real_ip = get_client_ip(real_request, trusted_proxy_count=1)
+    assert get_client_ip(faked_request, trusted_proxy_count=1) == real_ip
+
+
+def test_client_ip_falls_back_to_socket_address_without_header():
+    assert get_client_ip(make_request(socket_ip="10.0.0.1"), trusted_proxy_count=1) == "10.0.0.1"
+
+
+def test_client_ip_falls_back_to_socket_address_when_header_is_too_short():
+    # Fewer entries than trusted proxies means the header did not come through our proxies: do not trust it.
+    request = make_request({"X-Forwarded-For": "6.6.6.6"}, socket_ip="10.0.0.1")
+    assert get_client_ip(request, trusted_proxy_count=2) == "10.0.0.1"
 
 
 def test_client_ip_is_unknown_without_header_or_socket():
-    assert get_client_ip(make_request(socket_ip=None)) == "unknown"
-
-
-def test_dependency_raises_429_when_limit_reached():
-    dependency = build_rate_limit_dependency(make_limiter(FakeClock()))
-    request = make_request(socket_ip="1.1.1.1")
-    for _ in range(10):
-        anyio.run(dependency, request)  # the first 10 calls pass without raising
-    with pytest.raises(HTTPException) as error:
-        anyio.run(dependency, request)
-    assert error.value.status_code == 429
+    assert get_client_ip(make_request(socket_ip=None), trusted_proxy_count=1) == "unknown"
