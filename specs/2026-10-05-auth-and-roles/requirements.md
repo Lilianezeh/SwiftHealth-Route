@@ -76,9 +76,10 @@ Branch: `feature/auth-and-roles`. Every commit and test references FR-30 and NFR
     - **Async:** `core/database.py` (async engine, `AsyncSession` dependency), every repository, `auth_service`,
       `access_service` where it touches the database, `integrations/termii.py` (`httpx.AsyncClient`), the routes,
       the seed script and the tests that use the database.
-    - **Sync:** `core/security.py` and the rate limiter. The rate-limit dependency is declared `async def` without
-      any `await`, so it runs on the event loop and two requests can never update the counters at the same time.
-      A plain `def` dependency would run in a thread.
+    - **Sync:** `core/security.py`, the rate limiter and the rate-limit dependencies (they only count in memory and
+      wait for nothing), `access_service` where it only checks roles, and any other pure-logic function. A function
+      is `async def` only if it awaits the database or an outside service, or calls a function that does. FastAPI
+      runs a plain `def` dependency in a thread, so two requests can reach the rate limiter at the same time.
     - **Rule:** never call sync database code from an async route.
     - **Setup, from the SQLAlchemy, FastAPI and SQLModel documentation:** `create_async_engine`;
       `AsyncSession` from `sqlmodel.ext.asyncio.session`; sessions made with `expire_on_commit=False`; one session

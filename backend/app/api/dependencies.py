@@ -2,7 +2,7 @@
 
 TODO: get_current_user (reads the Bearer token) and require_role(...) for role checks.
 """
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 
 from fastapi import HTTPException, Request, status
 
@@ -13,14 +13,14 @@ from app.core.rate_limit import RateLimiter, get_client_ip, login_limiter, verif
 __all__ = ["get_session", "login_rate_limit", "verify_code_rate_limit"]
 
 
-def build_rate_limit_dependency(limiter: RateLimiter) -> Callable[[Request], Awaitable[None]]:
+def build_rate_limit_dependency(limiter: RateLimiter) -> Callable[[Request], None]:
     """Makes a FastAPI dependency that answers 429 when the client is over the limit (FR-30, NFR-06).
 
-    It is `async def` without any `await`, so it runs on the event loop: two requests can never
-    update the counters at the same time (a plain `def` dependency would run in a thread).
+    It only counts in memory and waits for nothing, so it is a plain `def` (decision 11). FastAPI runs a
+    plain `def` dependency in a thread.
     """
 
-    async def check_rate_limit(request: Request) -> None:
+    def check_rate_limit(request: Request) -> None:
         client_ip = get_client_ip(request, settings.trusted_proxy_count)
         if not limiter.allow(client_ip):
             raise HTTPException(

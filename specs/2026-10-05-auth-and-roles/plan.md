@@ -40,7 +40,7 @@ step is really done.
 
 ### Task 2: Rate limiter (done, `5355fea`)
 - [x] Write the tests in `tests/unit/test_rate_limit.py`.
-- [x] Implement `core/rate_limit.py` (sync `RateLimiter`; `async def` dependencies, see decision 11), run, commit.
+- [x] Implement `core/rate_limit.py` (sync `RateLimiter`; plain `def` dependencies, see decision 11), run, commit.
 - [x] Follow-up fixes: client IP counted from the end of `X-Forwarded-For` (`TRUSTED_PROXY_COUNT`), and the 429
   dependencies moved to `api/dependencies.py`.
 
