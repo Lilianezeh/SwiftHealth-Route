@@ -21,6 +21,9 @@ First migration for all 9 tables, demo seed data, first repositories. FR-15, FR-
 ### Phase 2: Auth and roles. In progress
 FR-30, NFR-06. Feature folder: [requirements](2026-10-05-auth-and-roles/requirements.md),
 [plan](2026-10-05-auth-and-roles/plan.md), [validation](2026-10-05-auth-and-roles/validation.md).
+
+Pull requests: PR #2 merged Tasks 0 and 1 into `main` early. Tasks 2 to 6 will come in a second pull request.
+
 - Task 0, spec, CLAUDE.md and dependency: **done**
 - Task 1, `core/security.py` (password check and JWT helpers): **done**
 - Task 2, rate limiter: next
