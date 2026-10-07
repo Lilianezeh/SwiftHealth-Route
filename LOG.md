@@ -19,9 +19,8 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   each no-key send logs a WARNING.
 - **Rate limiter, if traffic grows:** sweep old IPs. An IP that stops calling keeps its list of timestamps in memory
   until it calls again (`core/rate_limit.py`).
-- **Auth Task 4:** split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`.
-  Each runs only when its own folder or its own workflow file changes. `backend.yml` gets the
-  `postgres:16` service and `TEST_DATABASE_URL`.
+- **First frontend change:** check that it runs only `Frontend CI` and not `Backend CI` (the `frontend/**` filter
+  has not been tested yet). Add this to the pull request notes for that change.
 - **pwdlib change:** the passlib warning ("'crypt' is deprecated and slated for removal in Python 3.13")
   goes away with the later move from passlib to pwdlib (needs a re-seed, since seed users are bcrypt-hashed).
 

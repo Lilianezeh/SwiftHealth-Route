@@ -80,17 +80,21 @@ starts async. No behaviour change: the existing tests must give the same results
   With a key set it logs only the masked phone and the `message_id`; never the code, the key or the full phone.
 
 ### Task 4a: the CI split
-- [ ] Check that no code uses Starlette's `TestClient` any more (Task 2b moves the tests to `AsyncClient`):
+- [x] Check that no code uses Starlette's `TestClient` any more (Task 2b moves the tests to `AsyncClient`):
   `grep -rn "TestClient" backend`. If none is left, do not add `httpx2`: keep `httpx` (`AsyncClient` and the Termii
-  client use it). If some test still needs `TestClient`, stop and ask.
-- [ ] Split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`. Each runs on push and pull request, with
+  client use it). If some test still needs `TestClient`, stop and ask. Result: none left, so no `httpx2`.
+- [x] Split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`. Each runs on push and pull request, with
   a `paths:` filter for its own folder (`backend/**` or `frontend/**`) and its own workflow file. Keep the steps of the
   matching job from `ci.yml`.
-- [ ] In `backend.yml`, add a `postgres:16` service and set `TEST_DATABASE_URL` explicitly to the `localhost` URL
-  (the runner reaches the service on `localhost`; `db` only exists inside Docker Compose).
-- [ ] Delete `ci.yml`. Check branch protection: a required check from a path-filtered workflow that is skipped stays
-  pending.
-- [ ] Run the backend tests (no warning about `httpx` and `starlette.testclient`), commit.
+- [x] In `backend.yml`, add a `postgres:16` service and set `TEST_DATABASE_URL` explicitly to the `localhost` URL
+  (the runner reaches the service on `localhost`; `db` only exists inside Docker Compose). The old `ci.yml` had no
+  database, so its backend job had failed since Task 2b.
+- [x] Delete `ci.yml`. Branch protection: the owner confirmed there are no required checks. (If one is added later:
+  a required check from a path-filtered workflow that is skipped stays pending and blocks the merge, and the check
+  names are `Backend CI / backend` and `Frontend CI / frontend`.)
+- [x] Run the backend tests (no warning about `httpx` and `starlette.testclient`) and `ruff check .`, commit.
+- [ ] Push and read the runs on GitHub (see [validation.md](validation.md)). Task 4a is done when `Backend CI` is
+  green on PostgreSQL.
 
 ### Task 4b: the rest of the async test setup
 Task 2b already created `tests/conftest.py` with the async PostgreSQL database (`TEST_DATABASE_URL`, create if

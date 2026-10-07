@@ -40,8 +40,8 @@ One line each, with the reason.
 - **Tests run on PostgreSQL (`swifthealth_test`), never SQLite.** Enums, NUMERIC and time zones then behave as
   in production.
 - **`httpx` stays, and CI is split into `backend.yml` and `frontend.yml`.** Tests use `httpx.AsyncClient` instead
-  of Starlette's `TestClient`, so `httpx2` is not needed. The split is planned for auth Task 4a (see "To do later"
-  in [LOG.md](../LOG.md)).
+  of Starlette's `TestClient`, so `httpx2` is not needed. Each workflow runs only when its own folder or workflow
+  file changes, and the backend workflow has a `postgres:16` service for the tests.
 - **The backend is async wherever code waits on I/O.** Database access (async engine and `AsyncSession`, all
   repositories), integrations (`httpx.AsyncClient`) and the routes and services that use them are `async def`.
   Pure CPU code stays sync: `security.py` (JWT, HMAC, codes) and the rate limiter. Password hashing is called
