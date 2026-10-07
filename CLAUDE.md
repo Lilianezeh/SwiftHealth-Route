@@ -77,6 +77,7 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 - Before building an endpoint or page, read its section in the spec and follow it exactly.
 - If something isn't specified or the spec seems wrong, ask me instead of guessing. Update the spec first,
   then the code, so they never disagree.
+- Every feature has its own folder in specs/YYYY-MM-DD-feature-name/ with requirements.md, plan.md and validation.md. Read them before working on that feature, tick tasks with their commit hash when done, and check validation.md before saying a feature is done. Pull requests stay drafts until the merge checklist is complete.
 
 ## How to work
 1. For any feature, propose a short plan first (files to touch, endpoints, tests) and wait for my go-ahead.
