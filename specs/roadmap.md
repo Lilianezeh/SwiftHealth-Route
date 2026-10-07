@@ -19,12 +19,15 @@ Repo skeleton, Docker Compose, and the spike for "open now, nearest first" searc
 First migration for all 9 tables, demo seed data, first repositories. FR-15, FR-27, FR-28, FR-31, FR-33, FR-38.
 
 ### Phase 2: Auth and roles. In progress
-FR-30, NFR-06. Plan: [docs/plans/auth-and-roles.md](../docs/plans/auth-and-roles.md).
+FR-30, NFR-06. Feature folder: [requirements](2026-10-05-auth-and-roles/requirements.md),
+[plan](2026-10-05-auth-and-roles/plan.md), [validation](2026-10-05-auth-and-roles/validation.md).
 - Task 0, spec, CLAUDE.md and dependency: **done**
 - Task 1, `core/security.py` (password check and JWT helpers): **done**
 - Task 2, rate limiter: next
 - Task 3, Termii integration: next
-- Task 4, PostgreSQL test database, auth service, schemas, repository and routes (also `httpx2` and the CI split from LOG.md): next
+- Task 4a, `httpx2` and the CI split into `backend.yml` and `frontend.yml`: next
+- Task 4b, PostgreSQL test database: next
+- Task 4c, schemas, repository, auth service and routes: next
 - Task 5, `require_role` and listing access rules: next
 - Task 6, wrap-up and smoke test: next
 

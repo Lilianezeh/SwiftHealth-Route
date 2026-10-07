@@ -31,7 +31,7 @@ One line each, with the reason.
   Convert to kobo only when calling Paystack.
 - **Leaflet with OpenStreetMap.** No map API key and no per-load cost.
 - **PyJWT, not python-jose.** The current FastAPI documentation uses PyJWT
-  ([auth plan](../docs/plans/auth-and-roles.md)).
+  ([auth requirements](2026-10-05-auth-and-roles/requirements.md)).
 - **The JWT only identifies the user.** Role and `is_active` are read from the database on every request, so a
   role change or deactivation takes effect on the next request.
 - **passlib with bcrypt now, pwdlib right after auth and roles.** Moving later is a re-seed, so it is cheapest
@@ -48,4 +48,5 @@ One line each, with the reason.
 - Requirements: [prd.md](prd.md)
 - API contract: [backend/api-spec.md](backend/api-spec.md)
 - UI contract: [frontend/ui-spec.md](frontend/ui-spec.md)
-- Auth decisions in full: [docs/plans/auth-and-roles.md](../docs/plans/auth-and-roles.md)
+- Auth decisions in full: [requirements.md](2026-10-05-auth-and-roles/requirements.md), with the task list in
+  [plan.md](2026-10-05-auth-and-roles/plan.md)
