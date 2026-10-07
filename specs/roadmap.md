@@ -28,7 +28,7 @@ Pull requests: PR #2 merged Tasks 0 and 1 into `main` early. Tasks 2 to 6 will c
 - Task 1, `core/security.py` (password check and JWT helpers): **done**
 - Task 2, rate limiter: **done**
 - Task 2b, database, repositories, seed and tests converted to async: **done**
-- Task 3, Termii integration: next
+- Task 3, Termii integration: **done**
 - Task 4a, the CI split into `backend.yml` and `frontend.yml` (no `httpx2` if `TestClient` is gone): next
 - Task 4b, async PostgreSQL test database: next
 - Task 4c, schemas, repository, auth service and routes: next

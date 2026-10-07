@@ -59,18 +59,22 @@ How we know the feature is really done. What we build is in [requirements.md](re
 - [x] `seed.py` hashes passwords through `run_in_threadpool`, so it never blocks the event loop.
 - Extra tests in `tests/unit/test_test_database.py` (3) and `test_models.py` (split into 2).
 
-### Task 3: `tests/unit/test_termii.py`
-- [ ] `test_without_key_logs_code_and_makes_no_http_call`
-- [ ] `test_with_key_posts_to_termii` (mocked httpx: URL, method and body fields)
-- [ ] `test_phone_is_sent_without_the_plus_sign`
-- [ ] `test_mask_phone_keeps_prefix_and_last_four`
-- [ ] `test_channel_comes_from_the_setting`
-- [ ] `test_key_without_base_url_raises_a_clear_error`
-- [ ] `test_non_2xx_response_raises_sms_send_error`
-- [ ] `test_response_code_not_ok_raises_sms_send_error`
-- [ ] `test_network_error_raises_sms_send_error`
-- [ ] `test_with_key_nothing_secret_is_logged` (no code, no API key, no full phone)
-- [ ] `test_error_messages_contain_no_secrets`
+### Task 3: `tests/unit/test_termii.py` (29 of 29 passing)
+The failure tests run once for each of 7 failures: 400, 401, 429, 500, `code` not `ok`, a reply that is not JSON,
+and a network error. Each failing reply repeats the secrets in its body, to prove a body is never copied.
+- [x] `test_without_key_logs_code_and_makes_no_http_call`
+- [x] `test_with_key_posts_to_termii` (mocked httpx: URL, method and body fields, trailing slash on the base URL)
+- [x] `test_phone_is_sent_without_the_plus_sign`
+- [x] `test_mask_phone_keeps_prefix_and_last_four`
+- [x] `test_the_default_channel_is_dnd`
+- [x] `test_channel_comes_from_the_setting`
+- [x] `test_key_without_base_url_raises_a_clear_error`
+- [x] `test_a_failed_send_raises_sms_send_error` (7 cases)
+- [x] `test_error_messages_contain_no_secrets` (7 cases: no API key, code or phone in the error)
+- [x] `test_with_key_nothing_secret_is_logged_on_success`
+- [x] `test_with_key_nothing_secret_is_logged_on_failure` (7 cases: no code, API key or full phone in the logs)
+- [x] Checked by making the code leak on purpose (message in the success log, response text in the error): 7 tests
+  failed, then the leaks were removed.
 
 ### Task 4a: no new tests
 - [ ] `grep -rn "TestClient" backend` finds nothing, and `httpx2` is not in `requirements.txt`.

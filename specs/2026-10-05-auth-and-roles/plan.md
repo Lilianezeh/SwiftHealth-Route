@@ -67,16 +67,16 @@ starts async. No behaviour change: the existing tests must give the same results
   `ruff check .` and the seed, commit. (The Files table has no row for `core/database.py` or the repositories, and
   they already existed, so nothing to change there.)
 
-### Task 3: Termii integration
+### Task 3: Termii integration (done, `4fca59f`)
 - [x] Read the official Termii docs for the send endpoint, sandbox and fields. Result: `POST {base_url}/api/sms/send`
   with `api_key`, `to` (digits, no `+`), `from`, `sms`, `type`, `channel`; success is `200` with `code: "ok"`;
   there is no sandbox or test mode; the `dnd` channel needs the DND route activated on the account; the base URL
   is per account (dashboard). Error bodies are not documented.
-- [ ] Spec first: wording "Termii: no sandbox ..." in CLAUDE.md, tech-stack, requirements and api-spec; settings
+- [x] Spec first: wording "Termii: no sandbox ..." in CLAUDE.md, tech-stack, requirements and api-spec; settings
   `termii_base_url` (no default) and `termii_channel` (default `dnd`) in `config.py`; `.env.example` (empty
   `TERMII_API_KEY`, `TERMII_BASE_URL`, `TERMII_CHANNEL`); LOG.md reminder.
-- [ ] Write the tests in `tests/unit/test_termii.py` (listed in [validation.md](validation.md)).
-- [ ] Implement `integrations/termii.py` (`send_sms`, `to_termii_number`, `mask_phone`, `SmsSendError`), run, commit.
+- [x] Write the tests in `tests/unit/test_termii.py` (listed in [validation.md](validation.md)).
+- [x] Implement `integrations/termii.py` (`send_sms`, `to_termii_number`, `mask_phone`, `SmsSendError`), run, commit.
   With a key set it logs only the masked phone and the `message_id`; never the code, the key or the full phone.
 
 ### Task 4a: the CI split
