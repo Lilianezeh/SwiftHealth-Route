@@ -93,6 +93,8 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
   clear domain errors that routes translate). Use Depends() for session and current user.
 - Async wherever code waits on I/O (database, httpx, routes and services using them); CPU-only code (security.py,
   rate limiter) stays sync; call password hashing through `run_in_threadpool`; never call sync DB code from an async route.
+- Use the patterns from the FastAPI docs at fastapi.tiangolo.com/learn (Tutorial - User Guide, plus Concurrency and
+  async/await and Async Tests for async code). If something needs a pattern from elsewhere, ask me first and explain it.
 - File names say their layer: `listing_service.py`, `listing_repository.py`, `paystack.py`, `listing.py` (schema/model).
 - TypeScript: no `any`; server components by default, "use client" only when needed; API calls only via
   frontend/src/lib/api/. Component files in PascalCase (ListingCard.tsx).
