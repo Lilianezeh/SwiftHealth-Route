@@ -16,8 +16,10 @@ class Settings(BaseSettings):
     paystack_secret_key: str = ""
     cloudinary_url: str = ""
     resend_api_key: str = ""
-    termii_api_key: str = ""
+    termii_api_key: str = ""  # empty means local dev: the login code is logged instead of sent
+    termii_base_url: str = ""  # per account, from the Termii dashboard; needed only when a key is set
     termii_sender_id: str = "SwiftHealth"
+    termii_channel: str = "dnd"  # "dnd" reaches Do-Not-Disturb numbers but needs the DND route activated
     featured_price_naira: Decimal = Decimal("5000.00")  # monthly featured price; set the real price in .env
 
     # Fixed list of areas (PRD: managed in settings, not a table)

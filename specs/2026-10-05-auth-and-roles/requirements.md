@@ -13,7 +13,9 @@ Branch: `feature/auth-and-roles`. Every commit and test references FR-30 and NFR
 
 ## In scope
 
-- Login in two steps: password, then a 6-digit code sent by SMS (Termii sandbox).
+- Login in two steps: password, then a 6-digit code sent by SMS through Termii. Termii has no sandbox: locally with
+  no key the code is logged to the console; real sending needs a live account with the DND route activated and an
+  approved sender ID.
 - A short-lived access token that only identifies the user.
 - Role and ownership checks for staff and provider endpoints.
 - Rate limits on `/auth/login` and `/auth/verify-code`.

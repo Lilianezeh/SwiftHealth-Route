@@ -14,7 +14,7 @@ code style are in [CLAUDE.md](../CLAUDE.md) and are not repeated here.
 | Tests and lint | pytest and ruff (backend); lint, typecheck and tests with npm (frontend) |
 | Local development | Docker Compose |
 | Production | Vercel (frontend), Render (backend) |
-| Outside services | Paystack (test mode), Cloudinary, Resend, Termii (sandbox) |
+| Outside services | Paystack (test mode), Cloudinary, Resend, Termii (no sandbox: with no key the code is logged locally; real sending needs a live account with the DND route activated and an approved sender ID) |
 
 ## Decisions
 

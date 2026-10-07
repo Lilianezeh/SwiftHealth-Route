@@ -13,6 +13,10 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   can be dodged. A count that is too low counts a proxy address as the client, so every visitor shares one limit.
   Also check FastAPI's "Behind a Proxy" approach (uvicorn `--proxy-headers` and `--forwarded-allow-ips`) and prefer it
   over our own `get_client_ip` logic if it fits Render.
+- **Before the first real SMS (Termii):** activate the DND route on the account, get the sender ID approved, and set
+  `TERMII_BASE_URL` from the dashboard (Settings, API token tab). Termii has no sandbox, so every real send costs
+  balance. Also decide at the Render deploy whether to add a startup warning (lifespan) when no key is set; for now
+  each no-key send logs a WARNING.
 - **Rate limiter, if traffic grows:** sweep old IPs. An IP that stops calling keeps its list of timestamps in memory
   until it calls again (`core/rate_limit.py`).
 - **Auth Task 4:** split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`.

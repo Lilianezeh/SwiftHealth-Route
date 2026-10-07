@@ -61,7 +61,16 @@ How we know the feature is really done. What we build is in [requirements.md](re
 
 ### Task 3: `tests/unit/test_termii.py`
 - [ ] `test_without_key_logs_code_and_makes_no_http_call`
-- [ ] `test_with_key_posts_to_termii` (mocked httpx)
+- [ ] `test_with_key_posts_to_termii` (mocked httpx: URL, method and body fields)
+- [ ] `test_phone_is_sent_without_the_plus_sign`
+- [ ] `test_mask_phone_keeps_prefix_and_last_four`
+- [ ] `test_channel_comes_from_the_setting`
+- [ ] `test_key_without_base_url_raises_a_clear_error`
+- [ ] `test_non_2xx_response_raises_sms_send_error`
+- [ ] `test_response_code_not_ok_raises_sms_send_error`
+- [ ] `test_network_error_raises_sms_send_error`
+- [ ] `test_with_key_nothing_secret_is_logged` (no code, no API key, no full phone)
+- [ ] `test_error_messages_contain_no_secrets`
 
 ### Task 4a: no new tests
 - [ ] `grep -rn "TestClient" backend` finds nothing, and `httpx2` is not in `requirements.txt`.

@@ -228,8 +228,10 @@ FR-37. "List your facility" form. No login. Rate limited to 3 per IP per day.
 
 ## 4. Auth
 
-Login is two steps: password, then a 6-digit code by SMS (Termii sandbox). The code is never stored in the
-database; it travels inside a short-lived signed `challenge_token`, so no extra table is needed.
+Login is two steps: password, then a 6-digit code by SMS through Termii. Termii has no sandbox: locally with no key
+the code is logged to the console; real sending needs a live account with the DND route activated and an approved
+sender ID. The code is never stored in the database; it travels inside a short-lived signed `challenge_token`, so no
+extra table is needed.
 
 ### POST /auth/login
 **Request:** `{ "email": "ada@example.com", "password": "..." }`
