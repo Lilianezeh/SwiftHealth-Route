@@ -76,10 +76,14 @@ Branch: `feature/auth-and-roles`. Every commit and test references FR-30 and NFR
     - **Async:** `core/database.py` (async engine, `AsyncSession` dependency), every repository, `auth_service`,
       `access_service` where it touches the database, `integrations/termii.py` (`httpx.AsyncClient`), the routes,
       the seed script and the tests that use the database.
-    - **Sync:** `core/security.py`, the rate limiter and the rate-limit dependencies (they only count in memory and
-      wait for nothing), `access_service` where it only checks roles, and any other pure-logic function. A function
-      is `async def` only if it awaits the database or an outside service, or calls a function that does. FastAPI
-      runs a plain `def` dependency in a thread, so two requests can reach the rate limiter at the same time.
+    - **Sync:** `core/security.py`, the `RateLimiter` class, `access_service` where it only checks roles, and any
+      other pure-logic function. A function is `async def` only if it awaits the database or an outside service,
+      or calls a function that does.
+    - **Documented exception:** the rate-limit dependencies (`login_rate_limit`, `verify_code_rate_limit`) are
+      `async def` without any `await`. They use in-memory state shared by every request. FastAPI runs an
+      `async def` dependency on the event loop, so two requests can never update the counters at the same time;
+      a plain `def` dependency would run in a thread and could race. The code carries a comment saying so, and
+      CLAUDE.md states the same exception.
     - **Rule:** never call sync database code from an async route.
     - **Setup, from the SQLAlchemy, FastAPI and SQLModel documentation:** `create_async_engine`;
       `AsyncSession` from `sqlmodel.ext.asyncio.session`; sessions made with `expire_on_commit=False`; one session

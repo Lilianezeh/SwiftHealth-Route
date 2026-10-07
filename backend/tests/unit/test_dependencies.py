@@ -13,21 +13,23 @@ def make_request(socket_ip: str) -> Request:
     return Request({"type": "http", "headers": [], "client": (socket_ip, 50000)})
 
 
-def test_dependency_raises_429_when_limit_reached():
+@pytest.mark.anyio
+async def test_dependency_raises_429_when_limit_reached():
     limiter = RateLimiter(max_calls=10, window=timedelta(minutes=15))
     dependency = build_rate_limit_dependency(limiter)
     request = make_request("1.1.1.1")
     for _ in range(10):
-        dependency(request)  # the first 10 calls pass without raising
+        await dependency(request)  # the first 10 calls pass without raising
     with pytest.raises(HTTPException) as error:
-        dependency(request)
+        await dependency(request)
     assert error.value.status_code == 429
 
 
-def test_dependency_counts_each_ip_separately():
+@pytest.mark.anyio
+async def test_dependency_counts_each_ip_separately():
     limiter = RateLimiter(max_calls=1, window=timedelta(minutes=15))
     dependency = build_rate_limit_dependency(limiter)
-    dependency(make_request("1.1.1.1"))
-    dependency(make_request("2.2.2.2"))  # a different IP is not blocked
+    await dependency(make_request("1.1.1.1"))
+    await dependency(make_request("2.2.2.2"))  # a different IP is not blocked
     with pytest.raises(HTTPException):
-        dependency(make_request("1.1.1.1"))
+        await dependency(make_request("1.1.1.1"))
