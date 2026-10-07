@@ -44,7 +44,7 @@ step is really done.
 - [x] Follow-up fixes: client IP counted from the end of `X-Forwarded-For` (`TRUSTED_PROXY_COUNT`), and the 429
   dependencies moved to `api/dependencies.py`.
 
-### Task 2b: convert database, repositories, seed and tests to async
+### Task 2b: convert database, repositories, seed and tests to async (done, `76ac692`)
 Decision 11 in [requirements.md](requirements.md). Done before Task 3 so the Termii client and everything after it
 starts async. No behaviour change: the existing tests must give the same results.
 - [x] Check the official documentation: `postgresql+psycopg` with `create_async_engine`, and the `anyio_backend`
@@ -52,18 +52,20 @@ starts async. No behaviour change: the existing tests must give the same results
   async (`engine.dialect.is_async` is `True`, `select 1` ran through `AsyncSession.exec`); AnyIO's documented
   `anyio_backend` fixture returns `"asyncio"`. `alembic/env.py` uses its own sync engine on the same URL, so it
   needs no change.
-- [ ] `test_seed_data.py` ran the seed on in-memory SQLite, against decision 10. An async seed needs an async
+- [x] `test_seed_data.py` ran the seed on in-memory SQLite, against decision 10. An async seed needs an async
   database, so the core of Task 4b's `conftest.py` moves here: `TEST_DATABASE_URL`, create the database if missing,
   `run_sync(create_all)`, async truncate between tests, an `AsyncSession` fixture, the `anyio_backend` fixture and
-  `await engine.dispose()`. No new dependency (no `aiosqlite`).
-- [ ] Convert `core/database.py` to an async engine and an `AsyncSession` dependency (`get_session`).
-- [ ] Convert the four repositories (`audit`, `category`, `listing`, `user`) to `async def`. Check each query for
-  lazy loading.
-- [ ] Convert `seed/seed.py` to run with `asyncio.run`, and call `hash_password` through `run_in_threadpool`.
-- [ ] Convert the seed tests in `test_seed_data.py` to the PostgreSQL fixture and `test_health.py` (it uses
+  `await engine.dispose()`. No new dependency (no `aiosqlite`). `test_models.py` also used SQLite; it now checks
+  the nine tables in PostgreSQL.
+- [x] Convert `core/database.py` to an async engine and an `AsyncSession` dependency (`get_session`).
+- [x] Convert the four repositories (`audit`, `category`, `listing`, `user`) to `async def`. Check each query for
+  lazy loading (none of the queries loads a relationship).
+- [x] Convert `seed/seed.py` to run with `asyncio.run`, and call `hash_password` through `run_in_threadpool`.
+- [x] Convert the seed tests in `test_seed_data.py` to the PostgreSQL fixture and `test_health.py` (it uses
   `TestClient`; it moves to `httpx.AsyncClient` with `ASGITransport`), and add the anyio marker.
-- [ ] Update the "Files" table above for `core/database.py` and the repositories. Run `pytest -q`,
-  `ruff check .` and the seed, commit.
+- [x] Update the "Files" table above for `core/database.py` and the repositories. Run `pytest -q`,
+  `ruff check .` and the seed, commit. (The Files table has no row for `core/database.py` or the repositories, and
+  they already existed, so nothing to change there.)
 
 ### Task 3: Termii integration
 - [ ] Read the official Termii docs for the send endpoint, sandbox and fields.

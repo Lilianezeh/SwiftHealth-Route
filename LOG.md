@@ -15,8 +15,6 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   over our own `get_client_ip` logic if it fits Render.
 - **Rate limiter, if traffic grows:** sweep old IPs. An IP that stops calling keeps its list of timestamps in memory
   until it calls again (`core/rate_limit.py`).
-- **Auth Task 2b and 4a:** the Starlette TestClient deprecation warning ("install httpx2 instead") goes away
-  when the tests move to `httpx.AsyncClient`. Add `httpx2` only if some test still needs `TestClient`.
 - **Auth Task 4:** split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`.
   Each runs only when its own folder or its own workflow file changes. `backend.yml` gets the
   `postgres:16` service and `TEST_DATABASE_URL`.

@@ -43,18 +43,21 @@ How we know the feature is really done. What we build is in [requirements.md](re
 - [x] `test_dependency_counts_each_ip_separately` (in `test_dependencies.py`)
 - [ ] On Render (roadmap phase 4): log one real `X-Forwarded-For` and confirm `TRUSTED_PROXY_COUNT`.
 
-### Task 2b: no new feature tests, behaviour unchanged
-- [ ] Every test that passed before Task 2b still passes, with the same count, and the output has no
+### Task 2b: behaviour unchanged (60 of 60 passing: the 56 from before plus 4 new test-setup tests)
+- [x] Every test that passed before Task 2b still passes, and `pytest -W error::RuntimeWarning` shows no
   `RuntimeWarning: coroutine ... was never awaited` and no `Event loop is closed` warning.
-- [ ] `python -m seed.seed` runs and seeds the same rows as before.
-- [ ] `grep -rn "from sqlmodel import.*Session" backend/app backend/seed` finds nothing: no sync `Session` is left.
-- [ ] No `def` repository function remains in `backend/app/repositories/` (each one is `async def`).
-- [ ] `alembic upgrade head` still works.
-- [ ] `test_health.py` uses `AsyncClient`, so `grep -rn "TestClient" backend` finds nothing.
-- [ ] The seed tests run on the PostgreSQL test database: `grep -rn "sqlite" backend` finds nothing.
-- [ ] A row written in one test is gone in the next (the async truncate works), and the tests never touch the
-  development database.
-- [ ] `python -m seed.seed` still hashes passwords through `run_in_threadpool`, so it never blocks the event loop.
+- [x] `python -m seed.seed` runs. On the already seeded development database it reports 0 created; the seed tests
+  create every row on an empty PostgreSQL database and check the counts. A first run on an empty development
+  database was not repeated.
+- [x] `grep -rn "from sqlmodel import.*Session" backend/app backend/seed` finds nothing: no sync `Session` is left.
+- [x] No `def` repository function remains in `backend/app/repositories/` (each one is `async def`).
+- [x] `alembic upgrade head` still works (it keeps its own sync engine).
+- [x] `test_health.py` uses `AsyncClient`, so `grep -rn "TestClient" backend` finds nothing.
+- [x] The seed and model tests run on the PostgreSQL test database: `grep -rn "sqlite" backend` finds nothing.
+- [x] `test_a_row_written_in_the_previous_test_is_gone` fails when the truncate is removed (checked), and
+  `test_the_test_database_is_never_the_development_database` guards the development database.
+- [x] `seed.py` hashes passwords through `run_in_threadpool`, so it never blocks the event loop.
+- Extra tests in `tests/unit/test_test_database.py` (3) and `test_models.py` (split into 2).
 
 ### Task 3: `tests/unit/test_termii.py`
 - [ ] `test_without_key_logs_code_and_makes_no_http_call`
