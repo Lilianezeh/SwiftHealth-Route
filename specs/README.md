@@ -4,6 +4,9 @@ What SwiftHealth must do. Change the spec first, then the code, so they never di
 
 | File | What it covers |
 | --- | --- |
+| `mission.md` | Why we build SwiftHealth, where we start, and the principles we never break |
+| `tech-stack.md` | The fixed stack and the main technical decisions, with the reason for each |
+| `roadmap.md` | The build order in very small phases, with the status of each |
 | `prd.md` | Product requirements for the whole app: user stories (US), functional (FR) and non-functional (NFR) requirements |
 | `backend/api-spec.md` | The API contract: every endpoint, its inputs, outputs, rules, errors and tests |
 | `backend/endpoints.md` | Quick index of all endpoints |

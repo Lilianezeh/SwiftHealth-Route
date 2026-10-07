@@ -25,6 +25,7 @@ def is_open_at(opening_hours, moment):
 
 def find_open_places_nearest_first(places, my_lat, my_lng, moment):
     """Keep places that are trusted and open now, then sort them by distance from me."""
+    # Spike only: the real search labels overdue listings (verification_due) instead of hiding them.
     trusted = [place for place in places if not place["flagged"] and not place["overdue_for_recheck"]]
     open_now = [place for place in trusted if is_open_at(place["hours"], moment)]
     return sorted(open_now, key=lambda place: distance_in_km(my_lat, my_lng, place["lat"], place["lng"]))

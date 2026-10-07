@@ -236,7 +236,7 @@ database; it travels inside a short-lived signed `challenge_token`, so no extra 
 
 **Response 200:** `{ "challenge_token": "<jwt, 5 min>", "sent_to": "+234******0001" }`
 
-**Rules:** wrong email or password → 401 with the same message for both. Inactive user → 403. Sends the code by SMS; if no Termii key is set (local dev), logs the code to the API console instead. Rate limited to 10 attempts per IP per 15 minutes.
+**Rules:** wrong email or password → 401 with the same message for both. Inactive user → 403 (checked only after the password is correct). User with no phone number → 400. Sends the code by SMS; if no Termii key is set (local dev), logs the code to the API console instead. Rate limited to 10 attempts per IP per 15 minutes → 429.
 
 ### POST /auth/verify-code
 **Request:** `{ "challenge_token": "...", "code": "482913" }`
@@ -245,12 +245,14 @@ database; it travels inside a short-lived signed `challenge_token`, so no extra 
 ```json
 { "access_token": "<jwt>", "token_type": "bearer", "expires_in": 43200, "user": UserRead }
 ```
-**Rules:** wrong or expired code → 401. Sets `last_login_at`.
+**Rules:** wrong, malformed or expired code or challenge → 401. User deactivated since login → 403. Sets `last_login_at`. Rate limited to 10 attempts per IP per 15 minutes → 429 (separate counter from login).
 
 ### GET /auth/me
 Any logged-in user. **Response 200:** `UserRead`
 
-**Tests:** wrong password · wrong code · expired challenge · token works on `/auth/me` · inactive user blocked.
+**Rules:** the access token only identifies the user (it carries no role). Every protected endpoint loads the user from the database and uses `role` and `is_active` from that row, so a role change or deactivation applies on the next request. Missing or invalid token → 401. Deactivated user → 403.
+
+**Tests:** wrong password · wrong code · expired challenge · token works on `/auth/me` · inactive user blocked · user with no phone · login and verify-code rate limits (429) · role read from database.
 
 ---
 

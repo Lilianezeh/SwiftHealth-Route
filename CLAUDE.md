@@ -49,7 +49,8 @@ user_reports, audit_entries. Models live in backend/app/models/ (one file per ta
 
 ## Roles and rules
 - Visitor (no login), verifier, editor, admin, provider.
-- Every staff/provider endpoint checks the role from the JWT. Verifiers may only edit drafts they
+- Every staff/provider endpoint loads the user from the database and checks the role and is_active
+  from that row; the JWT only identifies the user (no role in the token). Verifiers may only edit drafts they
   created (listings.created_by); providers only their own listing (listings.owner_id).
 - The public sees only listings with status "published".
 - Every listing change writes an audit entry.
@@ -60,7 +61,8 @@ user_reports, audit_entries. Models live in backend/app/models/ (one file per ta
 ## The hard part
 "Open now, nearest first" search (backend/app/services/search_service.py, hours.py): distance from the user,
 opening hours in Africa/Lagos time including hours that cross midnight (check yesterday's row),
-and excluding listings that are overdue for re-check or reported "not working" by 2 users in 7 days.
+and excluding listings reported "not working" by 2 users in 7 days. Overdue listings are not excluded: they stay
+visible with `verification_due: true` until the nightly job moves them to `recheck_due`, which hides them.
 The reference logic is spikes/open_now_nearest.py. Its three tests live in backend/tests/unit/test_search_service.py.
 
 ## Commands
