@@ -37,9 +37,9 @@ step is really done.
 - [x] Write the tests in `tests/unit/test_security.py` (15 tests, listed in [validation.md](validation.md)).
 - [x] Implement, run, commit: `feat(auth): password check and JWT helpers (FR-30, NFR-06)`.
 
-### Task 2: Rate limiter
-- [ ] Write the tests in `tests/unit/test_rate_limit.py`.
-- [ ] Implement `core/rate_limit.py` (sync `RateLimiter`; `async def` dependencies, see decision 11), run, commit.
+### Task 2: Rate limiter (done, `5355fea`)
+- [x] Write the tests in `tests/unit/test_rate_limit.py`.
+- [x] Implement `core/rate_limit.py` (sync `RateLimiter`; `async def` dependencies, see decision 11), run, commit.
 
 ### Task 2b: convert database, repositories, seed and tests to async
 Decision 11 in [requirements.md](requirements.md). Done before Task 3 so the Termii client and everything after it

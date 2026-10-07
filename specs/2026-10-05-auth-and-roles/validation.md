@@ -27,11 +27,16 @@ How we know the feature is really done. What we build is in [requirements.md](re
 - [x] `test_login_code_is_six_digits_with_leading_zeros_kept`
 - [x] `test_generated_codes_are_always_six_digits`
 
-### Task 2: `tests/unit/test_rate_limit.py`
-- [ ] `test_allows_10_then_blocks_11th`
-- [ ] `test_window_expires_after_15_minutes` (injectable clock)
-- [ ] `test_ips_counted_separately`
-- [ ] `test_endpoints_counted_separately`
+### Task 2: `tests/unit/test_rate_limit.py` (9 of 9 passing)
+- [x] `test_allows_10_then_blocks_11th`
+- [x] `test_window_expires_after_15_minutes` (injectable clock)
+- [x] `test_ips_counted_separately`
+- [x] `test_endpoints_counted_separately`
+- [x] `test_reset_clears_all_counts`
+- [x] `test_client_ip_comes_from_x_forwarded_for`
+- [x] `test_client_ip_falls_back_to_socket_address`
+- [x] `test_client_ip_is_unknown_without_header_or_socket`
+- [x] `test_dependency_raises_429_when_limit_reached`
 
 ### Task 2b: no new feature tests, behaviour unchanged
 - [ ] Every test that passed before Task 2b still passes, with the same count, and the output has no
