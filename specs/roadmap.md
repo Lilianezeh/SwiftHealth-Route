@@ -109,3 +109,36 @@ US-13.
 - 14b: daily backups and a tested restore (NFR-09)
 - 14c: anonymous analytics events (see "Analytics" in [prd.md](prd.md#analytics))
 - 14d: go through the release criteria in [prd.md](prd.md#release-criteria)
+
+## After the MVP
+
+These are not phases. The numbered phases above are the MVP build order; the items below have no order and no
+dates. All of them are out of scope for the MVP (see "Out of scope for the MVP" in
+[prd.md](prd.md#out-of-scope-for-the-mvp)). Each line says what it needs first.
+
+### Soon after launch
+
+- **Public accounts:** a decision on how visitors sign in, and an updated privacy policy (NDPA). Today `users`
+  holds staff and providers only.
+- **Reviews:** public accounts first, and a moderation process for editors.
+- **Native Android app:** a stable public API, and MVP usage numbers (see "Analytics" in
+  [prd.md](prd.md#analytics)).
+- **Igbo:** translated text for every screen and someone to review it. NFR-11 already keeps text out of the code.
+
+### With partners
+
+- **Appointment and lab booking:** facilities that agree to confirm bookings.
+- **Pharmacy stock and delivery:** pharmacies that agree to share stock data.
+- **Donor registry:** explicit consent under the NDPA, opt-out at any time, and its own table (adding a table needs
+  the owner's approval).
+- **USSD:** a mobile network or aggregator partner for a short code.
+- **Hospital bed and service availability:** hospitals that agree to share it.
+- **Ambulance requests:** ambulance providers that accept requests, and a change to FR-26, because SwiftRescue
+  today does not dispatch or promise a response.
+- **Live blood stock:** partner blood banks that share stock. Today the page says to call to confirm (FR-27).
+- **Groups needed by donation centres:** donation centres that confirm which blood groups they need.
+
+### Not planned
+
+- **Diagnosis and symptom checking:** SwiftHealth is a directory and never gives medical advice
+  (see [mission.md](mission.md#principles-we-never-break), FR-13, NFR-13).
