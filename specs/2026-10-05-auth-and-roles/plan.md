@@ -12,7 +12,7 @@ step is really done.
 | --- | --- |
 | `specs/backend/api-spec.md` section 4 | Spec first: verify-code rate limit, no-phone 400, inactive 403 on `/me`, role read from DB (done in Task 0) |
 | `CLAUDE.md` | "loads the user from the database" instead of "role from the JWT" (done in Task 0) |
-| `backend/requirements.txt` | `python-jose` to `pyjwt` (done in Task 0); add `httpx2>=2.13` (Task 4a) |
+| `backend/requirements.txt` | `python-jose` to `pyjwt` (done in Task 0); `httpx` stays (no `httpx2`, see Task 4a) |
 | `backend/app/core/security.py` | `verify_password`, `create_access_token(user_id)`, `decode_access_token`, `create_challenge_token(user_id, code, expires_delta)`, `decode_challenge_token`, `generate_login_code`, `hash_login_code(user_id, code)` |
 | `backend/app/core/rate_limit.py` | `RateLimiter(max_calls, window)`; `login_rate_limit`, `verify_code_rate_limit` dependencies (429) |
 | `backend/app/integrations/termii.py` | `send_sms(phone, message)`; no key logs the code. Exact endpoint and fields from the official Termii docs, not guessed |
@@ -23,7 +23,7 @@ step is really done.
 | `backend/app/api/routes/auth.py` | thin: login, verify-code, me |
 | `backend/app/api/dependencies.py` | `get_current_user`, `require_role`, `require_listing_access` |
 | `.env.example` | add `TEST_DATABASE_URL` with host `db` (done when this folder was created) |
-| `backend/tests/conftest.py` | PostgreSQL test database, TestClient, demo users, limiter reset; default `TEST_DATABASE_URL` uses host `db` |
+| `backend/tests/conftest.py` | Async PostgreSQL test database, `AsyncClient`, demo users, limiter reset; default `TEST_DATABASE_URL` uses host `db` |
 | `.github/workflows/backend.yml`, `frontend.yml` | replace `ci.yml`; each runs only for its own folder and workflow file; `backend.yml` has the `postgres:16` service and `TEST_DATABASE_URL` |
 
 ## Tasks
@@ -39,16 +39,32 @@ step is really done.
 
 ### Task 2: Rate limiter
 - [ ] Write the tests in `tests/unit/test_rate_limit.py`.
-- [ ] Implement `core/rate_limit.py`, run, commit.
+- [ ] Implement `core/rate_limit.py` (sync `RateLimiter`; `async def` dependencies, see decision 11), run, commit.
+
+### Task 2b: convert database, repositories, seed and tests to async
+Decision 11 in [requirements.md](requirements.md). Done before Task 3 so the Termii client and everything after it
+starts async. No behaviour change: the existing tests must give the same results.
+- [ ] Check the official documentation: `postgresql+psycopg` with `create_async_engine`, and the `anyio_backend`
+  fixture. If psycopg does not work async, stop and ask before adding a driver (stack change).
+- [ ] Convert `core/database.py` to an async engine and an `AsyncSession` dependency (`get_session`).
+- [ ] Convert the four repositories (`audit`, `category`, `listing`, `user`) to `async def`. Check each query for
+  lazy loading.
+- [ ] Convert `seed/seed.py` to run with `asyncio.run`. Check that `alembic/env.py` is unaffected (migrations may
+  stay sync; if they do, say so in the commit).
+- [ ] Convert the existing tests that use the database (`test_seed_data.py`) and `test_health.py` (it uses
+  `TestClient`; it moves to `httpx.AsyncClient` with `ASGITransport`), and add the anyio marker.
+- [ ] Update the "Files" table above for `core/database.py` and the repositories. Run `pytest -q`,
+  `ruff check .` and the seed, commit.
 
 ### Task 3: Termii integration
 - [ ] Read the official Termii docs for the send endpoint, sandbox and fields.
 - [ ] Write the tests in `tests/unit/test_termii.py`.
 - [ ] Implement `integrations/termii.py`, run, commit.
 
-### Task 4a: `httpx2` and the CI split
-- [ ] Add `httpx2>=2.13` to `backend/requirements.txt` to remove the Starlette TestClient warning. Check whether
-  `httpx` is still needed (the Termii client uses it) before removing anything.
+### Task 4a: the CI split
+- [ ] Check that no code uses Starlette's `TestClient` any more (Task 2b moves the tests to `AsyncClient`):
+  `grep -rn "TestClient" backend`. If none is left, do not add `httpx2`: keep `httpx` (`AsyncClient` and the Termii
+  client use it). If some test still needs `TestClient`, stop and ask.
 - [ ] Split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`. Each runs on push and pull request, with
   a `paths:` filter for its own folder (`backend/**` or `frontend/**`) and its own workflow file. Keep the steps of the
   matching job from `ci.yml`.
@@ -56,13 +72,18 @@ step is really done.
   (the runner reaches the service on `localhost`; `db` only exists inside Docker Compose).
 - [ ] Delete `ci.yml`. Check branch protection: a required check from a path-filtered workflow that is skipped stays
   pending.
-- [ ] Run the backend tests (no warning about `httpx2`), commit.
+- [ ] Run the backend tests (no warning about `httpx` and `starlette.testclient`), commit.
 
-### Task 4b: PostgreSQL test database
-- [ ] Write `tests/conftest.py`: read `TEST_DATABASE_URL`, default
-  `postgresql+psycopg://swifthealth:swifthealth@db:5432/swifthealth_test` (host `db`, because the tests run inside the
-  backend container); create the database if missing, `create_all`, truncate between tests, override
-  `get_session`, reset the rate limiter, demo users.
+### Task 4b: PostgreSQL test database (async)
+- [ ] Write `tests/conftest.py` with async fixtures (decision 11 in [requirements.md](requirements.md)):
+  - read `TEST_DATABASE_URL`, default `postgresql+psycopg://swifthealth:swifthealth@db:5432/swifthealth_test` (host
+    `db`, because the tests run inside the backend container); create the database if missing;
+  - create the tables with `await connection.run_sync(SQLModel.metadata.create_all)`;
+  - truncate all tables between tests with an async statement;
+  - override `get_session` with an async generator that yields an `AsyncSession` on the test engine;
+  - an `AsyncClient` fixture built with `ASGITransport(app=app)` and `base_url="http://test"`; it does not run
+    lifespan events, so the fixture does not rely on them;
+  - dispose the test engine at the end (`await engine.dispose()`), reset the rate limiters, create the demo users.
 - [ ] Run the existing tests on it. All must still pass.
 - [ ] Commit.
 

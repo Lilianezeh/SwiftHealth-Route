@@ -91,6 +91,8 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
   Someone new to the code should understand each name without asking.
 - Python: type hints everywhere; follow the layers above; raise HTTPException only in routes (services raise
   clear domain errors that routes translate). Use Depends() for session and current user.
+- Async wherever code waits on I/O (database, httpx, routes and services using them); CPU-only code (security.py,
+  rate limiter) stays sync; call password hashing through `run_in_threadpool`; never call sync DB code from an async route.
 - File names say their layer: `listing_service.py`, `listing_repository.py`, `paystack.py`, `listing.py` (schema/model).
 - TypeScript: no `any`; server components by default, "use client" only when needed; API calls only via
   frontend/src/lib/api/. Component files in PascalCase (ListingCard.tsx).

@@ -39,8 +39,16 @@ One line each, with the reason.
   (see [roadmap.md](roadmap.md)).
 - **Tests run on PostgreSQL (`swifthealth_test`), never SQLite.** Enums, NUMERIC and time zones then behave as
   in production.
-- **`httpx2` for the test client, and CI split into `backend.yml` and `frontend.yml`.** Both are planned for
-  auth Task 4 (see "To do later" in [LOG.md](../LOG.md)).
+- **`httpx` stays, and CI is split into `backend.yml` and `frontend.yml`.** Tests use `httpx.AsyncClient` instead
+  of Starlette's `TestClient`, so `httpx2` is not needed. The split is planned for auth Task 4a (see "To do later"
+  in [LOG.md](../LOG.md)).
+- **The backend is async wherever code waits on I/O.** Database access (async engine and `AsyncSession`, all
+  repositories), integrations (`httpx.AsyncClient`) and the routes and services that use them are `async def`.
+  Pure CPU code stays sync: `security.py` (JWT, HMAC, codes) and the rate limiter. Password hashing is called
+  through `run_in_threadpool` from async code so it never blocks the event loop. Sync database code is never
+  called from an async route. A blocked event loop stalls every request, and we run on one small Render instance
+  for users on slow connections. Details and the setup are in the
+  [auth requirements](2026-10-05-auth-and-roles/requirements.md), decision 11.
 
 ## Where the details are
 

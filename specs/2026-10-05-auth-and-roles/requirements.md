@@ -66,3 +66,22 @@ Branch: `feature/auth-and-roles`. Every commit and test references FR-30 and NFR
     runner, so `backend.yml` sets `TEST_DATABASE_URL` to `localhost` explicitly. `tests/conftest.py` creates the
     database if missing, runs `SQLModel.metadata.create_all`, and truncates tables between tests. The `get_session`
     dependency is overridden to use it. CI gets a `postgres:16` service.
+11. **Async wherever code waits on I/O.** The database, the integrations, and the routes and services that use
+    them are async. Pure CPU code stays sync. Password hashing is the exception that crosses over: it is CPU work
+    but slow (bcrypt), so async code calls it through `run_in_threadpool`.
+    - **Async:** `core/database.py` (async engine, `AsyncSession` dependency), every repository, `auth_service`,
+      `access_service` where it touches the database, `integrations/termii.py` (`httpx.AsyncClient`), the routes,
+      the seed script and the tests that use the database.
+    - **Sync:** `core/security.py` and the rate limiter. The rate-limit dependency is declared `async def` without
+      any `await`, so it runs on the event loop and two requests can never update the counters at the same time.
+      A plain `def` dependency would run in a thread.
+    - **Rule:** never call sync database code from an async route.
+    - **Setup, from the SQLAlchemy, FastAPI and SQLModel documentation:** `create_async_engine`;
+      `AsyncSession` from `sqlmodel.ext.asyncio.session`; sessions made with `expire_on_commit=False`; one session
+      per request, never shared between concurrent tasks; no lazy loading (a relationship is loaded with
+      `selectinload` or it is not used); `conn.run_sync(SQLModel.metadata.create_all)` for the test schema;
+      `await engine.dispose()` on shutdown. Tests use `httpx.AsyncClient` with `ASGITransport` and the anyio
+      pytest marker. `AsyncClient` does not run lifespan events.
+    - **Checked in Task 2b, not assumed:** that `postgresql+psycopg` works with `create_async_engine` (the
+      SQLAlchemy page we read shows `asyncpg` only), and the exact `anyio_backend` fixture needed so the tests run
+      on asyncio only.

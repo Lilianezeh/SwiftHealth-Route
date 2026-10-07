@@ -27,9 +27,10 @@ Pull requests: PR #2 merged Tasks 0 and 1 into `main` early. Tasks 2 to 6 will c
 - Task 0, spec, CLAUDE.md and dependency: **done**
 - Task 1, `core/security.py` (password check and JWT helpers): **done**
 - Task 2, rate limiter: next
+- Task 2b, database, repositories, seed and tests converted to async: next
 - Task 3, Termii integration: next
-- Task 4a, `httpx2` and the CI split into `backend.yml` and `frontend.yml`: next
-- Task 4b, PostgreSQL test database: next
+- Task 4a, the CI split into `backend.yml` and `frontend.yml` (no `httpx2` if `TestClient` is gone): next
+- Task 4b, async PostgreSQL test database: next
 - Task 4c, schemas, repository, auth service and routes: next
 - Task 5, `require_role` and listing access rules: next
 - Task 6, wrap-up and smoke test: next

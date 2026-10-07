@@ -33,16 +33,28 @@ How we know the feature is really done. What we build is in [requirements.md](re
 - [ ] `test_ips_counted_separately`
 - [ ] `test_endpoints_counted_separately`
 
+### Task 2b: no new feature tests, behaviour unchanged
+- [ ] Every test that passed before Task 2b still passes, with the same count, and the output has no
+  `RuntimeWarning: coroutine ... was never awaited` and no `Event loop is closed` warning.
+- [ ] `python -m seed.seed` runs and seeds the same rows as before.
+- [ ] `grep -rn "from sqlmodel import.*Session" backend/app backend/seed` finds nothing: no sync `Session` is left.
+- [ ] No `def` repository function remains in `backend/app/repositories/` (each one is `async def`).
+- [ ] `alembic upgrade head` still works.
+- [ ] `test_health.py` uses `AsyncClient`, so `grep -rn "TestClient" backend` finds nothing.
+
 ### Task 3: `tests/unit/test_termii.py`
 - [ ] `test_without_key_logs_code_and_makes_no_http_call`
 - [ ] `test_with_key_posts_to_termii` (mocked httpx)
 
 ### Task 4a: no new tests
+- [ ] `grep -rn "TestClient" backend` finds nothing, and `httpx2` is not in `requirements.txt`.
 - [ ] The backend test run shows no warning about `httpx` and `starlette.testclient`.
 - [ ] A change under `backend/` runs only `backend.yml`; a change under `frontend/` runs only `frontend.yml`.
 
 ### Task 4b: no new tests
-- [ ] The existing tests all pass on the PostgreSQL test database.
+- [ ] The existing tests all pass on the async PostgreSQL test database, with no `Event loop is closed` warning.
+- [ ] A row written in one test is gone in the next (the async truncate works).
+- [ ] The `get_session` override gives routes an `AsyncSession` on `swifthealth_test`, never on the development database.
 
 ### Task 4c: `tests/integration/test_auth.py`
 - [ ] `test_login_wrong_password_401`

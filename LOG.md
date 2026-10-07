@@ -7,8 +7,8 @@ One entry per day. Keep it short and honest.
 Open reminders. Each says when it is due. Remove a line once it is done.
 
 - **Search feature:** treat is_24_hours listings as always open (no 23:59 gap).
-- **Auth Task 4:** add `httpx2>=2.13` to `backend/requirements.txt` to remove the
-  Starlette TestClient deprecation warning ("install httpx2 instead").
+- **Auth Task 2b and 4a:** the Starlette TestClient deprecation warning ("install httpx2 instead") goes away
+  when the tests move to `httpx.AsyncClient`. Add `httpx2` only if some test still needs `TestClient`.
 - **Auth Task 4:** split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`.
   Each runs only when its own folder or its own workflow file changes. `backend.yml` gets the
   `postgres:16` service and `TEST_DATABASE_URL`.
