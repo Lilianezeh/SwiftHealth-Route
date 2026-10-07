@@ -51,6 +51,10 @@ How we know the feature is really done. What we build is in [requirements.md](re
 - [ ] No `def` repository function remains in `backend/app/repositories/` (each one is `async def`).
 - [ ] `alembic upgrade head` still works.
 - [ ] `test_health.py` uses `AsyncClient`, so `grep -rn "TestClient" backend` finds nothing.
+- [ ] The seed tests run on the PostgreSQL test database: `grep -rn "sqlite" backend` finds nothing.
+- [ ] A row written in one test is gone in the next (the async truncate works), and the tests never touch the
+  development database.
+- [ ] `python -m seed.seed` still hashes passwords through `run_in_threadpool`, so it never blocks the event loop.
 
 ### Task 3: `tests/unit/test_termii.py`
 - [ ] `test_without_key_logs_code_and_makes_no_http_call`
@@ -62,9 +66,9 @@ How we know the feature is really done. What we build is in [requirements.md](re
 - [ ] A change under `backend/` runs only `backend.yml`; a change under `frontend/` runs only `frontend.yml`.
 
 ### Task 4b: no new tests
-- [ ] The existing tests all pass on the async PostgreSQL test database, with no `Event loop is closed` warning.
-- [ ] A row written in one test is gone in the next (the async truncate works).
+- [ ] The existing tests all pass with the new fixtures, with no `Event loop is closed` warning.
 - [ ] The `get_session` override gives routes an `AsyncSession` on `swifthealth_test`, never on the development database.
+- [ ] The rate limiters start empty in every test.
 
 ### Task 4c: `tests/integration/test_auth.py`
 - [ ] `test_login_wrong_password_401`

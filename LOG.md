@@ -11,6 +11,8 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   set `TRUSTED_PROXY_COUNT` to match. Render's docs say traffic passes through Cloudflare and Render's load
   balancers but not which entry to trust. A count that is too high trusts an entry the client can fake, so the limit
   can be dodged. A count that is too low counts a proxy address as the client, so every visitor shares one limit.
+  Also check FastAPI's "Behind a Proxy" approach (uvicorn `--proxy-headers` and `--forwarded-allow-ips`) and prefer it
+  over our own `get_client_ip` logic if it fits Render.
 - **Rate limiter, if traffic grows:** sweep old IPs. An IP that stops calling keeps its list of timestamps in memory
   until it calls again (`core/rate_limit.py`).
 - **Auth Task 2b and 4a:** the Starlette TestClient deprecation warning ("install httpx2 instead") goes away

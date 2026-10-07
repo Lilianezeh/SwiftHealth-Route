@@ -24,7 +24,7 @@ step is really done.
 | `backend/app/api/routes/auth.py` | thin: login, verify-code, me |
 | `backend/app/api/dependencies.py` | `get_current_user`, `require_role`, `require_listing_access` |
 | `.env.example` | add `TEST_DATABASE_URL` with host `db` (done when this folder was created) |
-| `backend/tests/conftest.py` | Async PostgreSQL test database, `AsyncClient`, demo users, limiter reset; default `TEST_DATABASE_URL` uses host `db` |
+| `backend/tests/conftest.py` | Async PostgreSQL test database (Task 2b), then `get_session` override, `AsyncClient`, demo users, limiter reset (Task 4b); default `TEST_DATABASE_URL` uses host `db` |
 | `.github/workflows/backend.yml`, `frontend.yml` | replace `ci.yml`; each runs only for its own folder and workflow file; `backend.yml` has the `postgres:16` service and `TEST_DATABASE_URL` |
 
 ## Tasks
@@ -47,14 +47,20 @@ step is really done.
 ### Task 2b: convert database, repositories, seed and tests to async
 Decision 11 in [requirements.md](requirements.md). Done before Task 3 so the Termii client and everything after it
 starts async. No behaviour change: the existing tests must give the same results.
-- [ ] Check the official documentation: `postgresql+psycopg` with `create_async_engine`, and the `anyio_backend`
-  fixture. If psycopg does not work async, stop and ask before adding a driver (stack change).
+- [x] Check the official documentation: `postgresql+psycopg` with `create_async_engine`, and the `anyio_backend`
+  fixture. If psycopg does not work async, stop and ask before adding a driver (stack change). Result: psycopg works
+  async (`engine.dialect.is_async` is `True`, `select 1` ran through `AsyncSession.exec`); AnyIO's documented
+  `anyio_backend` fixture returns `"asyncio"`. `alembic/env.py` uses its own sync engine on the same URL, so it
+  needs no change.
+- [ ] `test_seed_data.py` ran the seed on in-memory SQLite, against decision 10. An async seed needs an async
+  database, so the core of Task 4b's `conftest.py` moves here: `TEST_DATABASE_URL`, create the database if missing,
+  `run_sync(create_all)`, async truncate between tests, an `AsyncSession` fixture, the `anyio_backend` fixture and
+  `await engine.dispose()`. No new dependency (no `aiosqlite`).
 - [ ] Convert `core/database.py` to an async engine and an `AsyncSession` dependency (`get_session`).
 - [ ] Convert the four repositories (`audit`, `category`, `listing`, `user`) to `async def`. Check each query for
   lazy loading.
-- [ ] Convert `seed/seed.py` to run with `asyncio.run`. Check that `alembic/env.py` is unaffected (migrations may
-  stay sync; if they do, say so in the commit).
-- [ ] Convert the existing tests that use the database (`test_seed_data.py`) and `test_health.py` (it uses
+- [ ] Convert `seed/seed.py` to run with `asyncio.run`, and call `hash_password` through `run_in_threadpool`.
+- [ ] Convert the seed tests in `test_seed_data.py` to the PostgreSQL fixture and `test_health.py` (it uses
   `TestClient`; it moves to `httpx.AsyncClient` with `ASGITransport`), and add the anyio marker.
 - [ ] Update the "Files" table above for `core/database.py` and the repositories. Run `pytest -q`,
   `ruff check .` and the seed, commit.
@@ -77,17 +83,15 @@ starts async. No behaviour change: the existing tests must give the same results
   pending.
 - [ ] Run the backend tests (no warning about `httpx` and `starlette.testclient`), commit.
 
-### Task 4b: PostgreSQL test database (async)
-- [ ] Write `tests/conftest.py` with async fixtures (decision 11 in [requirements.md](requirements.md)):
-  - read `TEST_DATABASE_URL`, default `postgresql+psycopg://swifthealth:swifthealth@db:5432/swifthealth_test` (host
-    `db`, because the tests run inside the backend container); create the database if missing;
-  - create the tables with `await connection.run_sync(SQLModel.metadata.create_all)`;
-  - truncate all tables between tests with an async statement;
+### Task 4b: the rest of the async test setup
+Task 2b already created `tests/conftest.py` with the async PostgreSQL database (`TEST_DATABASE_URL`, create if
+missing, `run_sync(create_all)`, async truncate, `AsyncSession` fixture, `anyio_backend`, `engine.dispose()`).
+- [ ] Add to `tests/conftest.py` (decision 11 in [requirements.md](requirements.md)):
   - override `get_session` with an async generator that yields an `AsyncSession` on the test engine;
   - an `AsyncClient` fixture built with `ASGITransport(app=app)` and `base_url="http://test"`; it does not run
     lifespan events, so the fixture does not rely on them;
-  - dispose the test engine at the end (`await engine.dispose()`), reset the rate limiters, create the demo users.
-- [ ] Run the existing tests on it. All must still pass.
+  - reset the rate limiters between tests, and create the demo users.
+- [ ] Run the existing tests with the new fixtures. All must still pass.
 - [ ] Commit.
 
 ### Task 4c: Schemas, repository, `auth_service`, routes

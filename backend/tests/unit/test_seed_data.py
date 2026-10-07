@@ -7,9 +7,9 @@ import re
 from decimal import Decimal
 
 import pytest
-from sqlmodel import Session, SQLModel, create_engine, func, select
+from sqlmodel import func, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-import app.models  # noqa: F401  (registers all 9 tables)
 from app.core.config import settings
 from app.core.security import hash_password
 from app.models import (
@@ -49,16 +49,8 @@ def is_past_midnight(hours) -> bool:
     return not hours.is_closed and hours.closes_at < hours.opens_at
 
 
-def count_rows(session: Session, model) -> int:
-    return session.exec(select(func.count()).select_from(model)).one()
-
-
-@pytest.fixture
-def session():
-    engine = create_engine("sqlite://")
-    SQLModel.metadata.create_all(engine)
-    with Session(engine) as session:
-        yield session
+async def count_rows(session: AsyncSession, model) -> int:
+    return (await session.exec(select(func.count()).select_from(model))).one()
 
 
 # --- categories (FR-15, FR-33) ---
@@ -237,55 +229,60 @@ def test_a_hospital_has_a_blood_bank_service_and_donation_centres_exist():
 
 # --- running the seed ---
 
-def test_running_the_seed_creates_the_expected_rows(session):
-    created = run(session, TEST_PASSWORDS)
+@pytest.mark.anyio
+async def test_running_the_seed_creates_the_expected_rows(session):
+    created = await run(session, TEST_PASSWORDS)
     assert created == {"categories": len(CATEGORIES), "users": len(USERS), "listings": len(LISTINGS)}
-    assert count_rows(session, Category) == len(CATEGORIES)
-    assert count_rows(session, User) == len(USERS)
-    assert count_rows(session, Listing) == len(LISTINGS)
-    assert count_rows(session, AuditEntry) == len(LISTINGS)  # FR-38: one create entry per listing
+    assert await count_rows(session, Category) == len(CATEGORIES)
+    assert await count_rows(session, User) == len(USERS)
+    assert await count_rows(session, Listing) == len(LISTINGS)
+    assert await count_rows(session, AuditEntry) == len(LISTINGS)  # FR-38: one create entry per listing
 
 
-def test_published_listings_have_a_passing_call_and_visit_and_a_due_date(session):
-    run(session, TEST_PASSWORDS)
-    published = session.exec(select(Listing).where(Listing.status == ListingStatus.published)).all()
+@pytest.mark.anyio
+async def test_published_listings_have_a_passing_call_and_visit_and_a_due_date(session):
+    await run(session, TEST_PASSWORDS)
+    published = (await session.exec(select(Listing).where(Listing.status == ListingStatus.published))).all()
     for listing in published:
-        checks = session.exec(
+        checks = (await session.exec(
             select(VerificationCheck).where(VerificationCheck.listing_id == listing.id)
-        ).all()
+        )).all()
         assert {check.method.value for check in checks if check.result == CheckResult.passed} == {
             "call", "visit"}, listing.slug
         assert listing.last_verified_at is not None and listing.next_check_due is not None, listing.slug
 
 
-def test_the_provider_owns_exactly_one_listing_and_the_verifier_created_all(session):
-    run(session, TEST_PASSWORDS)
-    provider = session.exec(select(User).where(User.role == Role.provider)).one()
-    verifier = session.exec(select(User).where(User.role == Role.verifier)).one()
-    owned = session.exec(select(Listing).where(Listing.owner_id == provider.id)).all()
+@pytest.mark.anyio
+async def test_the_provider_owns_exactly_one_listing_and_the_verifier_created_all(session):
+    await run(session, TEST_PASSWORDS)
+    provider = (await session.exec(select(User).where(User.role == Role.provider))).one()
+    verifier = (await session.exec(select(User).where(User.role == Role.verifier))).one()
+    owned = (await session.exec(select(Listing).where(Listing.owner_id == provider.id))).all()
     assert len(owned) == 1
-    assert all(listing.created_by == verifier.id for listing in session.exec(select(Listing)).all())
+    assert all(listing.created_by == verifier.id for listing in (await session.exec(select(Listing))).all())
 
 
-def test_running_the_seed_twice_creates_no_duplicates(session):
-    run(session, TEST_PASSWORDS)
+@pytest.mark.anyio
+async def test_running_the_seed_twice_creates_no_duplicates(session):
+    await run(session, TEST_PASSWORDS)
     row_counts_after_first_run = {
-        model.__name__: count_rows(session, model)
+        model.__name__: await count_rows(session, model)
         for model in (Category, User, Listing, PhoneNumber, OpeningHours, Service, VerificationCheck,
                       AuditEntry)
     }
-    created_second_time = run(session, TEST_PASSWORDS)
+    created_second_time = await run(session, TEST_PASSWORDS)
     assert created_second_time == {"categories": 0, "users": 0, "listings": 0}
     for model in (Category, User, Listing, PhoneNumber, OpeningHours, Service, VerificationCheck, AuditEntry):
-        assert count_rows(session, model) == row_counts_after_first_run[model.__name__], model.__name__
+        assert await count_rows(session, model) == row_counts_after_first_run[model.__name__], model.__name__
 
 
-def test_rerunning_does_not_reset_a_changed_password(session):
-    run(session, TEST_PASSWORDS)
-    admin = session.exec(select(User).where(User.role == Role.admin)).one()
+@pytest.mark.anyio
+async def test_rerunning_does_not_reset_a_changed_password(session):
+    await run(session, TEST_PASSWORDS)
+    admin = (await session.exec(select(User).where(User.role == Role.admin))).one()
     admin.password_hash = "changed-by-the-admin"
     session.add(admin)
-    session.commit()
-    run(session, TEST_PASSWORDS)
-    session.refresh(admin)
+    await session.commit()
+    await run(session, TEST_PASSWORDS)
+    await session.refresh(admin)
     assert admin.password_hash == "changed-by-the-admin"
