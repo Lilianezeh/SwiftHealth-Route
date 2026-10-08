@@ -32,6 +32,25 @@ def test_verify_password_accepts_right_and_rejects_wrong():
     assert not verify_password("wrong horse", password_hash)
 
 
+def test_hash_password_uses_argon2():
+    assert hash_password("correct horse").startswith("$argon2")
+
+
+def test_same_password_gives_different_hashes():
+    assert hash_password("correct horse") != hash_password("correct horse")  # random salt each time
+
+
+def test_verify_password_rejects_a_bcrypt_hash():
+    # A bcrypt-format hash. pwdlib raises UnknownHashError for it; verify_password turns that into False.
+    bcrypt_hash = "$2b$12$C6UzMDM.H6dfI/f/IKcEeO5bW1pqHqVJ3JQmb3GxGxq4Qm4Zk2n6e"
+    assert verify_password("correct horse", bcrypt_hash) is False
+
+
+@pytest.mark.parametrize("unreadable_hash", ["not-a-hash", ""])
+def test_verify_password_rejects_garbage_hash(unreadable_hash):
+    assert verify_password("correct horse", unreadable_hash) is False
+
+
 def test_access_token_round_trip():
     token = create_access_token(USER_ID)
     assert decode_access_token(token) == USER_ID

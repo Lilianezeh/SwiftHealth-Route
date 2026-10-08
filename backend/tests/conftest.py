@@ -104,7 +104,7 @@ async def client(session_override: None) -> AsyncIterator[AsyncClient]:
 
 @pytest.fixture(scope="session")
 def demo_password_hash() -> str:
-    """bcrypt is slow on purpose, so the demo password is hashed once for the whole test run."""
+    """Argon2 is slow on purpose, so the demo password is hashed once for the whole test run."""
     return hash_password(DEMO_PASSWORD)
 
 

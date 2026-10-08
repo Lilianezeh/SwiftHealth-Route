@@ -65,7 +65,7 @@ async def start_login(session: AsyncSession, email: str, password: str) -> Login
     """Step 1: checks the password, then texts a 6-digit code and returns the challenge token."""
     user = await user_repository.get_by_email(session, email)
     password_hash = user.password_hash if user else _DUMMY_PASSWORD_HASH
-    # run_in_threadpool (Starlette): bcrypt is slow CPU work, so it runs in a thread, off the event loop.
+    # run_in_threadpool (Starlette): Argon2 is slow CPU work, so it runs in a thread, off the event loop.
     password_is_right = await run_in_threadpool(verify_password, password, password_hash)
     if user is None or not password_is_right:
         raise InvalidCredentialsError

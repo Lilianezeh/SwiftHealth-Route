@@ -73,7 +73,7 @@ async def run(
     for user_seed in USERS:
         user = await user_repository.get_by_email(session, user_seed.email)
         if user is None:
-            # run_in_threadpool (Starlette): bcrypt is slow CPU work, so it runs in a thread, off the loop.
+            # run_in_threadpool (Starlette): Argon2 is slow CPU work, so it runs in a thread, off the loop.
             password_hash = await run_in_threadpool(hash_password, passwords[user_seed.role])
             user = await user_repository.create(
                 session, name=user_seed.name, email=user_seed.email, phone=user_seed.phone,
