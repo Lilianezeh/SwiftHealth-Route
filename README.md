@@ -2,7 +2,9 @@
 
 Verified hospitals, pharmacies and emergency contacts for Enugu, with one-tap calling and directions.
 
-**Live demo:** [Netlify URL] | **API docs:** [Render URL]/docs
+**Live demo:** [swifthealth-ng.netlify.app](https://swifthealth-ng.netlify.app) | **API docs:** [swifthealth-api.onrender.com/docs](https://swifthealth-api.onrender.com/docs)
+
+The demo runs on free plans: the API sleeps after 15 minutes idle, so the first visit can take about a minute.
 
 ## The problem (with evidence)
 [Summarise RESEARCH.md: what the two interviews showed, with links to the artefacts in `docs/research/`.]

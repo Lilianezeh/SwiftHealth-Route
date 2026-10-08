@@ -78,6 +78,38 @@ def test_the_error_never_contains_the_secret():
     assert too_short_secret not in str(error.value)
 
 
+def test_database_url_with_plain_postgresql_prefix_gets_the_psycopg_driver():
+    # Render gives `postgresql://...`; our engine needs the psycopg 3 driver in the address (NFR-05, NFR-06).
+    settings = make_settings(database_url="postgresql://user:secret@host:5432/dbname")
+    assert settings.database_url == "postgresql+psycopg://user:secret@host:5432/dbname"
+
+
+def test_database_url_that_names_psycopg_is_left_alone():
+    address = "postgresql+psycopg://user:secret@host:5432/dbname"
+    assert make_settings(database_url=address).database_url == address
+
+
+def test_database_url_rewrite_keeps_user_password_host_and_database():
+    # Only the start of the address changes. An encoded password and a query string must survive.
+    settings = make_settings(database_url="postgresql://ada:p%40ss@db.example.com:6543/clinic?sslmode=require")
+    assert settings.database_url == "postgresql+psycopg://ada:p%40ss@db.example.com:6543/clinic?sslmode=require"
+
+
+def test_database_url_that_names_another_driver_is_left_alone():
+    address = "postgresql+asyncpg://user:secret@host:5432/dbname"
+    assert make_settings(database_url=address).database_url == address
+
+
+def test_database_url_is_rewritten_when_it_comes_from_the_environment(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:secret@host:5432/dbname")
+    assert make_settings().database_url == "postgresql+psycopg://user:secret@host:5432/dbname"
+
+
+def test_cors_origin_list_splits_a_comma_list_and_trims_spaces():
+    settings = make_settings(cors_origins="https://swifthealth.netlify.app, http://localhost:3000")
+    assert settings.cors_origin_list == ["https://swifthealth.netlify.app", "http://localhost:3000"]
+
+
 def test_app_env_is_read_from_the_environment(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     with pytest.raises(ValidationError, match="JWT_SECRET"):

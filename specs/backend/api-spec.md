@@ -11,7 +11,7 @@ Requirement IDs (US-xx, FR-xx, NFR-xx) refer to the PRD.
 
 | Topic | Rule |
 | --- | --- |
-| Base URL | Local: `http://localhost:8000` · Production: `https://[render-app].onrender.com` |
+| Base URL | Local: `http://localhost:8000` · Production: `https://swifthealth-api.onrender.com` |
 | Format | JSON in and out (except CSV import/export) |
 | Auth | `Authorization: Bearer <access_token>` on staff and provider endpoints. Public endpoints need no token. |
 | Times | Stored and returned in UTC, ISO 8601 (`2026-10-07T14:30:00Z`). Opening hours are local Nigerian time (`HH:MM`). "Open now" is always calculated in `Africa/Lagos`. |

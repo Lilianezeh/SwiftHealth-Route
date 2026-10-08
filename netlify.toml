@@ -1,0 +1,16 @@
+# Netlify settings for the SwiftHealth frontend (NFR-05, NFR-06). Spec: specs/2026-10-08-walking-skeleton-production/.
+# The site lives in frontend/, so the build runs from there. `publish` is relative to `base`, so ".next" means
+# frontend/.next. The plugin line is the Next.js adapter (OpenNext); it is declared here so the settings do not depend on
+# clicking "Runtime" and the publish directory in the Netlify dashboard (phase 4 requirements, decision 9).
+# No secrets here. NEXT_PUBLIC_API_URL is typed in the Netlify dashboard with the "Builds" scope.
+
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20" # the same major version as frontend/Dockerfile and the frontend CI workflow
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
