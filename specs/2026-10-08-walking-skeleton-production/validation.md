@@ -64,13 +64,29 @@ How we know the feature is really done. What we build is in [requirements.md](re
 
 ## Smoke test
 
-- [ ] `curl -i https://<render-address>/health` gives `200` and `{"status":"ok"}`.
-- [ ] `https://<render-address>/docs` opens.
-- [ ] `https://<netlify-address>/` opens over HTTPS and shows "API status: connected".
-- [ ] A browser request from the Netlify page's origin to the API is not blocked by CORS (open the browser console on the
-  Netlify page and run `fetch("<render-address>/health")`).
-- [ ] After 15+ minutes idle, the first Netlify visit may say "not reachable"; reload shows "connected".
+The production database has no users (decision 3 and the edge cases above), so nobody can log in there. The smoke test
+therefore checks what works without a user: the sites, HTTPS, CORS, that the API reaches the database, the 401 paths, and
+the login rate limit. A full login (password, code, token) stays covered by the local smoke test in the auth feature.
+The API address is `https://swifthealth-api.onrender.com` and the site is `https://swifthealth-ng.netlify.app`.
+
+- [ ] `curl -i <api>/health` gives `200` and `{"status":"ok"}`.
+- [ ] `<api>/docs` opens.
+- [ ] `http://` on both the API and the site answers `301` to `https://` (NFR-06).
+- [ ] `<site>/` opens over HTTPS and shows "API status: connected".
+- [ ] A preflight from the site's origin gets `access-control-allow-origin` with exactly that origin; a preflight from
+  another origin gets `400` and no such header.
+- [ ] `GET <api>/auth/me` without a token gives `401`.
+- [ ] `POST <api>/auth/login` with an unknown email gives `401` with `"Invalid email or password"`, not `500`. This
+  proves the API reached the database and its tables exist (the migration ran). `/meta` cannot be used for this yet: that
+  endpoint is not built.
+- [ ] Rate limit through the proxies (`TRUSTED_PROXY_COUNT=3`): 10 login attempts return `401`, and the 11th returns `429`
+  even when each attempt sends a different forged `X-Forwarded-For`. This proves the limit counts the real client and a
+  forged header does not dodge it. (Run from one address; the limit then holds for about 15 minutes.)
+- [ ] The temporary `/proxy-probe` endpoint is gone: `GET <api>/proxy-probe` gives `404`.
+- [ ] After 15+ minutes idle, the first site visit may say "not reachable"; reload shows "connected".
 - [ ] A change pushed to `frontend/` ran only `Frontend CI`, and a change to `backend/` ran only `Backend CI`.
+- [ ] Netlify with only `netlify.toml`: after clearing the dashboard "Runtime" and publish directory overrides, a new
+  deploy of this branch succeeds and the home page still says "connected" (decision 10).
 
 ## Merge checklist
 

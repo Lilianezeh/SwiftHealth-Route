@@ -28,6 +28,11 @@ services:
       - key: JWT_SECRET
         generateValue: true # Render makes a random 256-bit value (base64), longer than the 32 bytes we require
       - key: CORS_ORIGINS
-        sync: false # the Netlify address, for example https://your-site.netlify.app (no trailing slash)
+        # An address is not a secret, so it is a plain value. With `sync: false` Render asked for it only when the
+        # Blueprint was first created and left it out afterwards. https, no trailing slash.
+        value: https://swifthealth-ng.netlify.app
       - key: TRUSTED_PROXY_COUNT
-        value: "1" # placeholder: Task 3 counts the real X-Forwarded-For entries and sets the right number
+        # Counted from a real request through Render on 2026-10-08: X-Forwarded-For is
+        # "client, Cloudflare address, Render load balancer address", so the client is the 3rd entry from the end.
+        # Recount if Render changes its proxies (see the phase 4 requirements, decision 5).
+        value: "3"

@@ -134,7 +134,10 @@ Advisories:
    has no backups. That does not meet [NFR-05](../prd.md#non-functional-requirements) (99.5% uptime) or NFR-09 (daily
    backups). Both are fine for a skeleton with demo data and must be fixed before launch (phases 14b and 14d). The
    alternatives were paid plans from day one (more cost now, no benefit while there are no users) or a database outside
-   Render (a new provider, which needs the owner's approval).
+   Render (a new provider, which needs the owner's approval). Render allows only one active free database per workspace
+   ([Render free plans](https://render.com/docs/free)). The first Blueprint run hit that limit because an older free
+   database existed, and the owner suspended the old one. The database expires 30 days after creation: about
+   2026-11-07 (confirm the exact date in the Render dashboard).
 4. **The API accepts Render's database address as given.** Render's `connectionString` is a plain `postgresql://` address.
    Our engine needs the psycopg 3 driver, written `postgresql+psycopg://`, and SQLAlchemy would otherwise look for a
    different driver that is not installed. A small check in `core/config.py` rewrites the start of the address, with a
@@ -142,12 +145,21 @@ Advisories:
    The alternative is to type `DATABASE_URL` by hand in the dashboard with the right prefix. That works but breaks
    silently the day the database is recreated. The owner chose the rewrite. Both forms are tested: `postgresql://`
    becomes `postgresql+psycopg://`, and `postgresql+psycopg://` stays as it is.
-5. **`TRUSTED_PROXY_COUNT` is set from a real request, not from a guess.** In Task 3 we log one `X-Forwarded-For`
-   header from a request through Render and count its entries. A count that is too high trusts an entry a visitor can
-   fake; a count that is too low gives every visitor the same rate limit (see "To do later" in
-   [LOG.md](../../LOG.md)). We also compare with the uvicorn `--proxy-headers` and `--forwarded-allow-ips` approach and
-   keep our `get_client_ip` unless the FastAPI approach fits Render better. If that means changing the code, it becomes
-   its own task with tests first.
+5. **`TRUSTED_PROXY_COUNT` is set from a real request, not from a guess. It is 3.** A count that is too high trusts an
+   entry a visitor can fake; a count that is too low gives every visitor the same rate limit. We measured it on
+   2026-10-08 with a temporary endpoint that returned the caller's own forwarding headers (added and removed on this
+   branch, never merged). A plain request from a known address arrived as
+   `x-forwarded-for: <client>, <Cloudflare address>, <Render load balancer address>`, with the socket address equal to
+   the last entry. So there are three entries added by proxies, and the client is the third from the end. Two forged
+   requests (`X-Forwarded-For: 1.2.3.4` and `1.2.3.4, 5.6.7.8`) arrived with the forged text still at the start of the
+   list and the real client address still third from the end, so a visitor cannot change the address we count.
+   A count of 1 or 2 would be wrong: the last two entries are Cloudflare and Render addresses that differed between
+   requests (for example `172.68.247.13` and `172.70.243.251`), so many visitors would share a limit or one visitor
+   would get several. Render also sent `cf-connecting-ip` and `true-client-ip` with the real address, but we keep our
+   one rule (count from the end) so the code does not depend on one provider's header names. We kept our own
+   `get_client_ip` instead of uvicorn's `--forwarded-allow-ips`: the FastAPI documentation says `"*"` trusts every sender,
+   and the Cloudflare and Render addresses change, so a fixed allow-list is not practical. We did not test uvicorn's
+   `--proxy-headers` on Render. Recount if Render changes its proxies or we add a custom domain.
 6. **Config files in the repository.** `render.yaml` and `netlify.toml` are reviewed and reproducible. The alternative,
    dashboard-only, leaves nothing in git that records the settings. Secrets (`JWT_SECRET`, API keys) are never in these
    files: the Blueprint uses `generateValue: true` or `sync: false`, and Netlify variables are typed in the dashboard.
@@ -157,3 +169,23 @@ Advisories:
 8. **I cannot create your Render or Netlify services.** You create the accounts and click through the dashboards using
    the checklist in [plan.md](plan.md), Task 3. I write the files, the tests and the checklist, and run the smoke test
    with you.
+9. **`CORS_ORIGINS` is a plain value in `render.yaml`, not `sync: false`.** After the first Blueprint run the variable was
+   missing and the owner added it by hand. The Blueprint documentation says Render asks for `sync: false` values "only
+   during the initial Blueprint creation" and ignores them when an existing Blueprint is updated
+   ([Render Blueprint spec](https://render.com/docs/blueprint-spec)). The first run failed on the free database limit, so
+   the Blueprint was most likely applied a second time as an update; that is an inference, because the page does not say
+   what happens when a prompt is skipped. Either way `sync: false` is meant for secrets, and a web address is not a
+   secret. So the file now holds the value (`https://swifthealth-ng.netlify.app`). `JWT_SECRET` stays `generateValue:
+   true`, and the file still holds no secret.
+10. **`netlify.toml` declares the Next.js adapter and the publish directory.** After the first deploy the Netlify
+    dashboard showed "Runtime" as "Not set", and the owner set it to Next.js and set the publish directory to
+    `frontend/.next` by hand. Netlify's Next.js page says the adapter is applied automatically and never mentions a
+    "Runtime" setting ([Netlify Next.js overview](https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/)),
+    so we do not know why it was not detected; our guess is that detection looked at the repository root, where there is
+    no `package.json`. Settings in `netlify.toml` override the dashboard
+    ([Netlify file-based configuration](https://docs.netlify.com/build/configure-builds/file-based-configuration/)), and the
+    publish directory is relative to the base directory, so `publish = ".next"` with `base = "frontend"` means
+    `frontend/.next`. The plugin snippet `[[plugins]] package = "@netlify/plugin-nextjs"` is the one the Netlify page
+    shows for pinning the adapter. We use it without adding the package to `package.json`, so the version still updates
+    on each build. **This is untested until the owner clears the two dashboard overrides and redeploys** (see
+    [validation.md](validation.md)); if that deploy fails, we go back to the dashboard settings and record that here.
