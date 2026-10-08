@@ -84,7 +84,7 @@ and a network error. Each failing reply repeats the secrets in its body, to prov
   on the missing `greenlet` (a requirements bug, not the split). After `6bd2a80` it is green on the PostgreSQL
   service.
 - [x] A later change under `backend/` (`6bd2a80`) only ran `Backend CI`.
-- [ ] A docs-only change runs neither workflow. To read from the run list after the commit that ticks Task 4a.
+- [x] A docs-only change runs neither workflow (the tick commit `013bb9a` started no run).
 - [ ] A change under `frontend/` only runs `Frontend CI`. Open until the first real frontend change: no frontend
   file changes in this feature.
 
