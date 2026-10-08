@@ -59,6 +59,7 @@ Feature folder: [requirements](2026-10-08-walking-skeleton-production/requiremen
 - Task 2b, security upgrade of `next`, `react` and `react-dom` (React2Shell): **done**
 - Task 3, deploy by the owner, smoke test and `TRUSTED_PROXY_COUNT` (3): **done**, including the `netlify.toml`-only
   deploy
+- Task 3b, cold-start fix (`getHealth()` stops waiting after 8 seconds): **done**
 - Task 4, wrap-up: **done**
 
 ### Phase 5: Search. Next

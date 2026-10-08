@@ -11,6 +11,8 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   a minute to wake). The free database expires 30 days after creation, about **2026-11-07** (confirm the exact date in
   the Render dashboard; Render allows 14 more days to upgrade, then deletes it) and has no backups. Upgrade both
   before launch. If the database lapses before then, recreate it from `render.yaml` and the data is only demo data.
+- **After merging PR #5 (owner):** Render (service and Blueprint) and Netlify must deploy from `main`, and only then may
+  the branch `feature/walking-skeleton-production` be deleted. Steps are in the Phase 4 `validation.md`, "After the merge".
 - **Proxy count, recheck if Render changes:** `TRUSTED_PROXY_COUNT=3` on Render (client, Cloudflare, Render load
   balancer). Measured on 2026-10-08; see decision 5 in the phase 4 requirements. Recount after adding a custom domain
   or if Render changes its proxies, with a temporary endpoint that echoes `X-Forwarded-For`, and remove it afterwards.
@@ -74,9 +76,12 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **Phase 4, problems:** the free-database limit stopped the first Blueprint run; `CORS_ORIGINS` was then missing
   because Render asks for `sync: false` values only at first creation (now a plain value in `render.yaml`); Netlify
   showed "Runtime: Not set" (now declared in `netlify.toml`; proven by redeploying with the dashboard overrides cleared).
-- **Phase 4, open:** cold-start test failed. After 16 idle minutes the first Netlify visit returned an "Inactivity
-  Timeout" error page after 31 s, because `getHealth()` has no time limit while the free Render API wakes (about a
-  minute). A reload worked. Needs a time limit on that call before PR #5 is marked ready.
+- **Phase 4, cold start:** the first test failed. After 16 idle minutes the first Netlify visit returned an
+  "Inactivity Timeout" error page after 31 s, because `getHealth()` had no time limit while the free Render API wakes
+  (about a minute). Fixed with an 8-second limit (tests first). Second test after 21+ idle minutes: the first visit took
+  11.7 s and showed "not reachable" on a normal page; the next visit showed "connected".
 - **Tomorrow:** Phase 5, search (5a: `hours.py`, open now in Africa/Lagos time).
 
 - To do (after walking skeleton): capitalize router tags in /docs ("auth" → "Auth", "health" → "Health"). Paths unchanged. Update api-spec.md if it names tags. Own small branch and draft PR.
+
+- To do (after building): rename project to "SwiftHealth Route" and update the tagline (currently "Emergency, Hospital & Pharmacy Finder"). Before renaming, check that the name is free on Play Store and App Store, plus the domain, social handles and CAC business name. Then update app title, README, specs, pitch decks, project docs and the Netlify/Render names.

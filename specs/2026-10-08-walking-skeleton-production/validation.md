@@ -34,6 +34,14 @@ done it, because the API cannot show those settings.
   security upgrade (Task 2b). No new unit test is needed: no frontend code changed, only `netlify.toml` and the
   package versions.
 
+### Task 3b: `frontend/tests/unit/client.test.ts` (8 of 8 frontend tests passing; 5 new)
+- [x] `getHealth returns the answer when the API is fast`
+- [x] `getHealth returns null when the API answers with an error`
+- [x] `getHealth returns null when the API is slow, instead of waiting for it` (fails first; a fetch that never answers
+  gives `null` after the limit, here 50 ms)
+- [x] `getHealth gives up after 8 seconds by default` (fails first; `AbortSignal.timeout` is called with `8000`)
+- [x] `getHealth returns null when the network fails`
+
 ## Review-focus edge cases
 
 - [x] The API refuses to start with `APP_ENV=production` and a missing, default or short `JWT_SECRET`. This is tested in
@@ -43,11 +51,12 @@ done it, because the API cannot show those settings.
   production preflight check in the smoke test).
 - [x] The owner checked that `NEXT_PUBLIC_API_URL` in the Netlify environment variables starts with `https://`, never
   `http://`.
-- [ ] The first request after the API slept (about a minute) shows "not reachable" without crashing the home page, and
-  the next request shows "connected". **Failed on 2026-10-08:** after 16 idle minutes the first site visit took 31 s and
-  returned Netlify's "Inactivity Timeout" error page instead of the home page, because `getHealth()` waits for the
-  sleeping API with no time limit. The next visit showed "connected" and the API answered in 0.4 s, so it recovers. The
-  slow wake-up itself is a known cost of the free plan (decision 3); the error page is a flaw in our page.
+- [x] The first request after the API slept (about a minute) shows "not reachable" without crashing the home page, and
+  the next request shows "connected". The first test on 2026-10-08 **failed**: after 16 idle minutes the first site visit
+  took 31 s and returned Netlify's "Inactivity Timeout" error page, because `getHealth()` waited with no limit. After the
+  fix (decision 11, `0eef0ea`) the repeat test passed: after 21+ idle minutes the first visit took 11.7 s and showed a
+  normal page saying "not reachable" (the API itself needed 24.8 s to answer), and the next visit showed "connected".
+  The slow wake-up is a known cost of the free plan (decision 3).
 - [x] The Blueprint takes the database address from the database, so no password is typed or committed.
 - [x] The owner checked that the service's `DATABASE_URL` is the internal address (same region, private network): the
   host has no `.render.com` ending. Render says to use the internal address wherever possible.
@@ -95,8 +104,8 @@ The API address is `https://swifthealth-api.onrender.com` and the site is `https
   13th returned `429`, with a different forged `X-Forwarded-For` on every attempt. The limit counts the real client and a
   forged header does not dodge it.
 - [x] The temporary `/proxy-probe` endpoint is gone: `GET <api>/proxy-probe` gives `404`.
-- [ ] After 15+ minutes idle, the first site visit may say "not reachable"; reload shows "connected". Failed on the
-  first part, see the edge case above: the first visit showed an error page.
+- [x] After 15+ minutes idle, the first site visit may say "not reachable"; reload shows "connected". Passed on the
+  second test, see the edge case above.
 - [x] `Frontend CI` did not run on commits that changed no `frontend/` file (`277b521`, `b8f940b`).
 - Not a gate for this feature: `Backend CI` skipped on a pull request that changes only `frontend/`. It cannot be tested
   in this pull request, which changes both folders, so it moved to the reminder "CI path filters" in
@@ -112,5 +121,16 @@ The API address is `https://swifthealth-api.onrender.com` and the site is `https
 - [x] The spec, the [roadmap](../roadmap.md), `LOG.md`, [tech-stack.md](../tech-stack.md) and the production URLs in
   [api-spec.md](../backend/api-spec.md) and `README.md` are up to date.
 - [x] The free-plan limits (sleep, 30-day database, no backups) are in `LOG.md` with the expected expiry date.
-- [ ] The pull request stays a draft until every box above is ticked. The unticked boxes are the owner's dashboard checks
-  and the two tests listed above.
+- [x] The pull request stays a draft until every box above is ticked. All boxes are ticked, so it is marked ready for
+  review.
+
+## After the merge (owner)
+
+Render and Netlify now deploy from the feature branch. Switch them to `main` before the branch is deleted, or the
+sites stop updating.
+
+- [ ] Render service `swifthealth-api`: deploy branch is `main`.
+- [ ] Render Blueprint: tracked branch is `main`, and a sync does not change anything unexpected.
+- [ ] Netlify site `swifthealth-ng`: production branch is `main`.
+- [ ] A new commit on `main` redeploys both; `<api>/health` and the site home page still work.
+- [ ] Only then delete the branch `feature/walking-skeleton-production`.

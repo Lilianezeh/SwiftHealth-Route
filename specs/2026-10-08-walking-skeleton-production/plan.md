@@ -22,6 +22,7 @@ only when the step is really done. Dashboard steps are done by the owner (decisi
 | `specs/backend/api-spec.md` | The production base URL |
 | `README.md` | The live demo and API docs links |
 | `LOG.md` | Render reminders removed; free-plan, proxy and Netlify reminders added; today's entry |
+| `frontend/src/lib/api/client.ts`, `frontend/tests/unit/client.test.ts` | Task 3b: `getHealth()` stops waiting after 8 seconds |
 | `specs/roadmap.md` | Phase 4 status and tasks |
 | `specs/tech-stack.md` | No change: Task 3 kept our own proxy-header approach |
 
@@ -84,6 +85,17 @@ The owner did the dashboard steps. Temporary probe commits: `7eb2446` and `e323f
 - [x] Commit: `docs(specs): proxy count 3, CORS and Netlify settings in config files (NFR-05, NFR-06)`.
 - [x] **Owner, Netlify:** clear the "Runtime" and publish directory overrides, redeploy this branch, and check the home
   page says "connected" (decision 10). Done by the owner after the Task 3 commit; it worked.
+
+### Task 3b: Cold-start fix (done, `0eef0ea`)
+Added after the cold-start test failed: the first visit after the free API slept returned Netlify's "Inactivity
+Timeout" page (decision 11).
+- [x] Write the tests first in `frontend/tests/unit/client.test.ts` (listed in [validation.md](validation.md)). The slow
+  API test and the 8-second test fail first.
+- [x] Give `getHealth()` an abort signal with a time limit: 8 seconds by default, and a parameter so the test can use
+  a short one.
+- [x] Run lint, typecheck, `npm test` and `npm run build`, then commit:
+  `fix(web): stop waiting for a sleeping API after 8 seconds (NFR-05)`.
+- [x] Redeploy and repeat the cold-start test (result in [validation.md](validation.md)).
 
 ### Task 4: Wrap-up (done, this commit)
 - [x] Update `LOG.md`: remove the finished Render reminders, add the free-plan reminders (the API sleeps; the free

@@ -189,3 +189,12 @@ Advisories:
     shows for pinning the adapter. We use it without adding the package to `package.json`, so the version still updates
     on each build. **Tested on 2026-10-08:** the owner cleared the two dashboard overrides and redeployed, the deploy
     worked and the home page still says "connected". So `netlify.toml` is enough and the dashboard needs no overrides.
+11. **`getHealth()` stops waiting after 8 seconds.** The cold-start test on 2026-10-08 showed that after the free API
+    slept, the first site visit took 31 seconds and returned Netlify's "Inactivity Timeout" error page, because the
+    home page waited for the API with no limit and Render needs about a minute to wake. The call now has an abort
+    signal (`AbortSignal.timeout`) with an 8-second limit, so the page shows "not reachable" quickly. The aborted
+    request still reaches Render and wakes the API, so a reload shows "connected". 8 seconds leaves room for a slow
+    mobile connection and is far below the 31 seconds at which the page failed; we did not find a documented Netlify
+    limit, so the number is based on that measurement only. The alternatives were to accept the error page until we
+    leave the free plan, or to keep the API awake with a scheduled ping (extra moving part, and it uses up the 750 free
+    hours). The real fix is the paid plan before launch (decision 3).
