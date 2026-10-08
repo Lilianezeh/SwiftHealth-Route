@@ -11,9 +11,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "next": "15.5.4",
-    "react": "19.1.1",
-    "react-dom": "19.1.1",
+    "next": "15.5.27",
+    "react": "19.1.9",
+    "react-dom": "19.1.9",
     "leaflet": "^1.9.4",
     "react-leaflet": "^5.0.0",
     "recharts": "^3.2.1",
@@ -29,7 +29,7 @@
     "tailwindcss": "^4.1.13",
     "@tailwindcss/postcss": "^4.1.13",
     "eslint": "^8.57.1",
-    "eslint-config-next": "15.5.4",
+    "eslint-config-next": "15.5.27",
     "vitest": "^3.2.4",
     "@playwright/test": "^1.55.0"
   }

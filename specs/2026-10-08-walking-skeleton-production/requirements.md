@@ -96,6 +96,31 @@ address).
   and how many proxies sit in front of us is not stated in the documentation, so Task 3 settles it with a real request
   and a forged header (decision 5). Nothing is guessed before that.
 
+## Security update: Next.js and React (2026-10-08)
+
+Netlify blocked the first deploy because `next` 15.5.4 and `react` and `react-dom` 19.1.1 are affected by
+CVE-2025-55182 ("React2Shell", remote code execution in React Server Components). The same versions are also affected by
+CVE-2025-55183 (source code exposure) and CVE-2025-55184 (denial of service), whose first fix was incomplete and was
+completed as CVE-2025-67779. We upgraded on this branch, with exact versions in `frontend/package.json`:
+
+| Package | Before | After | Why this version |
+| --- | --- | --- | --- |
+| `next` | 15.5.4 | 15.5.27 | Newest 15.5.x on npm. Next.js names 15.5.7 for CVE-2025-55182 and 15.5.9 for CVE-2025-55183, CVE-2025-55184 and CVE-2025-67779. 15.5.27 (September 30, 2026) also carries later 15.5.x security fixes. |
+| `react`, `react-dom` | 19.1.1 | 19.1.9 | Newest 19.1.x on npm. The React blog says 19.1.2 fixes CVE-2025-55182 and 19.1.5 is the fix for the two later issues. 19.1.4 is not enough: the React blog calls it incomplete. |
+| `eslint-config-next` | 15.5.4 | 15.5.27 | Pinned to the same version as `next`. |
+
+I found no React advisory after December 2025 on the React blog. The newest 15.5.x and 19.1.x versions are taken from
+the npm registry. Our code has no `"use server"` functions today, but the advisories say any App Router app is affected,
+so the upgrade was required anyway. The app was never online with the old versions (Netlify blocked the deploy), so no
+deployed secret needs rotating because of this.
+
+Advisories:
+- [Next.js: CVE-2025-66478 (tracks CVE-2025-55182)](https://nextjs.org/blog/CVE-2025-66478)
+- [React: critical vulnerability in React Server Components (CVE-2025-55182)](https://react.dev/blog/2025/12/03/critical-security-vulnerability-in-react-server-components)
+- [Next.js: security update of December 11, 2025 (CVE-2025-55183, CVE-2025-55184, CVE-2025-67779)](https://nextjs.org/blog/security-update-2025-12-11)
+- [React: denial of service and source code exposure in React Server Components](https://react.dev/blog/2025/12/11/denial-of-service-and-source-code-exposure-in-react-server-components)
+- [Next.js: September 2026 security release (15.5.27)](https://nextjs.org/blog/september-2026-security-release)
+
 ## Decisions
 
 1. **Scope: deploy plus the Render reminders from `LOG.md`.** The alternative, deploy only, would leave

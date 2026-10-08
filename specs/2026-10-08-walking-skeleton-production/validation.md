@@ -54,6 +54,8 @@ How we know the feature is really done. What we build is in [requirements.md](re
   the value in `.env.example`.
 - [ ] Both sites answer on HTTPS only; `http://` redirects or fails (NFR-06). Render's load balancer ends TLS and Netlify
   serves HTTPS by default.
+- [ ] `frontend/package-lock.json` locks `next` 15.5.27 and `react` and `react-dom` 19.1.9, and `package.json` pins them
+  without `^` (see "Security update" in [requirements.md](requirements.md)).
 - [ ] No secrets in the commits; no `.env` change.
 - [ ] `TRUSTED_PROXY_COUNT` is not `*`-like: it is the counted number from a real request, and the rate limit still
   separates two different clients (tested with two requests from two networks, or the unit tests plus one real check).

@@ -60,4 +60,13 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   I approved the spec and the go-ahead for all three tasks.
 - Tested login myself with curl: login → code from console → verify-code → /auth/me all worked;
   no token, wrong password, unknown email and wrong code all gave 401 as expected.
+- **Security (Phase 4):** Netlify blocked the first deploy for CVE-2025-55182 (React2Shell). Upgraded `next` to
+  15.5.27 and `react` and `react-dom` to 19.1.9, pinned exactly. 19.1.4 was not enough, because it is incomplete for
+  CVE-2025-55183 and CVE-2025-55184. Advisories: [Next.js](https://nextjs.org/blog/CVE-2025-66478),
+  [React](https://react.dev/blog/2025/12/03/critical-security-vulnerability-in-react-server-components),
+  [Next.js, December 11](https://nextjs.org/blog/security-update-2025-12-11),
+  [React, December 11](https://react.dev/blog/2025/12/11/denial-of-service-and-source-code-exposure-in-react-server-components).
+  Details are in the Phase 4 `requirements.md`.
 - **Tomorrow:** Phase 4, walking skeleton in production (Render and Netlify).
+
+- To do (after walking skeleton): capitalize router tags in /docs ("auth" → "Auth", "health" → "Health"). Paths unchanged. Update api-spec.md if it names tags. Own small branch and draft PR.
