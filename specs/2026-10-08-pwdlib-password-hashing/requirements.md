@@ -37,11 +37,13 @@ is in [tech-stack.md](../tech-stack.md). This change carries out that decision. 
   because passlib 1.7 breaks with newer bcrypt).
 - The pwdlib documentation shows `PasswordHash.recommended()`, `hash()` and `verify()`. It lists `verify_and_update()`
   too, but we do not need it (decision 1).
-- Latest pwdlib seen on PyPI: 0.3.1, which needs Python 3.10 or newer, with the extra `argon2` pulling in
-  `argon2-cffi>=23.1.0`. Task 0 confirms the version again at install time and pins what pip really resolves.
-- Not checked yet: the exact Argon2 parameters `recommended()` uses, and what `verify()` does with a hash it does
-  not recognise (such as an old bcrypt hash). Task 0 reads the documentation and tests it, and records the answer
-  here.
+- Checked in Task 0 by installing it in the backend container: pwdlib 0.3.1 (with `argon2-cffi` 25.1.0) is what
+  pip resolves, and it matches the PyPI page. It needs Python 3.10 or newer.
+- `PasswordHash.recommended()` makes Argon2id hashes with `Argon2Hasher` defaults: `time_cost=3`,
+  `memory_cost=65536` (64 MiB), `parallelism=4`, 32-byte hash, 16-byte salt. A hash looks like
+  `$argon2id$v=19$m=65536,t=3,p=4$...`.
+- `verify()` does not return `False` for a hash it cannot identify. An old bcrypt hash, a garbage string and an
+  empty string all raise `pwdlib.exceptions.UnknownHashError`. Decision 6 depends on this.
 
 ## Decisions
 
@@ -62,5 +64,5 @@ is in [tech-stack.md](../tech-stack.md). This change carries out that decision. 
    `hash_password`, so it has the same Argon2 settings as real hashes and the login time does not reveal which
    emails exist (auth decision 4).
 6. **A hash we cannot read must give "wrong password", not a server error.** If a stored hash is in an unknown format,
-   login returns the same 401 as a wrong password. Task 0 finds out how pwdlib reports this case (exception or
-   `False`) and Task 1 handles it in `verify_password`.
+   login returns the same 401 as a wrong password. pwdlib raises `UnknownHashError` for it (see "Library choice"),
+   so `verify_password` catches that exception and returns `False`.

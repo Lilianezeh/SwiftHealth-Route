@@ -34,9 +34,9 @@ One line each, with the reason.
   ([auth requirements](2026-10-05-auth-and-roles/requirements.md)).
 - **The JWT only identifies the user.** Role and `is_active` are read from the database on every request, so a
   role change or deactivation takes effect on the next request.
-- **passlib with bcrypt now, pwdlib right after auth and roles.** Moving later is a re-seed, so it is cheapest
-  while we only have demo data. It also removes the passlib `crypt` deprecation warning
-  (see [roadmap.md](roadmap.md)).
+- **pwdlib with Argon2 for passwords.** The current FastAPI tutorial recommends it, and passlib logs the `crypt`
+  deprecation warning and breaks with newer bcrypt. The move was a re-seed of the demo users, done while we only
+  had demo data ([feature](2026-10-08-pwdlib-password-hashing/requirements.md)).
 - **The database port is internal to Docker Compose.** `docker-compose.yml` does not publish port 5432 to the host
   (commit `f5402f5`). The backend reaches PostgreSQL as `db:5432` on the Compose network, and nothing on the host
   connects to it directly. Use `docker compose exec db psql ...` for manual access. The backend and frontend ports
