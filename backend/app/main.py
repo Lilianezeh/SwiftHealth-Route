@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.core.rate_limit import get_client_ip
 
 app = FastAPI(title="SwiftHealth API", version="0.1.0")
 
@@ -31,4 +32,9 @@ def proxy_probe(request: Request) -> dict:
     forwarding_headers = {
         name: value for name, value in request.headers.items() if name.startswith(forwarding_prefixes)
     }
-    return {"forwarding_headers": forwarding_headers, "socket_client": request.client.host if request.client else None}
+    return {
+        "forwarding_headers": forwarding_headers,
+        "socket_client": request.client.host if request.client else None,
+        "trusted_proxy_count": settings.trusted_proxy_count,
+        "client_ip_we_use": get_client_ip(request, settings.trusted_proxy_count),
+    }
