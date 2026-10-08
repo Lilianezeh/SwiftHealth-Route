@@ -63,7 +63,10 @@ Branch: `feature/auth-and-roles`. Every commit and test references FR-30 and NFR
 7. **Ownership.** `services/access_service.py` has `ensure_can_edit_listing(user, listing)`, which raises
    `NotAllowedError`. Editor and admin: any listing. Verifier: only if `created_by == user.id` and
    `status == draft`. Provider: only if `owner_id == user.id`.
-8. **`require_role(*roles)`.** 403 on role mismatch, 401 on missing or invalid token. Admin always passes staff checks.
+8. **`require_role(*roles)`.** 403 on role mismatch, 401 on missing or invalid token. Admin always passes a check
+   that lists at least one staff role (verifier, editor or admin), because admin can do everything an editor can.
+   Admin does not pass a provider-only check. `require_listing_access` is a dependency for routes with a
+   `listing_id` path parameter: 404 if the listing does not exist, 403 if `ensure_can_edit_listing` refuses.
 9. **Inactive user.** Login 403. `/auth/me` and every protected endpoint 403. `/auth/verify-code` 403.
 10. **Test database.** A separate PostgreSQL database `swifthealth_test`, never SQLite, so enums, NUMERIC and time
     zones match production. The URL comes from `TEST_DATABASE_URL`, default

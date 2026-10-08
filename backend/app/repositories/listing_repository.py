@@ -7,6 +7,10 @@ from app.models import Listing, OpeningHours, PhoneNumber, Service, Verification
 from app.models.base import CheckMethod, CheckResult
 
 
+async def get_by_id(session: AsyncSession, listing_id: int) -> Listing | None:
+    return await session.get(Listing, listing_id)
+
+
 async def get_by_slug(session: AsyncSession, slug: str) -> Listing | None:
     return (await session.exec(select(Listing).where(Listing.slug == slug))).first()
 
