@@ -57,6 +57,6 @@ passes.
 ## Merge checklist
 
 - [x] `pytest -q` and `ruff check .` are clean, with no warnings.
-- [ ] `backend.yml` is green on the pull request. Not checked yet: the last push was before Task 1.
+- [x] `backend.yml` is green on the pull request (run 37732091269, on the Task 2 docs commit).
 - [x] The spec, the [roadmap](../roadmap.md), `LOG.md` and [tech-stack.md](../tech-stack.md) are up to date.
-- [ ] The pull request stays a draft until every box above is ticked.
+- [x] The pull request stays a draft until every box above is ticked. All boxes are ticked, so it is marked ready for review.
