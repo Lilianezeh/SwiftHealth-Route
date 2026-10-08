@@ -83,9 +83,10 @@ starts async. No behaviour change: the existing tests must give the same results
 - [x] Check that no code uses Starlette's `TestClient` any more (Task 2b moves the tests to `AsyncClient`):
   `grep -rn "TestClient" backend`. If none is left, do not add `httpx2`: keep `httpx` (`AsyncClient` and the Termii
   client use it). If some test still needs `TestClient`, stop and ask. Result: none left, so no `httpx2`.
-- [x] Split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`. Each runs on push and pull request, with
-  a `paths:` filter for its own folder (`backend/**` or `frontend/**`) and its own workflow file. Keep the steps of the
-  matching job from `ci.yml`.
+- [x] Split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`. Each runs on pull requests and on pushes
+  to `main` only (so a pushed branch with an open pull request is not tested twice; a branch without a pull request
+  is not tested at all), with a `paths:` filter for its own folder (`backend/**` or `frontend/**`) and its own
+  workflow file. Keep the steps of the matching job from `ci.yml`.
 - [x] In `backend.yml`, add a `postgres:16` service and set `TEST_DATABASE_URL` explicitly to the `localhost` URL
   (the runner reaches the service on `localhost`; `db` only exists inside Docker Compose). The old `ci.yml` had no
   database, so its backend job had failed since Task 2b.
