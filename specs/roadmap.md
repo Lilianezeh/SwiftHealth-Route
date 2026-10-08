@@ -19,14 +19,22 @@ Repo skeleton, Docker Compose, and the spike for "open now, nearest first" searc
 First migration for all 9 tables, demo seed data, first repositories. FR-15, FR-27, FR-28, FR-31, FR-33, FR-38.
 
 ### Phase 2: Auth and roles. In progress
-FR-30, NFR-06. Plan: [docs/plans/auth-and-roles.md](../docs/plans/auth-and-roles.md).
+FR-30, NFR-06. Feature folder: [requirements](2026-10-05-auth-and-roles/requirements.md),
+[plan](2026-10-05-auth-and-roles/plan.md), [validation](2026-10-05-auth-and-roles/validation.md).
+
+Pull requests: PR #2 merged Tasks 0 and 1 into `main` early. Tasks 2 to 6 will come in a second pull request.
+
 - Task 0, spec, CLAUDE.md and dependency: **done**
 - Task 1, `core/security.py` (password check and JWT helpers): **done**
-- Task 2, rate limiter: next
-- Task 3, Termii integration: next
-- Task 4, PostgreSQL test database, auth service, schemas, repository and routes (also `httpx2` and the CI split from LOG.md): next
-- Task 5, `require_role` and listing access rules: next
-- Task 6, wrap-up and smoke test: next
+- Task 2, rate limiter: **done**
+- Task 2b, database, repositories, seed and tests converted to async: **done**
+- Task 3, Termii integration: **done**
+- Task 4a, the CI split into `backend.yml` and `frontend.yml` (no `httpx2`, no `TestClient` left): **done**
+- Task 3b, JWT secret check at startup (`APP_ENV`): **done**
+- Task 4b, async PostgreSQL test database and fixtures: **done**
+- Task 4c, schemas, repository, auth service and routes: **done**
+- Task 5, `require_role` and listing access rules: **done**
+- Task 6, wrap-up and smoke test: **done**. Pull request #3 stays a draft until the merge checklist is complete.
 
 ### Phase 3: Move password hashing to pwdlib. Next
 Replace passlib and bcrypt with pwdlib, re-seed the demo users, and drop the passlib `crypt` warning.
@@ -103,3 +111,36 @@ US-13.
 - 14b: daily backups and a tested restore (NFR-09)
 - 14c: anonymous analytics events (see "Analytics" in [prd.md](prd.md#analytics))
 - 14d: go through the release criteria in [prd.md](prd.md#release-criteria)
+
+## After the MVP
+
+These are not phases. The numbered phases above are the MVP build order; the items below have no order and no
+dates. All of them are out of scope for the MVP (see "Out of scope for the MVP" in
+[prd.md](prd.md#out-of-scope-for-the-mvp)). Each line says what it needs first.
+
+### Soon after launch
+
+- **Public accounts:** a decision on how visitors sign in, and an updated privacy policy (NDPA). Today `users`
+  holds staff and providers only.
+- **Reviews:** public accounts first, and a moderation process for editors.
+- **Native Android app:** a stable public API, and MVP usage numbers (see "Analytics" in
+  [prd.md](prd.md#analytics)).
+- **Igbo:** translated text for every screen and someone to review it. NFR-11 already keeps text out of the code.
+
+### With partners
+
+- **Appointment and lab booking:** facilities that agree to confirm bookings.
+- **Pharmacy stock and delivery:** pharmacies that agree to share stock data.
+- **Donor registry:** explicit consent under the NDPA, opt-out at any time, and its own table (adding a table needs
+  the owner's approval).
+- **USSD:** a mobile network or aggregator partner for a short code.
+- **Hospital bed and service availability:** hospitals that agree to share it.
+- **Ambulance requests:** ambulance providers that accept requests, and a change to FR-26, because SwiftRescue
+  today does not dispatch or promise a response.
+- **Live blood stock:** partner blood banks that share stock. Today the page says to call to confirm (FR-27).
+- **Groups needed by donation centres:** donation centres that confirm which blood groups they need.
+
+### Not planned
+
+- **Diagnosis and symptom checking:** SwiftHealth is a directory and never gives medical advice
+  (see [mission.md](mission.md#principles-we-never-break), FR-13, NFR-13).

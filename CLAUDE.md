@@ -16,7 +16,8 @@ US-xx, FR-xx, NFR-xx). Reference those IDs in plans, commits and tests.
 - frontend/: Next.js App Router, TypeScript (strict), Tailwind CSS, shadcn/ui, Leaflet + OpenStreetMap, Recharts
 - backend/: FastAPI, SQLModel, Alembic, PostgreSQL, pytest, ruff
 - Docker Compose locally; Vercel (frontend) + Render (backend) in production
-- Integrations: Paystack (test mode), Cloudinary, Resend, Termii (sandbox)
+- Integrations: Paystack (test mode), Cloudinary, Resend, Termii: no sandbox; locally with no key the code is
+  logged to the console; real sending needs a live account with the DND route activated and an approved sender ID
 
 ## Project structure and layers
 Each layer has one job and only calls the layer below it. Never skip a layer.
@@ -77,6 +78,7 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 - Before building an endpoint or page, read its section in the spec and follow it exactly.
 - If something isn't specified or the spec seems wrong, ask me instead of guessing. Update the spec first,
   then the code, so they never disagree.
+- Every feature has its own folder in specs/YYYY-MM-DD-feature-name/ with requirements.md, plan.md and validation.md. Read them before working on that feature, tick tasks with their commit hash at the end of the feature, and check validation.md before saying a feature is done. Pull requests stay drafts until the merge checklist is complete.
 
 ## How to work
 1. For any feature, propose a short plan first (files to touch, endpoints, tests) and wait for my go-ahead.
@@ -85,11 +87,26 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 4. After changes, run the relevant tests and lint, and report the results honestly.
 5. Finish by summarising what changed and anything I should be able to explain.
 
+## Working efficiently
+- Keep replies short: summaries of 10 lines or fewer, no full file dumps unless I ask.
+- Work in bigger chunks: one plan for several related tasks.
+- Update plan.md, validation.md, roadmap.md and LOG.md once at the end of a feature, not after each task.
+- One commit per task is fine; don't make separate commits just to tick boxes.
+- Skip mutation checks except for security code.
+
 ## Code style
 - Readable names everywhere: no single-letter or cryptic names (use `response`, not `r`; `place`, not `p`).
   Someone new to the code should understand each name without asking.
 - Python: type hints everywhere; follow the layers above; raise HTTPException only in routes (services raise
   clear domain errors that routes translate). Use Depends() for session and current user.
+- Async wherever code waits on I/O (database, httpx, routes and services using them); CPU-only code (security.py,
+  the RateLimiter class) stays sync; call password hashing through `run_in_threadpool`; never call sync DB code from
+  an async route. Rule of thumb: a function is async only if it awaits the database or an outside service, or calls
+  something that does. Pure logic stays plain def, even inside services. Exception: in-memory shared state used from
+  a dependency (like the rate limiter) uses async def without await, so it runs on the event loop and can't race.
+  Comment why wherever this is used.
+- Use the patterns from the FastAPI docs at fastapi.tiangolo.com/learn (Tutorial - User Guide, plus Concurrency and
+  async/await and Async Tests for async code). If something needs a pattern from elsewhere, ask me first and explain it.
 - File names say their layer: `listing_service.py`, `listing_repository.py`, `paystack.py`, `listing.py` (schema/model).
 - TypeScript: no `any`; server components by default, "use client" only when needed; API calls only via
   frontend/src/lib/api/. Component files in PascalCase (ListingCard.tsx).

@@ -228,15 +228,17 @@ FR-37. "List your facility" form. No login. Rate limited to 3 per IP per day.
 
 ## 4. Auth
 
-Login is two steps: password, then a 6-digit code by SMS (Termii sandbox). The code is never stored in the
-database; it travels inside a short-lived signed `challenge_token`, so no extra table is needed.
+Login is two steps: password, then a 6-digit code by SMS through Termii. Termii has no sandbox: locally with no key
+the code is logged to the console; real sending needs a live account with the DND route activated and an approved
+sender ID. The code is never stored in the database; it travels inside a short-lived signed `challenge_token`, so no
+extra table is needed.
 
 ### POST /auth/login
 **Request:** `{ "email": "ada@example.com", "password": "..." }`
 
 **Response 200:** `{ "challenge_token": "<jwt, 5 min>", "sent_to": "+234******0001" }`
 
-**Rules:** wrong email or password → 401 with the same message for both. Inactive user → 403 (checked only after the password is correct). User with no phone number → 400. Sends the code by SMS; if no Termii key is set (local dev), logs the code to the API console instead. Rate limited to 10 attempts per IP per 15 minutes → 429.
+**Rules:** wrong email or password → 401 with the same message for both. Inactive user → 403 (checked only after the password is correct). User with no phone number → 400. Sends the code by SMS; if no Termii key is set (local dev), logs the code to the API console instead. If the SMS cannot be sent → 502 `"Could not send the code. Try again."` and no challenge token is returned. Wrong-password and unknown-email requests take the same time (an unknown email still runs a dummy password check). Rate limited to 10 attempts per IP per 15 minutes → 429.
 
 ### POST /auth/verify-code
 **Request:** `{ "challenge_token": "...", "code": "482913" }`
@@ -248,7 +250,7 @@ database; it travels inside a short-lived signed `challenge_token`, so no extra 
 **Rules:** wrong, malformed or expired code or challenge → 401. User deactivated since login → 403. Sets `last_login_at`. Rate limited to 10 attempts per IP per 15 minutes → 429 (separate counter from login).
 
 ### GET /auth/me
-Any logged-in user. **Response 200:** `UserRead`
+Any logged-in user. Send the access token as `Authorization: Bearer <access_token>`. **Response 200:** `UserRead`
 
 **Rules:** the access token only identifies the user (it carries no role). Every protected endpoint loads the user from the database and uses `role` and `is_active` from that row, so a role change or deactivation applies on the next request. Missing or invalid token → 401. Deactivated user → 403.
 

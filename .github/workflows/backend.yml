@@ -1,0 +1,39 @@
+name: Backend CI
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: backend } }
+    services:
+      postgres:
+        image: postgres:16
+        # Throwaway database for CI only, same values as .env.example. Not a secret.
+        env:
+          POSTGRES_USER: swifthealth
+          POSTGRES_PASSWORD: swifthealth
+          POSTGRES_DB: swifthealth
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      # The job runs on the runner, which reaches the service on localhost. The host `db` only exists in Docker Compose.
+      TEST_DATABASE_URL: postgresql+psycopg://swifthealth:swifthealth@localhost:5432/swifthealth_test
+      # Throwaway, CI only, not a secret. PyJWT warns when an HS256 key is under 32 bytes (RFC 7518 section 3.2),
+      # and the code's default dev secret is 15 bytes.
+      JWT_SECRET: ci-only-jwt-secret-for-tests-not-a-real-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt
+      - run: ruff check .
+      - run: pytest -q

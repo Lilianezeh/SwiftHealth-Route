@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from sqlmodel import Session
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import AuditEntry
 
 
-def add_entry(
-    session: Session,
+async def add_entry(
+    session: AsyncSession,
     *,
     user_id: int | None,
     listing_id: int | None,
@@ -25,5 +25,5 @@ def add_entry(
     if changed_at is not None:
         entry.changed_at = changed_at
     session.add(entry)
-    session.flush()
+    await session.flush()
     return entry

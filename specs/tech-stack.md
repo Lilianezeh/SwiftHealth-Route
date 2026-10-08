@@ -14,7 +14,7 @@ code style are in [CLAUDE.md](../CLAUDE.md) and are not repeated here.
 | Tests and lint | pytest and ruff (backend); lint, typecheck and tests with npm (frontend) |
 | Local development | Docker Compose |
 | Production | Vercel (frontend), Render (backend) |
-| Outside services | Paystack (test mode), Cloudinary, Resend, Termii (sandbox) |
+| Outside services | Paystack (test mode), Cloudinary, Resend, Termii (no sandbox: with no key the code is logged locally; real sending needs a live account with the DND route activated and an approved sender ID) |
 
 ## Decisions
 
@@ -31,16 +31,28 @@ One line each, with the reason.
   Convert to kobo only when calling Paystack.
 - **Leaflet with OpenStreetMap.** No map API key and no per-load cost.
 - **PyJWT, not python-jose.** The current FastAPI documentation uses PyJWT
-  ([auth plan](../docs/plans/auth-and-roles.md)).
+  ([auth requirements](2026-10-05-auth-and-roles/requirements.md)).
 - **The JWT only identifies the user.** Role and `is_active` are read from the database on every request, so a
   role change or deactivation takes effect on the next request.
 - **passlib with bcrypt now, pwdlib right after auth and roles.** Moving later is a re-seed, so it is cheapest
   while we only have demo data. It also removes the passlib `crypt` deprecation warning
   (see [roadmap.md](roadmap.md)).
+- **The database port is internal to Docker Compose.** `docker-compose.yml` does not publish port 5432 to the host
+  (commit `f5402f5`). The backend reaches PostgreSQL as `db:5432` on the Compose network, and nothing on the host
+  connects to it directly. Use `docker compose exec db psql ...` for manual access. The backend and frontend ports
+  are published on `127.0.0.1` only.
 - **Tests run on PostgreSQL (`swifthealth_test`), never SQLite.** Enums, NUMERIC and time zones then behave as
   in production.
-- **`httpx2` for the test client, and CI split into `backend.yml` and `frontend.yml`.** Both are planned for
-  auth Task 4 (see "To do later" in [LOG.md](../LOG.md)).
+- **`httpx` stays, and CI is split into `backend.yml` and `frontend.yml`.** Tests use `httpx.AsyncClient` instead
+  of Starlette's `TestClient`, so `httpx2` is not needed. Each workflow runs only when its own folder or workflow
+  file changes, and the backend workflow has a `postgres:16` service for the tests.
+- **The backend is async wherever code waits on I/O.** Database access (async engine and `AsyncSession`, all
+  repositories), integrations (`httpx.AsyncClient`) and the routes and services that use them are `async def`.
+  Pure CPU code stays sync: `security.py` (JWT, HMAC, codes) and the rate limiter. Password hashing is called
+  through `run_in_threadpool` from async code so it never blocks the event loop. Sync database code is never
+  called from an async route. A blocked event loop stalls every request, and we run on one small Render instance
+  for users on slow connections. Details and the setup are in the
+  [auth requirements](2026-10-05-auth-and-roles/requirements.md), decision 11.
 
 ## Where the details are
 
@@ -48,4 +60,5 @@ One line each, with the reason.
 - Requirements: [prd.md](prd.md)
 - API contract: [backend/api-spec.md](backend/api-spec.md)
 - UI contract: [frontend/ui-spec.md](frontend/ui-spec.md)
-- Auth decisions in full: [docs/plans/auth-and-roles.md](../docs/plans/auth-and-roles.md)
+- Auth decisions in full: [requirements.md](2026-10-05-auth-and-roles/requirements.md), with the task list in
+  [plan.md](2026-10-05-auth-and-roles/plan.md)

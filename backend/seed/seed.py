@@ -5,13 +5,15 @@ listing slug) is skipped and never overwritten, so changed passwords and staff e
 Passwords come from the environment (SEED_*_PASSWORD), never from this file.
 The data itself is in seed/seed_data.py. Demo data must stay clearly fictional.
 """
+import asyncio
 import os
 from collections.abc import Mapping
 from datetime import datetime, timedelta
 
-from sqlmodel import Session
+from sqlmodel.ext.asyncio.session import AsyncSession
+from starlette.concurrency import run_in_threadpool
 
-from app.core.database import engine
+from app.core.database import engine, session_factory
 from app.core.security import hash_password
 from app.models import Category, Listing, OpeningHours, PhoneNumber, Service, User
 from app.models.base import CheckMethod, CheckResult, Role, utcnow
@@ -49,16 +51,18 @@ def read_passwords(environment: Mapping[str, str]) -> dict[Role, str]:
     return passwords
 
 
-def run(session: Session, passwords: Mapping[Role, str], now: datetime | None = None) -> dict[str, int]:
+async def run(
+    session: AsyncSession, passwords: Mapping[Role, str], now: datetime | None = None
+) -> dict[str, int]:
     """Creates whatever is missing and returns how many categories, users and listings were created."""
     now = now or utcnow()
     created = {"categories": 0, "users": 0, "listings": 0}
 
     categories = {}
     for category_seed in CATEGORIES:
-        category = category_repository.get_by_slug(session, category_seed.slug)
+        category = await category_repository.get_by_slug(session, category_seed.slug)
         if category is None:
-            category = category_repository.create(
+            category = await category_repository.create(
                 session, name=category_seed.name, slug=category_seed.slug,
                 is_emergency=category_seed.is_emergency, recheck_days=category_seed.recheck_days,
             )
@@ -67,27 +71,33 @@ def run(session: Session, passwords: Mapping[Role, str], now: datetime | None = 
 
     users = {}
     for user_seed in USERS:
-        user = user_repository.get_by_email(session, user_seed.email)
+        user = await user_repository.get_by_email(session, user_seed.email)
         if user is None:
-            user = user_repository.create(
+            # run_in_threadpool (Starlette): bcrypt is slow CPU work, so it runs in a thread, off the loop.
+            password_hash = await run_in_threadpool(hash_password, passwords[user_seed.role])
+            user = await user_repository.create(
                 session, name=user_seed.name, email=user_seed.email, phone=user_seed.phone,
-                password_hash=hash_password(passwords[user_seed.role]), role=user_seed.role,
+                password_hash=password_hash, role=user_seed.role,
             )
             created["users"] += 1
         users[user_seed.role] = user
 
     for listing_seed in LISTINGS:
-        if listing_repository.get_by_slug(session, listing_seed.slug) is not None:
+        if await listing_repository.get_by_slug(session, listing_seed.slug) is not None:
             continue  # already seeded: skip the listing and all of its phones, hours and services
-        add_demo_listing(session, listing_seed, categories[listing_seed.category_slug], users, now)
+        await add_demo_listing(session, listing_seed, categories[listing_seed.category_slug], users, now)
         created["listings"] += 1
 
-    session.commit()
+    await session.commit()
     return created
 
 
-def add_demo_listing(
-    session: Session, listing_seed: ListingSeed, category: Category, users: Mapping[Role, User], now: datetime
+async def add_demo_listing(
+    session: AsyncSession,
+    listing_seed: ListingSeed,
+    category: Category,
+    users: Mapping[Role, User],
+    now: datetime,
 ) -> None:
     """Adds one listing with its phones, hours, services, check history and audit entry."""
     verifier = users[Role.verifier]
@@ -121,31 +131,32 @@ def add_demo_listing(
                 fee_collected_at=service.collected_at)
         for service in listing_seed.services
     ]
-    listing_repository.add_listing_with_details(session, listing, phones, opening_hours, services)
+    await listing_repository.add_listing_with_details(session, listing, phones, opening_hours, services)
 
     if last_verified_at is not None:  # published listings carry a passing call and visit (publish rule)
         for method, checked_at in ((CheckMethod.call, last_verified_at - timedelta(days=1)),
                                    (CheckMethod.visit, last_verified_at)):
-            listing_repository.add_verification_check(
+            await listing_repository.add_verification_check(
                 session, listing_id=listing.id, staff_id=verifier.id, method=method,
                 result=CheckResult.passed, person_reached="Demo contact", notes="Demo data (fictional)",
                 checked_at=checked_at,
             )
 
-    audit_repository.add_entry(
+    await audit_repository.add_entry(
         session, user_id=verifier.id, listing_id=listing.id, action="create", reference="seed",
     )
 
 
-def main() -> None:
+async def main() -> None:
     try:
         passwords = read_passwords(os.environ)
     except SeedConfigError as error:
         raise SystemExit(f"Seed not run. {error}") from error
-    with Session(engine) as session:
-        created = run(session, passwords)
+    async with session_factory() as session:
+        created = await run(session, passwords)
+    await engine.dispose()  # asyncio.run closes the event loop, so close the connections first
     print(f"Seed complete. Created: {created}")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

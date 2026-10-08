@@ -7,11 +7,27 @@ One entry per day. Keep it short and honest.
 Open reminders. Each says when it is due. Remove a line once it is done.
 
 - **Search feature:** treat is_24_hours listings as always open (no 23:59 gap).
-- **Auth Task 4:** add `httpx2>=2.13` to `backend/requirements.txt` to remove the
-  Starlette TestClient deprecation warning ("install httpx2 instead").
-- **Auth Task 4:** split `.github/workflows/ci.yml` into `backend.yml` and `frontend.yml`.
-  Each runs only when its own folder or its own workflow file changes. `backend.yml` gets the
-  `postgres:16` service and `TEST_DATABASE_URL`.
+- **Auth, Render deploy (roadmap phase 4):** log one real `X-Forwarded-For` header from a request through Render and
+  set `TRUSTED_PROXY_COUNT` to match. Render's docs say traffic passes through Cloudflare and Render's load
+  balancers but not which entry to trust. A count that is too high trusts an entry the client can fake, so the limit
+  can be dodged. A count that is too low counts a proxy address as the client, so every visitor shares one limit.
+  Also check FastAPI's "Behind a Proxy" approach (uvicorn `--proxy-headers` and `--forwarded-allow-ips`) and prefer it
+  over our own `get_client_ip` logic if it fits Render.
+- **Render deploy, environment (roadmap phase 4):** set `APP_ENV=production` and a long random `JWT_SECRET` (at
+  least 32 bytes, for example the output of `python -c "import secrets; print(secrets.token_urlsafe(48))"`). The app
+  refuses to start without them. Never reuse the value from `.env.example`.
+- **Before the first real SMS (Termii):** activate the DND route on the account, get the sender ID approved, and set
+  `TERMII_BASE_URL` from the dashboard (Settings, API token tab). Termii has no sandbox, so every real send costs
+  balance. Also decide at the Render deploy whether to add a startup warning (lifespan) when no key is set; for now
+  each no-key send logs a WARNING.
+- **Auth, if the risk matters:** a challenge token plus its code can be used again until the token expires (5
+  minutes), because the code is never stored (api-spec section 4). A one-time-use rule would need a small store.
+  Also: Swagger's Authorize button does not work with our two-step login (`OAuth2PasswordBearer` only reads the
+  header); test the API with the `Authorization: Bearer` header.
+- **Rate limiter, if traffic grows:** sweep old IPs. An IP that stops calling keeps its list of timestamps in memory
+  until it calls again (`core/rate_limit.py`).
+- **First frontend change:** check that it runs only `Frontend CI` and not `Backend CI` (the `frontend/**` filter
+  has not been tested yet). Add this to the pull request notes for that change.
 - **pwdlib change:** the passlib warning ("'crypt' is deprecated and slated for removal in Python 3.13")
   goes away with the later move from passlib to pwdlib (needs a re-seed, since seed users are bcrypt-hashed).
 
