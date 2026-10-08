@@ -40,8 +40,11 @@ only when the step is really done. Dashboard steps are done by the owner (decisi
   Error messages never show the address, because it holds the password.
 - [ ] Write `render.yaml`: one Docker web service (`dockerfilePath: ./backend/Dockerfile`,
   `dockerContext: ./backend`, `healthCheckPath: /health`) on the free plan, one free PostgreSQL database,
-  `DATABASE_URL` from the database, `APP_ENV=production`, `JWT_SECRET` with `generateValue: true`, `CORS_ORIGINS` and
-  `TRUSTED_PROXY_COUNT` for us to type in. No secret value in the file.
+  `DATABASE_URL` from the database, `APP_ENV=production`, `JWT_SECRET` with `generateValue: true`, `CORS_ORIGINS` typed
+  in the dashboard (`sync: false`), and `TRUSTED_PROXY_COUNT` as the placeholder `"1"` until Task 3 counts the real
+  value. Both the service and the database are in `frankfurt`, the Render region closest to Nigeria in the Blueprint
+  spec. No secret value in the file.
+- [ ] Add `cors_origin_list` to `Settings` so the comma list is split in one tested place; `main.py` uses it.
 - [ ] Run `pytest -q` and `ruff check .`, then commit:
   `feat(deploy): Render blueprint and database address check (NFR-05, NFR-06)`.
 

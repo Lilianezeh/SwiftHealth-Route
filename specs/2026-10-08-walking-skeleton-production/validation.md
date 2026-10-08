@@ -15,12 +15,14 @@ How we know the feature is really done. What we build is in [requirements.md](re
 
 ### Task 1: `tests/unit/test_config.py` and `tests/integration/test_cors.py`
 - [ ] `test_database_url_with_plain_postgresql_prefix_gets_the_psycopg_driver` (NFR-06; decision 4)
-- [ ] `test_database_url_that_names_a_driver_is_left_alone`
+- [ ] `test_database_url_that_names_psycopg_is_left_alone`
 - [ ] `test_database_url_rewrite_keeps_user_password_host_and_database` (only the start of the address changes)
-- [ ] `test_database_url_error_never_contains_the_password` (a bad address does not print what it was given)
-- [ ] `test_cors_allows_the_configured_origin` (a request with that `Origin` gets `access-control-allow-origin` back)
+- [ ] `test_database_url_that_names_another_driver_is_left_alone`
+- [ ] `test_database_url_is_rewritten_when_it_comes_from_the_environment`
+- [ ] `test_cors_origin_list_splits_a_comma_list_and_trims_spaces`
+- [ ] `test_cors_allows_the_configured_origin` (a preflight with that `Origin` gets `access-control-allow-origin` back)
 - [ ] `test_cors_does_not_allow_an_unknown_origin` (no `access-control-allow-origin` header for another origin)
-- [ ] `test_cors_origins_setting_accepts_several_origins_with_spaces` (comma list, as in `main.py`)
+- [ ] `test_a_normal_request_from_an_unknown_origin_gets_no_cors_header`
 - [ ] Existing tests still pass, including the five production `JWT_SECRET` tests in `test_config.py`.
 
 ### Task 2: frontend
@@ -37,6 +39,10 @@ How we know the feature is really done. What we build is in [requirements.md](re
 - [ ] The first request after the API slept (about a minute) shows "not reachable" without crashing the home page, and
   the next request shows "connected". This is a known cost of the free plan (decision 3).
 - [ ] The Blueprint takes the database address from the database, so no password is typed or committed.
+- [ ] The API uses the database's internal address (same region, private network). Render says to use the internal
+  address wherever possible; check in the Render dashboard that `DATABASE_URL` on the service is the internal one.
+- [ ] `ipAllowList: []` really blocks outside connections to the database. The Blueprint spec only says that leaving it
+  out allows every address, so confirm in the dashboard (database, Access Control) that no outside address is allowed.
 - [ ] `alembic upgrade head` runs at start (see `backend/Dockerfile`) and works on an empty Render database.
 - [ ] The production database holds no seed users, so there are no demo passwords online. If demo data is wanted
   there, decide that first; it is not part of this feature.

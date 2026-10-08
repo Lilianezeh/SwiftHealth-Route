@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_JWT_SECRET = "dev-only-secret"  # public: only for local development, never for anything deployed
@@ -33,6 +33,20 @@ class Settings(BaseSettings):
         "Independence Layout", "New Haven", "Trans-Ekulu", "GRA", "Ogui",
         "Uwani", "Achara Layout", "Abakpa Nike", "Emene", "Coal Camp",
     ]
+
+    @field_validator("database_url")
+    @classmethod
+    def use_psycopg_driver(cls, database_url: str) -> str:
+        """Render gives `postgresql://...`. SQLAlchemy would pick a driver we lack, so name psycopg."""
+        plain_prefix = "postgresql://"
+        if database_url.startswith(plain_prefix):
+            return "postgresql+psycopg://" + database_url.removeprefix(plain_prefix)
+        return database_url
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """CORS_ORIGINS is one comma-separated string in the environment; the middleware needs a list."""
+        return [origin.strip() for origin in self.cors_origins.split(",")]
 
     @model_validator(mode="after")
     def check_jwt_secret_outside_development(self) -> "Settings":
