@@ -37,6 +37,10 @@ One line each, with the reason.
 - **passlib with bcrypt now, pwdlib right after auth and roles.** Moving later is a re-seed, so it is cheapest
   while we only have demo data. It also removes the passlib `crypt` deprecation warning
   (see [roadmap.md](roadmap.md)).
+- **The database port is internal to Docker Compose.** `docker-compose.yml` does not publish port 5432 to the host
+  (commit `f5402f5`). The backend reaches PostgreSQL as `db:5432` on the Compose network, and nothing on the host
+  connects to it directly. Use `docker compose exec db psql ...` for manual access. The backend and frontend ports
+  are published on `127.0.0.1` only.
 - **Tests run on PostgreSQL (`swifthealth_test`), never SQLite.** Enums, NUMERIC and time zones then behave as
   in production.
 - **`httpx` stays, and CI is split into `backend.yml` and `frontend.yml`.** Tests use `httpx.AsyncClient` instead
