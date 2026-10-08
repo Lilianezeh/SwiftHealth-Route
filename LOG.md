@@ -11,8 +11,6 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   a minute to wake). The free database expires 30 days after creation, about **2026-11-07** (confirm the exact date in
   the Render dashboard; Render allows 14 more days to upgrade, then deletes it) and has no backups. Upgrade both
   before launch. If the database lapses before then, recreate it from `render.yaml` and the data is only demo data.
-- **After merging PR #5 (owner):** Render (service and Blueprint) and Netlify must deploy from `main`, and only then may
-  the branch `feature/walking-skeleton-production` be deleted. Steps are in the Phase 4 `validation.md`, "After the merge".
 - **Proxy count, recheck if Render changes:** `TRUSTED_PROXY_COUNT=3` on Render (client, Cloudflare, Render load
   balancer). Measured on 2026-10-08; see decision 5 in the phase 4 requirements. Recount after adding a custom domain
   or if Render changes its proxies, with a temporary endpoint that echoes `X-Forwarded-For`, and remove it afterwards.
@@ -85,3 +83,5 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - To do (after walking skeleton): capitalize router tags in /docs ("auth" → "Auth", "health" → "Health"). Paths unchanged. Update api-spec.md if it names tags. Own small branch and draft PR.
 
 - To do (after building): rename project to "SwiftHealth Route" and update the tagline (currently "Emergency, Hospital & Pharmacy Finder"). Before renaming, check that the name is free on Play Store and App Store, plus the domain, social handles and CAC business name. Then update app title, README, specs, pitch decks, project docs and the Netlify/Render names.
+
+- To do: lint-on-edit hook uses the wrong ESLint for frontend files (no node_modules on host, so npx fetches ESLint 10, which can't read our config). Real lint (npm run lint in Docker, plus Frontend CI) still works. Fix later, probably by running ESLint inside the frontend container.
