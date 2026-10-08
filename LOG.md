@@ -7,15 +7,16 @@ One entry per day. Keep it short and honest.
 Open reminders. Each says when it is due. Remove a line once it is done.
 
 - **Search feature:** treat is_24_hours listings as always open (no 23:59 gap).
-- **Auth, Render deploy (roadmap phase 4):** log one real `X-Forwarded-For` header from a request through Render and
-  set `TRUSTED_PROXY_COUNT` to match. Render's docs say traffic passes through Cloudflare and Render's load
-  balancers but not which entry to trust. A count that is too high trusts an entry the client can fake, so the limit
-  can be dodged. A count that is too low counts a proxy address as the client, so every visitor shares one limit.
-  Also check FastAPI's "Behind a Proxy" approach (uvicorn `--proxy-headers` and `--forwarded-allow-ips`) and prefer it
-  over our own `get_client_ip` logic if it fits Render.
-- **Render deploy, environment (roadmap phase 4):** set `APP_ENV=production` and a long random `JWT_SECRET` (at
-  least 32 bytes, for example the output of `python -c "import secrets; print(secrets.token_urlsafe(48))"`). The app
-  refuses to start without them. Never reuse the value from `.env.example`.
+- **Before launch, Render free plans (roadmap phases 14b and 14d):** the free API sleeps after 15 minutes idle (about
+  a minute to wake). The free database expires 30 days after creation, about **2026-11-07** (confirm the exact date in
+  the Render dashboard; Render allows 14 more days to upgrade, then deletes it) and has no backups. Upgrade both
+  before launch. If the database lapses before then, recreate it from `render.yaml` and the data is only demo data.
+- **Proxy count, recheck if Render changes:** `TRUSTED_PROXY_COUNT=3` on Render (client, Cloudflare, Render load
+  balancer). Measured on 2026-10-08; see decision 5 in the phase 4 requirements. Recount after adding a custom domain
+  or if Render changes its proxies, with a temporary endpoint that echoes `X-Forwarded-For`, and remove it afterwards.
+- **Phase 4, Netlify (owner):** clear the "Runtime" and publish directory overrides in the Netlify dashboard, redeploy
+  this branch, and check the home page still says "connected". That proves `netlify.toml` alone is enough (decision 10).
+  If the deploy fails, put the dashboard settings back and record it in the requirements.
 - **Before the first real SMS (Termii):** activate the DND route on the account, get the sender ID approved, and set
   `TERMII_BASE_URL` from the dashboard (Settings, API token tab). Termii has no sandbox, so every real send costs
   balance. Also decide at the Render deploy whether to add a startup warning (lifespan) when no key is set; for now
@@ -26,8 +27,9 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   header); test the API with the `Authorization: Bearer` header.
 - **Rate limiter, if traffic grows:** sweep old IPs. An IP that stops calling keeps its list of timestamps in memory
   until it calls again (`core/rate_limit.py`).
-- **First frontend change:** check that it runs only `Frontend CI` and not `Backend CI` (the `frontend/**` filter
-  has not been tested yet). Add this to the pull request notes for that change.
+- **CI path filters:** seen in PR #5: `Frontend CI` did not run on backend-only commits, so that direction works. Once
+  the PR also changed `frontend/`, both workflows ran on every push, because a pull request is judged on its whole
+  diff, not one commit. To see `Backend CI` skipped, use a pull request that changes only `frontend/`.
 
 ## Day 1 — 2026-10-04
 - **Built:** Repo skeleton, Docker Compose, spike for open-now + nearest search.
@@ -67,6 +69,14 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   [Next.js, December 11](https://nextjs.org/blog/security-update-2025-12-11),
   [React, December 11](https://react.dev/blog/2025/12/11/denial-of-service-and-source-code-exposure-in-react-server-components).
   Details are in the Phase 4 `requirements.md`.
-- **Tomorrow:** Phase 4, walking skeleton in production (Render and Netlify).
+- **Phase 4:** API live on Render (https://swifthealth-api.onrender.com), site live on Netlify
+  (https://swifthealth-ng.netlify.app), home page says "connected". Added the database address rewrite
+  (`postgresql://` to `postgresql+psycopg://`) and `render.yaml` and `netlify.toml`. `TRUSTED_PROXY_COUNT` is 3,
+  measured with a temporary endpoint (removed). The login rate limit held in production against forged
+  `X-Forwarded-For` headers (10 attempts 401, the 11th 429). Production has no users, so a full login was not tested there.
+- **Phase 4, problems:** the free-database limit stopped the first Blueprint run; `CORS_ORIGINS` was then missing
+  because Render asks for `sync: false` values only at first creation (now a plain value in `render.yaml`); Netlify
+  showed "Runtime: Not set" (now declared in `netlify.toml`, still to be proven, see the reminder above).
+- **Tomorrow:** Phase 5, search (5a: `hours.py`, open now in Africa/Lagos time).
 
 - To do (after walking skeleton): capitalize router tags in /docs ("auth" → "Auth", "health" → "Health"). Paths unchanged. Update api-spec.md if it names tags. Own small branch and draft PR.
