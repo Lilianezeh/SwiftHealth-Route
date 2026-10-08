@@ -74,6 +74,22 @@ async def test_login_wrong_password_401(client, demo_users, sms):
     assert sms.messages == []
 
 
+async def test_login_with_unknown_hash_format_gives_401(client, demo_users, session, sms):
+    # NFR-06: a stored hash we cannot read (for example an old bcrypt hash) is a wrong password, never a 500.
+    user = demo_users[Role.admin]
+    user.password_hash = "$2b$12$C6UzMDM.H6dfI/f/IKcEeO5bW1pqHqVJ3JQmb3GxGxq4Qm4Zk2n6e"
+    await session.commit()
+    response = await start_login(client, user.email)
+    assert response.status_code == 401
+    assert response.json()["detail"] == WRONG_LOGIN_MESSAGE
+    assert sms.messages == []
+
+
+def test_dummy_hash_uses_the_same_algorithm_as_real_hashes():
+    # NFR-06: the unknown-email check must cost the same as a real one, so it needs the same algorithm.
+    assert auth_service._DUMMY_PASSWORD_HASH.startswith("$argon2")
+
+
 async def test_login_unknown_email_401_same_message(client, demo_users, sms):
     wrong_password = await start_login(client, demo_users[Role.admin].email, "not-the-password")
     unknown_email = await start_login(client, "nobody@demo.example.com")

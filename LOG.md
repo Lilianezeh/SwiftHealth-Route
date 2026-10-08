@@ -28,8 +28,6 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   until it calls again (`core/rate_limit.py`).
 - **First frontend change:** check that it runs only `Frontend CI` and not `Backend CI` (the `frontend/**` filter
   has not been tested yet). Add this to the pull request notes for that change.
-- **pwdlib change:** the passlib warning ("'crypt' is deprecated and slated for removal in Python 3.13")
-  goes away with the later move from passlib to pwdlib (needs a re-seed, since seed users are bcrypt-hashed).
 
 ## Day 1 — 2026-10-04
 - **Built:** Repo skeleton, Docker Compose, spike for open-now + nearest search.
@@ -51,3 +49,13 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **AI use:** Claude Code planned and wrote the migration, seed, repositories and tests;
   I reviewed the plan, chose the options, and approved each file.
 - **Tomorrow:** Auth and roles (login, one-time code, JWT, role and ownership checks).
+
+## Day 5 — 2026-10-08
+- **Built:** Phase 3. Passwords are hashed with pwdlib (Argon2id) instead of passlib and bcrypt. Dev database reset
+  with Alembic and re-seeded. 212 tests passing with `-W error`, ruff clean, no `crypt` warning.
+- **Broke / fixed:** Smoke test first failed with 401 because my script used the test-fixture email domain, not the
+  seed one. Not a code bug.
+- **Learned:** [write this in your own words, e.g. why pwdlib raises on an unknown hash instead of returning False]
+- **AI use:** Claude Code checked the pwdlib behaviour in the container, wrote the tests first, then the change;
+  I approved the spec and the go-ahead for all three tasks.
+- **Tomorrow:** Phase 4, walking skeleton in production (Render and Vercel).

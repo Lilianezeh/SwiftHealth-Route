@@ -12,7 +12,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
+from pwdlib.exceptions import UnknownHashError
 
 from app.core.config import settings
 
@@ -21,7 +22,8 @@ CHALLENGE_TOKEN_LIFETIME = timedelta(minutes=5)
 ACCESS_PURPOSE = "access"
 CHALLENGE_PURPOSE = "login_challenge"
 
-_password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Argon2id with the pwdlib defaults (FastAPI docs, OAuth2 with Password and JWT).
+_password_hasher = PasswordHash.recommended()
 
 
 class InvalidTokenError(Exception):
@@ -35,12 +37,16 @@ class ChallengeClaims:
 
 
 def hash_password(plain_password: str) -> str:
-    """Returns a salted bcrypt hash. The plain password is never stored (NFR-06)."""
-    return _password_context.hash(plain_password)
+    """Returns a salted Argon2 hash. The plain password is never stored (NFR-06)."""
+    return _password_hasher.hash(plain_password)
 
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
-    return _password_context.verify(plain_password, password_hash)
+    try:
+        return _password_hasher.verify(plain_password, password_hash)
+    except UnknownHashError:
+        # A hash in another format (for example an old bcrypt hash) counts as a wrong password, not an error.
+        return False
 
 
 def generate_login_code() -> str:

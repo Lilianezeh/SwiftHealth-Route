@@ -103,7 +103,7 @@ def test_valid_passwords_are_read_by_role():
 def test_hash_password_does_not_store_plain_text():
     hashed = hash_password("a-long-test-password")
     assert hashed != "a-long-test-password"
-    assert hashed.startswith("$2")  # bcrypt
+    assert hashed.startswith("$argon2")
 
 
 # --- listings (FR-31) ---
