@@ -18,11 +18,12 @@ Repo skeleton, Docker Compose, and the spike for "open now, nearest first" searc
 ### Phase 1: Database and seed. Done (merged, PR #1)
 First migration for all 9 tables, demo seed data, first repositories. FR-15, FR-27, FR-28, FR-31, FR-33, FR-38.
 
-### Phase 2: Auth and roles. In progress
+### Phase 2: Auth and roles. Done (merged, PRs #2 and #3)
 FR-30, NFR-06. Feature folder: [requirements](2026-10-05-auth-and-roles/requirements.md),
 [plan](2026-10-05-auth-and-roles/plan.md), [validation](2026-10-05-auth-and-roles/validation.md).
 
-Pull requests: PR #2 merged Tasks 0 and 1 into `main` early. Tasks 2 to 6 will come in a second pull request.
+Pull requests: PR #2 merged Tasks 0 and 1 into `main` early. PR #3 merged the rest (Tasks 2 to 6 and the extra
+tasks 2b, 3b, 4a to 4c).
 
 - Task 0, spec, CLAUDE.md and dependency: **done**
 - Task 1, `core/security.py` (password check and JWT helpers): **done**
