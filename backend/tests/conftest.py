@@ -4,10 +4,11 @@ Decisions 10 and 11 in specs/2026-10-05-auth-and-roles/requirements.md. The URL 
 TEST_DATABASE_URL; the default uses host `db` because the tests run inside the backend container.
 """
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 
 import anyio
 import pytest
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import make_url, text
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
@@ -15,9 +16,17 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 import app.models  # noqa: F401  (registers all 9 tables)
 from app.core.config import settings
+from app.core.database import get_session
+from app.core.rate_limit import login_limiter, verify_code_limiter
+from app.core.security import hash_password
+from app.main import app
+from app.models import User
+from app.models.base import Role
+from app.repositories import user_repository
 
 DEFAULT_TEST_DATABASE_URL = "postgresql+psycopg://swifthealth:swifthealth@db:5432/swifthealth_test"
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL", DEFAULT_TEST_DATABASE_URL)
+DEMO_PASSWORD = "demo-password-for-tests"  # fake, used only by the test demo users
 
 
 @pytest.fixture
@@ -65,3 +74,52 @@ async def session(test_database: None) -> AsyncIterator[AsyncSession]:
     async with AsyncSession(test_engine, expire_on_commit=False) as test_session:
         yield test_session
     await test_engine.dispose()  # avoids "Event loop is closed" warnings (SQLAlchemy asyncio docs)
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiters() -> None:
+    """Every test starts with empty rate-limit counters, so one test cannot block another."""
+    login_limiter.reset()
+    verify_code_limiter.reset()
+
+
+@pytest.fixture
+def session_override(session: AsyncSession) -> Iterator[None]:
+    """Makes the routes use the test session instead of the development database. Removed after the test."""
+
+    async def get_test_session() -> AsyncIterator[AsyncSession]:
+        yield session
+
+    app.dependency_overrides[get_session] = get_test_session
+    yield
+    app.dependency_overrides.pop(get_session, None)
+
+
+@pytest.fixture
+async def client(session_override: None) -> AsyncIterator[AsyncClient]:
+    """An HTTP client that calls the app in memory. AsyncClient runs no lifespan events (FastAPI docs)."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as test_client:
+        yield test_client
+
+
+@pytest.fixture(scope="session")
+def demo_password_hash() -> str:
+    """bcrypt is slow on purpose, so the demo password is hashed once for the whole test run."""
+    return hash_password(DEMO_PASSWORD)
+
+
+@pytest.fixture
+async def demo_users(session: AsyncSession, demo_password_hash: str) -> dict[Role, User]:
+    """One active user per role. Fictional +2340... phone numbers; every user has the DEMO_PASSWORD."""
+    users = {}
+    for number, role in enumerate(Role, start=1):
+        users[role] = await user_repository.create(
+            session,
+            name=f"Demo {role.value.title()}",
+            email=f"{role.value}@demo.example.com",
+            phone=f"+234000000000{number}",
+            password_hash=demo_password_hash,
+            role=role,
+        )
+    await session.commit()
+    return users
