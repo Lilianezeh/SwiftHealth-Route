@@ -79,7 +79,7 @@ starts async. No behaviour change: the existing tests must give the same results
 - [x] Implement `integrations/termii.py` (`send_sms`, `to_termii_number`, `mask_phone`, `SmsSendError`), run, commit.
   With a key set it logs only the masked phone and the `message_id`; never the code, the key or the full phone.
 
-### Task 4a: the CI split
+### Task 4a: the CI split (done, `9b15518`; dependency fix `6bd2a80`)
 - [x] Check that no code uses Starlette's `TestClient` any more (Task 2b moves the tests to `AsyncClient`):
   `grep -rn "TestClient" backend`. If none is left, do not add `httpx2`: keep `httpx` (`AsyncClient` and the Termii
   client use it). If some test still needs `TestClient`, stop and ask. Result: none left, so no `httpx2`.
@@ -93,8 +93,11 @@ starts async. No behaviour change: the existing tests must give the same results
   a required check from a path-filtered workflow that is skipped stays pending and blocks the merge, and the check
   names are `Backend CI / backend` and `Frontend CI / frontend`.)
 - [x] Run the backend tests (no warning about `httpx` and `starlette.testclient`) and `ruff check .`, commit.
-- [ ] Push and read the runs on GitHub (see [validation.md](validation.md)). Task 4a is done when `Backend CI` is
-  green on PostgreSQL.
+- [x] Push and read the runs on GitHub (see [validation.md](validation.md)). Task 4a is done when `Backend CI` is
+  green on PostgreSQL. The first push (`9b15518`) failed: a fresh install got SQLAlchemy 2.1, which no longer
+  installs `greenlet`, so the async import failed. It would also have failed on Render. Fixed with
+  `sqlalchemy[asyncio]` in `requirements.txt` (`6bd2a80`), confirmed in a clean `python:3.12-slim` container, and
+  `Backend CI` is green on that push.
 
 ### Task 4b: the rest of the async test setup
 Task 2b already created `tests/conftest.py` with the async PostgreSQL database (`TEST_DATABASE_URL`, create if

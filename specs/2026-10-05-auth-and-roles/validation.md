@@ -80,9 +80,11 @@ and a network error. Each failing reply repeats the secrets in its body, to prov
 - [x] `grep -rn "TestClient" backend` finds nothing, and `httpx2` is not in `requirements.txt`.
 - [x] The backend test run shows no warning about `httpx` and `starlette.testclient`.
 - [x] Both workflow files parse as valid YAML (checked with PyYAML), and `ci.yml` is gone.
-- [ ] The first push after the split runs both workflows (both workflow files changed), and `Backend CI` is green on
-  the PostgreSQL service.
-- [ ] A later change under `backend/` only runs `Backend CI`; a later docs-only change runs neither.
+- [x] The first push after the split (`9b15518`) ran both workflows. `Frontend CI` was green. `Backend CI` failed
+  on the missing `greenlet` (a requirements bug, not the split). After `6bd2a80` it is green on the PostgreSQL
+  service.
+- [x] A later change under `backend/` (`6bd2a80`) only ran `Backend CI`.
+- [ ] A docs-only change runs neither workflow. To read from the run list after the commit that ticks Task 4a.
 - [ ] A change under `frontend/` only runs `Frontend CI`. Open until the first real frontend change: no frontend
   file changes in this feature.
 
