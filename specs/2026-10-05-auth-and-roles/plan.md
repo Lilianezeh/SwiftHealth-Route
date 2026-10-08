@@ -79,7 +79,7 @@ starts async. No behaviour change: the existing tests must give the same results
 - [x] Implement `integrations/termii.py` (`send_sms`, `to_termii_number`, `mask_phone`, `SmsSendError`), run, commit.
   With a key set it logs only the masked phone and the `message_id`; never the code, the key or the full phone.
 
-### Task 3b: JWT secret check at startup (decision 12)
+### Task 3b: JWT secret check at startup (decision 12) (done, `7506fd6`)
 - [x] Spec first: decision 12 in [requirements.md](requirements.md); `APP_ENV` in `.env.example`; Render reminder in
   LOG.md.
 - [x] Write the tests in `tests/unit/test_config.py` (listed in [validation.md](validation.md)).
@@ -106,16 +106,16 @@ starts async. No behaviour change: the existing tests must give the same results
   `sqlalchemy[asyncio]` in `requirements.txt` (`6bd2a80`), confirmed in a clean `python:3.12-slim` container, and
   `Backend CI` is green on that push.
 
-### Task 4b: the rest of the async test setup
+### Task 4b: the rest of the async test setup (done, `f3427ee`)
 Task 2b already created `tests/conftest.py` with the async PostgreSQL database (`TEST_DATABASE_URL`, create if
 missing, `run_sync(create_all)`, async truncate, `AsyncSession` fixture, `anyio_backend`, `engine.dispose()`).
-- [ ] Add to `tests/conftest.py` (decision 11 in [requirements.md](requirements.md)):
+- [x] Add to `tests/conftest.py` (decision 11 in [requirements.md](requirements.md)):
   - override `get_session` with an async generator that yields an `AsyncSession` on the test engine;
   - an `AsyncClient` fixture built with `ASGITransport(app=app)` and `base_url="http://test"`; it does not run
     lifespan events, so the fixture does not rely on them;
   - reset the rate limiters between tests, and create the demo users.
-- [ ] Run the existing tests with the new fixtures. All must still pass.
-- [ ] Commit.
+- [x] Run the existing tests with the new fixtures. All must still pass.
+- [x] Commit.
 
 ### Task 4c: Schemas, repository, `auth_service`, routes
 - [ ] Write the tests in `tests/integration/test_auth.py`.

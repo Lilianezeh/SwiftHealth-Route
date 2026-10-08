@@ -102,10 +102,18 @@ and a network error. Each failing reply repeats the secrets in its body, to prov
 - [ ] A change under `frontend/` only runs `Frontend CI`. Open until the first real frontend change: no frontend
   file changes in this feature.
 
-### Task 4b: no new tests
-- [ ] The existing tests all pass with the new fixtures, with no `Event loop is closed` warning.
-- [ ] The `get_session` override gives routes an `AsyncSession` on `swifthealth_test`, never on the development database.
-- [ ] The rate limiters start empty in every test.
+### Task 4b: fixture tests in `tests/unit/test_test_database.py` (11 of 11 passing; 111 in all)
+- [x] The existing tests all pass with the new fixtures, with no `Event loop is closed` warning
+  (`pytest -W error::RuntimeWarning`).
+- [x] `test_routes_get_the_test_session_on_the_test_database`: the `get_session` override gives routes the test
+  `AsyncSession`, and `select current_database()` returns `swifthealth_test`, never the development database.
+- [x] `test_the_session_override_exists_while_the_client_is_in_use` and
+  `test_the_session_override_is_removed_after_the_test` (checked by removing the cleanup: the second test failed).
+- [x] `test_first_test_uses_up_the_login_limit` and `test_the_limiters_start_empty_in_the_next_test` (checked by
+  removing the reset: the second test failed).
+- [x] `test_the_client_reaches_the_app`
+- [x] `test_demo_users_exist_one_per_role` and `test_demo_users_are_saved_in_the_database` (four active users with
+  fictional `+2340...` phones and a password that verifies).
 
 ### Task 4c: `tests/integration/test_auth.py`
 - [ ] `test_login_wrong_password_401`
