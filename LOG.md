@@ -14,9 +14,6 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **Proxy count, recheck if Render changes:** `TRUSTED_PROXY_COUNT=3` on Render (client, Cloudflare, Render load
   balancer). Measured on 2026-10-08; see decision 5 in the phase 4 requirements. Recount after adding a custom domain
   or if Render changes its proxies, with a temporary endpoint that echoes `X-Forwarded-For`, and remove it afterwards.
-- **Phase 4, Netlify (owner):** clear the "Runtime" and publish directory overrides in the Netlify dashboard, redeploy
-  this branch, and check the home page still says "connected". That proves `netlify.toml` alone is enough (decision 10).
-  If the deploy fails, put the dashboard settings back and record it in the requirements.
 - **Before the first real SMS (Termii):** activate the DND route on the account, get the sender ID approved, and set
   `TERMII_BASE_URL` from the dashboard (Settings, API token tab). Termii has no sandbox, so every real send costs
   balance. Also decide at the Render deploy whether to add a startup warning (lifespan) when no key is set; for now
@@ -76,7 +73,10 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `X-Forwarded-For` headers (10 attempts 401, the 11th 429). Production has no users, so a full login was not tested there.
 - **Phase 4, problems:** the free-database limit stopped the first Blueprint run; `CORS_ORIGINS` was then missing
   because Render asks for `sync: false` values only at first creation (now a plain value in `render.yaml`); Netlify
-  showed "Runtime: Not set" (now declared in `netlify.toml`, still to be proven, see the reminder above).
+  showed "Runtime: Not set" (now declared in `netlify.toml`; proven by redeploying with the dashboard overrides cleared).
+- **Phase 4, open:** cold-start test failed. After 16 idle minutes the first Netlify visit returned an "Inactivity
+  Timeout" error page after 31 s, because `getHealth()` has no time limit while the free Render API wakes (about a
+  minute). A reload worked. Needs a time limit on that call before PR #5 is marked ready.
 - **Tomorrow:** Phase 5, search (5a: `hours.py`, open now in Africa/Lagos time).
 
 - To do (after walking skeleton): capitalize router tags in /docs ("auth" → "Auth", "health" → "Health"). Paths unchanged. Update api-spec.md if it names tags. Own small branch and draft PR.

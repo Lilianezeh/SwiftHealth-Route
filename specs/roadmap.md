@@ -47,7 +47,7 @@ Feature folder: [requirements](2026-10-08-pwdlib-password-hashing/requirements.m
 - Task 1, swap the hashing library (tests first): **done**
 - Task 2, re-seed and wrap-up: **done**
 
-### Phase 4: Walking skeleton in production. In progress (all tasks done; pull request #5 is a draft until the owner's Netlify check and the dashboard checks in validation.md are done)
+### Phase 4: Walking skeleton in production. In progress (all tasks done; pull request #5 is ready for review and becomes Done when the owner merges it)
 `/health` on Render, a minimal page on Netlify that calls it through `lib/api/`, HTTPS and environment variables.
 NFR-05, NFR-06. Live: API https://swifthealth-api.onrender.com, site https://swifthealth-ng.netlify.app.
 Feature folder: [requirements](2026-10-08-walking-skeleton-production/requirements.md),
@@ -57,8 +57,8 @@ Feature folder: [requirements](2026-10-08-walking-skeleton-production/requiremen
 - Task 1, backend ready for Render (`render.yaml`, database address check, CORS tests): **done**
 - Task 2, frontend ready for Netlify (`netlify.toml`): **done**
 - Task 2b, security upgrade of `next`, `react` and `react-dom` (React2Shell): **done**
-- Task 3, deploy by the owner, smoke test and `TRUSTED_PROXY_COUNT` (3): **done**, except the `netlify.toml`-only deploy,
-  which the owner still has to try (see "To do later" in [LOG.md](../LOG.md))
+- Task 3, deploy by the owner, smoke test and `TRUSTED_PROXY_COUNT` (3): **done**, including the `netlify.toml`-only
+  deploy
 - Task 4, wrap-up: **done**
 
 ### Phase 5: Search. Next

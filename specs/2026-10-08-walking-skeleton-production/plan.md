@@ -79,12 +79,11 @@ The owner did the dashboard steps. Temporary probe commits: `7eb2446` and `e323f
   `render.yaml`.
 - [x] **Together:** measure `X-Forwarded-For` through Render with a temporary endpoint, set `TRUSTED_PROXY_COUNT` to 3
   (decision 5), compare with the uvicorn approach, and remove the temporary endpoint (NFR-07).
-- [x] Run the smoke test in [validation.md](validation.md). One item is still open: the owner's `netlify.toml`-only
-  deploy.
+- [x] Run the smoke test in [validation.md](validation.md).
 - [x] Fill in the production base URL in [api-spec.md](../backend/api-spec.md) and the links in `README.md`.
 - [x] Commit: `docs(specs): proxy count 3, CORS and Netlify settings in config files (NFR-05, NFR-06)`.
-- [ ] **Owner, Netlify:** clear the "Runtime" and publish directory overrides, redeploy this branch, and check the home
-  page says "connected" (decision 10).
+- [x] **Owner, Netlify:** clear the "Runtime" and publish directory overrides, redeploy this branch, and check the home
+  page says "connected" (decision 10). Done by the owner after the Task 3 commit; it worked.
 
 ### Task 4: Wrap-up (done, this commit)
 - [x] Update `LOG.md`: remove the finished Render reminders, add the free-plan reminders (the API sleeps; the free

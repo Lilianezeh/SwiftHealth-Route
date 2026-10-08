@@ -187,5 +187,5 @@ Advisories:
     publish directory is relative to the base directory, so `publish = ".next"` with `base = "frontend"` means
     `frontend/.next`. The plugin snippet `[[plugins]] package = "@netlify/plugin-nextjs"` is the one the Netlify page
     shows for pinning the adapter. We use it without adding the package to `package.json`, so the version still updates
-    on each build. **This is untested until the owner clears the two dashboard overrides and redeploys** (see
-    [validation.md](validation.md)); if that deploy fails, we go back to the dashboard settings and record that here.
+    on each build. **Tested on 2026-10-08:** the owner cleared the two dashboard overrides and redeployed, the deploy
+    worked and the home page still says "connected". So `netlify.toml` is enough and the dashboard needs no overrides.
