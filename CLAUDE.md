@@ -87,6 +87,13 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 4. After changes, run the relevant tests and lint, and report the results honestly.
 5. Finish by summarising what changed and anything I should be able to explain.
 
+## Working efficiently
+- Keep replies short: summaries of 10 lines or fewer, no full file dumps unless I ask.
+- Work in bigger chunks: one plan for several related tasks.
+- Update plan.md, validation.md, roadmap.md and LOG.md once at the end of a feature, not after each task.
+- One commit per task is fine; don't make separate commits just to tick boxes.
+- Skip mutation checks except for security code.
+
 ## Code style
 - Readable names everywhere: no single-letter or cryptic names (use `response`, not `r`; `place`, not `p`).
   Someone new to the code should understand each name without asking.
