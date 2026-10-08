@@ -129,8 +129,12 @@ The API address is `https://swifthealth-api.onrender.com` and the site is `https
 Render and Netlify now deploy from the feature branch. Switch them to `main` before the branch is deleted, or the
 sites stop updating.
 
-- [ ] Render service `swifthealth-api`: deploy branch is `main`.
-- [ ] Render Blueprint: tracked branch is `main`, and a sync does not change anything unexpected.
-- [ ] Netlify site `swifthealth-ng`: production branch is `main`.
-- [ ] A new commit on `main` redeploys both; `<api>/health` and the site home page still work.
-- [ ] Only then delete the branch `feature/walking-skeleton-production`.
+Pull request #5 was merged into `main` as `fdcf56c`. The owner switched Render (service and Blueprint) and Netlify to
+`main` and reported that both sites deploy from `main` and work. After the merge, `<api>/health` returned
+`{"status":"ok"}` and the home page said "connected".
+
+- [x] Render service `swifthealth-api`: deploy branch is `main` (reported by the owner).
+- [x] Render Blueprint: tracked branch is `main` (reported by the owner).
+- [x] Netlify site `swifthealth-ng`: production branch is `main` (reported by the owner).
+- [x] The sites work after the switch: checked on the live addresses.
+- [ ] Delete the branch `feature/walking-skeleton-production`. It still existed on GitHub when this was written.

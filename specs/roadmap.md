@@ -47,7 +47,7 @@ Feature folder: [requirements](2026-10-08-pwdlib-password-hashing/requirements.m
 - Task 1, swap the hashing library (tests first): **done**
 - Task 2, re-seed and wrap-up: **done**
 
-### Phase 4: Walking skeleton in production. In progress (all tasks done; pull request #5 is ready for review and becomes Done when the owner merges it)
+### Phase 4: Walking skeleton in production. Done (merged, PR #5)
 `/health` on Render, a minimal page on Netlify that calls it through `lib/api/`, HTTPS and environment variables.
 NFR-05, NFR-06. Live: API https://swifthealth-api.onrender.com, site https://swifthealth-ng.netlify.app.
 Feature folder: [requirements](2026-10-08-walking-skeleton-production/requirements.md),
