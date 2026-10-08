@@ -117,15 +117,20 @@ missing, `run_sync(create_all)`, async truncate, `AsyncSession` fixture, `anyio_
 - [x] Run the existing tests with the new fixtures. All must still pass.
 - [x] Commit.
 
-### Task 4c: Schemas, repository, `auth_service`, routes
-- [ ] Write the tests in `tests/integration/test_auth.py`.
-- [ ] Implement `schemas/auth.py`, `user_repository.py` additions, `auth_service.py`, `routes/auth.py`. Run, commit.
+### Task 4c: Schemas, repository, `auth_service`, routes (done, `7759536`)
+- [x] Write the tests in `tests/integration/test_auth.py`.
+- [x] Implement `schemas/auth.py`, `user_repository.py` additions, `auth_service.py`, `routes/auth.py`. Run, commit.
+  `get_current_user` moved here from Task 5 because `/auth/me` needs it. It reads the header with
+  `OAuth2PasswordBearer` (approved; Swagger's Authorize button does not work with our two-step login). A failed
+  SMS gives 502 `"Could not send the code. Try again."` and no challenge token (approved, now in the api-spec).
 
-### Task 5: Dependencies and access rules
-- [ ] Write the tests in `tests/unit/test_access_service.py` and `tests/integration/test_access_control.py`.
-- [ ] Implement `access_service.py`, `get_current_user`, `require_role`, `require_listing_access`. Run, commit.
+### Task 5: Dependencies and access rules (done, `2fef51c`)
+- [x] Write the tests in `tests/unit/test_access_service.py` and `tests/integration/test_access_control.py`.
+- [x] Implement `access_service.py`, `require_role`, `require_listing_access` (`get_current_user` is in 4c). Run, commit.
+  Admin passes any `require_role` check that lists a staff role, and does not pass a provider-only check
+  (spelled out in decision 8).
 
-### Task 6: Wrap-up
-- [ ] Run `pytest -q` and `ruff check .`, report the real output.
-- [ ] Run the smoke test from [validation.md](validation.md).
-- [ ] Go through the security checklist and the merge checklist in [validation.md](validation.md).
+### Task 6: Wrap-up (done)
+- [x] Run `pytest -q` and `ruff check .`, report the real output: 205 passed, 1 warning (passlib `crypt`); ruff clean.
+- [x] Run the smoke test from [validation.md](validation.md).
+- [x] Go through the security checklist and the merge checklist in [validation.md](validation.md).

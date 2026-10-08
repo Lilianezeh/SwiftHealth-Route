@@ -32,9 +32,9 @@ Pull requests: PR #2 merged Tasks 0 and 1 into `main` early. Tasks 2 to 6 will c
 - Task 4a, the CI split into `backend.yml` and `frontend.yml` (no `httpx2`, no `TestClient` left): **done**
 - Task 3b, JWT secret check at startup (`APP_ENV`): **done**
 - Task 4b, async PostgreSQL test database and fixtures: **done**
-- Task 4c, schemas, repository, auth service and routes: next
-- Task 5, `require_role` and listing access rules: next
-- Task 6, wrap-up and smoke test: next
+- Task 4c, schemas, repository, auth service and routes: **done**
+- Task 5, `require_role` and listing access rules: **done**
+- Task 6, wrap-up and smoke test: **done**. Pull request #3 stays a draft until the merge checklist is complete.
 
 ### Phase 3: Move password hashing to pwdlib. Next
 Replace passlib and bcrypt with pwdlib, re-seed the demo users, and drop the passlib `crypt` warning.

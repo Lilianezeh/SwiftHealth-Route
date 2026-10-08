@@ -115,53 +115,67 @@ and a network error. Each failing reply repeats the secrets in its body, to prov
 - [x] `test_demo_users_exist_one_per_role` and `test_demo_users_are_saved_in_the_database` (four active users with
   fictional `+2340...` phones and a password that verifies).
 
-### Task 4c: `tests/integration/test_auth.py`
-- [ ] `test_login_wrong_password_401`
-- [ ] `test_login_unknown_email_401_same_message`
-- [ ] `test_login_inactive_user_403`
-- [ ] `test_login_no_phone_400`
-- [ ] `test_login_returns_masked_phone_and_sends_code`
-- [ ] `test_verify_wrong_code_401`
-- [ ] `test_verify_expired_challenge_401`
-- [ ] `test_verify_inactive_user_403`
-- [ ] `test_verify_sets_last_login_at`
-- [ ] `test_access_token_works_on_me`
-- [ ] `test_me_without_token_401`
-- [ ] `test_me_deactivated_user_403`
-- [ ] `test_me_uses_role_from_database`
-- [ ] `test_login_11th_attempt_429`
-- [ ] `test_verify_code_11th_attempt_429`
+### Task 4c: `tests/integration/test_auth.py` (30 of 30 passing)
+- [x] `test_login_wrong_password_401`
+- [x] `test_login_unknown_email_401_same_message`
+- [x] `test_login_inactive_user_403` and `test_login_wrong_password_for_inactive_user_is_401`
+- [x] `test_login_no_phone_400`
+- [x] `test_login_returns_masked_phone_and_sends_code`
+- [x] `test_login_sms_failure_502_and_no_challenge_token`
+- [x] `test_verify_wrong_code_401`, `test_verify_malformed_code_401_never_500` (6 cases) and
+  `test_verify_keeps_leading_zeros`
+- [x] `test_verify_expired_challenge_401`, `test_verify_garbage_or_wrong_type_token_401` and
+  `test_verify_tampered_challenge_401`
+- [x] `test_verify_inactive_user_403`
+- [x] `test_verify_sets_last_login_at` and `test_verify_returns_a_token_and_the_user_without_secrets`
+- [x] `test_access_token_works_on_me`
+- [x] `test_me_without_token_401`, `test_me_with_a_bad_token_401` and `test_me_for_a_deleted_user_401`
+- [x] `test_me_deactivated_user_403`
+- [x] `test_me_uses_role_from_database`
+- [x] `test_login_11th_attempt_429` and `test_verify_code_11th_attempt_429`
+- [x] `test_login_and_verify_never_log_the_password_or_the_code`
+- [x] Security code checked by mutation (code check removed, inactive check removed, inactive check moved before the
+  password check): 12 tests failed, then the code was restored.
 
-### Task 5: access rules
-- [ ] `tests/unit/test_access_service.py`: the full role by ownership matrix, including a verifier on another
-  verifier's draft, a verifier on their own non-draft, and a provider on someone else's listing.
-- [ ] `tests/integration/test_access_control.py`: `require_role` gives 403 for the wrong role and 401 for no token,
-  using a throwaway test-only route.
+### Task 5: access rules (64 of 64 passing)
+- [x] `tests/unit/test_access_service.py`: the full role by ownership matrix (all five statuses), including a
+  verifier on another verifier's draft, a verifier on their own non-draft, and a provider on someone else's listing.
+- [x] `tests/integration/test_access_control.py`: `require_role` gives 403 for the wrong role and 401 for no token
+  (or a bad token), using a throwaway app in the test file; admin passes staff checks but not a provider-only
+  check; an inactive user gets 403; the role is read from the database. `require_listing_access` gives 404, 403
+  and 200 as decision 8 says.
+- [x] Checked by mutation (verifier draft rule, provider ownership rule, admin pass rule): 10 tests failed, then
+  the code was restored.
 
 ## Review-focus edge cases
 
-- [ ] Code "004821" keeps its leading zeros. A code that is not 6 digits gives 401 or 422, never 500.
-- [ ] A tampered challenge token (changed `sub`) gives 401.
-- [ ] A token for a deleted user gives 401.
-- [ ] With no Termii key set, the login code is logged, and a startup warning says so, so it is not left on in production.
+- [x] Code "004821" keeps its leading zeros. A code that is not 6 digits gives 401, never 500.
+- [x] A tampered challenge token gives 401 (wrong signature, and a correctly signed one with a changed `sub`).
+- [x] A token for a deleted user gives 401.
+- [ ] With no Termii key set, the login code is logged (done, a WARNING on every send), but the startup warning is
+  not built. Decided at the planning stage to leave it for the Render deploy (see LOG.md, "To do later").
 
 ## Security checklist
 
-- [ ] No secrets, keys or login codes in the code or in committed files. The only exception is the dev-mode console
-  log of the code when no Termii key is set.
-- [ ] `.env` is not committed.
-- [ ] Wrong email and wrong password give the same 401 message.
-- [ ] Passwords and login codes never appear in logs or error messages.
+- [x] No secrets, keys or login codes in the code or in committed files. The only exception is the dev-mode console
+  log of the code when no Termii key is set. Checked with `git grep` for key-like strings: none. The CI workflow
+  holds a throwaway database password and JWT secret, and `.env.example` holds demo values; neither is a secret.
+- [x] `.env` is not committed (`git ls-files` finds none, `.gitignore` lists it).
+- [x] Wrong email and wrong password give the same 401 message (tested, and the unknown email runs a dummy check).
+- [x] Passwords and login codes never appear in logs or error messages (tested; the auth code has no log calls).
 
 ## Smoke test
 
-- [ ] With a demo user: log in, read the code from the console, verify the code, call `/auth/me`.
+- [x] With a demo user: log in, read the code from the console, verify the code, call `/auth/me`. Done on the
+  running stack as the seeded admin: login 200 with `+234******0903`, the code read from the API console,
+  verify-code 200 (bearer, 43200 seconds, role admin), `/auth/me` 200, and 401 without a token.
 
 ## Merge checklist
 
 Added when this folder was created; not part of the original plan.
 
-- [ ] `pytest -q` and `ruff check .` are clean.
-- [ ] `backend.yml` and `frontend.yml` are green on the pull request.
-- [ ] The spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
-- [ ] The pull request stays a draft until every box above is ticked.
+- [x] `pytest -q` and `ruff check .` are clean (205 passed; the only warning is the passlib `crypt` one).
+- [x] `backend.yml` and `frontend.yml` are green on the pull request (both green on `2fef51c`, the last code commit).
+- [x] The spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
+- [ ] The pull request stays a draft until every box above is ticked. It is still a draft; the one open box above
+  is the startup warning for a missing Termii key, left for the Render deploy.

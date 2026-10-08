@@ -20,6 +20,10 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `TERMII_BASE_URL` from the dashboard (Settings, API token tab). Termii has no sandbox, so every real send costs
   balance. Also decide at the Render deploy whether to add a startup warning (lifespan) when no key is set; for now
   each no-key send logs a WARNING.
+- **Auth, if the risk matters:** a challenge token plus its code can be used again until the token expires (5
+  minutes), because the code is never stored (api-spec section 4). A one-time-use rule would need a small store.
+  Also: Swagger's Authorize button does not work with our two-step login (`OAuth2PasswordBearer` only reads the
+  header); test the API with the `Authorization: Bearer` header.
 - **Rate limiter, if traffic grows:** sweep old IPs. An IP that stops calling keeps its list of timestamps in memory
   until it calls again (`core/rate_limit.py`).
 - **First frontend change:** check that it runs only `Frontend CI` and not `Backend CI` (the `frontend/**` filter
