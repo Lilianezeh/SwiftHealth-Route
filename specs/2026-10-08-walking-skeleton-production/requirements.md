@@ -45,7 +45,8 @@ nothing but the health check on it. It adds no table, no endpoint and no page.
 
 ## What the official documentation says
 
-Checked on 2026-10-08. Task 0 reads these pages again before any config is written.
+Checked on 2026-10-08 (Task 0 finished the list: health checks, secrets, the Netlify monorepo page and the client
+address).
 
 - **Netlify and Next.js:** the App Router works through the OpenNext adapter, which supports Next.js 13.5 and later.
   It is applied automatically, with no plugin and no `netlify.toml` needed
@@ -71,8 +72,29 @@ Checked on 2026-10-08. Task 0 reads these pages again before any config is writt
 - **Proxy headers:** the FastAPI documentation says the server ignores `X-Forwarded-*` headers unless it is told which
   senders to trust with `--forwarded-allow-ips`, and that `"*"` lets any client fake them
   ([FastAPI, Behind a Proxy](https://fastapi.tiangolo.com/advanced/behind-a-proxy/)).
-- **Not found yet:** I could not find a Render page that says which `X-Forwarded-For` entry is the real client. Task 3
-  settles it with a real request (decision 5), and nothing is guessed before that.
+- **Render health checks:** a path check passes on any `2xx` or `3xx` answer within five seconds. A new deploy gets no
+  traffic until its instances pass, and Render cancels the deploy after 15 minutes of failing. The page does not say
+  how health checks work with the free plan's spin-down
+  ([Render health checks](https://render.com/docs/health-checks)).
+- **Render secrets:** the dashboard sets variables under the service's Environment tab, and Render's page warns not to
+  commit secret values to `render.yaml`; declare the variable and fill the value in the dashboard
+  ([Render environment variables](https://render.com/docs/configure-environment-variables)). That page does not say
+  whether variables are encrypted at rest, so we make no claim about it.
+- **Netlify monorepo:** a root-level `netlify.toml` with `base = "frontend"` under `[build]` is supported, and it
+  overrides the dashboard setting. The publish directory is relative to the base directory
+  ([Netlify monorepos](https://docs.netlify.com/build/configure-builds/monorepos/)). The pages do not list a publish
+  directory for Next.js, and the Next.js overview says the adapter sets it, so we leave `publish` unset.
+- **Client address on Render:** Render's own articles say traffic passes through Cloudflare and Render's load
+  balancers, so the app sees a proxy address by default, and the real client is in `X-Forwarded-For`
+  ([How Render handles DDoS attacks](https://render.com/articles/how-render-handles-ddos-attacks)). A Render community
+  thread reports that Render's proxy does not remove an `X-Forwarded-For` header sent by the client and only appends its
+  own address, so the first entry can be faked
+  ([community thread](https://community.render.com/t/accessing-client-ips-in-a-node-express-app/36282)). That is why
+  our `get_client_ip` counts from the end of the list. For public web services Render's PocketBase guide also names a
+  `CF-Connecting-IP` header
+  ([Host PocketBase on Render](https://render.com/articles/host-pocketbase-on-render)). Which entry is the real client
+  and how many proxies sit in front of us is not stated in the documentation, so Task 3 settles it with a real request
+  and a forged header (decision 5). Nothing is guessed before that.
 
 ## Decisions
 
@@ -93,7 +115,8 @@ Checked on 2026-10-08. Task 0 reads these pages again before any config is writt
    different driver that is not installed. A small check in `core/config.py` rewrites the start of the address, with a
    test, so `render.yaml` can take the address straight from the database instead of someone retyping it in the dashboard.
    The alternative is to type `DATABASE_URL` by hand in the dashboard with the right prefix. That works but breaks
-   silently the day the database is recreated. **This is a proposal; say if you prefer the manual way.**
+   silently the day the database is recreated. The owner chose the rewrite. Both forms are tested: `postgresql://`
+   becomes `postgresql+psycopg://`, and `postgresql+psycopg://` stays as it is.
 5. **`TRUSTED_PROXY_COUNT` is set from a real request, not from a guess.** In Task 3 we log one `X-Forwarded-For`
    header from a request through Render and count its entries. A count that is too high trusts an entry a visitor can
    fake; a count that is too low gives every visitor the same rate limit (see "To do later" in
