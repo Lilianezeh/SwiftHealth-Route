@@ -152,8 +152,8 @@ and a network error. Each failing reply repeats the secrets in its body, to prov
 - [x] Code "004821" keeps its leading zeros. A code that is not 6 digits gives 401, never 500.
 - [x] A tampered challenge token gives 401 (wrong signature, and a correctly signed one with a changed `sub`).
 - [x] A token for a deleted user gives 401.
-- [ ] With no Termii key set, the login code is logged (done, a WARNING on every send), but the startup warning is
-  not built. Decided at the planning stage to leave it for the Render deploy (see LOG.md, "To do later").
+- [x] With no Termii key set, the login code is logged (done, a WARNING on every send). The startup warning:
+  Deferred to the Render deploy phase (see LOG.md).
 
 ## Security checklist
 
@@ -177,5 +177,7 @@ Added when this folder was created; not part of the original plan.
 - [x] `pytest -q` and `ruff check .` are clean (205 passed; the only warning is the passlib `crypt` one).
 - [x] `backend.yml` and `frontend.yml` are green on the pull request (both green on `2fef51c`, the last code commit).
 - [x] The spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
-- [ ] The pull request stays a draft until every box above is ticked. It is still a draft; the one open box above
-  is the startup warning for a missing Termii key, left for the Render deploy.
+- [x] The pull request stays a draft until every box above is ticked. The merge checklist and the feature's tests
+  are ticked, so the pull request is marked ready for review. Two boxes stay open on purpose because they cannot be
+  done yet: the `X-Forwarded-For` check on Render (Task 2) and the `frontend/**` path filter test (Task 4a); both
+  are in LOG.md, "To do later". The owner merges on GitHub.
