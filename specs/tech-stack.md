@@ -13,7 +13,7 @@ code style are in [CLAUDE.md](../CLAUDE.md) and are not repeated here.
 | Database | PostgreSQL |
 | Tests and lint | pytest and ruff (backend); lint, typecheck and tests with npm (frontend) |
 | Local development | Docker Compose |
-| Production | Vercel (frontend), Render (backend) |
+| Production | Netlify (frontend), Render (backend) |
 | Outside services | Paystack (test mode), Cloudinary, Resend, Termii (no sandbox: with no key the code is logged locally; real sending needs a live account with the DND route activated and an approved sender ID) |
 
 ## Decisions
@@ -23,6 +23,10 @@ One line each, with the reason.
 - **One repository with `backend/` and `frontend/`.** One change can cover both sides of a feature.
 - **Next.js App Router, server components by default.** Less JavaScript is sent to the phone, which matters on
   slow 3G ([NFR-01](prd.md#non-functional-requirements)).
+- **Netlify for the frontend, not Vercel.** The owner already hosts other projects on Netlify, so one account
+  and one dashboard cover everything. Netlify supports the Next.js App Router (Next.js 13.5 and later) through
+  its OpenNext adapter, applied automatically, with no `netlify.toml` needed
+  ([Netlify Next.js docs](https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/)).
 - **Layered architecture: route, service, repository or integration.** Each layer has one job and only calls
   the layer below it. The rules are in [CLAUDE.md](../CLAUDE.md).
 - **Exactly 9 database tables, and areas are a fixed list in `core/config.py`.** It keeps the model small.

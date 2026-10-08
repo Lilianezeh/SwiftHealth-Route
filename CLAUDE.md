@@ -15,7 +15,7 @@ US-xx, FR-xx, NFR-xx). Reference those IDs in plans, commits and tests.
 ## Stack (do not change without asking)
 - frontend/: Next.js App Router, TypeScript (strict), Tailwind CSS, shadcn/ui, Leaflet + OpenStreetMap, Recharts
 - backend/: FastAPI, SQLModel, Alembic, PostgreSQL, pytest, ruff
-- Docker Compose locally; Vercel (frontend) + Render (backend) in production
+- Docker Compose locally; Netlify (frontend) + Render (backend) in production
 - Integrations: Paystack (test mode), Cloudinary, Resend, Termii: no sandbox; locally with no key the code is
   logged to the console; real sending needs a live account with the DND route activated and an approved sender ID
 

@@ -2,7 +2,7 @@
 
 Verified hospitals, pharmacies and emergency contacts for Enugu, with one-tap calling and directions.
 
-**Live demo:** [Vercel URL] | **API docs:** [Render URL]/docs
+**Live demo:** [Netlify URL] | **API docs:** [Render URL]/docs
 
 ## The problem (with evidence)
 [Summarise RESEARCH.md: what the two interviews showed, with links to the artefacts in `docs/research/`.]

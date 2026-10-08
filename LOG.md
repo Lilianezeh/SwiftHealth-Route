@@ -58,4 +58,6 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **Learned:** [write this in your own words, e.g. why pwdlib raises on an unknown hash instead of returning False]
 - **AI use:** Claude Code checked the pwdlib behaviour in the container, wrote the tests first, then the change;
   I approved the spec and the go-ahead for all three tasks.
-- **Tomorrow:** Phase 4, walking skeleton in production (Render and Vercel).
+- Tested login myself with curl: login → code from console → verify-code → /auth/me all worked;
+  no token, wrong password, unknown email and wrong code all gave 401 as expected.
+- **Tomorrow:** Phase 4, walking skeleton in production (Render and Netlify).

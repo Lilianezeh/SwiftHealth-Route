@@ -37,7 +37,7 @@ tasks 2b, 3b, 4a to 4c).
 - Task 5, `require_role` and listing access rules: **done**
 - Task 6, wrap-up and smoke test: **done**. Pull request #3 stays a draft until the merge checklist is complete.
 
-### Phase 3: Move password hashing to pwdlib. In progress (all tasks done; pull request #4 is a draft until CI is green and the owner merges)
+### Phase 3: Move password hashing to pwdlib. Done (merged, PR #4)
 Replace passlib and bcrypt with pwdlib, re-seed the demo users, and drop the passlib `crypt` warning.
 It sits right after auth because the re-seed is painless while we only have demo data. NFR-06.
 Feature folder: [requirements](2026-10-08-pwdlib-password-hashing/requirements.md),
@@ -48,7 +48,7 @@ Feature folder: [requirements](2026-10-08-pwdlib-password-hashing/requirements.m
 - Task 2, re-seed and wrap-up: **done**
 
 ### Phase 4: Walking skeleton in production. Next
-`/health` on Render, a minimal page on Vercel that calls it through `lib/api/`, HTTPS and environment variables.
+`/health` on Render, a minimal page on Netlify that calls it through `lib/api/`, HTTPS and environment variables.
 NFR-05, NFR-06.
 
 ### Phase 5: Search. Next

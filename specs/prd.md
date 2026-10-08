@@ -192,7 +192,7 @@ The site must work well on low-cost Android phones and slow, expensive mobile da
 
 ## Technology
 
-The stack is fixed in `CLAUDE.md`: Next.js (App Router, TypeScript, Tailwind, shadcn/ui) for the web app, FastAPI with SQLModel, Alembic and PostgreSQL for the API, Docker Compose locally, Vercel and Render in production, with Paystack, Cloudinary, Resend, Termii and Leaflet/OpenStreetMap.
+The stack is fixed in `CLAUDE.md`: Next.js (App Router, TypeScript, Tailwind, shadcn/ui) for the web app, FastAPI with SQLModel, Alembic and PostgreSQL for the API, Docker Compose locally, Netlify and Render in production, with Paystack, Cloudinary, Resend, Termii and Leaflet/OpenStreetMap.
 
 ## Analytics
 
