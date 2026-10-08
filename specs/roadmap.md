@@ -47,9 +47,17 @@ Feature folder: [requirements](2026-10-08-pwdlib-password-hashing/requirements.m
 - Task 1, swap the hashing library (tests first): **done**
 - Task 2, re-seed and wrap-up: **done**
 
-### Phase 4: Walking skeleton in production. Next
+### Phase 4: Walking skeleton in production. In progress
 `/health` on Render, a minimal page on Netlify that calls it through `lib/api/`, HTTPS and environment variables.
 NFR-05, NFR-06.
+Feature folder: [requirements](2026-10-08-walking-skeleton-production/requirements.md),
+[plan](2026-10-08-walking-skeleton-production/plan.md), [validation](2026-10-08-walking-skeleton-production/validation.md).
+
+- Task 0, spec and hosting documentation check: **next**
+- Task 1, backend ready for Render (`render.yaml`, database address check, CORS tests): **next**
+- Task 2, frontend ready for Netlify (`netlify.toml`): **next**
+- Task 3, deploy by the owner, smoke test and `TRUSTED_PROXY_COUNT`: **next**
+- Task 4, wrap-up: **next**
 
 ### Phase 5: Search. Next
 US-01, US-05. The hard part.

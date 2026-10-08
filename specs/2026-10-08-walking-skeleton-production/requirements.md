@@ -1,0 +1,111 @@
+# Walking skeleton in production: requirements
+
+What this feature must do and the decisions behind it. How we build it is in [plan.md](plan.md); how we know it is
+done is in [validation.md](validation.md).
+
+## Requirements
+
+- **NFR-05:** Availability, with the Emergency page served from a CDN so it stays up if the server is down.
+- **NFR-06:** HTTPS everywhere, staff two-factor login, hashed passwords, role-based access, rate limiting.
+
+Source of truth: [prd.md](../prd.md). Branch: `feature/walking-skeleton-production`. Every commit and test references
+NFR-05 or NFR-06. This is roadmap [phase 4](../roadmap.md). The health endpoint is specified in "GET /health" in
+[api-spec.md](../backend/api-spec.md); it does not change.
+
+Fit with the project: the mission says the MVP must work on low-cost phones on slow connections
+([mission.md](../mission.md)), and nothing the public sees counts until it is live. This feature puts the stack
+decided in [tech-stack.md](../tech-stack.md) (Netlify for the frontend, Render for the backend) into production with
+nothing but the health check on it. It adds no table, no endpoint and no page.
+
+## In scope
+
+- Deploy the backend to Render (Docker, with a Render PostgreSQL database) and the frontend to Netlify.
+- Keep the deploy settings in the repository: `render.yaml` and `netlify.toml`. Secrets stay in the dashboards.
+- Start the production API with `APP_ENV=production` and a long random `JWT_SECRET`
+  (the check already exists, see the [auth requirements](../2026-10-05-auth-and-roles/requirements.md), decision 12).
+- Set `CORS_ORIGINS` to the Netlify address, and `NEXT_PUBLIC_API_URL` to the Render address.
+- Settle `TRUSTED_PROXY_COUNT` and the proxy-header question from the "To do later" list in [LOG.md](../../LOG.md),
+  using one real request through Render.
+- Make the API accept the database address Render gives us (decision 4).
+- Prove it with a smoke test: HTTPS on both sides, `/health` on Render, and the existing home page showing
+  "connected".
+- Remove the finished Render reminders from `LOG.md`, and add the free-plan reminders (decision 3).
+
+## Out of scope (planned elsewhere)
+
+- A new page. The existing home page already calls `/health` through `lib/api/` and shows the API status, so it is the
+  minimal page. The real landing page is [roadmap](../roadmap.md) phase 13a.
+- Daily backups and a tested restore (NFR-09): phase 14b. The free database has no backups (decision 3).
+- Moving to paid Render plans, a custom domain and the release criteria: phase 14d.
+- The nightly re-check job as a Render Cron Job: phase 11b.
+- Real SMS sending through Termii: before the first real SMS, see "To do later" in [LOG.md](../../LOG.md).
+- Paystack, Cloudinary and Resend keys: set when the phase that uses each one starts (phases 10 and 12).
+- Serving the Emergency page from a CDN (the second half of NFR-05) is built with the page in phase 7d. Netlify
+  already serves the frontend through its CDN, but this feature adds no emergency page to prove it.
+
+## What the official documentation says
+
+Checked on 2026-10-08. Task 0 reads these pages again before any config is written.
+
+- **Netlify and Next.js:** the App Router works through the OpenNext adapter, which supports Next.js 13.5 and later.
+  It is applied automatically, with no plugin and no `netlify.toml` needed
+  ([Netlify Next.js overview](https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/)).
+  We use Next.js 15.5.4.
+- **Netlify build settings:** `netlify.toml` has `[build]` with `base`, `publish` and `command`. Paths in it are
+  relative to the base directory. In a monorepo the file may live in a subdirectory, but then the base directory or
+  package directory must be set so Netlify finds it. Environment variables need the "Builds" scope to be available
+  during the build, and secrets belong in the Netlify dashboard, not in the repository
+  ([Netlify file-based configuration](https://docs.netlify.com/build/configure-builds/file-based-configuration/)).
+- **Render free web service:** it spins down after 15 minutes without inbound traffic, takes about one minute to start
+  again, and has 750 free instance hours per month
+  ([Render free plans](https://render.com/docs/free)).
+- **Render free PostgreSQL:** it expires 30 days after creation, gives 14 days to upgrade before the data is deleted,
+  has 1 GB of storage, and has no backups ([Render free plans](https://render.com/docs/free)).
+- **Render ports and TLS:** a web service must bind to `0.0.0.0` and should use the `PORT` variable, which defaults to
+  `10000`. Render's load balancer ends TLS
+  ([Render web services](https://render.com/docs/web-services)). Our `Dockerfile` already starts uvicorn on `${PORT:-8000}`.
+- **Render Blueprint (`render.yaml`):** a Docker web service uses `runtime: docker`, `dockerfilePath`, `dockerContext`,
+  `healthCheckPath` and `envVars`. A variable can come from the database with `fromDatabase` and
+  `property: connectionString`, can be generated with `generateValue: true`, or can be left for us to type in the
+  dashboard with `sync: false` ([Render Blueprint spec](https://render.com/docs/blueprint-spec)).
+- **Proxy headers:** the FastAPI documentation says the server ignores `X-Forwarded-*` headers unless it is told which
+  senders to trust with `--forwarded-allow-ips`, and that `"*"` lets any client fake them
+  ([FastAPI, Behind a Proxy](https://fastapi.tiangolo.com/advanced/behind-a-proxy/)).
+- **Not found yet:** I could not find a Render page that says which `X-Forwarded-For` entry is the real client. Task 3
+  settles it with a real request (decision 5), and nothing is guessed before that.
+
+## Decisions
+
+1. **Scope: deploy plus the Render reminders from `LOG.md`.** The alternative, deploy only, would leave
+   `TRUSTED_PROXY_COUNT` unchecked until the rate limiter matters in production. The login rate limit depends on it
+   ([NFR-06](../prd.md#non-functional-requirements)), so it is cheaper to settle it now, while the only request is ours.
+2. **The existing home page is the minimal page.** `getHealth()` in `lib/api/client.ts` already calls `/health` and the
+   home page shows "connected" or "not reachable". A new `/status` page would be extra code for the same proof.
+3. **Start on the free Render plans, upgrade before launch.** It costs nothing while we build. The price is known and
+   written down here so nobody is surprised: the API sleeps after 15 minutes, so the first visit can wait about a
+   minute and the home page can show "not reachable" once; and the free database expires 30 days after creation and
+   has no backups. That does not meet [NFR-05](../prd.md#non-functional-requirements) (99.5% uptime) or NFR-09 (daily
+   backups). Both are fine for a skeleton with demo data and must be fixed before launch (phases 14b and 14d). The
+   alternatives were paid plans from day one (more cost now, no benefit while there are no users) or a database outside
+   Render (a new provider, which needs the owner's approval).
+4. **The API accepts Render's database address as given.** Render's `connectionString` is a plain `postgresql://` address.
+   Our engine needs the psycopg 3 driver, written `postgresql+psycopg://`, and SQLAlchemy would otherwise look for a
+   different driver that is not installed. A small check in `core/config.py` rewrites the start of the address, with a
+   test, so `render.yaml` can take the address straight from the database instead of someone retyping it in the dashboard.
+   The alternative is to type `DATABASE_URL` by hand in the dashboard with the right prefix. That works but breaks
+   silently the day the database is recreated. **This is a proposal; say if you prefer the manual way.**
+5. **`TRUSTED_PROXY_COUNT` is set from a real request, not from a guess.** In Task 3 we log one `X-Forwarded-For`
+   header from a request through Render and count its entries. A count that is too high trusts an entry a visitor can
+   fake; a count that is too low gives every visitor the same rate limit (see "To do later" in
+   [LOG.md](../../LOG.md)). We also compare with the uvicorn `--proxy-headers` and `--forwarded-allow-ips` approach and
+   keep our `get_client_ip` unless the FastAPI approach fits Render better. If that means changing the code, it becomes
+   its own task with tests first.
+6. **Config files in the repository.** `render.yaml` and `netlify.toml` are reviewed and reproducible. The alternative,
+   dashboard-only, leaves nothing in git that records the settings. Secrets (`JWT_SECRET`, API keys) are never in these
+   files: the Blueprint uses `generateValue: true` or `sync: false`, and Netlify variables are typed in the dashboard.
+7. **The frontend reaches the API only through `lib/api/`.** The Netlify site gets `NEXT_PUBLIC_API_URL` and no
+   `API_URL_INTERNAL`, so the server-side call falls back to the public address (see `client.ts`). `API_URL_INTERNAL`
+   stays a Docker-only setting.
+8. **I cannot create your Render or Netlify services.** You create the accounts and click through the dashboards using
+   the checklist in [plan.md](plan.md), Task 3. I write the files, the tests and the checklist, and run the smoke test
+   with you.
