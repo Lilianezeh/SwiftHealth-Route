@@ -11,8 +11,8 @@ when the step is really done.
 | File | Change |
 | --- | --- |
 | `specs/tech-stack.md` | Decision line "passlib with bcrypt now, pwdlib right after" becomes "pwdlib (Argon2)" |
-| `specs/2026-10-08-pwdlib-password-hashing/requirements.md` | Fill in what Task 0 finds (Argon2 parameters, unknown-hash behaviour, exact versions) |
-| `backend/requirements.txt` | Remove `passlib[bcrypt]` and `bcrypt`; add `pwdlib[argon2]` with an exact version |
+| `specs/2026-10-08-pwdlib-password-hashing/requirements.md` | Fill in what Task 0 finds (Argon2 parameters, unknown-hash behaviour, exact versions) (done) |
+| `backend/requirements.txt` | Remove `passlib[bcrypt]` and `bcrypt`; add `pwdlib[argon2]==0.3.1` and `argon2-cffi==25.1.0` |
 | `backend/app/core/security.py` | `PasswordHash.recommended()` instead of `CryptContext`; same `hash_password` and `verify_password` |
 | `backend/app/services/auth_service.py` | Comment only: the thread-pool note names Argon2, not bcrypt |
 | `backend/seed/seed.py` | Comment only: same note |
@@ -24,30 +24,30 @@ when the step is really done.
 
 ## Tasks
 
-### Task 0: Spec and library check
-- [ ] Read the official pwdlib documentation: the Argon2 parameters `recommended()` uses, and what `verify()` does
+### Task 0: Spec and library check (done, `5b6a884`)
+- [x] Read the official pwdlib documentation: the Argon2 parameters `recommended()` uses, and what `verify()` does
   with a hash in another format (an old bcrypt hash and a garbage string). Write the answers in
   [requirements.md](requirements.md), "Library choice".
-- [ ] Install `pwdlib[argon2]` in a throwaway way (not in `requirements.txt` yet) and confirm the real latest version
+- [x] Install `pwdlib[argon2]` in a throwaway way (not in `requirements.txt` yet) and confirm the real latest version
   and the `argon2-cffi` version pip resolves.
-- [ ] Update the decision line in [tech-stack.md](../tech-stack.md).
-- [ ] Commit: `docs(specs): pwdlib password hashing requirements and plan (NFR-06)`.
+- [x] Update the decision line in [tech-stack.md](../tech-stack.md).
+- [x] Commit: `docs(specs): pwdlib checked in the container, tech-stack updated (NFR-06)`.
 
-### Task 1: Swap the hashing library
-- [ ] Write the tests first in `tests/unit/test_security.py` and `test_seed_data.py` (listed in
+### Task 1: Swap the hashing library (done, `bac7e17`)
+- [x] Write the tests first in `tests/unit/test_security.py` and `test_seed_data.py` (listed in
   [validation.md](validation.md)). They fail while bcrypt is still in use.
-- [ ] Change `requirements.txt`: remove `passlib[bcrypt]` and `bcrypt`, add `pwdlib[argon2]==<exact version>`.
+- [x] Change `requirements.txt`: remove `passlib[bcrypt]` and `bcrypt`, add `pwdlib[argon2]==<exact version>`.
   Rebuild the backend image (`docker compose up --build`).
-- [ ] Change `core/security.py` to `PasswordHash.recommended()`. Keep the two function names and signatures.
+- [x] Change `core/security.py` to `PasswordHash.recommended()`. Keep the two function names and signatures.
   Handle an unreadable hash as decided in Task 0 (decision 6).
-- [ ] Update the comments in `auth_service.py`, `seed.py` and `conftest.py` that say bcrypt.
-- [ ] Run `pytest -q` and `ruff check .`, then commit: `feat(auth): hash passwords with pwdlib and Argon2 (NFR-06)`.
+- [x] Update the comments in `auth_service.py`, `seed.py` and `conftest.py` that say bcrypt.
+- [x] Run `pytest -q` and `ruff check .`, then commit: `feat(auth): hash passwords with pwdlib and Argon2 (NFR-06)`.
 
-### Task 2: Re-seed and wrap-up
-- [ ] Reset the development database with the Alembic commands in decision 2, then run the seed. Check the stored
+### Task 2: Re-seed and wrap-up (done, this commit)
+- [x] Reset the development database with the Alembic commands in decision 2, then run the seed. Check the stored
   hashes start with `$argon2`.
-- [ ] Run the checks and the smoke test in [validation.md](validation.md), including a clean container
+- [x] Run the checks and the smoke test in [validation.md](validation.md), including a clean container
   (`pip list` shows no `passlib` or `bcrypt`).
-- [ ] Update `LOG.md` (remove the pwdlib reminder, add today's entry), the [roadmap](../roadmap.md), and tick the
+- [x] Update `LOG.md` (remove the pwdlib reminder, add today's entry), the [roadmap](../roadmap.md), and tick the
   boxes in this folder with their commit hashes.
-- [ ] Commit: `docs(specs): pwdlib wrap-up (NFR-06)`.
+- [x] Commit: `docs(specs): pwdlib wrap-up (NFR-06)`.
