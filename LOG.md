@@ -13,6 +13,9 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   can be dodged. A count that is too low counts a proxy address as the client, so every visitor shares one limit.
   Also check FastAPI's "Behind a Proxy" approach (uvicorn `--proxy-headers` and `--forwarded-allow-ips`) and prefer it
   over our own `get_client_ip` logic if it fits Render.
+- **Render deploy, environment (roadmap phase 4):** set `APP_ENV=production` and a long random `JWT_SECRET` (at
+  least 32 bytes, for example the output of `python -c "import secrets; print(secrets.token_urlsafe(48))"`). The app
+  refuses to start without them. Never reuse the value from `.env.example`.
 - **Before the first real SMS (Termii):** activate the DND route on the account, get the sender ID approved, and set
   `TERMII_BASE_URL` from the dashboard (Settings, API token tab). Termii has no sandbox, so every real send costs
   balance. Also decide at the Render deploy whether to add a startup warning (lifespan) when no key is set; for now

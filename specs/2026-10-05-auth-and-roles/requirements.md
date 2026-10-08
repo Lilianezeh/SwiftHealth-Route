@@ -96,3 +96,10 @@ Branch: `feature/auth-and-roles`. Every commit and test references FR-30 and NFR
     - **Checked in Task 2b, not assumed:** that `postgresql+psycopg` works with `create_async_engine` (the
       SQLAlchemy page we read shows `asyncpg` only), and the exact `anyio_backend` fixture needed so the tests run
       on asyncio only.
+12. **The JWT secret is checked at startup outside development.** `Settings` has `app_env` (`APP_ENV`, default
+    `development`). When `APP_ENV` is anything other than `development`, `Settings` refuses to start if
+    `JWT_SECRET` is missing, empty, equal to the built-in development default, or shorter than 32 bytes. The error
+    names the problem and never prints the secret. Reason: a forgotten `JWT_SECRET` would otherwise start the app
+    silently with a public default, and anyone could forge login tokens. PyJWT also warns about HS256 keys under 32
+    bytes (RFC 7518 section 3.2). Render must set `APP_ENV=production` and a long random `JWT_SECRET`. The check
+    is strict on purpose: any value other than `development` (a typo such as `prod` too) turns it on.

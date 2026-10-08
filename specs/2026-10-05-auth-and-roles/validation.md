@@ -76,6 +76,20 @@ and a network error. Each failing reply repeats the secrets in its body, to prov
 - [x] Checked by making the code leak on purpose (message in the success log, response text in the error): 7 tests
   failed, then the leaks were removed.
 
+### Task 3b: `tests/unit/test_config.py` (14 of 14 passing)
+- [x] `test_app_env_defaults_to_development`
+- [x] `test_development_accepts_the_default_and_a_short_secret`
+- [x] `test_production_refuses_a_missing_jwt_secret`
+- [x] `test_production_refuses_an_empty_jwt_secret`
+- [x] `test_production_refuses_the_default_jwt_secret`
+- [x] `test_production_refuses_a_secret_under_32_bytes` (31 bytes fails, 32 bytes passes)
+- [x] `test_the_length_is_counted_in_bytes` (16 two-byte characters pass, 15 fail)
+- [x] `test_any_app_env_other_than_development_is_checked` (4 cases: `staging`, `prod`, `Development`, `production`)
+- [x] `test_a_long_random_secret_is_accepted_in_production`
+- [x] `test_the_error_never_contains_the_secret` (failed first: pydantic printed the input, so the settings now use
+  `hide_input_in_errors=True`)
+- [x] `test_app_env_is_read_from_the_environment`
+
 ### Task 4a: no new tests
 - [x] `grep -rn "TestClient" backend` finds nothing, and `httpx2` is not in `requirements.txt`.
 - [x] The backend test run shows no warning about `httpx` and `starlette.testclient`.

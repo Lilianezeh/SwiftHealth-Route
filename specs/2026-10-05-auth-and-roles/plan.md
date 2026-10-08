@@ -79,6 +79,12 @@ starts async. No behaviour change: the existing tests must give the same results
 - [x] Implement `integrations/termii.py` (`send_sms`, `to_termii_number`, `mask_phone`, `SmsSendError`), run, commit.
   With a key set it logs only the masked phone and the `message_id`; never the code, the key or the full phone.
 
+### Task 3b: JWT secret check at startup (decision 12)
+- [x] Spec first: decision 12 in [requirements.md](requirements.md); `APP_ENV` in `.env.example`; Render reminder in
+  LOG.md.
+- [x] Write the tests in `tests/unit/test_config.py` (listed in [validation.md](validation.md)).
+- [x] Implement `app_env` and the check in `core/config.py`, run, commit.
+
 ### Task 4a: the CI split (done, `9b15518`; dependency fix `6bd2a80`)
 - [x] Check that no code uses Starlette's `TestClient` any more (Task 2b moves the tests to `AsyncClient`):
   `grep -rn "TestClient" backend`. If none is left, do not add `httpx2`: keep `httpx` (`AsyncClient` and the Termii
