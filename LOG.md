@@ -15,10 +15,15 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `REPORTER_KEY_SECRET`, `SEED_DEMO_LISTINGS` and `REMOVE_DEMO_LISTINGS` in phase 5A (all three now in the dashboard).
   Still to add by hand: any variable a later phase adds (Paystack, Resend, Cloudinary, Termii keys). Keep `render.yaml` as
   the written record, and update the dashboard to match whenever it changes.
-- **`GET /meta` service labels, optional (decide with real data):** when a service is saved in several spellings, `/meta`
-  shows the first in plain alphabetical order, so `X-RAY` would win over `X-ray`. Showing the spelling used by the most
-  listings would look better; it needs `GROUP BY name` with a count in `service_repository`. Not needed while the
-  verifiers write names the same way.
+- **Phase 10b, a controlled list of service names (the real fix for service spellings):** services are free text today,
+  so the same service can be saved as `X-ray`, `x-ray`, `Xray` or `X ray`. `GET /meta` and the `service` filter of
+  `/search` already treat the first three as one service (phase 5B-0, `core/service_names.py`), and `/meta` shows the
+  first spelling in plain alphabetical order (an all-capitals `X-RAY` would win over `X-ray`). `X ray` (with a space) is
+  still a different service. The keeper decision (owner, 2026-10-09): keep that simple label rule, and in the phase 10
+  listing editor let staff **pick** services from a controlled list of names instead of typing them. That removes
+  `X ray` against `Xray`, the label quirk and typos at the source. It needs a place for the list (an admin-managed list,
+  or the distinct names in use), which is a data-model question for the owner: the project has exactly 9 tables, so
+  adding a table needs approval. The UI spec (3.4, "Services and fees") changes first.
 - **Node.js versions (check the schedule each autumn):** Node 20, which we run (frontend Dockerfile, `netlify.toml`, the
   frontend CI), reached end of life on 2026-04-30 (official [release schedule](https://github.com/nodejs/Release/blob/main/schedule.json),
   checked 2026-10-09). A chore moves the frontend to Node 24 (Active LTS until 2026-10-20, Maintenance LTS until
@@ -147,6 +152,10 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `git config core.hooksPath scripts/hooks`) and a rule to check `git branch --show-current` before every commit and push.
 - **Still open:** typos in very short words (3 to 5 letters) are not matched, see "To do later". The owner does the
   Render steps after the merge (`validation.md`, "After the merge").
+- **Phase 5B-0 (draft PR, `GET /meta`):** `GET /meta` (areas, categories, services, blood groups, report reasons), the
+  access log shows `lat=redacted&lng=redacted` (uvicorn was logging the full position), and one shared rule for "the same
+  service" so that picking `X-ray` from `/meta` also finds `Xray` and ` x-ray ` (the old `service` filter missed them; tests
+  written first showed it). 627 tests passing. The Node 20 end of life (2026-04-30) is a separate chore before 5B-1.
 - **Learned:** [write this in your own words, e.g. what a trigram is and why a score of 0.50 is not enough]
 - **AI use:** Claude Code compared the options with real scores, wrote the tests first and the code; I chose the
   options, approved the plan and decided what to keep out of scope.

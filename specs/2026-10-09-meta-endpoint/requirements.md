@@ -93,8 +93,9 @@ no library and no setting.
    The `/meta` label shown for a service is the first spelling in plain alphabetical order, cleaned to one space between
    words and none at the ends. Limits: `Pap-smear` and `Pap smear` stay two services (the hyphen is removed, the space is
    not); and because capitals sort before small letters, an all-capitals spelling (`X-RAY`) is shown when it exists
-   next to `X-ray`. Showing the spelling used by most listings would fix the second one; it needs a count from the
-   query and is noted in `LOG.md` for the owner to decide.
+   next to `X-ray`. The owner kept this simple label rule (2026-10-09). The real fix is in
+   [phase 10b](../roadmap.md): staff pick services from a controlled list of names instead of typing them, which also
+   ends `X ray` against `Xray` (see `LOG.md`).
    **Found while writing the tests:** the old filter (`lower(name) = lower(text)`) really did miss `Xray` and ` x-ray `
    when `X-ray` was picked, so this is a fix to `/search`, not only a safeguard.
 10. **Frontend consequence.** Because the position is only ever a query parameter of one API call (and never in the

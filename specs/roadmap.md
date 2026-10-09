@@ -96,14 +96,17 @@ The spike `spikes/open_now_nearest.py` still hides overdue listings; the real se
 US-01, US-05. Needs 5A merged. It was bigger than a day and needed `GET /meta`, so it is split in three. The phase
 numbers after it stay the same.
 
-#### Phase 5B-0: GET /meta and no position in the logs. In progress
+#### Phase 5B-0: GET /meta and no position in the logs. In progress (all tasks done; draft pull request waits for the owner's merge and Render checks)
 FR-03, FR-05, NFR-07. A small backend feature, so that 5B-1 can be frontend-only. Feature folder:
 [requirements](2026-10-09-meta-endpoint/requirements.md), [plan](2026-10-09-meta-endpoint/plan.md),
 [validation](2026-10-09-meta-endpoint/validation.md).
-- Task 0, spec: **done when committed**
-- Task 1, `GET /meta` (tests first): next
-- Task 2, `lat` and `lng` redacted in the API access log (tests first): next
-- Task 3, wrap-up and the owner's after-merge steps: next
+- Task 0, spec: **done**
+- Task 1, `GET /meta` (tests first): **done**
+- Task 2, `lat` and `lng` redacted in the API access log (tests first): **done**
+- Task 2b, one rule for "the same service" in `/meta` and the `service` filter of `/search` (found and fixed a miss:
+  `X-ray` did not find `Xray`): **done**
+- Task 3, wrap-up and the owner's after-merge steps (live `/meta`, a live search with a location, and the Render Logs
+  check for `lat=redacted`): **done**
 - `GET /meta` also returns `services` (owner's decision, 2026-10-09): the distinct names of published listings, without
   the blood groups, for the results page filter.
 
@@ -163,7 +166,10 @@ US-08.
 ### Phase 10: Staff screens and "List your facility". Next
 US-10.
 - 10a: staff login screen (FR-30, FR-42)
-- 10b: admin listings list and listing editor (FR-31)
+- 10b: admin listings list and listing editor (FR-31). Services are **picked from a controlled list of service names**,
+  not typed, so "X ray" and "Xray" cannot both exist and the `/meta` label is always the same spelling (owner's
+  decision, 2026-10-09; see "To do later" in [LOG.md](../LOG.md)). Where the list lives (a new table needs the owner's
+  approval, since the project has exactly 9 tables) and the UI spec 3.4 are decided first.
 - 10c: verification log and status moves: submit, publish, hide, reopen (FR-32)
 - 10d: "List your facility" form and submissions arriving as drafts (FR-37)
 - 10e: admin manages staff accounts and roles (FR-41)
