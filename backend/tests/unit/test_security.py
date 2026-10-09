@@ -1,4 +1,6 @@
 """Tests for core/security.py. Requirements: FR-30 (one-time code), NFR-06 (hashed passwords, two-factor)."""
+import hashlib
+import hmac
 from datetime import timedelta
 
 import jwt
@@ -15,6 +17,7 @@ from app.core.security import (
     generate_login_code,
     hash_login_code,
     hash_password,
+    hash_reporter_key,
     verify_password,
 )
 
@@ -136,3 +139,63 @@ def test_generated_codes_are_always_six_digits():
         code = generate_login_code()
         assert len(code) == 6
         assert code.isdigit()
+
+
+# --- hash_reporter_key: counts different reporters for FR-22 without storing a phone or an IP (NFR-07) ---
+
+A_PHONE = "+2340000000042"
+AN_IP = "203.0.113.7"  # a documentation address, not a real client
+
+
+def test_reporter_key_is_a_64_character_hex_string():
+    reporter_key = hash_reporter_key(A_PHONE)
+    assert len(reporter_key) == 64
+    assert set(reporter_key) <= set("0123456789abcdef")
+
+
+def test_same_value_gives_the_same_reporter_key():
+    assert hash_reporter_key(A_PHONE) == hash_reporter_key(A_PHONE)  # so two reports can be matched
+
+
+def test_different_values_give_different_reporter_keys():
+    assert hash_reporter_key(A_PHONE) != hash_reporter_key("+2340000000043")
+    assert hash_reporter_key(AN_IP) != hash_reporter_key("203.0.113.8")
+
+
+def test_reporter_key_depends_on_the_reporter_key_secret(monkeypatch):
+    original_key = hash_reporter_key(A_PHONE)
+    monkeypatch.setattr(settings, "reporter_key_secret", "a-different-reporter-secret")
+    assert hash_reporter_key(A_PHONE) != original_key
+
+
+def test_reporter_key_does_not_depend_on_jwt_secret(monkeypatch):
+    # The reason for a separate secret: rotating JWT_SECRET must not break FR-22 counting (decision 6).
+    original_key = hash_reporter_key(A_PHONE)
+    monkeypatch.setattr(settings, "jwt_secret", "a-rotated-jwt-secret")
+    assert hash_reporter_key(A_PHONE) == original_key
+
+
+@pytest.mark.parametrize("value", [A_PHONE, AN_IP])
+def test_reporter_key_does_not_contain_the_phone_or_the_ip(value):
+    assert value not in hash_reporter_key(value)
+    assert value.lstrip("+") not in hash_reporter_key(value)
+
+
+@pytest.mark.parametrize("value", [A_PHONE, AN_IP])
+def test_reporter_key_is_not_a_plain_hash(value):
+    # A plain SHA-256 of a phone number could be reversed by trying every Nigerian number.
+    assert hash_reporter_key(value) != hashlib.sha256(value.encode()).hexdigest()
+    assert hash_reporter_key(value) != hashlib.sha256(f"reporter:{value}".encode()).hexdigest()
+
+
+def test_reporter_key_uses_the_reporter_label_and_the_reporter_secret():
+    expected = hmac.new(
+        settings.reporter_key_secret.encode(), f"reporter:{A_PHONE}".encode(), hashlib.sha256
+    ).hexdigest()
+    assert hash_reporter_key(A_PHONE) == expected
+
+
+def test_reporter_key_differs_from_a_login_code_hash_of_the_same_text(monkeypatch):
+    # Even if the two secrets were ever equal, the label keeps one use from matching the other.
+    monkeypatch.setattr(settings, "reporter_key_secret", settings.jwt_secret)
+    assert hash_reporter_key("7:482913") != hash_login_code(7, "482913")

@@ -118,7 +118,8 @@ library.
    means a leaked `jwt_secret` does not help someone test phone numbers against the stored keys. The details:
    - `Settings` gets `reporter_key_secret` (`REPORTER_KEY_SECRET`) with the same startup check as `JWT_SECRET`:
      outside development (`APP_ENV` is not `development`) the app refuses to start if it is missing, empty, the
-     built-in development default, or shorter than 32 bytes. The error names the problem and never prints the secret.
+     built-in development default, or shorter than 32 bytes, or equal to `JWT_SECRET` (so one leaked value opens only
+     one use). One error names every bad secret and never prints a secret.
      In development a blank value (as in `.env.example`) falls back to a public development default, so a new
      checkout works without setting it.
    - `render.yaml` gets `REPORTER_KEY_SECRET` with `generateValue: true`, like `JWT_SECRET`. `.env.example` gets

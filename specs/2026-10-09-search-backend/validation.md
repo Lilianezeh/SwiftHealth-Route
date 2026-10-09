@@ -41,8 +41,12 @@ All times below are `Africa/Lagos` unless the test says UTC. A Monday is `day_of
 - [ ] `test_production_refuses_a_reporter_key_secret_under_32_bytes` (31 bytes fails, 32 bytes passes)
 - [ ] `test_the_reporter_key_error_never_contains_the_secret`
 - [ ] `test_development_accepts_a_blank_reporter_key_secret` (falls back to the public development default)
-- [ ] `test_either_secret_missing_is_refused_in_production` (a good `JWT_SECRET` does not excuse a bad
-  `REPORTER_KEY_SECRET`, and the reverse)
+- [ ] `test_either_secret_bad_is_refused_in_production` (a good `JWT_SECRET` does not excuse a bad
+  `REPORTER_KEY_SECRET`, and the reverse), `test_one_error_names_every_bad_secret` and
+  `test_the_two_secrets_may_not_be_the_same_value`
+- [ ] `test_reporter_key_secret_is_read_from_the_environment`
+- Existing config tests changed only to give production a good second secret (`production_settings` helper); their
+  checks are the same.
 - [ ] `test_reporter_key_is_a_64_character_hex_string`
 - [ ] `test_same_value_gives_the_same_reporter_key` (so two reports can be matched)
 - [ ] `test_different_values_give_different_reporter_keys`
@@ -190,11 +194,14 @@ Render runs `alembic upgrade head` when the container starts (`backend/Dockerfil
 The production database blocks outside connections and the free plan has no shell, so we do not look inside it. The
 checks use the deploy and the live API only.
 
+- [ ] **Before anything else:** in Render, open the Environment page of `swifthealth-api` and confirm
+  `REPORTER_KEY_SECRET` is listed with a value. A new variable in `render.yaml` may not show up on its own (as happened
+  with `CORS_ORIGINS`), and the API refuses to start without it. If it is missing, add it in the dashboard with a
+  random value of at least 32 bytes that differs from `JWT_SECRET` (Render's "Generate" button, or any random string
+  of 40 or more characters). Never paste the value anywhere else.
 - [ ] The deploy succeeded and `<api>/health` returns `{"status":"ok"}` (the free API may need about a minute to wake).
   This proves the migration ran: it would fail, and the new version would not start, if `pg_trgm` could not be created
-  or `reporter_key` could not be added.
-- [ ] The new settings did not stop the start: Render generated `REPORTER_KEY_SECRET` from `render.yaml`. If the
-  deploy log says `REPORTER_KEY_SECRET is missing`, add the variable in the Render dashboard.
+  or `reporter_key` could not be added. If the deploy log says `REPORTER_KEY_SECRET is missing`, see the box above.
 - [ ] Put the demo listings in production (Task 3b, decision 13): in the Render dashboard set `SEED_DEMO_LISTINGS` to
   `true`, let the service redeploy, then set it back to `false`.
 - [ ] A misspelled search on the live API finds the right listing, for example `<api>/search?q=Nigt Pharmcy` finds

@@ -65,6 +65,16 @@ def code_matches(user_id: int, code: str, code_hash: str) -> bool:
     return hmac.compare_digest(hash_login_code(user_id, code), code_hash)
 
 
+def hash_reporter_key(phone_or_ip: str) -> str:
+    """Keyed hash that lets FR-22 count different reporters without storing a phone number or an IP (NFR-07).
+
+    Pass the phone already as +234..., or the client IP. The key is its own secret (not jwt_secret),
+    so rotating the JWT secret cannot break the counting. The fixed "reporter:" label keeps this hash apart
+    from the other HMACs in this file. A plain hash would not do: every Nigerian phone number can be tried."""
+    message = f"reporter:{phone_or_ip}".encode()
+    return hmac.new(settings.reporter_key_secret.encode(), message, hashlib.sha256).hexdigest()
+
+
 def _encode(claims: dict, lifetime: timedelta) -> str:
     expires_at = datetime.now(timezone.utc) + lifetime
     return jwt.encode({**claims, "exp": expires_at}, settings.jwt_secret, algorithm=JWT_ALGORITHM)

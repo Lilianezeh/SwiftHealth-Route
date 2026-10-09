@@ -117,7 +117,8 @@ no users, no passwords. Built after `GET /search` so the test can search for the
 
 ### Task 4: Wrap-up
 - [ ] Run the checks and the smoke test in [validation.md](validation.md), including the timing check (NFR-02) on the seed data.
-- [ ] Remind the owner of the "After the merge" checks in [validation.md](validation.md) (the deploy and the live
-  misspelled search).
+- [ ] Remind the owner of the "After the merge" checks in [validation.md](validation.md). First of all: open Render's
+  Environment page for `swifthealth-api` and confirm `REPORTER_KEY_SECRET` exists. It may not appear by itself (as
+  happened with `CORS_ORIGINS`), and the API will not start without it. Then the deploy and the live misspelled search.
 - [ ] Update `LOG.md`, the [roadmap](../roadmap.md), and tick the boxes in this folder with their commit hashes.
 - [ ] Commit: `docs(specs): search backend wrap-up (US-01, US-05)`. Open the pull request as a draft.

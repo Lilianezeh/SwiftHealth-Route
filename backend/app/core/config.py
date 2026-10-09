@@ -4,7 +4,9 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_JWT_SECRET = "dev-only-secret"  # public: only for local development, never for anything deployed
-MINIMUM_JWT_SECRET_BYTES = 32  # an HS256 key should be at least 32 bytes (RFC 7518 section 3.2)
+DEFAULT_REPORTER_KEY_SECRET = "dev-only-reporter-key-secret"  # public: only for local development
+# An HS256 key should be at least 32 bytes (RFC 7518 section 3.2). The reporter-key HMAC has the same minimum.
+MINIMUM_SECRET_BYTES = 32
 
 
 class Settings(BaseSettings):
@@ -16,6 +18,9 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://swifthealth:swifthealth@localhost:5432/swifthealth"
     jwt_secret: str = DEFAULT_JWT_SECRET
     jwt_minutes: int = 60 * 12
+    # Keys the hash that counts different reporters for FR-22. Separate from JWT_SECRET on purpose: rotating
+    # the JWT secret must not break the counting. In development a blank value means the development default.
+    reporter_key_secret: str = DEFAULT_REPORTER_KEY_SECRET
     cors_origins: str = "http://localhost:3000"
     # Proxies in front of the API that append to X-Forwarded-For. Not yet checked on Render (see LOG.md).
     trusted_proxy_count: int = Field(default=1, ge=1)
@@ -49,19 +54,33 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins.split(",")]
 
     @model_validator(mode="after")
-    def check_jwt_secret_outside_development(self) -> "Settings":
-        """Refuses to start with a weak JWT secret outside development. The messages never show the secret."""
+    def check_secrets_outside_development(self) -> "Settings":
+        """Refuses to start with a weak secret outside development. The messages never show a secret value."""
         if self.app_env == "development":
+            if not self.reporter_key_secret:  # a blank REPORTER_KEY_SECRET, as in .env.example
+                self.reporter_key_secret = DEFAULT_REPORTER_KEY_SECRET
             return self
-        setting_help = f"APP_ENV is '{self.app_env}', so set JWT_SECRET to a random value of 32+ bytes."
-        if not self.jwt_secret:
-            raise ValueError(f"JWT_SECRET is missing or empty. {setting_help}")
-        if self.jwt_secret == DEFAULT_JWT_SECRET:
-            raise ValueError(f"JWT_SECRET is missing or is still the development default. {setting_help}")
-        secret_bytes = len(self.jwt_secret.encode())
-        if secret_bytes < MINIMUM_JWT_SECRET_BYTES:
-            raise ValueError(f"JWT_SECRET is only {secret_bytes} bytes. {setting_help}")
+        reporter_default = DEFAULT_REPORTER_KEY_SECRET
+        problems = [
+            *self._secret_problems("JWT_SECRET", self.jwt_secret, DEFAULT_JWT_SECRET),
+            *self._secret_problems("REPORTER_KEY_SECRET", self.reporter_key_secret, reporter_default),
+        ]
+        if not problems and self.reporter_key_secret == self.jwt_secret:
+            problems.append("REPORTER_KEY_SECRET must differ from JWT_SECRET, so one leak opens only one.")
+        if problems:
+            raise ValueError(" ".join(problems))
         return self
+
+    def _secret_problems(self, variable: str, secret: str, development_default: str) -> list[str]:
+        setting_help = f"APP_ENV is '{self.app_env}', so set {variable} to a random value of 32+ bytes."
+        if not secret:
+            return [f"{variable} is missing or empty. {setting_help}"]
+        if secret == development_default:
+            return [f"{variable} is missing or is still the development default. {setting_help}"]
+        secret_bytes = len(secret.encode())
+        if secret_bytes < MINIMUM_SECRET_BYTES:
+            return [f"{variable} is only {secret_bytes} bytes. {setting_help}"]
+        return []
 
 
 settings = Settings()
