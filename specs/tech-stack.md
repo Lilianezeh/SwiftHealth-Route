@@ -54,6 +54,13 @@ One line each, with the reason.
   dashboard on 2026-10-09), so the tests run on the production version. The image changed its data path in 18, so the
   compose volume is mounted at `/var/lib/postgresql`. Moved from 16 in the search feature
   ([plan](2026-10-09-search-backend/plan.md), Task 1c).
+- **Node.js 24 (Active LTS) for the frontend: Dockerfile, Netlify and the frontend CI.** Node 20 reached end of life on
+  2026-04-30 (official [release schedule](https://github.com/nodejs/Release/blob/main/schedule.json), checked 2026-10-09).
+  Node 24 is the Active LTS on that date (Maintenance LTS from 2026-10-20, supported until 2028-04-30). Next.js 15.5
+  accepts Node 20 or newer, and Netlify takes a major version in `NODE_VERSION`. Node 26 becomes LTS on 2026-10-28; we
+  move to it in 2027, before 2028-04-30. The four places that name the version (`frontend/Dockerfile`, `netlify.toml`,
+  `.github/workflows/frontend.yml`, `@types/node` in `package.json`) are kept equal by
+  `bash scripts/check-node-version.sh`, which the frontend CI runs. The backend runs Python and is not affected.
 - **The backend is async wherever code waits on I/O.** Database access (async engine and `AsyncSession`, all
   repositories), integrations (`httpx.AsyncClient`) and the routes and services that use them are `async def`.
   Pure CPU code stays sync: `security.py` (JWT, HMAC, codes) and the rate limiter. Password hashing is called

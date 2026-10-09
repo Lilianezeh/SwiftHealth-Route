@@ -6,6 +6,7 @@ __pycache__/
 .venv/
 node_modules/
 .next/
+*.tsbuildinfo
 *.db
 CLAUDE.local.md
 .claude/settings.local.json
