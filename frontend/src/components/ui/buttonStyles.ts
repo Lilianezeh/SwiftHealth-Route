@@ -3,7 +3,8 @@
  */
 export type ButtonVariant = "primary" | "secondary";
 
-const BASE = "inline-flex min-h-[50px] w-full items-center justify-center rounded-xl px-4 text-base font-semibold";
+const BASE =
+  "inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl px-4 text-base font-semibold";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: "bg-pine text-white",

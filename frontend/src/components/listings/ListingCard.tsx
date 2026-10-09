@@ -1,12 +1,14 @@
 /** One result in a list. Requirements: US-01, FR-06, FR-08, NFR-10. UI spec: components table, ListingCard.
  * All text is rendered as text (React escapes it), never as HTML.
  */
+import { MapPin } from "lucide-react";
 import Link from "next/link";
 
 import { CallButton } from "@/components/listings/CallButton";
 import { DirectionsButton } from "@/components/listings/DirectionsButton";
 import { OpenNowBadge } from "@/components/listings/OpenNowBadge";
 import { VerifiedDate } from "@/components/listings/VerifiedDate";
+import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { formatDistance } from "@/lib/formatters/distance";
 import type { ListingSummary } from "@/types/api";
 
@@ -41,9 +43,12 @@ export function ListingCard({ listing, now }: ListingCardProps) {
         <OpenNowBadge isOpenNow={listing.is_open_now} is24Hours={listing.is_24_hours} />
       </div>
 
-      <div className="border-t border-line pt-3 text-base">
-        <p className="text-ink">{listing.address}</p>
-        <p className="text-ink-soft">{listing.area}</p>
+      <div className="flex gap-2 border-t border-line pt-3 text-base">
+        <DecorativeIcon icon={MapPin} className="mt-1 h-5 w-5 text-ink-soft" />
+        <div>
+          <p className="text-ink">{listing.address}</p>
+          <p className="text-ink-soft">{listing.area}</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

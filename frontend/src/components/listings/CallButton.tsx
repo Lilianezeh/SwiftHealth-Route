@@ -1,7 +1,10 @@
 /** A tel: link styled as the primary button. Requirements: FR-06, FR-10, NFR-10.
  * Phone numbers are stored as +234 and ten digits; anything else is not shown as a link.
  */
+import { Phone } from "lucide-react";
+
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 
 type CallButtonProps = { phone: string; facilityName: string };
 
@@ -12,6 +15,7 @@ export function CallButton({ phone, facilityName }: CallButtonProps) {
 
   return (
     <a href={`tel:${phone}`} aria-label={`Call ${facilityName}`} className={buttonClasses("primary")}>
+      <DecorativeIcon icon={Phone} />
       Call
     </a>
   );

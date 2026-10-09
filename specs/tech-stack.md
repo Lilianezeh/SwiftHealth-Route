@@ -70,6 +70,14 @@ One line each, with the reason.
   by itself, and nothing is shipped to a phone. Fake timers (`vi.useFakeTimers`) test time limits without waiting.
   Plain logic stays in `*.test.ts` (Node); a component test is a `*.test.tsx` that starts with
   `// @vitest-environment jsdom`. `npm audit` shows the same 11 findings before and after adding them.
+- **Icons: `lucide-react` 1.47.0, exact version, one icon per import (owner's decision, 2026-10-09).** `components.json` already
+  named lucide as the icon library for shadcn/ui; the package is now installed so cards and buttons can carry the
+  icons of the Figma reference (phone, route, pin, shield, clock, search). Rules: named imports only (`import { Phone } from
+  "lucide-react"`, never the whole set or a dynamic icon, so the build keeps only the icons we use); drawn through
+  `components/ui/DecorativeIcon.tsx`, which hides them from screen readers; always beside a text label, never alone.
+  Version 1.47.0 was released on 2026-09-17, more than three weeks before we pinned it (the package ships a new version
+  every few days; we do not take one that is only days old). `tests/unit/icons.test.ts` checks the pin and the import style.
+  `npm audit` shows the same 11 findings as before.
 - **The backend is async wherever code waits on I/O.** Database access (async engine and `AsyncSession`, all
   repositories), integrations (`httpx.AsyncClient`) and the routes and services that use them are `async def`.
   Pure CPU code stays sync: `security.py` (JWT, HMAC, codes) and the rate limiter. Password hashing is called
