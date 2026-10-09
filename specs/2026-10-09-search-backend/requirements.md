@@ -37,6 +37,8 @@ library.
   (decisions 1 and 4).
 - The `REPORTER_KEY_SECRET` setting (with the same startup check as `JWT_SECRET`), the `hash_reporter_key` helper in
   `core/security.py`, `render.yaml` and `.env.example` (decisions 4 and 6).
+- PostgreSQL 18 in Docker Compose and backend CI, to match Render (Task 1c, done).
+- Flag-driven demo listings for production, with an exact-slug cleanup (Task 3b, decision 13).
 - Spec updates first (Task 0): `sponsored` stays `false`, the `reporter_key` column, the `q` rule.
 
 ## Out of scope (planned elsewhere)
@@ -141,6 +143,28 @@ library.
     name. `lat` without `lng` (or the reverse) is a 422, as in the api-spec.
 12. **Sort and paging.** With a location: nearest first, ties by name. Without: by name. `total` is the count after all
     filters, before `limit` and `offset`. Distance is rounded to 1 decimal only in the response, never before sorting.
+
+13. **Demo listings in production are flag-driven, listings only, and removed by exact slug.** The production database
+    blocks outside connections and the free plan has no shell, so the only way to put a listing there is code that
+    runs when the container starts. Alternatives: a data migration (mixes demo data into schema history and runs in
+    every database) and a temporary `ipAllowList` entry (opens the database). The rules:
+    - Names start with `DEMO – `. Slugs are fixed (`demo-...`) and listed once in `seed/demo_listings_data.py`.
+      Phones come from `demo_phone` (`+234` followed by a zero), which can never be a real number. No user is created
+      and no password is read or set.
+    - `SEED_DEMO_LISTINGS=true` seeds. It is idempotent: a slug that already exists is skipped and never overwritten.
+      Any other value, or no value, does nothing.
+    - `REMOVE_DEMO_LISTINGS=true` deletes exactly the listings with the fixed slugs, plus their phones, hours,
+      services, checks, reports and audit entries, in one transaction. It never matches by name prefix, so a real
+      listing called "DEMO – something" is safe. If both flags are `true`, the removal runs and the seed does not.
+    - Categories are reference data that real listings need at launch, so the seed adds the missing ones and the
+      cleanup leaves them. (This is the one place "only the rows the seed created" is not literal; the owner can veto.)
+    - Demo listings are inserted directly with `last_verified_at` and `next_check_due` set. They have no
+      `verification_checks` rows, because those need a staff user. The "publish needs a passing check" rule belongs to the
+      staff API (phase 10c), so inserting directly does not break it.
+    - A failure of this step is logged and does not stop the API from starting.
+    - Both flags are declared as `false` in `render.yaml`. The owner sets one to `true` in the Render dashboard, lets the
+      service redeploy, then sets it back to `false`. The launch checklist ([roadmap](../roadmap.md), phase 14d) has
+      the cleanup and the check that zero demo listings are left.
 
 ## Threshold result
 

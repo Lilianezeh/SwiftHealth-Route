@@ -77,8 +77,10 @@ Tasks:
 - Task 0, spec and `pg_trgm` check on Render: next
 - Task 1, `hours.py` (5a): next
 - Task 1b, `REPORTER_KEY_SECRET` and `hash_reporter_key`: next
+- Task 1c, PostgreSQL 18 in Docker Compose and backend CI: **done**
 - Task 2, `search_service`, repository and migration (`pg_trgm`, `user_reports.reporter_key`) (5b): next
 - Task 3, `GET /search` (5c): next
+- Task 3b, flag-driven demo listings for production, with an exact-slug cleanup: next
 - Task 4, wrap-up: next
 
 Note for 5a and 5b: `backend/tests/unit/test_search_service.py` does not exist yet. Its tests must expect overdue
@@ -143,7 +145,9 @@ US-13.
 - 14a: CSV import and export (FR-39, FR-40, both Should)
 - 14b: daily backups and a tested restore (NFR-09)
 - 14c: anonymous analytics events (see "Analytics" in [prd.md](prd.md#analytics))
-- 14d: go through the release criteria in [prd.md](prd.md#release-criteria)
+- 14d: go through the release criteria in [prd.md](prd.md#release-criteria). Includes the demo cleanup: set
+  `REMOVE_DEMO_LISTINGS=true` in Render, redeploy, and confirm zero demo listings are left (`/search?q=DEMO` returns
+  `total` 0), then set it back to `false` (see [decision 13](2026-10-09-search-backend/requirements.md))
 
 ## After the MVP
 

@@ -109,6 +109,28 @@ The first three are the spike's three checks, rewritten with the new rule (overd
 - [ ] `test_misspelled_q_finds_the_right_listing_and_an_unrelated_q_finds_nothing` (FR-04)
 - [ ] `test_sponsored_is_false_on_every_item`
 
+### Task 3b: `tests/unit/test_demo_listings.py` and `tests/integration/test_demo_listings.py`
+- [ ] `test_every_demo_name_starts_with_demo_dash` (`DEMO – `)
+- [ ] `test_demo_slugs_are_fixed_unique_and_start_with_demo` (compared with a literal list, so a changed slug fails)
+- [ ] `test_demo_phones_are_fictional` (each is `+234` then a zero, and none equals a number in the main seed)
+- [ ] `test_demo_data_has_no_user_or_password`
+- [ ] `test_seed_creates_the_demo_listings_with_phones_hours_and_services`
+- [ ] `test_seed_twice_creates_nothing_the_second_time` (same row counts)
+- [ ] `test_seed_does_not_overwrite_a_changed_demo_listing`
+- [ ] `test_seed_adds_a_missing_category_and_creates_no_user`
+- [ ] `test_demo_listings_are_published_and_not_overdue`
+- [ ] `test_demo_listings_are_found_by_search_and_by_a_misspelled_name` (the same check as "After the merge")
+- [ ] `test_cleanup_deletes_exactly_the_demo_slugs_and_their_rows` (phones, hours, services, reports and audit entries
+  go; counted per table)
+- [ ] `test_cleanup_keeps_a_real_listing_whose_name_starts_with_demo_dash` (same prefix, different slug)
+- [ ] `test_cleanup_keeps_the_main_seed_listings_and_all_categories_and_users`
+- [ ] `test_cleanup_twice_is_safe_and_reports_zero_left`
+- [ ] `test_cleanup_is_one_transaction` (if a delete fails, nothing is deleted)
+- [ ] `test_main_does_nothing_without_the_flags` and `test_only_the_exact_value_true_turns_a_flag_on` (`True`, `1`,
+  `yes`, `false`, empty)
+- [ ] `test_when_both_flags_are_true_the_cleanup_runs_and_the_seed_does_not`
+- [ ] `test_a_failure_is_logged_and_does_not_crash_the_start`
+
 ## Review-focus edge cases
 
 - [ ] **UTC server.** Render runs in UTC. A moment of 23:30 UTC on Monday is 00:30 Tuesday in Lagos, and the answer
@@ -173,12 +195,11 @@ checks use the deploy and the live API only.
   or `reporter_key` could not be added.
 - [ ] The new settings did not stop the start: Render generated `REPORTER_KEY_SECRET` from `render.yaml`. If the
   deploy log says `REPORTER_KEY_SECRET is missing`, add the variable in the Render dashboard.
-- [ ] A misspelled search on the live API finds the right listing, for example `<api>/search?q=<misspelled name of a
-  demo listing>`; and `<api>/search?q=<an unrelated word>` returns `{ "items": [], "total": 0 }`. This needs at least
-  one published listing in the production database. **Open:** production may have none today (the seed needs a shell,
-  which the free plan lacks). If so, the owner decides how to get one listing there, and this box stays open until
-  then. Until it is ticked, `<api>/search` returning `{ "items": [], "total": 0 }` only proves the route and the
-  migration, not the misspelling match.
+- [ ] Put the demo listings in production (Task 3b, decision 13): in the Render dashboard set `SEED_DEMO_LISTINGS` to
+  `true`, let the service redeploy, then set it back to `false`.
+- [ ] A misspelled search on the live API finds the right listing, for example `<api>/search?q=Nigt Pharmcy` finds
+  `DEMO – Night Pharmacy`; and `<api>/search?q=<an unrelated word>` returns `{ "items": [], "total": 0 }`.
+- [ ] Both flags are back to `false` in the dashboard. Nothing else was opened: `ipAllowList` is still empty.
 - [ ] If the deploy failed because Render does not allow `CREATE EXTENSION`, Render keeps the previous version running.
   Stop: decision 1 in [requirements.md](requirements.md) must then be redone.
 
