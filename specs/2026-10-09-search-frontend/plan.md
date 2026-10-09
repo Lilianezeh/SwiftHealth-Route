@@ -55,11 +55,14 @@ Task 7).
 - [x] Write the types, `requestJson` (5 s notice, 45 s limit, cancel), `searchListings`, `getMeta` and the query functions.
 - [x] Run lint, typecheck and tests (73 of 73 pass), then commit: `feat(web): search and meta API client with a 45 s limit and a waking-up notice (US-01, FR-04, FR-05)`.
 
-### Task 3: Location (tests first)
-- [ ] Write the tests for `locationStore.ts` and `useLocation.ts` first (a fake `navigator.geolocation`).
-- [ ] Write the store (rounding, remembered refusal, area) and the hook (idle, asking, granted, denied, unavailable,
+### Task 3: Location (tests first) (done, this commit)
+- [x] Write the tests for `locationStore.ts` and `useLocation.ts` first (a fake `navigator.geolocation`); both files failed
+  to load before the code existed.
+- [x] Write the store (rounding, remembered refusal, area) and the hook (idle, asking, granted, denied, unavailable,
   timed out). The browser prompt only runs after a call from a button.
-- [ ] Run lint, typecheck and tests, then commit: `feat(web): location in session storage, asked once (FR-03, NFR-07)`.
+- [x] Mutation check (privacy code): no rounding (5 tests failed), the position in `localStorage` (14), a `console.log` of
+  the position (2), the position also in a cookie (3). Restored.
+- [x] Run lint, typecheck and tests (111 of 111 pass), then commit: `feat(web): location in session storage, asked once (FR-03, NFR-07)`.
 
 ### Task 4: Cards and small parts (tests first)
 - [ ] **Before starting:** the owner shares the Figma Make details (decision 13). List every difference from the UI spec

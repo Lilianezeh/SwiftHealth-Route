@@ -133,7 +133,7 @@ US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-
 - Task 0, UI spec: **done**
 - Task 1, component test tooling: **done**
 - Task 2, types and API layer: **done**
-- Task 3, location: next
+- Task 3, location: **done**
 - Task 4, cards and small parts: next
 - Task 5, the Find page: next
 - Task 6, the results page: next
