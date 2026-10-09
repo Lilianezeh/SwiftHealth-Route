@@ -171,7 +171,7 @@ library.
     - A failure of this step is logged and does not stop the API from starting.
     - Both flags are declared as `false` in `render.yaml`. Found at the deploy: the Render Blueprint is on manual sync,
       so the variable does not exist in the dashboard until the owner adds it by hand (`SEED_DEMO_LISTINGS` was added
-      that way; `REMOVE_DEMO_LISTINGS` is still to add at launch). The owner sets one to `true` in the Render dashboard, lets the
+      that way, and so was `REMOVE_DEMO_LISTINGS`, set to `false`). The owner sets one to `true` in the Render dashboard, lets the
       service redeploy, then sets it back to `false`. Render docs (checked 2026-10-09): saving an environment variable
       normally starts a deploy (the "Save only" option does not); and "the next Blueprint sync overwrites" dashboard
       changes that conflict with the Blueprint, so a flag left on may switch itself back to `false`. The docs do not say

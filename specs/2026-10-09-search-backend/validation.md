@@ -278,11 +278,11 @@ inside the service when it starts (Task 3b, decision 13). Only the exact text `t
   `Demo listings seeded: {'categories': ..., 'listings': 4}. Demo listings left: 4.` (If the demo listings were
   already there it says `'listings': 0` and still `left: 4`. That is fine: running it again adds nothing.)
 - [x] Change `SEED_DEMO_LISTINGS` back to `false` and click **Save and deploy** again. After the deploy, **Logs**
-  show `Demo listings: no flag set, nothing to do.` (The owner reported the flag is back to `false`; the log line was
-  not reported.) Render's docs say the next Blueprint sync overwrites dashboard
+  show `Demo listings: no flag set, nothing to do.` (The owner reported the flag is back to `false` and saw that log
+  line.) Render's docs say the next Blueprint sync overwrites dashboard
   values that differ from `render.yaml`, so the flag may also switch itself back. That is safe.
-- [ ] `REMOVE_DEMO_LISTINGS` is still `false`. It was not reported, and with a manual-sync Blueprint it probably does
-  not exist in the dashboard yet: **add it by hand at launch** (roadmap, phase 14d). Open until then.
+- [x] `REMOVE_DEMO_LISTINGS` is still `false`. The owner confirmed it is in the dashboard (added by hand, the
+  Blueprint is on manual sync) and set to `false`. You only turn it on at launch (roadmap, phase 14d).
 
 **Step 4. Try a misspelled search on the live API.**
 - [x] Open <https://swifthealth-api.onrender.com/docs>. You see a page of blue and green boxes. Find the group named
@@ -309,7 +309,7 @@ inside the service when it starts (Task 3b, decision 13). Only the exact text `t
   threshold result and the two-typo comparison.
 - [x] The `LOG.md` reminders exist: the "thousands of listings" note, phase 9a (call `hash_reporter_key` when a report
   is created), phase 11a (clear `reporter_key` on resolve), the Render collation check and the phase 5B note.
-- [x] The "After the merge" steps above are done by the owner. One box stays open on purpose: `REMOVE_DEMO_LISTINGS`
-  belongs to the launch (roadmap, phase 14d).
+- [x] The "After the merge" steps above are done by the owner, every box ticked. `REMOVE_DEMO_LISTINGS` is in the
+  dashboard and `false`; turning it on belongs to the launch (roadmap, phase 14d).
 - [x] The pull request stayed a draft until the checks above were done, then it was marked ready and merged
   (PR #7, merge commit `cf23c1a`).
