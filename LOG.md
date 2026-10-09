@@ -10,8 +10,10 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   behaviour can change on clusters whose default collation provider is not libc. Local and CI use the image default
   (libc). Confirm that Render's database also uses libc, or reindex the `pg_trgm` indexes after any change.
 - **Search, if listings grow into the thousands (after launch):** `search_service` computes distance and open-now in
-  Python over every published listing that passes the SQL filters. Add a bounding-box pre-filter or move distance into
-  SQL, and re-time `GET /search` (NFR-02: under 1 second).
+  Python over every published listing that passes the SQL filters, and the `q` match scans the published listings
+  with `word_similarity()` (no index). Add a bounding-box pre-filter or move distance into SQL, switch `q` to the `<%`
+  operator with GIN `gin_trgm_ops` indexes on `listings.name` and `services.name`, and re-time `GET /search`
+  (NFR-02: under 1 second).
 - **Phase 9a, reports:** when a report is created, set `reporter_key = hash_reporter_key(phone or client IP)` (built in
   phase 5A). Never store the raw IP.
 - **Phase 11a, resolving a report:** clear `reporter_key` as well as `reporter_phone` (NDPA; api-spec `PATCH` resolve rule).

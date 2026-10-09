@@ -25,7 +25,7 @@ NFR-07, NFR-08) in every commit and test. Tick a box with its commit hash only w
 | `backend/app/schemas/listing.py` | New: `ListingSummary` and `CategorySummary` (reused by phases 6 to 8) |
 | `backend/app/schemas/search.py` | New: `SearchParams` (query parameters) and `SearchResponse` (`items`, `total`) |
 | `backend/app/models/user_report.py` | New nullable column `reporter_key` |
-| `backend/alembic/versions/<new>.py` | `CREATE EXTENSION pg_trgm`, trigram indexes, `reporter_key` column (autogenerate, then edit by hand for the extension) |
+| `backend/alembic/versions/<new>.py` | `CREATE EXTENSION pg_trgm` and the `reporter_key` column (autogenerate, then add the extension by hand) |
 | `backend/app/api/dependencies.py` | New `get_current_moment` dependency (the clock, so tests can replace it) |
 | `backend/app/api/routes/search.py` | `GET /search`: reads the request, calls the service, returns the schema |
 | `backend/tests/conftest.py` | Create the `pg_trgm` extension in the test database; small helpers to build listings, hours and reports |
@@ -81,8 +81,8 @@ so the first `pg_trgm` migration runs on the production version.
 ### Task 2: `search_service` and the repository (roadmap 5b)
 - [ ] Write the failing tests first: `tests/unit/test_search_service.py` (the three spike tests, then the label,
   radius, sort and paging tests) and `tests/integration/test_search_repository.py` (status, `q`, FR-22).
-- [ ] Add `reporter_key` to the `UserReport` model, generate the migration, add the `pg_trgm` extension and the
-  trigram indexes by hand, and run `alembic upgrade head` and `alembic downgrade -1` and `upgrade head` again.
+- [ ] Add `reporter_key` to the `UserReport` model, generate the migration, add the `pg_trgm` extension
+  by hand, and run `alembic upgrade head` and `alembic downgrade -1` and `upgrade head` again.
   Update `conftest.py` so the test database gets the extension.
 - [ ] Write `ListingSummary`, `SearchParams` and `SearchResponse`, `search_repository.py` and `search_service.py`.
 - [ ] Pick the trigram threshold with the misspelling examples (decision 2) and write the number and the examples in

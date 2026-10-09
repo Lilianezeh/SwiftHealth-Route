@@ -33,8 +33,7 @@ library.
 - `GET /search` with the query parameters and the `{ "items", "total" }` response in the api-spec (5c).
 - `backend/tests/unit/test_search_service.py` (the three tests named in CLAUDE.md, adapted: overdue listings are
   labelled, not hidden) and the other tests in [validation.md](validation.md).
-- One Alembic migration: the `pg_trgm` extension, trigram indexes, and the new `user_reports.reporter_key` column
-  (decisions 1 and 4).
+- One Alembic migration: the `pg_trgm` extension and the new `user_reports.reporter_key` column (decisions 1 and 4).
 - The `REPORTER_KEY_SECRET` setting (with the same startup check as `JWT_SECRET`), the `hash_reporter_key` helper in
   `core/security.py`, `render.yaml` and `.env.example` (decisions 4 and 6).
 - PostgreSQL 18 in Docker Compose and backend CI, to match Render (Task 1c, done).
@@ -59,7 +58,9 @@ library.
 
 1. **Misspellings use PostgreSQL `pg_trgm`.** `q` is matched against the listing name, the area and the service names
    with trigram similarity, in SQL with the other filters. The extension is created in an Alembic migration (no new
-   table), with GIN trigram indexes on `listings.name` and `services.name`. Alternatives: Python `difflib` (no
+   table). It calls `word_similarity()` with an explicit threshold, which does a scan of the published listings and
+   uses no index. That is enough for the pilot dataset (NFR-02). A GIN trigram index only helps the `<%` operator, so
+   it is added together with that operator if listings grow into the thousands (see `LOG.md`). Alternatives: Python `difflib` (no
    migration, but loads every candidate listing into Python and does not scale) and plain `ILIKE` (no tolerance, so
    FR-04 would not be met). The extension must also exist in the test database and in the `postgres:16` CI service.
    Task 0 result (checked 2026-10-09):
@@ -84,8 +85,9 @@ library.
    word with any run of words in a longer text, with default threshold 0.6; a GIN index with `gin_trgm_ops` speeds up
    `%`, `<%`, `LIKE` and `ILIKE`. A name such as "Demo 24 Hour Pharmacy" searched with "pharmcy" is a word inside a
    longer text, so `word_similarity` is the likely fit; the tests in Task 2 decide between it and `similarity`. Task 2 writes the tests first, with realistic Enugu examples
-   (misspelled facility names, areas and services, and unrelated words that must find nothing), then picks the lowest
-   threshold that passes them and records the number and the examples here, in "Threshold result" below.
+   (misspelled facility names, areas and services, and unrelated words that must find nothing), then picks a threshold between the
+   unrelated words and the misspellings, with room on both sides, and records the number and the examples here, in
+   "Threshold result" below.
 3. **Python does distance, radius, open-now, sort and paging; SQL does the rest.** The repository returns every
    published listing that matches the SQL filters (status, category, service, area, `q`, 24-hour, flagged exclusion)
    with its hours, phones and category. The service computes distance, applies `radius_km` and `open_now`, sorts, and
@@ -168,4 +170,24 @@ library.
 
 ## Threshold result
 
-Filled in during Task 2 (decision 2): the chosen `pg_trgm` threshold, and the misspelling examples that justify it.
+Chosen in Task 2 (2026-10-09, PostgreSQL 18.6, `pg_trgm` 1.6): **`word_similarity() >= 0.55`**, the constant
+`MATCH_THRESHOLD` in `search_service.py`. `word_similarity(q, text)` was measured on the test database for
+misspellings and for unrelated words (a score of 1.00 is an exact match of the words):
+
+| Kind | Examples and scores |
+| --- | --- |
+| Misspelled, found (0.60 to 0.85) | pharmcy 0.63, Pharmacey 0.70, farmacy 0.63, hospitl 0.75, clinik 0.71, labouratory 0.64, Indepandence 0.60, Abaka Nike 0.64, Coal Cmp 0.63, Uwani Maternty 0.80, diagnostic labratory 0.79, malaria tst 0.75, ultrasond 0.70, antenatl care 0.71 |
+| Exact or a part of a name, found (1.00) | Ogui, dental, Trans Ekulu (for Trans-Ekulu), xray (for the hyphen-free form of X-ray) |
+| Unrelated, not found (0.00 to 0.33) | zzzzzz 0.00, uniform 0.13, enugu 0.17, hotel 0.33, lagos 0.33, banana 0.17, football 0.11, kitchen 0.13, market 0.29 |
+| Look-alike words, the weak spot | generator 0.60 (for "General"), pharaoh 0.50 (for "Pharmacy") |
+
+- **Why 0.55:** it is above every unrelated word we tried (highest 0.33) and below every one- or two-letter
+  misspelling (lowest 0.60). The default `word_similarity_threshold` of 0.6 would lose "Indepandence" (0.60 is
+  borderline). 0.5 would also match "pharaoh" for "Pharmacy".
+- **Known limit:** a different word that looks like a real one, such as "generator" for "General", still matches
+  (0.60). That is the price of tolerating misspellings. It never matches unrelated words.
+- **Hyphens:** the column is also compared without hyphens, because "xray" scores only 0.40 against "X-ray" but 1.00
+  against "Xray", while "trans ekulu" needs the hyphen form to stay as it is for "Trans-Ekulu".
+- **Re-check later:** with real listing names (phase 10) re-run the same measurements and move the number if
+  needed. Tests: `test_q_finds_a_misspelled_*` and `test_q_with_an_unrelated_word_finds_nothing` in
+  `tests/integration/test_search_repository.py`.
