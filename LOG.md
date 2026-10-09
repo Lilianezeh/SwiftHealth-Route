@@ -24,6 +24,12 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `X ray` against `Xray`, the label quirk and typos at the source. It needs a place for the list (an admin-managed list,
   or the distinct names in use), which is a data-model question for the owner: the project has exactly 9 tables, so
   adding a table needs approval. The UI spec (3.4, "Services and fees") changes first.
+- **`npm audit` in the frontend shows 11 findings (2 critical, 7 high, 2 moderate), the same before and after phase 5B-1's
+  test packages (checked 2026-10-09):** the critical ones are `vitest` and `tinypool` (dev-only test runner; the fix is
+  vitest 5, a major upgrade); the high ones are the `eslint-config-next` chain (`braces`, `micromatch`, `fast-glob`; dev-only),
+  `postcss` inside `next`, and `sharp` (libvips CVEs; used by Next's image optimisation, which we do not use yet); `next`
+  itself is moderate (the suggested fix is Next 16, a major upgrade, and `next` is pinned on purpose since React2Shell).
+  None blocks the pilot. Review before launch (roadmap 13c or 14d) and plan the vitest 5 and Next upgrades as their own chores.
 - **npm 11 install-scripts warning (Node 24 chore):** with Node 24 (npm 11.19) `npm install` warns that the install
   scripts of `esbuild`, `sharp` and `unrs-resolver` are "not yet covered by allowScripts" and suggests
   `npm install-scripts approve <package>`. Nothing is blocked today (lint, typecheck, tests and `next build` all pass).

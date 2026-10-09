@@ -124,6 +124,9 @@ the layers `app/` to `components/` to `hooks/` to `lib/api/`. The only additions
     running the tests. Candidates on 2026-10-09: `@testing-library/react` 16.3.3 (accepts React 19), `@testing-library/dom`
     10.4.2, `@testing-library/user-event` 14.6.7, `@testing-library/jest-dom` 7.0.1 (needs Node 22 or newer), `jsdom`
     30.1.2 (needs 22.22.2 or 24.15 or newer; a lower 27.x or 26.1.0 is the fallback if vitest 3.2.x does not run with it).
+    **Installed in Task 1 (2026-10-09), all five at the candidate versions:** `jsdom` 30.1.2, `@testing-library/react`
+    16.3.3, `@testing-library/dom` 10.4.2, `@testing-library/jest-dom` 7.0.1, `@testing-library/user-event` 14.6.7; the
+    component test set-up runs with vitest 3.2.7 on Node 24.21, so no fallback was needed.
     Nothing is shipped to a phone. Fake timers (`vi.useFakeTimers`) test the 5 second notice and the 45 second limit
     without waiting. `vitest.config.ts` also gets: test files `*.test.ts` and `*.test.tsx`, the `@/` alias to `src/`, and
     `esbuild: { jsx: "automatic" }` because `tsconfig.json` keeps `jsx: "preserve"` for Next.js. The versions and the

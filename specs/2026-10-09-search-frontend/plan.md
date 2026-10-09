@@ -40,12 +40,14 @@ Task 7).
   `docs(specs): UI spec for the Find page, the near-you section and the results states (FR-01, FR-03, FR-05)`.
   (The feature folders themselves were committed with the 5B-0 spec.)
 
-### Task 1: Test tooling
-- [ ] Choose the five versions for Node 24 by the rule in decision 10 (check each with `npm view`), install them with
+### Task 1: Test tooling (done, this commit)
+- [x] Choose the five versions for Node 24 by the rule in decision 10 (check each with `npm view`), install them with
   exact versions (`npm install --save-exact --save-dev` inside the frontend container), update `vitest.config.ts` and add `tests/setup.ts`. Write one small component test first (a heading
   renders) and watch it fail without the config, then pass with it.
-- [ ] Add the packages and the reason to [tech-stack.md](../tech-stack.md).
-- [ ] Run lint, typecheck and tests, then commit: `chore(web): component test tooling, exact versions (NFR-10)`.
+  (Before the packages and the config, the new `.tsx` test was not even picked up: the old config only collected
+  `*.test.ts`, so its 4 tests did not run. After the config: 16 of 16 tests pass.)
+- [x] Add the packages and the reason to [tech-stack.md](../tech-stack.md).
+- [x] Run lint, typecheck and tests, then commit: `chore(web): component test tooling, exact versions (NFR-10)`.
 
 ### Task 2: Types and the API layer (tests first, with fake timers)
 - [ ] Write the tests for `request.ts`, `search.ts`, `meta.ts` and `searchQuery.ts` first; they fail.
