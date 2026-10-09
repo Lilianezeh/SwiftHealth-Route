@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.core.logging_filters import install_log_redaction
+
+install_log_redaction()  # the API access log must never keep a visitor's lat and lng (NFR-07)
 
 app = FastAPI(title="SwiftHealth API", version="0.1.0")
 
