@@ -25,6 +25,8 @@ no library and no setting.
   no login. The `services` list was added on 2026-10-09 at the owner's request (decision 8).
 - A log filter that replaces the values of `lat` and `lng` in the access log lines of `uvicorn.access`
   (decision 5), with tests.
+- One shared rule for "the same service", used by `/meta` to merge names and by the `service` filter of `/search` to
+  match them (decision 9), with tests that prove the two cannot drift apart.
 - Spec notes (Task 0): the order of `categories`, where `blood_groups` come from, and the rule that logs never hold
   a position.
 
@@ -78,6 +80,23 @@ no library and no setting.
    already have their own list, `blood_groups`. The rule that removes them is a business rule, so it lives in
    `meta_service` (it compares with `BLOOD_GROUPS`), while the query lives in a new `service_repository`. Empty or blank
    names are skipped. The list grows with the data; with thousands of services we would cache it (not needed for the pilot).
-7. **Frontend consequence.** Because the position is only ever a query parameter of one API call (and never in the
+9. **One rule decides "the same service", for `/meta` and for `/search` (owner's request, 2026-10-09).** The pick-from-list
+   would silently miss listings if the list merged names one way and the filter matched another. The rule: two names are
+   the same service when they are equal after (1) taking the spaces off both ends, (2) joining runs of white space into
+   one space, (3) removing hyphens, and (4) lower-casing. So `X-ray`, `x-ray`, ` X-ray ` and `Xray` are one service; `X ray`
+   (a space) is another, and so is `Ultrasound`. Hyphens are ignored the same way as in the `q` match (`xray` finds `X-ray`).
+   It lives in one module, `core/service_names.py`, with two parts that must agree: `normalise_service_name(name)`
+   (Python, used by `meta_service` to merge) and `normalised_service_name_expression(column)` (the same steps as SQL, used
+   by `search_repository` to match), and a test compares them on many strings in the real database. When the filter text
+   normalises to nothing (`-`, spaces), nothing matches. The old filter, `lower(name) = lower(text)`, missed `Xray`,
+   `X-ray` with spaces around it and `x-ray` typed with a hyphen the other way, so this is a fix to `/search` as well.
+   The `/meta` label shown for a service is the first spelling in plain alphabetical order, cleaned to one space between
+   words and none at the ends. Limits: `Pap-smear` and `Pap smear` stay two services (the hyphen is removed, the space is
+   not); and because capitals sort before small letters, an all-capitals spelling (`X-RAY`) is shown when it exists
+   next to `X-ray`. Showing the spelling used by most listings would fix the second one; it needs a count from the
+   query and is noted in `LOG.md` for the owner to decide.
+   **Found while writing the tests:** the old filter (`lower(name) = lower(text)`) really did miss `Xray` and ` x-ray `
+   when `X-ray` was picked, so this is a fix to `/search`, not only a safeguard.
+10. **Frontend consequence.** Because the position is only ever a query parameter of one API call (and never in the
    address of a page), the access log is the only place on our side where it could land. After this feature it does
    not.

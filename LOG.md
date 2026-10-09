@@ -15,6 +15,10 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `REPORTER_KEY_SECRET`, `SEED_DEMO_LISTINGS` and `REMOVE_DEMO_LISTINGS` in phase 5A (all three now in the dashboard).
   Still to add by hand: any variable a later phase adds (Paystack, Resend, Cloudinary, Termii keys). Keep `render.yaml` as
   the written record, and update the dashboard to match whenever it changes.
+- **`GET /meta` service labels, optional (decide with real data):** when a service is saved in several spellings, `/meta`
+  shows the first in plain alphabetical order, so `X-RAY` would win over `X-ray`. Showing the spelling used by the most
+  listings would look better; it needs `GROUP BY name` with a count in `service_repository`. Not needed while the
+  verifiers write names the same way.
 - **Node.js versions (check the schedule each autumn):** Node 20, which we run (frontend Dockerfile, `netlify.toml`, the
   frontend CI), reached end of life on 2026-04-30 (official [release schedule](https://github.com/nodejs/Release/blob/main/schedule.json),
   checked 2026-10-09). A chore moves the frontend to Node 24 (Active LTS until 2026-10-20, Maintenance LTS until

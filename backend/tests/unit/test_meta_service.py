@@ -27,6 +27,29 @@ def test_names_that_differ_only_in_capitals_count_once_and_the_first_spelling_is
     assert choose_service_names(["x-ray", "X-ray", "X-RAY"], []) == ["X-RAY"]  # plain order: capitals first
 
 
+def test_names_that_differ_only_in_hyphens_count_once() -> None:
+    assert choose_service_names(["Xray", "X-ray", "x-ray", " X-ray ", "XRAY"], []) == ["X-ray"]
+
+
+def test_the_first_spelling_in_plain_order_is_shown() -> None:
+    assert choose_service_names(["Xray", "xray"], []) == ["Xray"]
+    assert choose_service_names(["Xray", "X-ray"], []) == ["X-ray"]  # "-" comes before "r"
+
+
+def test_an_all_capitals_spelling_wins_when_it_is_first_in_plain_order() -> None:
+    # Known quirk of "first spelling in plain order": capitals sort before small letters. On purpose.
+    assert choose_service_names(["X-ray", "X-RAY"], []) == ["X-RAY"]
+
+
+def test_the_label_has_one_space_between_words_and_none_at_the_ends() -> None:
+    assert choose_service_names(["  Malaria   test "], []) == ["Malaria test"]
+    assert choose_service_names(["Pap\tsmear", "Pap smear"], []) == ["Pap smear"]
+
+
+def test_names_that_differ_by_a_space_stay_apart() -> None:
+    assert choose_service_names(["X ray", "Xray"], []) == ["X ray", "Xray"]
+
+
 def test_blood_groups_are_left_out() -> None:
     assert choose_service_names(["Blood bank", "A+", "O-", "AB+"], BLOOD_GROUPS) == ["Blood bank"]
 

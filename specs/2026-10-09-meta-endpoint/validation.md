@@ -46,6 +46,38 @@ How we know the feature is really done. What we build is in [requirements.md](re
 - [ ] `test_the_filter_is_attached_to_uvicorn_access_after_the_app_is_imported`
 - [ ] `test_installing_twice_attaches_the_filter_once`
 
+### Task 2b: one rule for "the same service" (FR-05, US-05; decision 9)
+`tests/unit/test_service_names.py`:
+- [ ] `test_the_rule_trims_joins_spaces_removes_hyphens_and_lowers_case` (table: `X-ray`, `x-ray`, ` X-ray `, `Xray`,
+  `XRAY`, `X-RAY` all become `xray`; `Pap  Smear` becomes `pap smear`; tabs and new lines count as spaces)
+- [ ] `test_names_that_are_different_services_stay_different` (`X ray` against `Xray`, `Ultrasound` against `X-ray`, `A+`)
+- [ ] `test_the_rule_gives_the_same_answer_when_applied_twice`
+- [ ] `test_a_name_of_only_hyphens_and_spaces_becomes_empty`
+- [ ] `test_accented_capitals_are_lowered` (`CONSULTATION GÉNÉRALE`)
+
+`tests/integration/test_service_names_sql.py` (the real database):
+- [ ] `test_the_sql_expression_gives_the_same_result_as_the_python_function` (about 25 strings, including empty, tabs,
+  new lines, many spaces, hyphens at the ends, accented capitals and a non-breaking space)
+
+`tests/integration/test_search_repository.py` and `test_search.py`:
+- [ ] `test_service_filter_finds_every_spelling_of_the_picked_service` (`X-ray` finds listings saved as `x-ray`, ` X-ray `,
+  `Xray`, `X-RAY`)
+- [ ] `test_service_filter_with_a_typed_variant_finds_the_same_listings` (`xray`, `  x-RAY `)
+- [ ] `test_service_filter_still_misses_other_services` (`Ultrasound`, `X ray`)
+- [ ] `test_service_filter_with_only_hyphens_or_spaces_matches_nothing`
+- [ ] `test_service_filter_does_not_return_a_listing_twice` (a listing with two spellings of the same service)
+- [ ] `test_search_service_filter_finds_xray_through_the_route` (HTTP: `/search?service=X-ray`)
+
+`tests/integration/test_meta.py`, `tests/unit/test_meta_service.py`:
+- [ ] `test_meta_merges_xray_and_x_ray` (and ` X-ray `, `x-ray`, `XRAY`): one entry, `X-ray`
+- [ ] `test_names_that_differ_only_in_hyphens_count_once` and `test_the_first_spelling_in_plain_order_is_shown`
+
+No drift (`tests/integration/test_service_filter_matches_meta.py`):
+- [ ] `test_every_meta_choice_finds_exactly_the_listings_whose_service_it_stands_for` (for each spelling in a mixed set,
+  the listings the filter finds are exactly the listings whose service `/meta` merged into that choice)
+- [ ] `test_nothing_outside_core_service_names_compares_service_names` (the old `lower(Service.name)` pattern is gone from
+  `backend/app`, and both users import the shared module)
+
 ## Review-focus edge cases
 
 - [ ] **Layers.** The route has no query and no rule; `meta_service` is the only caller of `list_all`.

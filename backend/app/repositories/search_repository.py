@@ -7,10 +7,11 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import ColumnElement, and_, exists, func, or_
+from sqlalchemy import ColumnElement, and_, exists, false, func, or_
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.service_names import normalise_service_name, normalised_service_name_expression
 from app.models import Category, Listing, OpeningHours, PhoneNumber, Service, UserReport
 from app.models.base import ListingStatus, ReportReason, ReportStatus
 
@@ -100,9 +101,17 @@ async def find_candidates(
     if is_24_hours:
         conditions.append(col(Listing.is_24_hours).is_(True))
     if service_name is not None:
-        conditions.append(
-            exists().where(Service.listing_id == Listing.id, func.lower(Service.name) == service_name.lower())
-        )
+        # The same-service rule of GET /meta (core/service_names.py): case, end spaces, hyphens ignored.
+        wanted_service = normalise_service_name(service_name)
+        if wanted_service:
+            conditions.append(
+                exists().where(
+                    Service.listing_id == Listing.id,
+                    normalised_service_name_expression(col(Service.name)) == wanted_service,
+                )
+            )
+        else:
+            conditions.append(false())  # only hyphens and spaces: nothing can be that service
     if search_text is not None:
         conditions.append(query_matches(search_text, search_words, match_threshold))
 

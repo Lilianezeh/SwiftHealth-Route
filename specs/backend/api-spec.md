@@ -132,9 +132,13 @@ Lists for filters and forms.
 ```
 `areas` keep the order of the fixed list in `core/config.py`. `categories` are all rows of the categories table, sorted by
 `id`. `services` are the distinct service names of **published** listings, sorted alphabetically without regard to case, one
-entry per name (names that differ only in capitals count as one; the first spelling in alphabetical order is kept), and
-without the blood groups (blood groups are stored as service rows, see `blood_groups`). They are the choices for the `service`
-filter of `GET /search`, which matches a name without regard to case. `blood_groups` is a fixed list in `core/config.py`.
+entry per service, and without the blood groups (blood groups are stored as service rows, see `blood_groups`). **Same service
+rule:** two names are the same service when they are equal after trimming spaces at both ends, joining runs of spaces into
+one, removing hyphens and lower-casing (`X-ray`, `x-ray`, ` X-ray ` and `Xray` are one service; `X ray` is another). The label
+shown is the first spelling in plain alphabetical order, with no spaces at the ends and one space between words (`X-ray` before
+`Xray`; capitals sort before small letters, so an all-capitals spelling such as `X-RAY` would win). They are the choices for the `service` filter of
+`GET /search`, which uses the same rule, so picking a choice finds every listing whose service is saved in any of those
+spellings. `blood_groups` is a fixed list in `core/config.py`.
 `report_reasons` are the report reasons in the order shown. No login.
 
 ### GET /search — the hard part
@@ -146,7 +150,7 @@ FR-04 to FR-08, US-01, US-05. Open-now, nearest-first search over trusted listin
 | --- | --- | --- | --- |
 | `q` | string | – | Matches name, area, service names; tolerant of small misspellings (PostgreSQL `pg_trgm` similarity). Max 100 characters. |
 | `category` | string | – | Category slug |
-| `service` | string | – | Service name, e.g. `X-ray` |
+| `service` | string | – | Service name, e.g. `X-ray`. Matches a listing's service by the same-service rule of `GET /meta` (case, spaces at the ends and hyphens ignored: `X-ray` also finds `x-ray` and `Xray`). Typing a name is the job of `q`; this filter is for the choices in `/meta`. |
 | `area` | string | – | One of `/meta` areas; any other value is a 422. An unknown `category` or `service` is not an error: it returns an empty list. |
 | `open_now` | bool | `false` | Only places open at the current Africa/Lagos time |
 | `is_24_hours` | bool | `false` | Only confirmed 24-hour places |

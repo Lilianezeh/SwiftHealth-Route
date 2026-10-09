@@ -60,6 +60,64 @@ async def test_service_filter_finds_only_listings_that_offer_it(session: AsyncSe
     assert await find_names(session, service_name="MRI") == []
 
 
+SPELLINGS_OF_XRAY = ("X-ray", "x-ray", " X-ray ", "Xray", "X-RAY", "xray")
+
+
+async def add_listings_with_xray_spellings(session: AsyncSession) -> list[str]:
+    """One listing per spelling, plus listings that must never match an X-ray search."""
+    names = []
+    for number, spelling in enumerate(SPELLINGS_OF_XRAY, start=1):
+        names.append(f"Scan Place {number}")
+        await add_listing(session, names[-1], category_slug="laboratory", service_names=(spelling,))
+    await add_listing(session, "Echo Place", category_slug="laboratory", service_names=("Ultrasound",))
+    await add_listing(session, "Spaced Place", category_slug="laboratory", service_names=("X ray",))
+    await add_listing(session, "Bare Place", category_slug="laboratory")
+    await session.commit()
+    return sorted(names)
+
+
+async def test_service_filter_finds_every_spelling_of_the_picked_service(session: AsyncSession) -> None:
+    # FR-05, US-05: picking "X-ray" from the /meta list must not miss listings saved as "Xray" and so on.
+    expected = await add_listings_with_xray_spellings(session)
+    assert await find_names(session, service_name="X-ray") == expected
+
+
+@pytest.mark.parametrize("typed", ["xray", "XRAY", "  x-RAY ", "x-ray", "Xray", "X--ray"])
+async def test_service_filter_with_a_typed_variant_finds_the_same_listings(
+    session: AsyncSession, typed: str
+) -> None:
+    expected = await add_listings_with_xray_spellings(session)
+    assert await find_names(session, service_name=typed) == expected
+
+
+@pytest.mark.parametrize("picked", ["Ultrasound", "X ray", "Blood test", "X-rays"])
+async def test_service_filter_still_misses_other_services(session: AsyncSession, picked: str) -> None:
+    expected = await add_listings_with_xray_spellings(session)
+    found = await find_names(session, service_name=picked)
+    assert not set(found) & set(expected)  # none of the X-ray listings
+
+
+@pytest.mark.parametrize("typed", ["-", "---", " - ", "\t"])
+async def test_service_filter_with_only_hyphens_or_spaces_matches_nothing(
+    session: AsyncSession, typed: str
+) -> None:
+    await add_listings_with_xray_spellings(session)
+    await add_listing(session, "Odd Place", service_names=("-", "  "))
+    await session.commit()
+    assert await find_names(session, service_name=typed) == []
+
+
+async def test_service_filter_does_not_return_a_listing_twice(session: AsyncSession) -> None:
+    await add_listing(session, "Double Place", service_names=("X-ray", "Xray", "x-ray"))
+    await session.commit()
+    candidates = await search_repository.find_candidates(
+        session, search_text=None, search_words=[], category_slug=None, service_name="X-ray", area=None,
+        is_24_hours=False, reports_since=NOW - REPORT_WINDOW, reports_to_exclude=REPORTS_TO_EXCLUDE,
+        match_threshold=MATCH_THRESHOLD,
+    )
+    assert [candidate.listing.name for candidate in candidates] == ["Double Place"]
+
+
 async def test_area_filter(session: AsyncSession) -> None:
     await add_listing(session, "Ogui Place", area="Ogui")
     await add_listing(session, "Uwani Place", area="Uwani")

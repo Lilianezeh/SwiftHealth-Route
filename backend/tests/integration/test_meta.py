@@ -9,6 +9,7 @@ from sqlalchemy import event
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
+from app.core.service_names import normalise_service_name
 from app.main import app
 from app.models.base import ListingStatus
 from app.repositories import category_repository
@@ -113,6 +114,43 @@ async def test_meta_services_count_names_that_differ_only_in_capitals_once(
     await add_listing(session, "Second Scan Centre", service_names=("X-ray", "X-RAY"))
     await session.commit()
     assert (await get_meta(client))["services"] == ["X-RAY"]  # plain string order puts capitals first
+
+
+@pytest.mark.parametrize(
+    "spellings",
+    [
+        ("Xray", "X-ray"),
+        ("Xray", "X-ray", " X-ray ", "x-ray", "XRAY"),
+        (" X-ray ", "x-ray"),
+        ("xray", "x-RAY"),
+    ],
+)
+async def test_meta_merges_xray_and_x_ray(
+    client: AsyncClient, session: AsyncSession, spellings: tuple[str, ...]
+) -> None:
+    for number, spelling in enumerate(spellings, start=1):
+        await add_listing(session, f"Scan Place {number}", service_names=(spelling,))
+    await session.commit()
+    services = (await get_meta(client))["services"]
+    assert len(services) == 1
+    assert normalise_service_name(services[0]) == "xray"
+
+
+async def test_meta_shows_the_first_spelling_in_plain_order_for_a_merged_service(
+    client: AsyncClient, session: AsyncSession
+) -> None:
+    await add_listing(session, "Scan Place 1", service_names=("Xray", "xray"))
+    await add_listing(session, "Scan Place 2", service_names=("X-ray",))
+    await session.commit()
+    assert (await get_meta(client))["services"] == ["X-ray"]  # "-" sorts before "r" in plain order
+
+
+async def test_meta_keeps_services_that_differ_by_a_space_apart(
+    client: AsyncClient, session: AsyncSession
+) -> None:
+    await add_listing(session, "Scan Place", service_names=("Xray", "X ray", "Pap smear", "Pap-smear"))
+    await session.commit()
+    assert (await get_meta(client))["services"] == ["Pap smear", "Pap-smear", "X ray", "Xray"]
 
 
 async def test_meta_services_only_come_from_published_listings(
