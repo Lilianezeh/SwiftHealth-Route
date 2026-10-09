@@ -4,6 +4,6 @@ See specs/backend/api-spec.md section 3.
 """
 from fastapi import APIRouter
 
-router = APIRouter(tags=["public"])
+router = APIRouter(tags=["Public"])
 
 # TODO: GET /meta and POST /facility-submissions

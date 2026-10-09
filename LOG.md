@@ -90,8 +90,6 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   11.7 s and showed "not reachable" on a normal page; the next visit showed "connected".
 - **Tomorrow:** Phase 5, search (5a: `hours.py`, open now in Africa/Lagos time).
 
-- To do (after walking skeleton): capitalize router tags in /docs ("auth" → "Auth", "health" → "Health"). Paths unchanged. Update api-spec.md if it names tags. Own small branch and draft PR.
-
 - To do (after building): rename project to "SwiftHealth Route" and update the tagline (currently "Emergency, Hospital & Pharmacy Finder"). Before renaming, check that the name is free on Play Store and App Store, plus the domain, social handles and CAC business name. Then update app title, README, specs, pitch decks, project docs and the Netlify/Render names.
 
 - To do: lint-on-edit hook uses the wrong ESLint for frontend files (no node_modules on host, so npx fetches ESLint 10, which can't read our config). Real lint (npm run lint in Docker, plus Frontend CI) still works. Fix later, probably by running ESLint inside the frontend container.

@@ -10,7 +10,7 @@ from app.api.dependencies import get_current_moment, get_session
 from app.schemas.search import SearchParams, SearchResponse
 from app.services import search_service
 
-router = APIRouter(prefix="/search", tags=["search"])
+router = APIRouter(prefix="/search", tags=["Search"])
 
 
 @router.get("", response_model=SearchResponse)

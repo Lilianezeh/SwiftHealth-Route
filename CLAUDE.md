@@ -108,6 +108,8 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 - Use the patterns from the FastAPI docs at fastapi.tiangolo.com/learn (Tutorial - User Guide, plus Concurrency and
   async/await and Async Tests for async code). If something needs a pattern from elsewhere, ask me first and explain it.
 - File names say their layer: `listing_service.py`, `listing_repository.py`, `paystack.py`, `listing.py` (schema/model).
+- Router tags start with a capital letter (`tags=["Search"]`, `["Auth"]`, `["Health"]`), so `/docs` groups read
+  consistently. Endpoint paths stay lower case and are never changed for a tag.
 - TypeScript: no `any`; server components by default, "use client" only when needed; API calls only via
   frontend/src/lib/api/. Component files in PascalCase (ListingCard.tsx).
 - UI: mobile-first, large tap targets (min 48px), text 16px+, works on slow 3G.

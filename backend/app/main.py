@@ -18,6 +18,6 @@ app.add_middleware(
 app.include_router(api_router)
 
 
-@app.get("/health", tags=["health"])
+@app.get("/health", tags=["Health"])
 def health() -> dict:
     return {"status": "ok"}
