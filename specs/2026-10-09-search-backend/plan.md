@@ -63,6 +63,17 @@ NFR-07, NFR-08) in every commit and test. Tick a box with its commit hash only w
 - [ ] Run the security mutation check in [validation.md](validation.md), restore the code, run `pytest -q` and
   `ruff check .`, then commit: `feat(security): keyed hash for report counting, separate secret (FR-22, NFR-07)`.
 
+### Task 1c: PostgreSQL 18 in Docker Compose and backend CI (decision of 2026-10-09)
+Added after Task 0 found that the Render database runs PostgreSQL 18 while compose and CI ran 16. Done before Task 2
+so the first `pg_trgm` migration runs on the production version.
+- [x] `docker-compose.yml`: `postgres:18`, and the volume at `/var/lib/postgresql` (the 18 image changed its data path).
+- [x] `.github/workflows/backend.yml`: the `postgres:18` service. [tech-stack.md](../tech-stack.md): decision line added.
+- [x] `LOG.md`: the 16 against 18 decision is replaced by a reminder to confirm Render's collation provider.
+- [x] Delete the old local volume, start the stack, check `SHOW server_version` (18.6), `alembic upgrade head`, re-seed,
+  `pytest -q` (242 passed) and `ruff check .`.
+- [x] Commit: `chore(db): run PostgreSQL 18 locally and in CI, like Render (NFR-05)`. The CI result is checked on the
+  pull request.
+
 ### Task 2: `search_service` and the repository (roadmap 5b)
 - [ ] Write the failing tests first: `tests/unit/test_search_service.py` (the three spike tests, then the label,
   radius, sort and paging tests) and `tests/integration/test_search_repository.py` (status, `q`, FR-22).

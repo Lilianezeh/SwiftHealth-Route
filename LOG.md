@@ -6,26 +6,9 @@ One entry per day. Keep it short and honest.
 
 Open reminders. Each says when it is due. Remove a line once it is done.
 
-- **Decision for the owner: PostgreSQL 16 locally and in CI, 18 on Render.** `docker-compose.yml` and `backend.yml` use
-  `postgres:16`; the Render database runs 18 (read from the dashboard on 2026-10-09). Tests therefore do not run on the
-  production version, which goes against the stack decision "tests run on PostgreSQL, never SQLite, so enums, NUMERIC and
-  time zones behave as in production". Risks of the mismatch:
-  - A query, plan or index that works on 16 could behave differently on 18. The PostgreSQL 18 release notes list few
-    application-visible changes: time-zone abbreviations now prefer the session's, MD5 passwords deprecated (warning),
-    and full-text search and `pg_trgm` may change behaviour only on clusters that use a non-libc collation provider
-    (ours default to libc, but the Render setting is unchecked). Low risk for our SQL, but 5A is the first feature that
-    leans on `pg_trgm`, so this is the first place a difference could hide.
-  - The reverse also holds: we could use a feature that exists only in 18 and the 16 tests would fail for the wrong
-    reason (not a danger, only noise).
-  - Moving local and CI to 18 is not free. From the Docker Hub `postgres` page: in 18 the image's volume and `PGDATA`
-    changed (`VOLUME /var/lib/postgresql`, `PGDATA=/var/lib/postgresql/18/docker`), so `volumes: [pgdata:/var/lib/postgresql/data]`
-    in `docker-compose.yml` must change too. An existing 16 volume cannot be opened by 18 (the release notes require
-    dump/restore, `pg_upgrade` or logical replication); locally that means deleting the volume and re-seeding, which is
-    fine for demo data only. `initdb` in 18 turns data checksums on by default.
-  - Recommendation: move both to `postgres:18` in one small chore change **before Task 2 of phase 5A** (the first
-    migration with `pg_trgm`), so the migration and its tests first run on the production version. Change
-    `docker-compose.yml` (image and volume path) and `.github/workflows/backend.yml` (service image), reset the local
-    volume, re-seed, run the tests. Update the stack line in `specs/tech-stack.md`. Not changed yet: waiting for your answer.
+- **Render collation provider (before the production `pg_trgm` check):** PostgreSQL 18 release notes say `pg_trgm`
+  behaviour can change on clusters whose default collation provider is not libc. Local and CI use the image default
+  (libc). Confirm that Render's database also uses libc, or reindex the `pg_trgm` indexes after any change.
 - **Search, if listings grow into the thousands (after launch):** `search_service` computes distance and open-now in
   Python over every published listing that passes the SQL filters. Add a bounding-box pre-filter or move distance into
   SQL, and re-time `GET /search` (NFR-02: under 1 second).

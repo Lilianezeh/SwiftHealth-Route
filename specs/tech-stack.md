@@ -49,7 +49,11 @@ One line each, with the reason.
   in production.
 - **`httpx` stays, and CI is split into `backend.yml` and `frontend.yml`.** Tests use `httpx.AsyncClient` instead
   of Starlette's `TestClient`, so `httpx2` is not needed. Each workflow runs only when its own folder or workflow
-  file changes, and the backend workflow has a `postgres:16` service for the tests.
+  file changes, and the backend workflow has a `postgres:18` service for the tests.
+- **PostgreSQL 18 everywhere: Docker Compose, backend CI and Render.** The Render database runs 18 (read from the
+  dashboard on 2026-10-09), so the tests run on the production version. The image changed its data path in 18, so the
+  compose volume is mounted at `/var/lib/postgresql`. Moved from 16 in the search feature
+  ([plan](2026-10-09-search-backend/plan.md), Task 1c).
 - **The backend is async wherever code waits on I/O.** Database access (async engine and `AsyncSession`, all
   repositories), integrations (`httpx.AsyncClient`) and the routes and services that use them are `async def`.
   Pure CPU code stays sync: `security.py` (JWT, HMAC, codes) and the rate limiter. Password hashing is called
