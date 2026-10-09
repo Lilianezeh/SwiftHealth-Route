@@ -72,6 +72,8 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 - Seed: `docker compose exec backend python -m seed.seed`
 - Backend tests/lint: `docker compose exec backend pytest -q` and `docker compose exec backend ruff check .`
 - Frontend: `cd frontend && npm run lint && npm run typecheck && npm test`
+- Push guard (once per clone): `git config core.hooksPath scripts/hooks`. The hook `scripts/hooks/pre-push` refuses any
+  push to `main`; test it with `bash scripts/hooks/test-pre-push.sh`.
 
 ## Specs (source of truth)
 - Requirements: specs/prd.md (US/FR/NFR IDs) · API: specs/backend/api-spec.md · UI: specs/frontend/ui-spec.md.
@@ -86,6 +88,8 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 3. Keep changes small: one requirement per change. Do not refactor unrelated code.
 4. After changes, run the relevant tests and lint, and report the results honestly.
 5. Finish by summarising what changed and anything I should be able to explain.
+6. Run `git branch --show-current` before every commit and every push, and say the branch name. Never commit or push
+   on `main`: work on a branch and open a pull request. If the branch is `main`, stop and create one first.
 
 ## Working efficiently
 - Keep replies short: summaries of 10 lines or fewer, no full file dumps unless I ask.
@@ -122,6 +126,8 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
   strings like "1500.00". Convert to kobo (integer) only when calling Paystack: `int(amount * 100)`.
 
 ## Never
+- Never push to `main` (and never commit on it). Changes reach `main` only through a pull request that the owner
+  merges. Check the branch with `git branch --show-current` before every commit and push (see "How to work").
 - Never commit or print secrets; never edit .env. Use test keys only.
 - Never invent library APIs, Paystack/Termii/Cloudinary fields or legal claims. If unsure, say so and
   point to the official docs.

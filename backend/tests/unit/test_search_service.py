@@ -159,12 +159,10 @@ async def test_radius_excludes_listings_farther_away(session: AsyncSession) -> N
     await session.commit()
     inside_default = SearchParams(lat=MY_LATITUDE, lng=MY_LONGITUDE)  # radius_km defaults to 10
     wide = SearchParams(lat=MY_LATITUDE, lng=MY_LONGITUDE, radius_km=50)
-    assert [i.name for i in (await search_listings(session, inside_default, tuesday_in_lagos(10))).items] == [
-        "Close Pharmacy"
-    ]
-    assert [i.name for i in (await search_listings(session, wide, tuesday_in_lagos(10))).items] == [
-        "Close Pharmacy", "Far Pharmacy"
-    ]
+    default_radius_results = await search_listings(session, inside_default, tuesday_in_lagos(10))
+    wide_radius_results = await search_listings(session, wide, tuesday_in_lagos(10))
+    assert [listing.name for listing in default_radius_results.items] == ["Close Pharmacy"]
+    assert [listing.name for listing in wide_radius_results.items] == ["Close Pharmacy", "Far Pharmacy"]
 
 
 async def test_radius_ignored_without_location(session: AsyncSession) -> None:

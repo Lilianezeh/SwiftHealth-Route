@@ -118,7 +118,11 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   lowering the threshold added false matches ("banana" 0 to 4 listings), matching each word alone lost queries that
   worked, matching the whole query or every word fixed it with no false matches. One commit went in with a lint error
   and was amended before pushing. Claude edited files with `sed` and a Python script twice, against the rule to use
-  the Edit tool; corrected after it was pointed out.
+  the Edit tool; corrected after it was pointed out. Later the same day a small commit (the `search_text` rename,
+  `ef9c010`) was pushed straight to `main` instead of a branch, because the working copy had been switched to `main`
+  before the commit and the branch was not checked. The change was tested and CI stayed green, so it was left.
+  Fixed for the future by a `pre-push` hook that refuses pushes to `main` (`scripts/hooks/pre-push`, install with
+  `git config core.hooksPath scripts/hooks`) and a rule to check `git branch --show-current` before every commit and push.
 - **Still open:** typos in very short words (3 to 5 letters) are not matched, see "To do later". The owner does the
   Render steps after the merge (`validation.md`, "After the merge").
 - **Learned:** [write this in your own words, e.g. what a trigram is and why a score of 0.50 is not enough]

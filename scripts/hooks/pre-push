@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Git pre-push hook: refuses any push that updates or deletes `main` on the remote.
+# Work happens on a branch, and main changes only through a pull request on GitHub (CLAUDE.md, "Never").
+# Install once per clone:  git config core.hooksPath scripts/hooks
+# Tested by scripts/hooks/test-pre-push.sh. Git gives this script, on standard input, one line per ref being
+# pushed: <local ref> <local sha> <remote ref> <remote sha> (see "githooks" in the Git documentation).
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    {
+      echo "PUSH REFUSED: this push would change 'main' on the remote."
+      echo "  Never push to main. Work on a branch, push the branch, and open a pull request on GitHub."
+      echo "  Check where you are first:   git branch --show-current"
+      echo "  Start a branch (if you committed on main by mistake): git switch -c chore/short-name"
+      echo "  Then push it:                git push -u origin chore/short-name"
+    } >&2
+    exit 1
+  fi
+done
+
+exit 0
