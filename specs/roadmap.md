@@ -112,7 +112,7 @@ FR-03, FR-05, NFR-07. A small backend feature, so that 5B-1 can be frontend-only
 - `GET /meta` also returns `services` (owner's decision, 2026-10-09): the distinct names of published listings, without
   the blood groups, for the results page filter.
 
-#### Chore between 5B-0 and 5B-1: Node.js 24 LTS for the frontend. In progress (branch `chore/node-24-lts`, draft pull request)
+#### Chore between 5B-0 and 5B-1: Node.js 24 LTS for the frontend. Done (merged, PR #12)
 Node 20 reached end of life on 2026-04-30 (official [release schedule](https://github.com/nodejs/Release/blob/main/schedule.json),
 checked 2026-10-09). On that date Node 24 is the Active LTS (until 2026-10-20, then Maintenance LTS until 2028-04-30);
 Node 22 is Maintenance LTS until 2027-04-30; Node 26 becomes LTS on 2026-10-28. Next.js 15.5.27 accepts any Node 20 or
@@ -123,6 +123,11 @@ newer (`engines`), and Netlify takes a major version in `NODE_VERSION`. So one s
 deploy preview must build with it. It is also the first frontend-only pull request, so it doubles as the CI path check:
 `Frontend CI` runs and `Backend CI` does not (`gh pr checks` is written in the pull request). Move to Node 26 LTS in
 2027, before Node 24 ends on 2028-04-30 (see `LOG.md`).
+
+- Result of the CI path check (pull request #12): `Frontend CI` ran and passed, `Backend CI` did not start. Lint,
+  typecheck, 12 tests and `next build` passed on Node 24 (every page 103 kB First Load JS).
+- After the merge the owner reported (2026-10-09): Netlify's deploy log shows Node 24.x, no `NODE_VERSION` override is
+  set in the Netlify dashboard, and the live site still says "connected".
 
 #### Phase 5B-1: Find page and results page. Next (spec written, starts after 5B-0 and the Node chore are merged)
 US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-10-09-search-frontend/requirements.md),
