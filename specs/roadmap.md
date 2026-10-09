@@ -92,12 +92,53 @@ Tasks:
 The spike `spikes/open_now_nearest.py` still hides overdue listings; the real search labels them (FR-08), and
 `backend/tests/unit/test_search_service.py` checks that.
 
-### Phase 5B: Search frontend. Next
-US-01, US-05. Needs 5A merged.
-- 5d: Find page and location permission (FR-01, FR-03). The page should offer category buttons and nearby
-  suggestions (see "To do later" in [LOG.md](../LOG.md))
-- 5e: results page with filters (FR-04, FR-05, FR-06)
-- 5f: map view (FR-07, Should)
+### Phase 5B: Search frontend. In progress
+US-01, US-05. Needs 5A merged. It was bigger than a day and needed `GET /meta`, so it is split in three. The phase
+numbers after it stay the same.
+
+#### Phase 5B-0: GET /meta and no position in the logs. In progress (all tasks done; draft pull request waits for the owner's merge and Render checks)
+FR-03, FR-05, NFR-07. A small backend feature, so that 5B-1 can be frontend-only. Feature folder:
+[requirements](2026-10-09-meta-endpoint/requirements.md), [plan](2026-10-09-meta-endpoint/plan.md),
+[validation](2026-10-09-meta-endpoint/validation.md).
+- Task 0, spec: **done**
+- Task 1, `GET /meta` (tests first): **done**
+- Task 2, `lat` and `lng` redacted in the API access log (tests first): **done**
+- Task 2b, one rule for "the same service" in `/meta` and the `service` filter of `/search` (found and fixed a miss:
+  `X-ray` did not find `Xray`): **done**
+- Task 3, wrap-up and the owner's after-merge steps (live `/meta`, a live search with a location, and the Render Logs
+  check for `lat=redacted`): **done**
+- `GET /meta` also returns `services` (owner's decision, 2026-10-09): the distinct names of published listings, without
+  the blood groups, for the results page filter.
+
+#### Chore between 5B-0 and 5B-1: Node.js 24 LTS for the frontend. Next
+Node 20 reached end of life on 2026-04-30 (official [release schedule](https://github.com/nodejs/Release/blob/main/schedule.json),
+checked 2026-10-09). On that date Node 24 is the Active LTS (until 2026-10-20, then Maintenance LTS until 2028-04-30);
+Node 22 is Maintenance LTS until 2027-04-30; Node 26 becomes LTS on 2026-10-28. Next.js 15.5.27 accepts any Node 20 or
+newer (`engines`), and Netlify takes a major version in `NODE_VERSION`. So one small frontend-only pull request,
+`chore/node-24-lts`: `frontend/Dockerfile` (`node:24-alpine`), `netlify.toml` (`NODE_VERSION = "24"`),
+`.github/workflows/frontend.yml` (`node-version: "24"`), `@types/node` to the Node 24 line, and a line in
+[tech-stack.md](tech-stack.md). Lint, typecheck, tests and `npm run build` must pass on Node 24, and the Netlify
+deploy preview must build with it. It is also the first frontend-only pull request, so it doubles as the CI path check:
+`Frontend CI` runs and `Backend CI` does not (`gh pr checks` is written in the pull request). Move to Node 26 LTS in
+2027, before Node 24 ends on 2028-04-30 (see `LOG.md`).
+
+#### Phase 5B-1: Find page and results page. Next (spec written, starts after 5B-0 and the Node chore are merged)
+US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-10-09-search-frontend/requirements.md),
+[plan](2026-10-09-search-frontend/plan.md), [validation](2026-10-09-search-frontend/validation.md). Frontend-only:
+`Backend CI` must not run on it either.
+- 5d: Find page and location permission (FR-01, FR-03), category buttons and nearby suggestions
+- 5e: results page with filters (FR-04, FR-05, FR-06), loaded in the browser with a 45 s limit
+- Task 0, UI spec: next
+- Task 1, component test tooling: next
+- Task 2, types and API layer: next
+- Task 3, location: next
+- Task 4, cards and small parts: next
+- Task 5, the Find page: next
+- Task 6, the results page: next
+- Task 7, wrap-up, smoke test on a phone, draft pull request: next
+
+#### Phase 5B-2: Map view. Next
+FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Needs 5B-1 merged.
 
 ### Phase 6: Listing page. Next
 US-02, US-03, US-06, US-07.
@@ -125,7 +166,10 @@ US-08.
 ### Phase 10: Staff screens and "List your facility". Next
 US-10.
 - 10a: staff login screen (FR-30, FR-42)
-- 10b: admin listings list and listing editor (FR-31)
+- 10b: admin listings list and listing editor (FR-31). Services are **picked from a controlled list of service names**,
+  not typed, so "X ray" and "Xray" cannot both exist and the `/meta` label is always the same spelling (owner's
+  decision, 2026-10-09; see "To do later" in [LOG.md](../LOG.md)). Where the list lives (a new table needs the owner's
+  approval, since the project has exactly 9 tables) and the UI spec 3.4 are decided first.
 - 10c: verification log and status moves: submit, publish, hide, reopen (FR-32)
 - 10d: "List your facility" form and submissions arriving as drafts (FR-37)
 - 10e: admin manages staff accounts and roles (FR-41)

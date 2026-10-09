@@ -1,4 +1,4 @@
-from sqlmodel import select
+from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Category
@@ -6,6 +6,11 @@ from app.models import Category
 
 async def get_by_slug(session: AsyncSession, slug: str) -> Category | None:
     return (await session.exec(select(Category).where(Category.slug == slug))).first()
+
+
+async def list_all(session: AsyncSession) -> list[Category]:
+    """Every category, in the order they were created (by id)."""
+    return list((await session.exec(select(Category).order_by(col(Category.id)))).all())
 
 
 async def create(

@@ -15,6 +15,33 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `REPORTER_KEY_SECRET`, `SEED_DEMO_LISTINGS` and `REMOVE_DEMO_LISTINGS` in phase 5A (all three now in the dashboard).
   Still to add by hand: any variable a later phase adds (Paystack, Resend, Cloudinary, Termii keys). Keep `render.yaml` as
   the written record, and update the dashboard to match whenever it changes.
+- **Phase 10b, a controlled list of service names (the real fix for service spellings):** services are free text today,
+  so the same service can be saved as `X-ray`, `x-ray`, `Xray` or `X ray`. `GET /meta` and the `service` filter of
+  `/search` already treat the first three as one service (phase 5B-0, `core/service_names.py`), and `/meta` shows the
+  first spelling in plain alphabetical order (an all-capitals `X-RAY` would win over `X-ray`). `X ray` (with a space) is
+  still a different service. The keeper decision (owner, 2026-10-09): keep that simple label rule, and in the phase 10
+  listing editor let staff **pick** services from a controlled list of names instead of typing them. That removes
+  `X ray` against `Xray`, the label quirk and typos at the source. It needs a place for the list (an admin-managed list,
+  or the distinct names in use), which is a data-model question for the owner: the project has exactly 9 tables, so
+  adding a table needs approval. The UI spec (3.4, "Services and fees") changes first.
+- **Node.js versions (check the schedule each autumn):** Node 20, which we run (frontend Dockerfile, `netlify.toml`, the
+  frontend CI), reached end of life on 2026-04-30 (official [release schedule](https://github.com/nodejs/Release/blob/main/schedule.json),
+  checked 2026-10-09). A chore moves the frontend to Node 24 (Active LTS until 2026-10-20, Maintenance LTS until
+  2028-04-30). Node 22 ends 2027-04-30. Node 26 becomes LTS on 2026-10-28: move to it in 2027, well before 2028-04-30.
+  After the chore, check in Netlify (Project configuration, Environment variables and Dependency management) that no
+  old `NODE_VERSION` value overrides `netlify.toml`.
+- **After the Render upgrade (phase 14d), results without JavaScript:** phase 5B-1 loads search results in the browser
+  (45 s limit, because the free API takes up to a minute to wake and Netlify gives up on a server page after about
+  30 s). That needs JavaScript, and Opera Mini's extreme mode, common in Nigeria, runs very little of it. NFR-04 names
+  Opera Mini, while the PRD and the UI spec say nothing about no-JavaScript. When the API no longer sleeps, revisit
+  server rendering for `/search` (the Find page search box is already a plain form, so it reaches `/search`).
+- **Before the Render upgrade (phase 14d), position in Render's request logs:** the documentation says a Pro
+  workspace or higher also keeps HTTP request logs with the "Requested URL", with no setting to redact it, and it does
+  not say whether the query string is included ([Render logging](https://render.com/docs/logging)). Our own access log
+  redacts `lat` and `lng` (phase 5B-0), but this one is Render's. Check what it holds before upgrading. If it holds the
+  position, send it another way (for example in a POST body) and update the api-spec.
+- **Phase 14d, release criteria:** the PRD asks for all Must requirements to pass on a low-cost Android phone on 3G.
+  Phase 5B-1 gets an early check on the owner's own Android phone (deploy preview); the full check stays here.
 - **Phase 5B, the Find page (5d):** offer category buttons (Hospitals, Clinics, Pharmacies, Maternity, Labs, as in
   FR-01) and nearby suggestions (for example the closest open pharmacy and the closest open 24-hour facility, from
   `GET /search` with the visitor's location), so a visitor can start without typing. Typing is hard on a phone and
@@ -125,6 +152,10 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `git config core.hooksPath scripts/hooks`) and a rule to check `git branch --show-current` before every commit and push.
 - **Still open:** typos in very short words (3 to 5 letters) are not matched, see "To do later". The owner does the
   Render steps after the merge (`validation.md`, "After the merge").
+- **Phase 5B-0 (draft PR, `GET /meta`):** `GET /meta` (areas, categories, services, blood groups, report reasons), the
+  access log shows `lat=redacted&lng=redacted` (uvicorn was logging the full position), and one shared rule for "the same
+  service" so that picking `X-ray` from `/meta` also finds `Xray` and ` x-ray ` (the old `service` filter missed them; tests
+  written first showed it). 627 tests passing. The Node 20 end of life (2026-04-30) is a separate chore before 5B-1.
 - **Learned:** [write this in your own words, e.g. what a trigram is and why a score of 0.50 is not enough]
 - **AI use:** Claude Code compared the options with real scores, wrote the tests first and the code; I chose the
   options, approved the plan and decided what to keep out of scope.

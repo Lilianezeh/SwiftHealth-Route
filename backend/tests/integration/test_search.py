@@ -135,6 +135,19 @@ async def test_category_and_service_filters(
     assert names(await search(client, service="X-ray")) == ["Scan Centre"]  # US-05
 
 
+@pytest.mark.parametrize("picked", ["X-ray", "xray", " x-RAY "])
+async def test_search_service_filter_finds_xray_through_the_route(
+    client: AsyncClient, session: AsyncSession, clock: list[datetime], picked: str
+) -> None:
+    # The choice in the /meta list is "X-ray"; listings saved as "Xray" or " x-ray " must be found by it.
+    await add_listing(session, "Hyphen Place", service_names=("X-ray",))
+    await add_listing(session, "Plain Place", service_names=("Xray",))
+    await add_listing(session, "Lower Place", service_names=(" x-ray ",))
+    await add_listing(session, "Echo Place", service_names=("Ultrasound",))
+    await session.commit()
+    assert names(await search(client, service=picked)) == ["Hyphen Place", "Lower Place", "Plain Place"]
+
+
 async def test_open_now_uses_lagos_time(
     client: AsyncClient, session: AsyncSession, clock: list[datetime]
 ) -> None:

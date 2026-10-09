@@ -125,10 +125,21 @@ Lists for filters and forms.
 {
   "areas": ["Independence Layout", "New Haven", "..."],
   "categories": [ { "slug": "pharmacy", "name": "Pharmacy", "is_emergency": false } ],
+  "services": ["Consultation", "Malaria test", "X-ray"],
   "blood_groups": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
   "report_reasons": ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"]
 }
 ```
+`areas` keep the order of the fixed list in `core/config.py`. `categories` are all rows of the categories table, sorted by
+`id`. `services` are the distinct service names of **published** listings, sorted alphabetically without regard to case, one
+entry per service, and without the blood groups (blood groups are stored as service rows, see `blood_groups`). **Same service
+rule:** two names are the same service when they are equal after trimming spaces at both ends, joining runs of spaces into
+one, removing hyphens and lower-casing (`X-ray`, `x-ray`, ` X-ray ` and `Xray` are one service; `X ray` is another). The label
+shown is the first spelling in plain alphabetical order, with no spaces at the ends and one space between words (`X-ray` before
+`Xray`; capitals sort before small letters, so an all-capitals spelling such as `X-RAY` would win). They are the choices for the `service` filter of
+`GET /search`, which uses the same rule, so picking a choice finds every listing whose service is saved in any of those
+spellings. `blood_groups` is a fixed list in `core/config.py`.
+`report_reasons` are the report reasons in the order shown. No login.
 
 ### GET /search — the hard part
 FR-04 to FR-08, US-01, US-05. Open-now, nearest-first search over trusted listings.
@@ -139,7 +150,7 @@ FR-04 to FR-08, US-01, US-05. Open-now, nearest-first search over trusted listin
 | --- | --- | --- | --- |
 | `q` | string | – | Matches name, area, service names; tolerant of small misspellings (PostgreSQL `pg_trgm` similarity). Max 100 characters. |
 | `category` | string | – | Category slug |
-| `service` | string | – | Service name, e.g. `X-ray` |
+| `service` | string | – | Service name, e.g. `X-ray`. Matches a listing's service by the same-service rule of `GET /meta` (case, spaces at the ends and hyphens ignored: `X-ray` also finds `x-ray` and `Xray`). Typing a name is the job of `q`; this filter is for the choices in `/meta`. |
 | `area` | string | – | One of `/meta` areas; any other value is a 422. An unknown `category` or `service` is not an error: it returns an empty list. |
 | `open_now` | bool | `false` | Only places open at the current Africa/Lagos time |
 | `is_24_hours` | bool | `false` | Only confirmed 24-hour places |
@@ -152,6 +163,9 @@ FR-04 to FR-08, US-01, US-05. Open-now, nearest-first search over trusted listin
 2. Apply filters. "Open now" checks today's hours and yesterday's past-midnight shift (see spike).
 3. Sort by distance when location is given, otherwise by name.
 4. Sponsored slot (FR-45, **built in roadmap phase 12c**; until then `sponsored` is always `false` and no listing is moved first): at most **one** listing with `featured_until` in the future that matches all filters (and is within the radius) is placed first with `sponsored: true`. It is not repeated lower down.
+
+**Privacy (NFR-07):** `lat` and `lng` are a visitor's position. They are used for this request only. The server logs must never keep
+them: the API access log shows `lat=redacted&lng=redacted`.
 
 **Response 200:** `{ "items": [ListingSummary], "total": 37 }`
 
