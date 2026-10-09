@@ -122,6 +122,7 @@ The first three are the spike's three checks, rewritten with the new rule (overd
 - [ ] `test_seed_twice_creates_nothing_the_second_time` (same row counts)
 - [ ] `test_seed_does_not_overwrite_a_changed_demo_listing`
 - [ ] `test_seed_adds_a_missing_category_and_creates_no_user`
+- [ ] `test_every_demo_category_is_in_the_real_category_list` (no demo-only category)
 - [ ] `test_demo_listings_are_published_and_not_overdue`
 - [ ] `test_demo_listings_are_found_by_search_and_by_a_misspelled_name` (the same check as "After the merge")
 - [ ] `test_cleanup_deletes_exactly_the_demo_slugs_and_their_rows` (phones, hours, services, reports and audit entries

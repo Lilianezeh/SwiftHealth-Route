@@ -1,5 +1,6 @@
 """Shared FastAPI dependencies used by routes (session, current user, role checks, rate limits)."""
 from collections.abc import Awaitable, Callable
+from datetime import datetime, timezone
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
@@ -14,8 +15,8 @@ from app.models.base import Role
 from app.services import access_service, auth_service
 
 __all__ = [
-    "get_current_user", "get_session", "login_rate_limit", "require_listing_access", "require_role",
-    "verify_code_rate_limit",
+    "get_current_moment", "get_current_user", "get_session", "login_rate_limit", "require_listing_access",
+    "require_role", "verify_code_rate_limit",
 ]
 
 STAFF_ROLES = {Role.verifier, Role.editor, Role.admin}
@@ -24,6 +25,13 @@ NO_PERMISSION_MESSAGE = "You do not have permission for this."
 # OAuth2PasswordBearer (FastAPI Tutorial, Security) only reads the "Authorization: Bearer <token>" header and
 # answers 401 when it is missing. Our login is two JSON steps, so Swagger's Authorize button won't work.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/verify-code")
+
+
+def get_current_moment() -> datetime:
+    """The current time in UTC. The one place routes read the clock, so tests can replace it.
+
+    Plain `def`: it reads the clock and waits for nothing."""
+    return datetime.now(timezone.utc)
 
 
 async def get_current_user(

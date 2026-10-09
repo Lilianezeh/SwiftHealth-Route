@@ -160,7 +160,9 @@ library.
       services, checks, reports and audit entries, in one transaction. It never matches by name prefix, so a real
       listing called "DEMO – something" is safe. If both flags are `true`, the removal runs and the seed does not.
     - Categories are reference data that real listings need at launch, so the seed adds the missing ones and the
-      cleanup leaves them. (This is the one place "only the rows the seed created" is not literal; the owner can veto.)
+      cleanup leaves them. The owner approved this. The seed adds only categories from the real category list
+      (`CATEGORIES` in `seed/seed_data.py`, which `test_all_spec_categories_are_present` checks against the spec,
+      FR-15 and [prd.md](../prd.md) categories), never a demo-only category.
     - Demo listings are inserted directly with `last_verified_at` and `next_check_due` set. They have no
       `verification_checks` rows, because those need a staff user. The "publish needs a passing check" rule belongs to the
       staff API (phase 10c), so inserting directly does not break it.
