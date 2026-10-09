@@ -151,6 +151,15 @@ list does not contain. Do these steps in order and report what you see.
 - [ ] Report anything that was too small to tap, too small to read, or confusing. This box is the "real phone on 3G" check
   of the PRD release criteria for this feature only; the full check stays in roadmap phase 14d.
 
+## Design differences (Figma Make reference against the UI spec; decision 13)
+
+Filled in while building the components (Task 4 onward). The UI spec and the design rules win; each row says what was
+built and why. _The owner has not shared the Figma details yet._
+
+| Screen / part | Figma | UI spec or design rule | Built | Why |
+| --- | --- | --- | --- | --- |
+| _(none yet)_ | | | | |
+
 ## Merge checklist
 
 - [ ] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean.

@@ -31,6 +31,11 @@ Sketches go in `docs/screens/`.
 - Tap targets at least 48 × 48 px; body text 16 px or larger; visible focus ring.
 - Works from 320 px wide; no sideways scrolling.
 - Pages are server components unless they need interaction; only maps, forms and filters are client components.
+  One exception: the results list of `/search` is a client component too. It loads in the browser with a 45 second limit
+  (see "Standard states"), because the free API can take about a minute to wake and the hosting gives up on a server page
+  after about 30 seconds. This means results need JavaScript (revisit after the Render upgrade, `LOG.md`).
+- A visitor's position is kept in `sessionStorage` for the tab only, rounded to 3 decimals. It is never in a page address,
+  a cookie, `localStorage` or a log, and it is sent only as `lat` and `lng` to `GET /search`.
 - Images compressed; no large libraries on public pages except Leaflet on the map view.
 
 ### Standard states (every data screen)
@@ -38,7 +43,8 @@ Sketches go in `docs/screens/`.
 | --- | --- |
 | Loading | Skeleton cards (grey blocks), never a blank screen |
 | Empty | Plain message + next step, e.g. "No open pharmacies within 10 km. Try a wider area." with a button |
-| Error | "We couldn't load this. Check your connection and try again." + Retry button |
+| Waking up | On data screens loaded in the browser (`/search`, the near-you cards): after 5 seconds without an answer, "The service is waking up. This can take up to a minute." (announced to screen readers; the skeleton stays) |
+| Error | "We couldn't load this. Check your connection and try again." + Retry button. Also shown 45 seconds after a request started without an answer |
 | Offline | On `/emergency`: show the cached list with "Offline — showing saved contacts from [date]" |
 
 ### Reusable components (`src/components/`)
@@ -74,19 +80,21 @@ Sketches go in `docs/screens/`.
 FR-01, FR-03. **Purpose:** the app's start screen.
 1. Heading **"What do you need?"**
 2. Two large buttons side by side (stacked on small screens): **Find a healthcare facility** (scrolls to search) · **Get emergency help** (`/emergency`, red).
-3. Search box: "Search hospitals, pharmacies, labs…" → `/search?q=…`.
-4. Category shortcuts: Hospitals · Clinics · Pharmacies · Maternity · Labs · Blood (→ `/blood`).
-5. "Open now near me" button → `/search?open_now=true` with location.
-**Location:** ask once for permission; if refused, show an area dropdown (from `GET /meta`).
+3. Search box: "Search hospitals, pharmacies, labs…" → `/search?q=…`. It is a plain form (a GET to `/search`), so it works before any script has loaded.
+4. Category shortcuts (plain links): Hospitals `/search?category=hospital` · Clinics `clinic` · Pharmacies `pharmacy` · Maternity `maternity` · Labs `laboratory` · Blood (→ `/blood`, a "Coming soon" page until phase 8).
+5. "Open now near me" button → asks for the position (after the tap), then `/search?open_now=true`. The position is not in the address.
+6. **Near you** (once there is a position or a chosen area; before that, a "Show places near me" button and the area list): two cards, **Closest open pharmacy** (`category=pharmacy&open_now=true&limit=1`) and **Closest open 24-hour place** (`is_24_hours=true&limit=1`), each a `ListingCard`, then a button **See all open places near me** (`/search?open_now=true`). With an area and no position, the same two calls use `area=` and show no distance. The two cards load independently. A card with no result says "No open pharmacy found nearby" or "No 24-hour place found nearby" with a link to search all places, never an empty card; a failed card shows its own error and Retry.
+**Location:** the browser asks for permission only after a tap on a button, and only once per tab (a refusal is remembered for the tab). If refused, show an area dropdown (from `GET /meta`).
 
 ### 2.3 Search results — `/search`
 FR-04 to FR-08, US-01, US-05. **API:** `GET /search`, `GET /meta`.
-1. Search box (pre-filled) and a **Filters** button opening a sheet: category, service, area, open now, 24 hours, distance (5 / 10 / 20 km).
-2. Toggle: **List** | **Map**.
-3. Result count: "12 places, nearest first".
+1. Search box (pre-filled) and a **Filters** button opening a sheet (a native `<dialog>` styled as a bottom sheet): category (list from `GET /meta`), service (pick from the `services` list of `GET /meta`, with "Any service"), area (from `GET /meta`), open now, 24 hours, distance (5 / 10 / 20 km; only usable when there is a position, otherwise disabled with a hint). **Apply** and **Clear filters**.
+2. Toggle: **List** | **Map** (the map is phase 5B-2; until then only the list shows).
+3. Result count: "12 places, nearest first" with a position, "12 places, A to Z" without one.
 4. List of `ListingCard`s; sponsored card (if any) first with "Sponsored" tag.
-5. "Load more" button (pagination).
-**URL holds all filters** (`/search?category=pharmacy&open_now=true`) so results can be shared.
+5. "Load more" button (pagination, 20 at a time; page state, not in the address).
+**URL holds all filters** (`/search?category=pharmacy&open_now=true`) so results can be shared, but **never the position** (`lat`, `lng`): it is read from `sessionStorage`. Applying filters replaces the address without adding history entries. A shared link opens with the filters set and, for the receiver, no position.
+**States:** skeleton cards while loading; after 5 seconds "The service is waking up. This can take up to a minute."; error with Retry after 45 seconds or on an error answer.
 **Empty:** "No matches. Try removing a filter or widening the distance."
 
 ### 2.4 Listing page — `/listing/[slug]`

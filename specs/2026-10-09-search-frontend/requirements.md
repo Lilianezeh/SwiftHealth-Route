@@ -133,6 +133,15 @@ the layers `app/` to `components/` to `hooks/` to `lib/api/`. The only additions
     owner adds that one address to `CORS_ORIGINS` in Render by hand, and takes it out after the merge
     ([validation.md](validation.md), "Smoke test on a phone"). Whether the preview gets `NEXT_PUBLIC_API_URL` is checked
     in the same test.
+13. **The owner's Figma Make file is a visual reference, not the spec (owner's rule, 2026-10-09).** The owner shares the
+    details (frames, colours, spacing, text) before Task 4, when the components start. Where the Figma file and
+    [ui-spec.md](../frontend/ui-spec.md) or the design rules differ (the tokens forest, pine, amber, paper, ink and
+    emergency; tap targets of 48 px; text of 16 px or more; contrast; the standard states; 320 px wide), **the UI spec
+    and the design rules win**. Each difference is written down in the "Design differences" table of
+    [validation.md](validation.md), with what was built and why, so the owner can decide whether to change the spec.
+    Figma elements that the spec does not mention (extra sections, animations, images) are not built until the owner says
+    so; they go in that table as "not built". Nothing is copied from Figma that costs weight on a slow phone (large images,
+    web fonts) without asking.
 12. **No new runtime package, no Leaflet on these pages.** The weight of `/find` and `/search` is read from the build
     output and recorded. Components are in `components/listings/` and `components/search/`, hooks in `hooks/`, the
     location store in `lib/location/`, and no component calls `fetch` (CLAUDE.md).

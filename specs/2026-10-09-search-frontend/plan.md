@@ -35,8 +35,8 @@ Task 7).
 
 ## Tasks
 
-### Task 0: Spec
-- [ ] Update the UI spec as listed in the Files table (spec first), then commit:
+### Task 0: Spec (done, this commit)
+- [x] Update the UI spec as listed in the Files table (spec first), then commit:
   `docs(specs): UI spec for the Find page, the near-you section and the results states (FR-01, FR-03, FR-05)`.
   (The feature folders themselves were committed with the 5B-0 spec.)
 
@@ -59,6 +59,8 @@ Task 7).
 - [ ] Run lint, typecheck and tests, then commit: `feat(web): location in session storage, asked once (FR-03, NFR-07)`.
 
 ### Task 4: Cards and small parts (tests first)
+- [ ] **Before starting:** the owner shares the Figma Make details (decision 13). List every difference from the UI spec
+  in the "Design differences" table of [validation.md](validation.md); the UI spec wins.
 - [ ] Write the tests for the formatters, the badge, the date, the two buttons and `ListingCard` first.
 - [ ] Write them. Check tap size classes (48 px), text size (16 px), words as well as colour, the link formats.
 - [ ] Run lint, typecheck and tests, then commit: `feat(web): ListingCard, call and directions buttons, open and verified labels (FR-06, FR-08, NFR-10)`.
