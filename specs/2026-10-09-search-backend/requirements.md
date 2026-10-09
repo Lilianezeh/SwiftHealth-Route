@@ -129,7 +129,9 @@ library.
    job (phase 11b) hides them, by moving them to `recheck_due`. A listing with no `next_check_due` is not overdue.
 8. **24-hour listings are always open.** `is_open_now` is `true` for any listing with `is_24_hours = true`, even
    with no opening-hours rows or with a `23:59` close (the spike's gap, from `LOG.md`). The `is_24_hours` filter uses
-   only the flag. A listing with `is_24_hours = false` and no hours rows is closed.
+   only the flag. A listing with `is_24_hours = false` and no hours rows is closed. Other closed cases: a row with
+   `is_closed`, a row with no `opens_at` or `closes_at`, and a row whose opening and closing time are equal
+   (zero length, as in the spike). A row marked `is_closed` never carries a shift into the next morning.
 9. **"Now" comes from outside the functions.** `hours.py` and the service take the moment as an argument and convert
    it to `Africa/Lagos` inside. The server runs in UTC on Render, so tests use a UTC moment that falls on a different
    day in Lagos (for example 23:30 UTC). Only the route calls the clock.
