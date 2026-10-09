@@ -3,6 +3,7 @@
 It returns every published listing that passes the SQL filters, with its category, primary phone and hours.
 Distance, open now, sorting and paging are business rules and happen in search_service.
 """
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -48,10 +49,36 @@ def text_matches(text: str, column: ColumnElement, match_threshold: float) -> Co
     )
 
 
+def listing_matches(text: str, match_threshold: float) -> ColumnElement[bool]:
+    """`text` resembles the listing's name, its area, or the name of one of its services."""
+    service_matches = exists().where(
+        Service.listing_id == Listing.id, text_matches(text, col(Service.name), match_threshold)
+    )
+    return or_(
+        text_matches(text, col(Listing.name), match_threshold),
+        text_matches(text, col(Listing.area), match_threshold),
+        service_matches,
+    )
+
+
+def query_matches(q: str, q_words: Sequence[str], match_threshold: float) -> ColumnElement[bool]:
+    """The whole query matches, or (for 2 or more words) every word matches somewhere in the listing.
+
+    The word rule only adds matches: "Nigt Pharmcy" scores 0.50 as a whole but each word scores 0.55 or more.
+    A word may match the name, the area or a service, so "pharmcy ogui" finds a pharmacy in Ogui.
+    """
+    whole_query = listing_matches(q, match_threshold)
+    if not q_words:
+        return whole_query
+    every_word = and_(*(listing_matches(word, match_threshold) for word in q_words))
+    return or_(whole_query, every_word)
+
+
 async def find_candidates(
     session: AsyncSession,
     *,
     q: str | None,
+    q_words: Sequence[str],
     category_slug: str | None,
     service_name: str | None,
     area: str | None,
@@ -75,16 +102,7 @@ async def find_candidates(
             exists().where(Service.listing_id == Listing.id, func.lower(Service.name) == service_name.lower())
         )
     if q is not None:
-        service_matches = exists().where(
-            Service.listing_id == Listing.id, text_matches(q, col(Service.name), match_threshold)
-        )
-        conditions.append(
-            or_(
-                text_matches(q, col(Listing.name), match_threshold),
-                text_matches(q, col(Listing.area), match_threshold),
-                service_matches,
-            )
-        )
+        conditions.append(query_matches(q, q_words, match_threshold))
 
     query = (
         select(Listing, Category)

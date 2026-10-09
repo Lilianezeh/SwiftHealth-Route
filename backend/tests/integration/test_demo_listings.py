@@ -124,6 +124,8 @@ async def test_demo_listings_are_found_by_search_and_by_a_misspelled_name(sessio
     assert everything.total == len(DEMO_LISTINGS)
     misspelled = await search_listings(session, SearchParams(q="After Hours Pharmcy"), NOW)  # one typo
     assert [item.name for item in misspelled.items] == ["DEMO – After Hours Pharmacy"]
+    two_typos = await search_listings(session, SearchParams(q="Aftr Hours Pharmcy"), NOW)  # two typos
+    assert [item.name for item in two_typos.items] == ["DEMO – After Hours Pharmacy"]
     assert (await search_listings(session, SearchParams(q="banana"), NOW)).total == 0
 
 

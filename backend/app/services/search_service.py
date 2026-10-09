@@ -20,6 +20,19 @@ REPORT_WINDOW = timedelta(days=7)  # FR-22
 REPORTS_TO_EXCLUDE = 2  # FR-22: different reporters saying "not working"
 MATCH_THRESHOLD = 0.55  # pg_trgm word_similarity from 0 to 1, chosen with the examples in the requirements
 EARTH_RADIUS_KM = 6371
+# The word rule (below) is used for 2 to 6 distinct words. A longer query uses only the whole-query rule.
+MAX_QUERY_WORDS = 6
+
+
+def split_query_words(query: str | None) -> list[str]:
+    """The words for the word rule: lower case, each word once, in the order typed.
+
+    The whole-query match scores two typos in two short words too low ("Nigt Pharmcy" is 0.50), so a listing
+    also matches when every word matches on its own (requirements, decision 2). A single word needs no word
+    rule, and a very long query is left to the whole-query rule so the SQL stays small.
+    """
+    words = list(dict.fromkeys((query or "").lower().split()))
+    return words if 2 <= len(words) <= MAX_QUERY_WORDS else []
 
 
 def distance_in_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -58,6 +71,7 @@ async def search_listings(session: AsyncSession, params: SearchParams, moment: d
     candidates = await search_repository.find_candidates(
         session,
         q=params.q,
+        q_words=split_query_words(params.q),
         category_slug=params.category,
         service_name=params.service,
         area=params.area,

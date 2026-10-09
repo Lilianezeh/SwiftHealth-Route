@@ -79,7 +79,9 @@ library.
      has it too; `backend.yml` going green in Task 2 confirms that.
    - Local and CI run PostgreSQL 16 but Render runs 18. The risks and the decision about moving to 18 are in `LOG.md`
      ("Decision for the owner: PostgreSQL 16 locally and in CI, 18 on Render").
-2. **The similarity threshold is chosen with tests, not guessed.** Task 0 read the official `pg_trgm` documentation
+2. **The similarity threshold is chosen with tests, not guessed. A word rule adds two-typo queries.** A listing
+   matches `q` if the whole query matches (below) or, for a query of 2 to 6 words, every word matches the name, the
+   area or a service on its own (see "Two typos: the options compared"). Task 0 read the official `pg_trgm` documentation
    ([PostgreSQL 16](https://www.postgresql.org/docs/16/pgtrgm.html)): `similarity(a, b)` gives 0 to 1; `a % b` is true
    when similarity is above `pg_trgm.similarity_threshold` (default 0.3); `word_similarity` and `<%` compare a short
    word with any run of words in a longer text, with default threshold 0.6; a GIN index with `gin_trgm_ops` speeds up
@@ -193,10 +195,49 @@ misspellings and for unrelated words (a score of 1.00 is an exact match of the w
   borderline). 0.5 would also match "pharaoh" for "Pharmacy".
 - **Known limit:** a different word that looks like a real one, such as "generator" for "General", still matches
   (0.60). That is the price of tolerating misspellings. It never matches unrelated words.
-- **Second known limit:** several typos in one query can fall below the line. "Night Pharmcy" (one typo) scores 0.79
-  against "DEMO – Night Pharmacy", but "Nigt Pharmcy" (two typos in two words) scores 0.50 and finds nothing. Found
-  while writing the demo-listing check. The live check therefore uses one typo. Lowering the threshold to catch
-  it would also match "pharaoh" for "Pharmacy" (0.50), so it stays at 0.55 until real search logs show what people type.
+- **Two typos in one query (fixed with a word rule, see below).** "Night Pharmcy" (one typo) scores 0.79, but "Nigt
+  Pharmcy" (two typos in two words) scored 0.50 as a whole and found nothing. Found while writing the demo-listing
+  check.
+- **Typos in very short words are still missed.** A typo in a word of 3 to 5 letters can drop that word below the line:
+  uwni for Uwani 0.40, hors for Hours 0.40, nigth for Night 0.50, genral for General 0.50, tst for test 0.29, cre for
+  care 0.29. Trigrams cannot do better on so few letters. "pharaoh" for "Pharmacy" also scores 0.50, so no threshold
+  can catch "nigth" without catching "pharaoh". A different tool would be needed (for example `levenshtein()` from the
+  PostgreSQL `fuzzystrmatch` extension, an edit-distance check per word). That is a new extension, so it needs the
+  owner's approval and is not part of this feature.
+- **A partly matching query still returns partial matches.** "banana pharmacy" returns the pharmacies (the whole-query
+  score ignores the missing word) and "hospital pizza" returns the hospitals. This is how it worked before the word
+  rule, and the word rule does not change it (it only adds matches).
+
+### Two typos: the options compared (Task 3b follow-up, 2026-10-09)
+
+Measured on the 28 published dev-seed listings (names, areas and service names), as the number of listings matched.
+Queries with two typos that a person could type, and 33 unrelated or look-alike queries as the guard:
+
+| Approach | Fixes "Nigt Pharmcy" | New false matches | Verdict |
+| --- | --- | --- | --- |
+| (b) lower the whole-query threshold to 0.50 | yes (1 listing) | **yes**: "banana" 0 to 4 listings, "pharaoh" 0 to 6 | Rejected |
+| (b) lower it to 0.45 | yes | yes, the same ones | Rejected |
+| (a) each word on its own, instead of the whole query | yes | none, and "banana pharmacy" 6 to 0 | Rejected: it loses queries that worked, because one typo in a short word is worth less on its own ("Demo Genral Hospitl", "Teching Hospitl", "Trauma Unt", "Midnght Pharmcy" all went from 1 listing to 0) |
+| (a) **plus** the whole query: a listing matches if the whole query matches, **or** every word matches (any of name, area, service) | yes | **none** in 33 guard queries, at word thresholds 0.45, 0.50, 0.55 and 0.60 | **Chosen** |
+
+- **Chosen: the whole-query rule or the word rule, both at 0.55.** The word rule only adds matches, so it cannot make
+  a result set smaller or hide something that was found before. For a one-word query it is the same as before. A word
+  may match the name, the area or a service, so "pharmcy ogui" finds the pharmacy in Ogui (before: nothing) and
+  "maternty uwani" finds the maternity home in Uwani.
+- **Why not a lower word threshold:** 0.50 would catch "Pharmcy Ogi" too, but a one-word query would then match
+  at 0.50 as well ("pharaoh"), unless the threshold depended on the number of words. One number is simpler and has no
+  false matches.
+- **Limits of the word rule:** it applies to 2 to 6 distinct words (`MAX_QUERY_WORDS`); a longer query uses only the
+  whole-query rule, so the SQL stays small. Words are lower-cased, each word counts once, in any order.
+- **Tests:** `test_q_finds_a_name_with_two_typos`, `test_q_words_may_match_the_name_the_area_and_the_services`,
+  `test_the_word_rule_needs_every_word_to_match`, `test_the_word_rule_is_not_used_for_a_query_with_too_many_words`,
+  `test_q_with_several_unrelated_words_finds_nothing` (19 queries) and `test_look_alike_words_do_not_match_more_than_before`
+  in `tests/integration/test_search_repository.py`; `test_split_query_words` and
+  `test_two_typos_in_a_two_word_query_still_find_the_listing` in `tests/unit/test_search_service.py`.
+- **Timing after the change (dev seed, 28 listings, 20 requests each):** plain search median 19 ms; `q=pharmcy`
+  median 16 ms; `q=Nigt Pharmcy` median 20 ms, slowest 28 ms; a four-word typo query with a location median 26 ms,
+  slowest 45 ms; `q=airline ticket` median 19 ms. The slowest single request of all was 236 ms (the first one after
+  the tests ran). All are well under the 1 second of NFR-02.
 - **Hyphens:** the column is also compared without hyphens, because "xray" scores only 0.40 against "X-ray" but 1.00
   against "Xray", while "trans ekulu" needs the hyphen form to stay as it is for "Trans-Ekulu".
 - **Re-check later:** with real listing names (phase 10) re-run the same measurements and move the number if

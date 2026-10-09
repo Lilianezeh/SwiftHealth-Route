@@ -12,7 +12,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.schemas.search import SearchParams
 from app.services.hours import LAGOS_TIME
-from app.services.search_service import distance_in_km, search_listings
+from app.services.search_service import MAX_QUERY_WORDS, distance_in_km, search_listings, split_query_words
 from tests.factories import add_listing, every_day
 
 pytestmark = pytest.mark.anyio
@@ -101,11 +101,40 @@ async def test_distance_is_rounded_to_one_decimal_but_sorted_unrounded(session: 
     assert isinstance(response.items[0].distance_km, float)
 
 
+@pytest.mark.parametrize(
+    "query, words",
+    [
+        (None, []),
+        ("", []),
+        ("pharmacy", []),  # one word: the whole-query rule already covers it
+        ("Nigt Pharmcy", ["nigt", "pharmcy"]),  # lower case
+        ("  Nigt   Pharmcy  ", ["nigt", "pharmcy"]),  # extra spaces
+        ("pharmacy PHARMACY ogui", ["pharmacy", "ogui"]),  # the same word twice counts once
+        ("a b c d e f", ["a", "b", "c", "d", "e", "f"]),  # exactly the most
+        ("a b c d e f g", []),  # one more: the word rule is skipped
+    ],
+)
+def test_split_query_words(query: str | None, words: list[str]) -> None:
+    assert MAX_QUERY_WORDS == 6
+    assert split_query_words(query) == words
+
+
 def test_distance_in_km_known_pair_and_same_point() -> None:
     assert distance_in_km(6.45, 7.5, 6.45, 7.5) == 0
     # One degree of latitude is about 111.2 km (Earth radius 6371 km).
     assert distance_in_km(6.0, 7.5, 7.0, 7.5) == pytest.approx(111.19, abs=0.1)
     assert distance_in_km(6.45, 7.5, 6.5, 7.6) == distance_in_km(6.5, 7.6, 6.45, 7.5)
+
+
+async def test_two_typos_in_a_two_word_query_still_find_the_listing(session: AsyncSession) -> None:
+    await add_listing(session, "Night Pharmacy", area="New Haven")
+    await add_listing(session, "Day Clinic", area="GRA", category_slug="clinic")
+    await session.commit()
+    for query in ("Nigt Pharmcy", "nigt pharmcy", "Pharmcy Nigt"):
+        response = await search_listings(session, SearchParams(q=query), tuesday_in_lagos(10))
+        assert [item.name for item in response.items] == ["Night Pharmacy"], query
+    unrelated = await search_listings(session, SearchParams(q="airline ticket"), tuesday_in_lagos(10))
+    assert unrelated.total == 0
 
 
 async def test_without_location_distance_is_null_and_results_sort_by_name(session: AsyncSession) -> None:

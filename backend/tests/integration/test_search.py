@@ -265,7 +265,10 @@ async def test_misspelled_q_finds_the_right_listing_and_an_unrelated_q_finds_not
     await session.commit()
     assert names(await search(client, q="pharmcy")) == ["Ogui Road Pharmacy"]
     assert names(await search(client, q="Uwani Maternty")) == ["Uwani Maternity Home"]
+    assert names(await search(client, q="Ogui Rod Pharmcy")) == ["Ogui Road Pharmacy"]  # two typos
+    assert names(await search(client, q="pharmcy ogui")) == ["Ogui Road Pharmacy"]  # name word, area word
     assert await search(client, q="banana") == {"items": [], "total": 0}
+    assert await search(client, q="airline ticket") == {"items": [], "total": 0}
 
 
 async def test_a_blank_q_is_the_same_as_no_q(

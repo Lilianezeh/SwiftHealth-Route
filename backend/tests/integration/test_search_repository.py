@@ -11,7 +11,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.base import ListingStatus, ReportReason, ReportStatus
 from app.repositories import search_repository
-from app.services.search_service import MATCH_THRESHOLD, REPORT_WINDOW, REPORTS_TO_EXCLUDE
+from app.services.search_service import MATCH_THRESHOLD, REPORT_WINDOW, REPORTS_TO_EXCLUDE, split_query_words
 from tests.factories import add_listing, add_report
 
 pytestmark = pytest.mark.anyio
@@ -27,6 +27,7 @@ async def find_names(session: AsyncSession, **filters: object) -> list[str]:
         "match_threshold": MATCH_THRESHOLD,
     }
     arguments.update(filters)
+    arguments.setdefault("q_words", split_query_words(arguments["q"]))  # type: ignore[arg-type]
     candidates = await search_repository.find_candidates(session, **arguments)  # type: ignore[arg-type]
     return sorted(candidate.listing.name for candidate in candidates)
 
@@ -152,6 +153,96 @@ async def test_q_finds_a_misspelled_service_name(
 ) -> None:
     await add_named_places(session)
     assert expected_name in await find_names(session, q=query)
+
+
+# --- Two typos in one query (found in Task 3b): each word is also matched on its own, see decision 2 ---
+
+NIGHT_PHARMACY = ("Night Pharmacy", "New Haven", ("Prescription filling",))
+
+
+@pytest.mark.parametrize(
+    "query, expected_name",
+    [
+        ("Nigt Pharmcy", "Night Pharmacy"),  # two typos in two short words: as a whole it scores only 0.50
+        ("nigt pharmcy", "Night Pharmacy"),
+        ("Night Pharmcy", "Night Pharmacy"),
+        ("Pharmacy Nigt", "Night Pharmacy"),  # the words in another order
+        ("Ogui Rod Pharmcy", "Ogui Road Pharmacy"),
+        ("Uwani Maternty Hom", "Uwani Maternity Home"),
+        ("Coal Camp Diagnostc Laboratry", "Coal Camp Diagnostic Laboratory"),
+        ("GRA Genral Hospitl", "GRA General Hospital"),
+        ("Independance Layot Clinic", "Independence Layout Clinic"),
+        ("Abaka Nke Medical", "Abakpa Medical Centre"),  # a typo'd area word and a name word
+    ],
+)
+async def test_q_finds_a_name_with_two_typos(session: AsyncSession, query: str, expected_name: str) -> None:
+    await add_named_places(session)
+    await add_listing(session, NIGHT_PHARMACY[0], area=NIGHT_PHARMACY[1], service_names=NIGHT_PHARMACY[2])
+    await session.commit()
+    assert expected_name in await find_names(session, q=query)
+
+
+@pytest.mark.parametrize(
+    "query, expected_name",
+    [
+        ("pharmacy ogui", "Ogui Road Pharmacy"),  # a name word and an area word
+        ("pharmcy ogui", "Ogui Road Pharmacy"),
+        ("maternity uwani", "Uwani Maternity Home"),
+        ("maternty uwani", "Uwani Maternity Home"),
+        ("clinic independance", "Independence Layout Clinic"),
+        ("malaria clinic", "Independence Layout Clinic"),  # a service word and a name word
+        ("antenatl care", "Uwani Maternity Home"),  # a typo in a service name
+        ("xray coal", "Coal Camp Diagnostic Laboratory"),  # a service word and an area word
+    ],
+)
+async def test_q_words_may_match_the_name_the_area_and_the_services(
+    session: AsyncSession, query: str, expected_name: str
+) -> None:
+    await add_named_places(session)
+    await session.commit()
+    assert expected_name in await find_names(session, q=query)
+
+
+async def test_the_word_rule_needs_every_word_to_match(session: AsyncSession) -> None:
+    await add_listing(session, NIGHT_PHARMACY[0], area=NIGHT_PHARMACY[1], service_names=NIGHT_PHARMACY[2])
+    await session.commit()
+    assert await find_names(session, q="nigt pharmcy") == ["Night Pharmacy"]
+    assert await find_names(session, q="nigt xyzzy") == []  # one word matches, the other matches nothing
+    assert await find_names(session, q="nigt pharmcy xyzzy") == []
+
+
+async def test_the_word_rule_is_not_used_for_a_query_with_too_many_words(session: AsyncSession) -> None:
+    # Every word matches the listing's name, area or service, but 7 distinct words are too many for the word
+    # rule (decision 2): it is skipped, so only the whole-query rule decides.
+    await add_listing(session, NIGHT_PHARMACY[0], area=NIGHT_PHARMACY[1], service_names=NIGHT_PHARMACY[2])
+    await session.commit()
+    six_words = "nigt pharmcy new havn prescriptn filing"
+    assert await find_names(session, q=six_words) == ["Night Pharmacy"]
+    assert await find_names(session, q=f"{six_words} nigh") == []
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "airline ticket", "pizza restaurant", "car wash", "phone repair", "school fees", "good morning",
+        "near me", "open now", "football stadium", "big market", "new phone", "red car", "fast food",
+        "banana kitchen", "taxi park", "lagos airport", "night club", "fire wood", "blood orange",
+    ],
+)
+async def test_q_with_several_unrelated_words_finds_nothing(session: AsyncSession, query: str) -> None:
+    await add_named_places(session)
+    await add_listing(session, NIGHT_PHARMACY[0], area=NIGHT_PHARMACY[1], service_names=NIGHT_PHARMACY[2])
+    await session.commit()
+    assert await find_names(session, q=query) == []
+
+
+async def test_look_alike_words_do_not_match_more_than_before(session: AsyncSession) -> None:
+    # Known look-alikes (see "Threshold result" in the requirements). They must not grow with the word rule.
+    await add_named_places(session)
+    await session.commit()
+    assert await find_names(session, q="generator") == ["GRA General Hospital"]  # 0.60: the known limit
+    assert await find_names(session, q="pharaoh") == []  # 0.50: below the line, and must stay below
+    assert await find_names(session, q="hotel") == []
 
 
 @pytest.mark.parametrize(
