@@ -241,6 +241,10 @@ Render runs `alembic upgrade head` when the container starts (`backend/Dockerfil
 The production database blocks outside connections and the free plan has no shell, so we do not look inside it. The
 checks use the deploy and the live API only.
 
+Done by the owner on 2026-10-09 after PR #7 was merged (merge commit `cf23c1a`) and reported to Claude, who cannot
+see the Render dashboard. One thing the owner found: the Render Blueprint is on manual sync, so a variable added to
+`render.yaml` does not appear in the dashboard by itself (see `LOG.md`).
+
 Do the four steps in this order. In these steps, "the API" is `https://swifthealth-api.onrender.com`. Render's
 screens may look a little different from the words below. Look for the same names (Environment, Save and deploy, Logs).
 The free API goes to sleep when nobody uses it: the first page you open can take about a minute. Wait, then refresh.
@@ -249,56 +253,63 @@ The free API goes to sleep when nobody uses it: the first page you open can take
 may not appear by itself (this happened with `CORS_ORIGINS`). Do this step **before** you merge if you can: adding the
 variable first means the first deploy after the merge already has it. If a deploy fails for lack of it, Render keeps
 the old version running, so the site stays up; add the variable and deploy again.
-- [ ] Open <https://dashboard.render.com> and sign in. Click the service `swifthealth-api`.
-- [ ] In the left menu click **Environment**. Under **Environment Variables**, look for `REPORTER_KEY_SECRET`. It
+- [x] Open <https://dashboard.render.com> and sign in. Click the service `swifthealth-api`.
+- [x] In the left menu click **Environment**. Under **Environment Variables**, look for `REPORTER_KEY_SECRET`. It
   should be in the list with a hidden value (dots). Do not write the value down or paste it anywhere.
-- [ ] If it is missing: click **+ Add Environment Variable**. Key: `REPORTER_KEY_SECRET`. For the value, open a terminal
+- [x] If it is missing (it was; the Blueprint is on manual sync): click **+ Add Environment Variable**. Key: `REPORTER_KEY_SECRET`. For the value, open a terminal
   on your computer, run `openssl rand -base64 48`, copy the line it prints, and paste it as the Value. Do not reuse
   the value of `JWT_SECRET`: the API refuses to start if the two are the same. Click **Save and deploy**.
 
 **Step 2. Confirm the deploy succeeded.** This also proves the database migration ran: it would fail, and the new
 version would not start, if `pg_trgm` could not be created or `reporter_key` could not be added.
-- [ ] On the service page, open **Events** (or **Logs**). The newest deploy must say **Live** (a green mark). If it
+- [x] On the service page, open **Events** (or **Logs**). The newest deploy must say **Live** (a green mark). If it
   says **Failed**, open **Logs** and read the last red lines:
   - `REPORTER_KEY_SECRET is missing` means Step 1 is not finished. Fix it there.
   - An error that mentions `pg_trgm` or `CREATE EXTENSION` means Render does not allow the extension. Render keeps
     the old version running. Stop and tell the developer: decision 1 in [requirements.md](requirements.md) must be redone.
-- [ ] Open <https://swifthealth-api.onrender.com/health> in your browser. It must show `{"status":"ok"}`.
+- [x] Open <https://swifthealth-api.onrender.com/health> in your browser. It must show `{"status":"ok"}`.
 
 **Step 3. Add the demo listings, then switch the flag off again.** Nothing is opened to the internet: the code runs
 inside the service when it starts (Task 3b, decision 13). Only the exact text `true` turns the flag on.
-- [ ] In **Environment**, find `SEED_DEMO_LISTINGS` (it is `false`). Change its value to `true` and click
+- [x] In **Environment**, find `SEED_DEMO_LISTINGS` (it is `false`; in fact it did not exist, because the Blueprint is
+  on manual sync, so the owner added it by hand with the value `true`) and click
   **Save and deploy**. (Saving an environment variable normally starts a new deploy, say the Render docs.)
-- [ ] Wait until the new deploy says **Live**. Open **Logs** and look for the line
+- [x] Wait until the new deploy says **Live**. The owner reported the 4 listings seeded. Open **Logs** and look for the line
   `Demo listings seeded: {'categories': ..., 'listings': 4}. Demo listings left: 4.` (If the demo listings were
   already there it says `'listings': 0` and still `left: 4`. That is fine: running it again adds nothing.)
-- [ ] Change `SEED_DEMO_LISTINGS` back to `false` and click **Save and deploy** again. After the deploy, **Logs**
-  show `Demo listings: no flag set, nothing to do.` Render's docs say the next Blueprint sync overwrites dashboard
+- [x] Change `SEED_DEMO_LISTINGS` back to `false` and click **Save and deploy** again. After the deploy, **Logs**
+  show `Demo listings: no flag set, nothing to do.` (The owner reported the flag is back to `false` and saw that log
+  line.) Render's docs say the next Blueprint sync overwrites dashboard
   values that differ from `render.yaml`, so the flag may also switch itself back. That is safe.
-- [ ] `REMOVE_DEMO_LISTINGS` is still `false`. You only turn it on at launch (roadmap, phase 14d).
+- [x] `REMOVE_DEMO_LISTINGS` is still `false`. The owner confirmed it is in the dashboard (added by hand, the
+  Blueprint is on manual sync) and set to `false`. You only turn it on at launch (roadmap, phase 14d).
 
 **Step 4. Try a misspelled search on the live API.**
-- [ ] Open <https://swifthealth-api.onrender.com/docs>. You see a page of blue and green boxes. Find the group named
+- [x] Open <https://swifthealth-api.onrender.com/docs>. You see a page of blue and green boxes. Find the group named
   **Search** and click the row `GET /search`. Click **Try it out**.
-- [ ] In the `q` box type `Aftr Hours Pharmcy` (two words are spelled wrong on purpose). Leave the other boxes empty.
+- [x] In the `q` box type `Aftr Hours Pharmcy` (two words are spelled wrong on purpose). Leave the other boxes empty.
   Click **Execute**.
-- [ ] Scroll down to **Server response**. The code must be `200`. In the body, `items` must contain one listing named
-  `DEMO – After Hours Pharmacy`, and `"total": 1`.
-- [ ] Now type `banana` in `q` and click **Execute** again. The body must be `{"items": [], "total": 0}`. This shows a
-  wrong word finds nothing.
-- [ ] Clear `q`, type `DEMO` and click **Execute**: `total` must be `4` (the four demo listings).
-- [ ] Nothing else was opened: the database setting `ipAllowList` in `render.yaml` is still empty.
+- [x] Scroll down to **Server response**. The code must be `200`. In the body, `items` must contain one listing named
+  `DEMO – After Hours Pharmacy`, and `"total": 1`. Reported: 1 found, and `is_open_now` was `false` at 12:48 in Lagos,
+  which is right for hours of 20:00 to 02:00.
+- [x] Now type `banana` in `q` and click **Execute** again. The body must be `{"items": [], "total": 0}`. This shows a
+  wrong word finds nothing. Reported: 0 found.
+- [x] Clear `q`, type `DEMO` and click **Execute**: `total` must be `4` (the four demo listings). Reported: 4 found.
+- [x] Nothing else was opened: the database setting `ipAllowList` in `render.yaml` is still empty (checked in the file
+  on `main`; the dashboard setting is not visible to Claude).
 
 ## Merge checklist
 
 - [x] `pytest -q -W error` and `ruff check .` are clean (485 passed).
-- [x] `backend.yml` is green on the pull request, on `postgres:18` (run 37919799371 on `92a95c0`; the run for the
-  last commits is checked before the merge).
+- [x] `backend.yml` is green on the pull request, on `postgres:18` (run 37919799371 on `92a95c0`, and again on the
+  last commit `242804c`).
 - [x] The migration works up, down and up again.
 - [x] The spec ([api-spec.md](../backend/api-spec.md), [prd.md](../prd.md)), the [roadmap](../roadmap.md),
   [tech-stack.md](../tech-stack.md) and `LOG.md` are up to date, and [requirements.md](requirements.md) has the
   threshold result and the two-typo comparison.
 - [x] The `LOG.md` reminders exist: the "thousands of listings" note, phase 9a (call `hash_reporter_key` when a report
   is created), phase 11a (clear `reporter_key` on resolve), the Render collation check and the phase 5B note.
-- [ ] The "After the merge" steps above are done by the owner.
-- [ ] The pull request stays a draft until every box above is ticked.
+- [x] The "After the merge" steps above are done by the owner, every box ticked. `REMOVE_DEMO_LISTINGS` is in the
+  dashboard and `false`; turning it on belongs to the launch (roadmap, phase 14d).
+- [x] The pull request stayed a draft until the checks above were done, then it was marked ready and merged
+  (PR #7, merge commit `cf23c1a`).

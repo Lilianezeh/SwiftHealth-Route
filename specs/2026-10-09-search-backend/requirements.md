@@ -169,7 +169,9 @@ library.
       `verification_checks` rows, because those need a staff user. The "publish needs a passing check" rule belongs to the
       staff API (phase 10c), so inserting directly does not break it.
     - A failure of this step is logged and does not stop the API from starting.
-    - Both flags are declared as `false` in `render.yaml`. The owner sets one to `true` in the Render dashboard, lets the
+    - Both flags are declared as `false` in `render.yaml`. Found at the deploy: the Render Blueprint is on manual sync,
+      so the variable does not exist in the dashboard until the owner adds it by hand (`SEED_DEMO_LISTINGS` was added
+      that way, and so was `REMOVE_DEMO_LISTINGS`, set to `false`). The owner sets one to `true` in the Render dashboard, lets the
       service redeploy, then sets it back to `false`. Render docs (checked 2026-10-09): saving an environment variable
       normally starts a deploy (the "Save only" option does not); and "the next Blueprint sync overwrites" dashboard
       changes that conflict with the Blueprint, so a flag left on may switch itself back to `false`. The docs do not say

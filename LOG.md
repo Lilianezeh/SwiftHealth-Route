@@ -9,6 +9,12 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **Render collation provider (before the production `pg_trgm` check):** PostgreSQL 18 release notes say `pg_trgm`
   behaviour can change on clusters whose default collation provider is not libc. Local and CI use the image default
   (libc). Confirm that Render's database also uses libc, or reindex the `pg_trgm` indexes after any change.
+- **Render Blueprint is on manual sync:** a new variable in `render.yaml` does NOT reach the service by itself, and
+  changing `render.yaml` does not redeploy through the Blueprint. Add every new variable by hand in the dashboard
+  (Environment, **+ Add Environment Variable**) and deploy. Seen twice: `CORS_ORIGINS` in phase 4, and
+  `REPORTER_KEY_SECRET`, `SEED_DEMO_LISTINGS` and `REMOVE_DEMO_LISTINGS` in phase 5A (all three now in the dashboard).
+  Still to add by hand: any variable a later phase adds (Paystack, Resend, Cloudinary, Termii keys). Keep `render.yaml` as
+  the written record, and update the dashboard to match whenever it changes.
 - **Phase 5B, the Find page (5d):** offer category buttons (Hospitals, Clinics, Pharmacies, Maternity, Labs, as in
   FR-01) and nearby suggestions (for example the closest open pharmacy and the closest open 24-hour facility, from
   `GET /search` with the visitor's location), so a visitor can start without typing. Typing is hard on a phone and
