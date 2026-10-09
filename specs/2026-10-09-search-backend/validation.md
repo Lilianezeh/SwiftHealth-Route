@@ -195,21 +195,51 @@ Render runs `alembic upgrade head` when the container starts (`backend/Dockerfil
 The production database blocks outside connections and the free plan has no shell, so we do not look inside it. The
 checks use the deploy and the live API only.
 
-- [ ] **Before anything else:** in Render, open the Environment page of `swifthealth-api` and confirm
-  `REPORTER_KEY_SECRET` is listed with a value. A new variable in `render.yaml` may not show up on its own (as happened
-  with `CORS_ORIGINS`), and the API refuses to start without it. If it is missing, add it in the dashboard with a
-  random value of at least 32 bytes that differs from `JWT_SECRET` (Render's "Generate" button, or any random string
-  of 40 or more characters). Never paste the value anywhere else.
-- [ ] The deploy succeeded and `<api>/health` returns `{"status":"ok"}` (the free API may need about a minute to wake).
-  This proves the migration ran: it would fail, and the new version would not start, if `pg_trgm` could not be created
-  or `reporter_key` could not be added. If the deploy log says `REPORTER_KEY_SECRET is missing`, see the box above.
-- [ ] Put the demo listings in production (Task 3b, decision 13): in the Render dashboard set `SEED_DEMO_LISTINGS` to
-  `true`, let the service redeploy, then set it back to `false`.
-- [ ] A misspelled search on the live API finds the right listing, for example `<api>/search?q=Nigt Pharmcy` finds
-  `DEMO – Night Pharmacy`; and `<api>/search?q=<an unrelated word>` returns `{ "items": [], "total": 0 }`.
-- [ ] Both flags are back to `false` in the dashboard. Nothing else was opened: `ipAllowList` is still empty.
-- [ ] If the deploy failed because Render does not allow `CREATE EXTENSION`, Render keeps the previous version running.
-  Stop: decision 1 in [requirements.md](requirements.md) must then be redone.
+Do the four steps in this order. In these steps, "the API" is `https://swifthealth-api.onrender.com`. Render's
+screens may look a little different from the words below. Look for the same names (Environment, Save and deploy, Logs).
+The free API goes to sleep when nobody uses it: the first page you open can take about a minute. Wait, then refresh.
+
+**Step 1. Confirm `REPORTER_KEY_SECRET` exists.** The API will not start without it. A new variable in `render.yaml`
+may not appear by itself (this happened with `CORS_ORIGINS`).
+- [ ] Open <https://dashboard.render.com> and sign in. Click the service `swifthealth-api`.
+- [ ] In the left menu click **Environment**. Under **Environment Variables**, look for `REPORTER_KEY_SECRET`. It
+  should be in the list with a hidden value (dots). Do not write the value down or paste it anywhere.
+- [ ] If it is missing: click **+ Add Environment Variable**. Key: `REPORTER_KEY_SECRET`. For the value, open a terminal
+  on your computer, run `openssl rand -base64 48`, copy the line it prints, and paste it as the Value. Do not reuse
+  the value of `JWT_SECRET`: the API refuses to start if the two are the same. Click **Save and deploy**.
+
+**Step 2. Confirm the deploy succeeded.** This also proves the database migration ran: it would fail, and the new
+version would not start, if `pg_trgm` could not be created or `reporter_key` could not be added.
+- [ ] On the service page, open **Events** (or **Logs**). The newest deploy must say **Live** (a green mark). If it
+  says **Failed**, open **Logs** and read the last red lines:
+  - `REPORTER_KEY_SECRET is missing` means Step 1 is not finished. Fix it there.
+  - An error that mentions `pg_trgm` or `CREATE EXTENSION` means Render does not allow the extension. Render keeps
+    the old version running. Stop and tell the developer: decision 1 in [requirements.md](requirements.md) must be redone.
+- [ ] Open <https://swifthealth-api.onrender.com/health> in your browser. It must show `{"status":"ok"}`.
+
+**Step 3. Add the demo listings, then switch the flag off again.** Nothing is opened to the internet: the code runs
+inside the service when it starts (Task 3b, decision 13). Only the exact text `true` turns the flag on.
+- [ ] In **Environment**, find `SEED_DEMO_LISTINGS` (it is `false`). Change its value to `true` and click
+  **Save and deploy**. (Saving an environment variable normally starts a new deploy, say the Render docs.)
+- [ ] Wait until the new deploy says **Live**. Open **Logs** and look for the line
+  `Demo listings seeded: {'categories': ..., 'listings': 4}. Demo listings left: 4.` (If the demo listings were
+  already there it says `'listings': 0` and still `left: 4`. That is fine: running it again adds nothing.)
+- [ ] Change `SEED_DEMO_LISTINGS` back to `false` and click **Save and deploy** again. After the deploy, **Logs**
+  show `Demo listings: no flag set, nothing to do.` Render's docs say the next Blueprint sync overwrites dashboard
+  values that differ from `render.yaml`, so the flag may also switch itself back. That is safe.
+- [ ] `REMOVE_DEMO_LISTINGS` is still `false`. You only turn it on at launch (roadmap, phase 14d).
+
+**Step 4. Try a misspelled search on the live API.**
+- [ ] Open <https://swifthealth-api.onrender.com/docs>. You see a page of blue and green boxes. Find the group named
+  **Search** and click the row `GET /search`. Click **Try it out**.
+- [ ] In the `q` box type `After Hours Pharmcy` (the word *Pharmacy* is spelled wrong on purpose). Leave the other
+  boxes empty. Click **Execute**.
+- [ ] Scroll down to **Server response**. The code must be `200`. In the body, `items` must contain one listing named
+  `DEMO – After Hours Pharmacy`, and `"total": 1`.
+- [ ] Now type `banana` in `q` and click **Execute** again. The body must be `{"items": [], "total": 0}`. This shows a
+  wrong word finds nothing.
+- [ ] Clear `q`, type `DEMO` and click **Execute**: `total` must be `4` (the four demo listings).
+- [ ] Nothing else was opened: the database setting `ipAllowList` in `render.yaml` is still empty.
 
 ## Merge checklist
 

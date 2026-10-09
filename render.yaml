@@ -28,6 +28,13 @@ services:
           property: connectionString # `postgresql://...`; core/config.py adds the psycopg driver
       - key: JWT_SECRET
         generateValue: true # Render makes a random 256-bit value (base64), longer than the 32 bytes we require
+      - key: SEED_DEMO_LISTINGS
+        # "true" adds a few fictional DEMO listings when the service starts (seed/demo_listings.py). Set it to true in
+        # the dashboard, let the service restart, then set it back to false. Only the exact text "true" counts.
+        value: "false"
+      - key: REMOVE_DEMO_LISTINGS
+        # "true" deletes exactly those demo listings when the service starts. Part of the launch checklist.
+        value: "false"
       - key: REPORTER_KEY_SECRET
         # Keys the hash that counts different reporters for FR-22. A separate value from JWT_SECRET, so rotating
         # the JWT secret does not break the counting. The API refuses to start without it (core/config.py).

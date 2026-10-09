@@ -168,7 +168,11 @@ library.
       staff API (phase 10c), so inserting directly does not break it.
     - A failure of this step is logged and does not stop the API from starting.
     - Both flags are declared as `false` in `render.yaml`. The owner sets one to `true` in the Render dashboard, lets the
-      service redeploy, then sets it back to `false`. The launch checklist ([roadmap](../roadmap.md), phase 14d) has
+      service redeploy, then sets it back to `false`. Render docs (checked 2026-10-09): saving an environment variable
+      normally starts a deploy (the "Save only" option does not); and "the next Blueprint sync overwrites" dashboard
+      changes that conflict with the Blueprint, so a flag left on may switch itself back to `false`. The docs do not say
+      whether a plain `value` edited in the dashboard counts as a conflict, so we do not rely on it: the owner sets the
+      flag back by hand and the checklist confirms it. The launch checklist ([roadmap](../roadmap.md), phase 14d) has
       the cleanup and the check that zero demo listings are left.
 
 ## Threshold result
@@ -189,6 +193,10 @@ misspellings and for unrelated words (a score of 1.00 is an exact match of the w
   borderline). 0.5 would also match "pharaoh" for "Pharmacy".
 - **Known limit:** a different word that looks like a real one, such as "generator" for "General", still matches
   (0.60). That is the price of tolerating misspellings. It never matches unrelated words.
+- **Second known limit:** several typos in one query can fall below the line. "Night Pharmcy" (one typo) scores 0.79
+  against "DEMO – Night Pharmacy", but "Nigt Pharmcy" (two typos in two words) scores 0.50 and finds nothing. Found
+  while writing the demo-listing check. The live check therefore uses one typo. Lowering the threshold to catch
+  it would also match "pharaoh" for "Pharmacy" (0.50), so it stays at 0.55 until real search logs show what people type.
 - **Hyphens:** the column is also compared without hyphens, because "xray" scores only 0.40 against "X-ray" but 1.00
   against "Xray", while "trans ekulu" needs the hyphen form to stay as it is for "Trans-Ekulu".
 - **Re-check later:** with real listing names (phase 10) re-run the same measurements and move the number if
