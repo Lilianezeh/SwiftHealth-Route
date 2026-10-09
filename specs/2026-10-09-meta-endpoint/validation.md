@@ -136,32 +136,32 @@ The free API sleeps when idle: the first page can take about a minute. Wait, the
 `https://swifthealth-api.onrender.com`. Do the three steps in this order.
 
 **Step 1. Check that the deploy is live and `/meta` works.**
-- [ ] Open <https://dashboard.render.com>, click the service `swifthealth-api`, open **Events**. The newest deploy must
+- [x] Open <https://dashboard.render.com>, click the service `swifthealth-api`, open **Events**. The newest deploy must
   say **Live**. If it says **Failed**, open **Logs** and tell the developer the last red line.
-- [ ] Open <https://swifthealth-api.onrender.com/meta> in your browser. You see a page of text with `areas` (ten names),
+- [x] Open <https://swifthealth-api.onrender.com/meta> in your browser. You see a page of text with `areas` (ten names),
   `categories` (at least pharmacy, clinic and laboratory, added by the demo listings), `services` (the demo listings'
   services: Blood test, Consultation, Malaria test, Prescription filling, Ultrasound, X-ray), `blood_groups` (eight)
   and `report_reasons` (six).
 
 **Step 2. Make a live search with a location.** This is the request whose log line you will look at in Step 3.
-- [ ] Open <https://swifthealth-api.onrender.com/docs>. Find the group named **Search** and click the row `GET /search`.
+- [x] Open <https://swifthealth-api.onrender.com/docs>. Find the group named **Search** and click the row `GET /search`.
   Click **Try it out**.
-- [ ] In the `q` box type `DEMO`. In `lat` type `6.45` and in `lng` type `7.5`. Leave the other boxes empty. Click
+- [x] In the `q` box type `DEMO`. In `lat` type `6.45` and in `lng` type `7.5`. Leave the other boxes empty. Click
   **Execute**.
-- [ ] Scroll down to **Server response**. The code must be `200`, and the listings in the body must have a
+- [x] Scroll down to **Server response**. The code must be `200`, and the listings in the body must have a
   `distance_km` number (this shows the position was really used).
-- [ ] Also try the service pick: clear `q`, type `Xray` in `service` and click **Execute**. You should see the demo
+- [x] Also try the service pick: clear `q`, type `Xray` in `service` and click **Execute**. You should see the demo
   listing that offers `X-ray` (the lab).
 
 **Step 3. Check Render's Logs for `lat=redacted`.** This is the privacy check: the position must not be stored in our log.
-- [ ] In Render, on the service `swifthealth-api`, click **Logs** in the left menu. Wait a few seconds for the newest
+- [x] In Render, on the service `swifthealth-api`, click **Logs** in the left menu. Wait a few seconds for the newest
   lines to appear (the log is not instant).
-- [ ] Find the line for your search. Type `search` in the log filter box, or scroll to the newest lines. It looks like
+- [x] Find the line for your search. Type `search` in the log filter box, or scroll to the newest lines. It looks like
   `GET /search?q=DEMO&lat=redacted&lng=redacted HTTP/1.1" 200 OK`.
-- [ ] The words `lat=redacted&lng=redacted` must be there, and **`6.45` and `7.5` must not appear** anywhere in that line.
+- [x] The words `lat=redacted&lng=redacted` must be there, and **`6.45` and `7.5` must not appear** anywhere in that line.
   If you see `lat=6.45`, tell the developer straight away and do not use the "near me" feature on the live site until it
   is fixed.
-- [ ] Render shows only our own service output on the free plan. If you ever upgrade to a Pro workspace, Render can also
+- Note (not a check): Render shows only our own service output on the free plan. If you ever upgrade to a Pro workspace, Render can also
   show its own "request logs" with the full address; before that upgrade the developer must check what they hold (a note
   is in `LOG.md`).
 
@@ -172,5 +172,9 @@ The free API sleeps when idle: the first page can take about a minute. Wait, the
   (see the result of `gh pr checks` in the pull request).
 - [x] The api-spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date (the service rule, the `/meta` list, the
   controlled list of service names for phase 10b).
-- [ ] The "After the merge" steps above are done by the owner.
-- [ ] The pull request stays a draft until every box above is ticked.
+- [x] The "After the merge" steps above are done by the owner (2026-10-09; reported to Claude, who cannot see the
+  Render dashboard): the deploy is Live, `/meta` shows the lists, a live search with lat 6.45 and lng 7.5 gave
+  distances, `service=Xray` found the X-ray listing, and Render's Logs show `lat=redacted&lng=redacted` with no real
+  numbers.
+- [x] The pull request stayed a draft until the checks above were done, then it was merged (PR #10, merge commit
+  `b79f280`).

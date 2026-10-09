@@ -96,7 +96,7 @@ The spike `spikes/open_now_nearest.py` still hides overdue listings; the real se
 US-01, US-05. Needs 5A merged. It was bigger than a day and needed `GET /meta`, so it is split in three. The phase
 numbers after it stay the same.
 
-#### Phase 5B-0: GET /meta and no position in the logs. In progress (all tasks done; draft pull request waits for the owner's merge and Render checks)
+#### Phase 5B-0: GET /meta and no position in the logs. Done (merged, PR #10)
 FR-03, FR-05, NFR-07. A small backend feature, so that 5B-1 can be frontend-only. Feature folder:
 [requirements](2026-10-09-meta-endpoint/requirements.md), [plan](2026-10-09-meta-endpoint/plan.md),
 [validation](2026-10-09-meta-endpoint/validation.md).
@@ -106,7 +106,9 @@ FR-03, FR-05, NFR-07. A small backend feature, so that 5B-1 can be frontend-only
 - Task 2b, one rule for "the same service" in `/meta` and the `service` filter of `/search` (found and fixed a miss:
   `X-ray` did not find `Xray`): **done**
 - Task 3, wrap-up and the owner's after-merge steps (live `/meta`, a live search with a location, and the Render Logs
-  check for `lat=redacted`): **done**
+  check for `lat=redacted`): **done**. On 2026-10-09 the owner reported: deploy Live, `/meta` shows the lists, a live
+  search with lat 6.45 and lng 7.5 gave distances, `service=Xray` found the X-ray listing, and Render's Logs show
+  `lat=redacted&lng=redacted` with no real numbers. No new Render variable was needed.
 - `GET /meta` also returns `services` (owner's decision, 2026-10-09): the distinct names of published listings, without
   the blood groups, for the results page filter.
 
