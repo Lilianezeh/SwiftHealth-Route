@@ -3,7 +3,9 @@ from decimal import Decimal
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-DEFAULT_JWT_SECRET = "dev-only-secret"  # public: only for local development, never for anything deployed
+# The eight blood groups, in the order of GET /meta. Blood banks store them as service rows (CLAUDE.md).
+BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+DEFAULT_JWT_SECRET ="dev-only-secret"  # public: only for local development, never for anything deployed
 DEFAULT_REPORTER_KEY_SECRET = "dev-only-reporter-key-secret"  # public: only for local development
 # An HS256 key should be at least 32 bytes (RFC 7518 section 3.2). The reporter-key HMAC has the same minimum.
 MINIMUM_SECRET_BYTES = 32

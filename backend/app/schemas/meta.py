@@ -1,0 +1,16 @@
+"""The answer of GET /meta. See specs/backend/api-spec.md, section 3 (FR-03, FR-05)."""
+from pydantic import BaseModel
+
+
+class MetaCategory(BaseModel):
+    slug: str
+    name: str
+    is_emergency: bool
+
+
+class MetaResponse(BaseModel):
+    areas: list[str]
+    categories: list[MetaCategory]
+    services: list[str]
+    blood_groups: list[str]
+    report_reasons: list[str]
