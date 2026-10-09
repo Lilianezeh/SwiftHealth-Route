@@ -31,7 +31,13 @@ body {
   color: var(--color-ink);
 }
 
+/* Focus ring: forest on light backgrounds (14:1 on white), paper on a forest background (12:1). Both are far over the 3:1
+   that WCAG 2.2 asks of a focus indicator. A container with a forest background has the class `on-dark`. */
 :focus-visible {
-  outline: 3px solid var(--color-amber);
+  outline: 3px solid var(--color-forest);
   outline-offset: 2px;
+}
+
+.on-dark :focus-visible {
+  outline-color: var(--color-paper);
 }

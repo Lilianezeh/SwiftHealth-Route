@@ -107,10 +107,39 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     expect(contrast(tokens.ink, tokens.amber)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it.todo("the amber focus ring reaches 3:1 on paper and white (2.2 to 2.5:1 today; the owner decides, see Design differences)");
+  it("plain amber is not used for the focus ring: it is under 3:1 on white and paper", () => {
+    expect(contrast(tokens.amber, WHITE)).toBeLessThan(3);
+    expect(contrast(tokens.amber, tokens.paper)).toBeLessThan(3);
+  });
+});
 
-  it("the amber focus ring does reach 3:1 on the dark forest header", () => {
-    expect(contrast(tokens.amber, tokens.forest)).toBeGreaterThanOrEqual(3);
+describe("the focus ring (owner's decision, 2026-10-09; WCAG 2.2 asks for 3:1)", () => {
+  const tokens = readTokens();
+
+  it.each(["white", "paper", "pine-50", "pine-100", "closed-bg", "open-bg"])(
+    "forest ring is at least 3:1 on %s",
+    (background) => {
+      const colour = background === "white" ? WHITE : tokens[background];
+      expect(contrast(tokens.forest, colour)).toBeGreaterThanOrEqual(3);
+    },
+  );
+
+  it("a paper ring is at least 3:1 on a forest background", () => {
+    expect(contrast(tokens.paper, tokens.forest)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("globals.css draws a 3 px forest ring, and a paper ring inside .on-dark", () => {
+    const light = GLOBALS_CSS.match(/:focus-visible\s*\{([^}]*)\}/)?.[1] ?? "";
+    const dark = GLOBALS_CSS.match(/\.on-dark\s+:focus-visible\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(light).toMatch(/outline:\s*3px solid var\(--color-forest\)/);
+    expect(light).toMatch(/outline-offset:\s*2px/);
+    expect(dark).toMatch(/outline-color:\s*var\(--color-paper\)/);
+  });
+
+  it("no focus rule uses amber", () => {
+    const focusRules = [...GLOBALS_CSS.matchAll(/[^{}]*:focus-visible\s*\{[^}]*\}/g)].map((match) => match[0]);
+    expect(focusRules.length).toBeGreaterThanOrEqual(2);
+    for (const rule of focusRules) expect(rule).not.toContain("amber");
   });
 });
 

@@ -22,7 +22,7 @@ Sketches go in `docs/screens/`.
 | --- | --- | --- |
 | forest | `#12302a` | Header, headings |
 | pine | `#2f7d6b` | Primary buttons, links |
-| amber | `#e8913a` | Highlights, focus ring, "Sponsored" tag |
+| amber | `#e8913a` | Highlights, "Sponsored" tag background (dark `ink` text on it). Not the focus ring: amber is only 2.2 to 2.5:1 on light backgrounds |
 | paper | `#f6f3ec` | Page background |
 | ink | `#1d2421` | Body text |
 | emergency | `#b3261e` | SwiftRescue button, 112 card only |
@@ -52,6 +52,13 @@ background is `paper`, its red is `emergency`.
 
 ### Accessibility and performance (NFR-01, NFR-04, NFR-10)
 - Tap targets at least 48 × 48 px; body text 16 px or larger; visible focus ring.
+- **Focus ring** (owner's decision, 2026-10-09): 3 px, 2 px offset. `forest` on light backgrounds (14:1 on white, 12:1 on
+  `paper`); `paper` on a `forest` background (12:1). A container with a `forest` background has the class `on-dark`, which
+  switches the ring for everything inside it (the header and the Find page hero). Both are at least 3:1 (WCAG 2.2, 1.4.11).
+  A test in `tests/unit/design-tokens.test.ts` checks it.
+- **Icons** (owner's decision, 2026-10-09): from `lucide-react`, imported one by one by name (never the whole set, never a
+  dynamic icon). They are decorative (`aria-hidden`) and always sit next to a text label; an icon is never the only content
+  of a button or link, and it never carries information alone.
 - Works from 320 px wide; no sideways scrolling.
 - Pages are server components unless they need interaction; only maps, forms and filters are client components.
   One exception: the results list of `/search` is a client component too. It loads in the browser with a 45 second limit
