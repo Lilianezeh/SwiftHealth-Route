@@ -6,7 +6,12 @@ One entry per day. Keep it short and honest.
 
 Open reminders. Each says when it is due. Remove a line once it is done.
 
-- **Search feature:** treat is_24_hours listings as always open (no 23:59 gap).
+- **Search, if listings grow into the thousands (after launch):** `search_service` computes distance and open-now in
+  Python over every published listing that passes the SQL filters. Add a bounding-box pre-filter or move distance into
+  SQL, and re-time `GET /search` (NFR-02: under 1 second).
+- **Phase 9a, reports:** when a report is created, set `reporter_key = hash_reporter_key(phone or client IP)` (built in
+  phase 5A). Never store the raw IP.
+- **Phase 11a, resolving a report:** clear `reporter_key` as well as `reporter_phone` (NDPA; api-spec `PATCH` resolve rule).
 - **Before launch, Render free plans (roadmap phases 14b and 14d):** the free API sleeps after 15 minutes idle (about
   a minute to wake). The free database expires 30 days after creation, about **2026-11-07** (confirm the exact date in
   the Render dashboard; Render allows 14 more days to upgrade, then deletes it) and has no backups. Upgrade both

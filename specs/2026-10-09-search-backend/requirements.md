@@ -60,10 +60,26 @@ library.
    table), with GIN trigram indexes on `listings.name` and `services.name`. Alternatives: Python `difflib` (no
    migration, but loads every candidate listing into Python and does not scale) and plain `ILIKE` (no tolerance, so
    FR-04 would not be met). The extension must also exist in the test database and in the `postgres:16` CI service.
-   Task 0 checks that it is supported on our Render PostgreSQL (see decision 2). A check after the deploy confirms
-   that the migration created it in production ([validation.md](validation.md), "After the merge").
-2. **The similarity threshold is chosen with tests, not guessed.** Task 0 reads the official `pg_trgm` documentation
-   for the operators and the default thresholds. Task 2 writes the tests first, with realistic Enugu examples
+   Task 0 result (checked 2026-10-09):
+   - The [Render PostgreSQL extensions page](https://render.com/docs/postgresql-extensions) lists `pg_trgm` as
+     supported on PostgreSQL 13 and later. It does not say which database role may run `CREATE EXTENSION`, and it says
+     nothing about free-plan databases. `render.yaml` does not set a PostgreSQL version, so we use Render's default;
+     we have not confirmed that it is 13 or later.
+   - The [PostgreSQL 16 documentation](https://www.postgresql.org/docs/16/pgtrgm.html) says `pg_trgm` is a "trusted"
+     extension: a non-superuser with `CREATE` privilege on the database can install it. Whether Render's database
+     user has that privilege is not documented, so it is not proven.
+   - So the real proof is the deploy: the migration runs on start (`backend/Dockerfile`) and would fail without the
+     extension ([validation.md](validation.md), "After the merge"). If it fails, Render keeps the old version running
+     and we redo this decision.
+   - Not yet checked: that the `postgres:16` image (compose and the CI service) includes `pg_trgm`. Docker was not
+     reachable from this shell in Task 0 (`docker: command not found` in this WSL distro). It is checked in Task 2,
+     when the migration first runs in the container and in CI.
+2. **The similarity threshold is chosen with tests, not guessed.** Task 0 read the official `pg_trgm` documentation
+   ([PostgreSQL 16](https://www.postgresql.org/docs/16/pgtrgm.html)): `similarity(a, b)` gives 0 to 1; `a % b` is true
+   when similarity is above `pg_trgm.similarity_threshold` (default 0.3); `word_similarity` and `<%` compare a short
+   word with any run of words in a longer text, with default threshold 0.6; a GIN index with `gin_trgm_ops` speeds up
+   `%`, `<%`, `LIKE` and `ILIKE`. A name such as "Demo 24 Hour Pharmacy" searched with "pharmcy" is a word inside a
+   longer text, so `word_similarity` is the likely fit; the tests in Task 2 decide between it and `similarity`. Task 2 writes the tests first, with realistic Enugu examples
    (misspelled facility names, areas and services, and unrelated words that must find nothing), then picks the lowest
    threshold that passes them and records the number and the examples here, in "Threshold result" below.
 3. **Python does distance, radius, open-now, sort and paging; SQL does the rest.** The repository returns every

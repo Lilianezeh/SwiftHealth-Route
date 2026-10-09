@@ -137,10 +137,10 @@ FR-04 to FR-08, US-01, US-05. Open-now, nearest-first search over trusted listin
 
 | Name | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `q` | string | – | Matches name, area, service names; tolerant of small misspellings |
+| `q` | string | – | Matches name, area, service names; tolerant of small misspellings (PostgreSQL `pg_trgm` similarity). Max 100 characters. |
 | `category` | string | – | Category slug |
 | `service` | string | – | Service name, e.g. `X-ray` |
-| `area` | string | – | One of `/meta` areas |
+| `area` | string | – | One of `/meta` areas; any other value is a 422. An unknown `category` or `service` is not an error: it returns an empty list. |
 | `open_now` | bool | `false` | Only places open at the current Africa/Lagos time |
 | `is_24_hours` | bool | `false` | Only confirmed 24-hour places |
 | `lat`, `lng` | float | – | Caller's location. Both or neither, else 422. |
@@ -148,10 +148,10 @@ FR-04 to FR-08, US-01, US-05. Open-now, nearest-first search over trusted listin
 | `limit`, `offset` | int | 20, 0 | Pagination |
 
 **Rules**
-1. Apply the trust rules, then exclude listings flagged by FR-22 (2+ `not_working` reports from different reporters in 7 days).
+1. Apply the trust rules, then exclude listings flagged by FR-22: 2 or more `open` reports with reason `not_working`, made in the last 7 days, with 2 different `reporter_key` values. A report with no `reporter_key` counts for nothing. Resolved and dismissed reports do not count.
 2. Apply filters. "Open now" checks today's hours and yesterday's past-midnight shift (see spike).
 3. Sort by distance when location is given, otherwise by name.
-4. Sponsored slot (FR-45): at most **one** listing with `featured_until` in the future that matches all filters (and is within the radius) is placed first with `sponsored: true`. It is not repeated lower down.
+4. Sponsored slot (FR-45, **built in roadmap phase 12c**; until then `sponsored` is always `false` and no listing is moved first): at most **one** listing with `featured_until` in the future that matches all filters (and is within the radius) is placed first with `sponsored: true`. It is not repeated lower down.
 
 **Response 200:** `{ "items": [ListingSummary], "total": 37 }`
 
@@ -206,7 +206,7 @@ FR-20 to FR-22, US-08. Report a problem. No login. Rate limited to 5 per IP per 
 
 **Response 201:** `{ "id": 88, "message": "Thank you. We will check this listing." }`
 
-**Rules:** `listing_id` must be published (else 404). If this makes 2+ `not_working` reports from different reporters (by phone, else by IP) within 7 days, set the listing to `recheck_due`, write an audit entry, and email editors (Resend) and SMS the admin (Termii).
+**Rules:** `listing_id` must be published (else 404). The report stores `reporter_key`: the keyed hash `hash_reporter_key` of the normalised phone if given, else of the client IP (never the raw IP). If this makes 2+ `not_working` reports from different reporters (different `reporter_key`) within 7 days, set the listing to `recheck_due`, write an audit entry, and email editors (Resend) and SMS the admin (Termii).
 
 **Tests:** creates report · auto-flag after second report · rate limit returns 429.
 
@@ -334,7 +334,7 @@ Urgent first (listings auto-flagged by FR-22), then newest.
 
 ### PATCH /reports/{report_id}
 Editor, admin. **Request:** `{ "status": "resolved" }` or `{ "status": "dismissed" }`
-**Rules:** sets `resolved_by`, `resolved_at`, and **deletes `reporter_phone`** (NDPA). Audit entry.
+**Rules:** sets `resolved_by`, `resolved_at`, and **deletes `reporter_phone` and `reporter_key`** (NDPA). Audit entry.
 
 ---
 
