@@ -63,17 +63,19 @@ library.
    Task 0 result (checked 2026-10-09):
    - The [Render PostgreSQL extensions page](https://render.com/docs/postgresql-extensions) lists `pg_trgm` as
      supported on PostgreSQL 13 and later. It does not say which database role may run `CREATE EXTENSION`, and it says
-     nothing about free-plan databases. `render.yaml` does not set a PostgreSQL version, so we use Render's default;
-     we have not confirmed that it is 13 or later.
+     nothing about free-plan databases. `render.yaml` does not set a PostgreSQL version. The owner read the Render
+     dashboard: our database runs **PostgreSQL 18**, so `pg_trgm` is supported.
    - The [PostgreSQL 16 documentation](https://www.postgresql.org/docs/16/pgtrgm.html) says `pg_trgm` is a "trusted"
      extension: a non-superuser with `CREATE` privilege on the database can install it. Whether Render's database
      user has that privilege is not documented, so it is not proven.
    - So the real proof is the deploy: the migration runs on start (`backend/Dockerfile`) and would fail without the
      extension ([validation.md](validation.md), "After the merge"). If it fails, Render keeps the old version running
      and we redo this decision.
-   - Not yet checked: that the `postgres:16` image (compose and the CI service) includes `pg_trgm`. Docker was not
-     reachable from this shell in Task 0 (`docker: command not found` in this WSL distro). It is checked in Task 2,
-     when the migration first runs in the container and in CI.
+   - Checked in the local container (2026-10-09, `postgres:16`, server 16.15): `pg_trgm` is available (default
+     version 1.6) and marked trusted. The CI service uses the same image (`postgres:16` in `backend.yml`), so it
+     has it too; `backend.yml` going green in Task 2 confirms that.
+   - Local and CI run PostgreSQL 16 but Render runs 18. The risks and the decision about moving to 18 are in `LOG.md`
+     ("Decision for the owner: PostgreSQL 16 locally and in CI, 18 on Render").
 2. **The similarity threshold is chosen with tests, not guessed.** Task 0 read the official `pg_trgm` documentation
    ([PostgreSQL 16](https://www.postgresql.org/docs/16/pgtrgm.html)): `similarity(a, b)` gives 0 to 1; `a % b` is true
    when similarity is above `pg_trgm.similarity_threshold` (default 0.3); `word_similarity` and `<%` compare a short

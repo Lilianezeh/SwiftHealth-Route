@@ -39,15 +39,15 @@ NFR-07, NFR-08) in every commit and test. Tick a box with its commit hash only w
 ## Tasks
 
 ### Task 0: Spec and checks
-- [ ] Read the Render documentation for PostgreSQL extensions: is `pg_trgm` supported on our Render database (the
+- [x] Read the Render documentation for PostgreSQL extensions: is `pg_trgm` supported on our Render database (the
   `swifthealth-db` in `render.yaml`), and can the app's database user run `CREATE EXTENSION`? Write the answer and the
   link in [requirements.md](requirements.md), decision 1. If it is not supported, stop and ask the owner.
-- [ ] Read the official PostgreSQL `pg_trgm` documentation: the `similarity()` function, the `%` and `<%` operators,
+- [x] Read the official PostgreSQL `pg_trgm` documentation: the `similarity()` function, the `%` and `<%` operators,
   the default thresholds and `gin_trgm_ops`. Write what we rely on in decision 2.
-- [ ] In the backend container, run `CREATE EXTENSION IF NOT EXISTS pg_trgm` on a throwaway database to confirm the
+- [x] In the backend container, run `CREATE EXTENSION IF NOT EXISTS pg_trgm` on a throwaway database to confirm the
   `postgres:16` image (compose and the CI service) includes it.
-- [ ] Update [api-spec.md](../backend/api-spec.md) and [prd.md](../prd.md) as listed in the Files table. Update `LOG.md`.
-- [ ] Commit: `docs(specs): search backend spec and pg_trgm check (FR-04, FR-22)`.
+- [x] Update [api-spec.md](../backend/api-spec.md) and [prd.md](../prd.md) as listed in the Files table. Update `LOG.md`.
+- [x] Commit: `docs(specs): search backend spec and pg_trgm check (FR-04, FR-22)`.
 
 ### Task 1: `hours.py` (roadmap 5a)
 - [ ] Write `tests/unit/test_hours.py` first (names in [validation.md](validation.md)). They fail: the module does not exist.
