@@ -9,6 +9,14 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **Render collation provider (before the production `pg_trgm` check):** PostgreSQL 18 release notes say `pg_trgm`
   behaviour can change on clusters whose default collation provider is not libc. Local and CI use the image default
   (libc). Confirm that Render's database also uses libc, or reindex the `pg_trgm` indexes after any change.
+- **Phase 5B, the Find page (5d):** offer category buttons (Hospitals, Clinics, Pharmacies, Maternity, Labs, as in
+  FR-01) and nearby suggestions (for example the closest open pharmacy and the closest open 24-hour facility, from
+  `GET /search` with the visitor's location), so a visitor can start without typing. Typing is hard on a phone and
+  the search is tolerant of typos, but not of every typo (see the next item).
+- **Search, typos in very short words (decide with real search logs):** a typo in a word of 3 to 5 letters can drop
+  below the match line (uwni, hors, nigth; the scores are in the search `requirements.md`). A lower threshold cannot fix
+  it without false matches ("pharaoh" scores the same as "nigth"). An edit-distance check per word (`levenshtein()` in
+  the PostgreSQL `fuzzystrmatch` extension) would, but it is a new extension, so it needs the owner's approval.
 - **Search, if listings grow into the thousands (after launch):** `search_service` computes distance and open-now in
   Python over every published listing that passes the SQL filters, and the `q` match scans the published listings
   with `word_similarity()` (no index). Add a bounding-box pre-filter or move distance into SQL, switch `q` to the `<%`
@@ -89,6 +97,27 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   (about a minute). Fixed with an 8-second limit (tests first). Second test after 21+ idle minutes: the first visit took
   11.7 s and showed "not reachable" on a normal page; the next visit showed "connected".
 - **Tomorrow:** Phase 5, search (5a: `hours.py`, open now in Africa/Lagos time).
+
+## Day 6 — 2026-10-09
+- **Built:** Phase 5A, the search backend (draft PR #7). `hours.py` (open now in Lagos time, hours past midnight, 24-hour
+  listings), `search_service` and `search_repository` (nearest first, overdue listings labelled `verification_due`,
+  listings reported "not working" by 2 different reporters in 7 days hidden, misspelling-tolerant `q` with `pg_trgm`),
+  `GET /search`. Also: `REPORTER_KEY_SECRET` and the keyed `hash_reporter_key` (so we never store a raw IP or phone to
+  count reporters), PostgreSQL 18 locally and in CI like Render, flag-driven DEMO listings for production with an
+  exact-slug cleanup, capitalised router tags, and a word rule for queries with two typos. 485 tests passing with
+  `-W error` (242 before), ruff clean, CI green on `postgres:18`.
+- **Timing (NFR-02):** `GET /search` on the 28 seed listings, 20 requests: median 25 ms, slowest 150 ms.
+- **Broke / fixed:** my first two DEMO names produced the same slugs as the main seed, so the cleanup would have deleted
+  main-seed listings in the dev database (a test caught it; renamed). "Nigt Pharmcy" scored 0.50 and found nothing:
+  lowering the threshold added false matches ("banana" 0 to 4 listings), matching each word alone lost queries that
+  worked, matching the whole query or every word fixed it with no false matches. One commit went in with a lint error
+  and was amended before pushing. Claude edited files with `sed` and a Python script twice, against the rule to use
+  the Edit tool; corrected after it was pointed out.
+- **Still open:** typos in very short words (3 to 5 letters) are not matched, see "To do later". The owner does the
+  Render steps after the merge (`validation.md`, "After the merge").
+- **Learned:** [write this in your own words, e.g. what a trigram is and why a score of 0.50 is not enough]
+- **AI use:** Claude Code compared the options with real scores, wrote the tests first and the code; I chose the
+  options, approved the plan and decided what to keep out of scope.
 
 - To do (after building): rename project to "SwiftHealth Route" and update the tagline (currently "Emergency, Hospital & Pharmacy Finder"). Before renaming, check that the name is free on Play Store and App Store, plus the domain, social handles and CAC business name. Then update app title, README, specs, pitch decks, project docs and the Netlify/Render names.
 
