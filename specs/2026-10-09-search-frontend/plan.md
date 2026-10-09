@@ -64,12 +64,19 @@ Task 7).
   the position (2), the position also in a cookie (3). Restored.
 - [x] Run lint, typecheck and tests (111 of 111 pass), then commit: `feat(web): location in session storage, asked once (FR-03, NFR-07)`.
 
-### Task 4: Cards and small parts (tests first)
-- [ ] **Before starting:** the owner shares the Figma Make details (decision 13). List every difference from the UI spec
-  in the "Design differences" table of [validation.md](validation.md); the UI spec wins.
-- [ ] Write the tests for the formatters, the badge, the date, the two buttons and `ListingCard` first.
-- [ ] Write them. Check tap size classes (48 px), text size (16 px), words as well as colour, the link formats.
-- [ ] Run lint, typecheck and tests, then commit: `feat(web): ListingCard, call and directions buttons, open and verified labels (FR-06, FR-08, NFR-10)`.
+### Task 4: Cards and small parts (tests first) (done, this commit)
+- [x] **Before starting:** the owner shared the Figma Make details (`docs/design/figma-find-page-design.md`, decision 13).
+  Every difference from the UI spec is in the "Design differences" table of [validation.md](validation.md); the UI spec
+  wins. The file is committed with this task. The UI spec got the new tokens, the button and text rules and the card
+  rows first.
+- [x] Write the tests first: `design-tokens.test.ts` (tokens exist, contrast pairs, no hex in components), the formatters,
+  the badge, the date, the two buttons and `ListingCard`. They failed first (7 files could not load their modules; 12
+  token tests failed).
+- [x] Write the tokens in `globals.css`, the formatters, a shared button style and the components. Check tap size classes
+  (50 px), text size (16 px), words as well as colour, the link formats. No icons (no icon library in the stack).
+  `npm run build` proves Tailwind generates the new token classes. The footer and the home page had `text-sm` (14 px),
+  against the 16 px rule; both are now `text-base`.
+- [x] Run lint, typecheck and tests (202 pass, 1 pending), then commit: `feat(web): ListingCard, call and directions buttons, open and verified labels (FR-06, FR-08, NFR-10)`.
 
 ### Task 5: The Find page (tests first)
 - [ ] Write the tests for `SearchBox`, `CategoryShortcuts`, `LocationPrompt`, `NearbySuggestions` (two independent cards,

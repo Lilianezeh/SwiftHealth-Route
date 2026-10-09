@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Design tokens: the table in specs/frontend/ui-spec.md ("Design tokens"). Components use them as Tailwind classes
+   (bg-pine, text-ink-soft, border-line, shadow-card) and never write a colour by hand. Every text and background pair
+   is checked for 4.5:1 contrast by tests/unit/design-tokens.test.ts. */
 @theme {
   --color-forest: #12302a;
   --color-pine: #2f7d6b;
@@ -7,6 +10,20 @@
   --color-paper: #f6f3ec;
   --color-ink: #1d2421;
   --color-emergency: #b3261e;
+
+  /* From the Figma Make reference (docs/design/figma-find-page-design.md), added to the spec on 2026-10-09 */
+  --color-ink-soft: #4b5c59;
+  --color-line: #d7e1df;
+  --color-pine-100: #dff3ef;
+  --color-pine-50: #f0faf8;
+  --color-open: #147a48;
+  --color-open-bg: #e7f6ed;
+  --color-closed: #465451;
+  --color-closed-bg: #edf1f0;
+  --color-amber-ink: #8b5c00;
+  --color-amber-wash: #fff4d6;
+
+  --shadow-card: 0 2px 12px color-mix(in srgb, var(--color-forest) 7%, transparent);
 }
 
 body {

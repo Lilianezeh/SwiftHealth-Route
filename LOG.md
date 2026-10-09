@@ -24,6 +24,17 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `X ray` against `Xray`, the label quirk and typos at the source. It needs a place for the list (an admin-managed list,
   or the distinct names in use), which is a data-model question for the owner: the project has exactly 9 tables, so
   adding a table needs approval. The UI spec (3.4, "Services and fees") changes first.
+- **Owner decisions from the Figma work (phase 5B-1, Task 4):**
+  1. *Focus ring contrast.* The spec's amber ring is 2.2 to 2.5:1 on white and `paper`, under the 3:1 that WCAG 2.2 asks of
+     a focus indicator (5.8:1 on the `forest` header). A `forest` ring is 14:1 everywhere. Kept as the spec says; a pending
+     test in `design-tokens.test.ts` marks it. Change the token use in `globals.css` and the UI spec if you agree.
+  2. *Icons.* Figma uses icons (phone, route, pin, shield, clock, search). The stack has no icon package (`components.json`
+     names lucide, but `lucide-react` is not installed), so the cards use words and a dot. Adding `lucide-react` is a new
+     runtime dependency (tree-shaken, a few kB for the icons used); say yes and it goes into Task 5 or 6.
+  3. *Hours on the card.* Figma shows "Closes 9:00 PM" and "Opens 7:30 AM tomorrow". `ListingSummary` has no opening hours
+     (they are in `ListingDetail`, phase 6), so the card shows only the badge. Adding a short `hours_note` to the API summary
+     needs an api-spec change first.
+  4. *Pine on paper for small text* is 4.4:1 (under 4.5:1), so links use `forest`.
 - **`npm audit` in the frontend shows 11 findings (2 critical, 7 high, 2 moderate), the same before and after phase 5B-1's
   test packages (checked 2026-10-09):** the critical ones are `vitest` and `tinypool` (dev-only test runner; the fix is
   vitest 5, a major upgrade); the high ones are the `eslint-config-next` chain (`braces`, `micromatch`, `fast-glob`; dev-only),

@@ -134,7 +134,7 @@ US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-
 - Task 1, component test tooling: **done**
 - Task 2, types and API layer: **done**
 - Task 3, location: **done**
-- Task 4, cards and small parts: next
+- Task 4, cards and small parts (with the Figma reference mapped to design tokens): **done**
 - Task 5, the Find page: next
 - Task 6, the results page: next
 - Task 7, wrap-up, smoke test on a phone, draft pull request: next

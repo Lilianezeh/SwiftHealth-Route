@@ -104,7 +104,7 @@ the layers `app/` to `components/` to `hooks/` to `lib/api/`. The only additions
    filter needs the exact name, so the visitor picks it instead of typing it. A `service` value in a shared link that is
    not in the list is still sent to the API and shown as the selected choice. Typing in the main search box also finds
    services, with typo tolerance.
-7. **Cards and states follow the UI spec.** `ListingCard` (name, category, area, distance "1.4 km away", open badge,
+7. **Cards and states follow the UI spec.** `ListingCard` (name, category, area, distance "1.4 km", open badge,
    verified date, Call and Directions, "Sponsored" tag when `sponsored`), `CallButton` (`tel:+234...`),
    `DirectionsButton` (the Google Maps link from the listing's latitude and longitude, opens in a new tab with
    `rel="noopener noreferrer"`), `OpenNowBadge` ("Open now", "Closed", "Open 24 hours": words, not only colour) and
@@ -140,7 +140,9 @@ the layers `app/` to `components/` to `hooks/` to `lib/api/`. The only additions
     details (frames, colours, spacing, text) before Task 4, when the components start. Where the Figma file and
     [ui-spec.md](../frontend/ui-spec.md) or the design rules differ (the tokens forest, pine, amber, paper, ink and
     emergency; tap targets of 48 px; text of 16 px or more; contrast; the standard states; 320 px wide), **the UI spec
-    and the design rules win**. Each difference is written down in the "Design differences" table of
+    and the design rules win**. The Figma notes are in `docs/design/figma-find-page-design.md` (committed with Task 4),
+    and Figma colours map to our tokens, never to hex values in components (ten role-named tokens were added to the UI
+    spec for colours it had none for). Each difference is written down in the "Design differences" table of
     [validation.md](validation.md), with what was built and why, so the owner can decide whether to change the spec.
     Figma elements that the spec does not mention (extra sections, animations, images) are not built until the owner says
     so; they go in that table as "not built". Nothing is copied from Figma that costs weight on a slow phone (large images,

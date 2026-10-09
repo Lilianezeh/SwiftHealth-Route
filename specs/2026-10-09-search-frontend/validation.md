@@ -50,17 +50,22 @@ All timing tests use `vi.useFakeTimers()`: no test waits for real time.
 - [ ] `nothing logs or puts the position in the address` (console spies stay empty; `location.search` stays unchanged)
 
 ### Task 4: `distance.test.ts`, `dates.test.ts`, `OpenNowBadge.test.tsx`, `VerifiedDate.test.tsx`, `CallButton.test.tsx`, `DirectionsButton.test.tsx`, `ListingCard.test.tsx`
-- [ ] `formats the distance in kilometres as the API sends it` (1.4 is "1.4 km away", 0.3 is "0.3 km away", 12.5 is "12.5 km away",
-  0 is "Under 0.1 km away"; there are no metres)
-- [ ] `verified today, 1 day ago, 3 days ago, 45 days ago` (the current time is passed in)
-- [ ] `OpenNowBadge says Open now, Closed or Open 24 hours in words` (24 hours wins over closed)
-- [ ] `VerifiedDate shows the amber "Verification due" when verification_due is true`
-- [ ] `CallButton is a tel: link with the +234 number and is at least 48 px high`
+- [ ] `design-tokens.test.ts`: every token of the UI spec table exists in `globals.css`; every text and background pair is at
+  least 4.5:1; no component or page writes a hex or `rgb(a)` colour; a pending test for the focus ring (see Design differences)
+- [ ] `distance.test.ts`: the distance in kilometres as the API sends it (1.4 is "1.4 km", 12.5 is "12.5 km", 1 is "1 km",
+  0 is "Under 0.1 km", null is nothing; there are no metres)
+- [ ] `dates.test.ts`: "Verified today", "1 day ago", "3 days ago", "45 days ago" (the current time is passed in); a future
+  date counts as today; no date is "Not yet verified"
+- [ ] `OpenNowBadge says Open now, Closed or Open 24 hours in words` (24 hours wins over closed; the dot is hidden from screen readers)
+- [ ] `VerifiedDate shows "Verified 3 days ago", and the amber "Verification due" with the date next to it when verification_due is true`
+- [ ] `CallButton is a tel: link with the +234 number, labelled for screen readers with the facility name, and at least 50 px high`
+- [ ] `CallButton shows nothing for a number that is not +234 and ten digits`
 - [ ] `DirectionsButton opens the Google Maps directions link for the listing's latitude and longitude in a new tab with noopener`
-- [ ] `ListingCard shows name, category, area, distance, badge, verified date, Call and Directions`
+- [ ] `ListingCard shows name, category, area, address, distance, both labels, Call and Directions`
 - [ ] `ListingCard hides the distance when it is null and shows a Sponsored tag only when sponsored`
 - [ ] `ListingCard renders HTML in a name as text` (an XSS string stays text)
 - [ ] `ListingCard without a primary phone shows no Call button` (the Directions button stays)
+- [ ] `ListingCard links the name to /listing/[slug]` and `has no text under 16 px` (no `text-xs` or `text-sm`)
 
 ### Task 5: `SearchBox.test.tsx`, `CategoryShortcuts.test.tsx`, `LocationPrompt.test.tsx`, `NearbySuggestions.test.tsx`, `FindPage.test.tsx`
 - [ ] `SearchBox is a GET form to /search with the field named q`
@@ -153,12 +158,45 @@ list does not contain. Do these steps in order and report what you see.
 
 ## Design differences (Figma Make reference against the UI spec; decision 13)
 
-Filled in while building the components (Task 4 onward). The UI spec and the design rules win; each row says what was
-built and why. _The owner has not shared the Figma details yet._
+The Figma details are in [docs/design/figma-find-page-design.md](../../docs/design/figma-find-page-design.md) (read
+2026-10-09). The UI spec and the design rules win; each row says what was built and why. "Task 4" rows are built now, the
+others when that task comes. Colours are never copied as hex into components: they map to the tokens of the UI spec
+(section "Design tokens"), and ten new role-named tokens were added to the UI spec first.
 
 | Screen / part | Figma | UI spec or design rule | Built | Why |
 | --- | --- | --- | --- | --- |
-| _(none yet)_ | | | | |
+| Colours: dark teal | teal-950 `#073d3b` (hero, brand text, active chip) | `forest` `#12302a` | `forest` | Spec token wins (Task 4 tokens, Task 5 hero) |
+| Colours: primary | teal-700 `#08766f` (primary button, brand mark) | `pine` `#2f7d6b` | `pine` (white on it: 4.9:1) | Spec token wins |
+| Colours: page background | canvas `#f5f8f7` (cool white) | `paper` `#f6f3ec` (warm) | `paper` | Spec token wins |
+| Colours: text, red | ink `#172321`, red `#b4232c` | `ink` `#1d2421`, `emergency` `#b3261e` | the spec tokens | Spec token wins; red is for SwiftRescue only |
+| Colours: link and secondary-button text | teal-800 `#0b5c57` | no such token | `forest` for button text; links `forest` underlined | `pine` on `paper` is 4.4:1, under the 4.5:1 minimum, so `pine` is not used for small text on `paper` |
+| Colours: tints, lines, secondary text | teal-100, teal-50, line, ink-soft, muted text (`#61706d`/`#647471`) | only six tokens | new tokens `pine-100`, `pine-50`, `line`, `ink-soft` (Figma values); "muted" folded into `ink-soft` | The spec had no tokens for them; added to the UI spec first. One secondary colour is enough and `ink-soft` is the stronger (6.4:1) |
+| Colours: status | green/green-bg, grey-bg/closed text, amber `#8b5c00`/`#fff4d6` | green and grey named in the spec without a value; amber token too light for small text | new tokens `open`/`open-bg`, `closed`/`closed-bg`, `amber-ink`/`amber-wash` (Figma values; 4.8, 7.0 and 5.3:1) | The plain `amber` `#e8913a` on white is 2.5:1, too low for text; it stays for the "Sponsored" tag background, highlights and the focus ring |
+| Focus ring | `#82cfc3`, 3 px, 2 px offset | `amber` ring (spec), visible | `amber`, 3 px, 2 px offset (as in `globals.css`) | Spec wins. **Finding for the owner:** amber on white or `paper` is 2.2 to 2.5:1, under the 3:1 that WCAG 2.2 asks of a focus indicator (Figma's teal is worse, 1.9:1). On `forest` it is 5.8:1. A forest ring (14:1) would pass everywhere; this is the owner's call and is recorded as a pending test in `design-tokens.test.ts` |
+| Text sizes | 14 px secondary text, 13 px badges, "Last checked", eyebrows, chips, filter and location buttons, a 12 px note | 16 px or larger for all text (NFR-10, CLAUDE.md) | 16 px everywhere (Task 4: badges, area line, verified line, eyebrow); card title 18 px | Spec wins. Headings may be larger |
+| Tap targets | buttons 50 px, location 52 px, search box 56 px, chips 48 px | at least 48 px | 50 px minimum for buttons and links (Task 4); 56/52 px in Task 5 | Within the rule |
+| Radii and spacing | button radius 11 px, search box 14 px, card padding 18/16 px, gap 14 px | no values | rounded to the Tailwind scale: 12 px buttons, 16 px cards, 16 px padding, 12 px gaps | Use the scale, not odd values; the look is the same |
+| Card shadow | `0 2px 12px rgba(7,61,59,.07)` | no value | token `shadow-card` made from `forest` at 7% | No hex or rgba in components |
+| Font | system stack, no web font | system stack | Tailwind's default `font-sans` (a system stack) | Same |
+| Icons (pin, clock, shield, phone, route, search, the facility tile) | an icon on most things | no icon library in the stack (`components.json` names lucide, not installed) | **not built**: text and a coloured dot only | `lucide-react` would be a new runtime dependency on a slow-3G page; hand-drawn icons I cannot see would risk broken glyphs. Owner decides whether to add it |
+| Listing card: hours line | "Open 24 hours", "Closes 9:00 PM", "Opens 7:30 AM tomorrow" | `ListingSummary` has no opening hours (they are in `ListingDetail`, phase 6) | the badge only ("Open now", "Closed", "Open 24 hours"); no hours line | The API summary cannot supply it; adding hours to `ListingSummary` needs an api-spec change |
+| Listing card: "Last checked 18 Jun 2026" | an absolute date under the badges | `VerifiedDate`: "Verified 3 days ago" | the relative text in the label; when overdue, "Verification due" plus "Verified 45 days ago" | Spec wins; the date is still always shown (US-07, FR-08) |
+| Listing card: "Area, Enugu" | the city name is written in | nothing may be tied to Enugu only (CLAUDE.md, mission) | the area only | The city is not in the API; it could come from `config/site.ts` later |
+| Listing card: eyebrow | "Hospital · 1.2 km" | distance on the card | "Hospital · 1.2 km" (the same) | No conflict |
+| Listing card: facility icon tile | a 48 px tile with an icon | not in the spec | not built | No icon library (see Icons) |
+| Directions | a Google Maps search by address | `destination=lat,lng` from the API | latitude and longitude | Spec wins and is more exact |
+| Header | white, sticky, 64 px, brand mark, `backdrop-filter: blur`, rescue icon | forest header, name on the left, red SwiftRescue on the right (already built) | unchanged | Not part of 5B-1; the blur can be slow on low-end phones, so a solid background stays |
+| SwiftRescue panel | red panel on the Find screen | SwiftRescue is its own page, `/emergency` (phase 7) | **not built** (owner's instruction) | Phase 7 |
+| Bottom navigation (Home, Search, Rescue) | mobile only | not in the UI spec | **not built** (owner's instruction) | Not in the spec |
+| Desktop aside "BROWSE CARE" | from 980 px | not in the UI spec | **not built** (owner's instruction) | Not in the spec |
+| Hero: "Enugu, Nigeria", "LAUNCH AREA" pill, "Find trusted care near you" | on teal-950 | heading "What do you need?", two large choices (FR-01) | Task 5: the spec's heading and the two choices; no city line | Spec wins; nothing tied to Enugu only |
+| Find page: area select always visible | "Or choose an area" + Filters button | area list only when location is refused (FR-03); filters belong to `/search` | Task 5: the spec's behaviour | Spec wins |
+| Filters | category chips inline toggles | native `<dialog>` sheet with open now, category, area, service, distance | Task 6: the dialog | Spec wins |
+| Category chips | All, Hospital, Pharmacy, Laboratory, Clinic, Blood, More | Hospitals, Clinics, Pharmacies, Maternity, Labs, Blood (FR-01) | Task 5: the spec's six, in Figma's chip style (a scrolling row, 48 px) | Spec wins on the list; the look is kept |
+| Loading | a message card with a spinner and the waking-up sentence at once | skeletons; the sentence after 5 s | Task 6: skeletons first, the sentence after 5 s | Spec wins; a spinner may be added if it respects reduced motion |
+| Error | "We could not load places", "Try again" | "We couldn't load this. Check your connection and try again." + Retry | Task 6: the spec's words | Spec wins |
+| Empty | "No places found", "Clear search" | "No matches. Try removing a filter or widening the distance." | Task 6: the spec's words | Spec wins |
+| Near-you cards | eyebrow, title, "1.2 km · New Haven", badge, hours, Call, Directions | `ListingCard` in the near-you section | Task 5: the same `ListingCard` with the eyebrow "Closest open pharmacy" above it | One card component, no hours line (see above) |
 
 ## Merge checklist
 

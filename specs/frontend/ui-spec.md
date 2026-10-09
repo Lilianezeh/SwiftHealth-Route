@@ -26,6 +26,29 @@ Sketches go in `docs/screens/`.
 | paper | `#f6f3ec` | Page background |
 | ink | `#1d2421` | Body text |
 | emergency | `#b3261e` | SwiftRescue button, 112 card only |
+| ink-soft | `#4b5c59` | Secondary text (area line, "Verified 3 days ago"); 6.4:1 on paper |
+| line | `#d7e1df` | Card borders and dividers |
+| pine-100 | `#dff3ef` | Background of the "Verified" label |
+| pine-50 | `#f0faf8` | Light panels (the empty "near you" box, empty-state icon circle) |
+| open | `#147a48` on open-bg `#e7f6ed` | "Open now" and "Open 24 hours" label (4.8:1) |
+| closed | `#465451` on closed-bg `#edf1f0` | "Closed" label (7.0:1) |
+| amber-ink | `#8b5c00` on amber-wash `#fff4d6` | "Verification due" label and the error icon (5.3:1); the plain `amber` is too light for small text |
+| shadow-card | `0 2px 12px` of forest at 7% | Card shadow |
+
+Components use these tokens (Tailwind classes such as `bg-pine`, `text-ink-soft`), never a hex value. The last eight rows (ten colours) were
+added on 2026-10-09 from the owner's Figma Make reference (`docs/design/figma-find-page-design.md`); every pair of text and
+background colour is checked by `tests/unit/design-tokens.test.ts` to be at least 4.5:1 (NFR-10). Read the table with the
+rule that the six original tokens win over the Figma colours: Figma's teal-950 is `forest`, teal-700 is `pine`, its page
+background is `paper`, its red is `emergency`.
+
+### Buttons and text
+- **Primary** (Call, Retry): `pine` background, white text. **Secondary** (Directions, See all, Clear filters): white
+  background, `pine` border, `forest` text. **Emergency** (SwiftRescue only): `emergency` background, white text. 16 px text,
+  semi-bold, at least 50 px high (never under 48 px), radius 12 px.
+- Every piece of text is 16 px or larger, including badges, the area line and "Verified 3 days ago" (NFR-10). Card titles
+  are 18 px. The system font stack is used; no web font is downloaded.
+- Cards: white, 1 px `line` border, 16 px radius, `shadow-card`, 16 px inside.
+- Status is shown with words as well as colour ("Open now", "Closed", "Verification due").
 
 ### Accessibility and performance (NFR-01, NFR-04, NFR-10)
 - Tap targets at least 48 × 48 px; body text 16 px or larger; visible focus ring.
@@ -50,11 +73,11 @@ Sketches go in `docs/screens/`.
 ### Reusable components (`src/components/`)
 | Component | Purpose |
 | --- | --- |
-| `ListingCard` | Name, category, area, distance, open/closed badge, last-verified date, Call + Directions buttons; "Sponsored" tag when `sponsored` |
-| `CallButton` | `tel:+234…` link, full-width on mobile |
-| `DirectionsButton` | Opens `https://www.google.com/maps/dir/?api=1&destination=lat,lng` |
-| `OpenNowBadge` | "Open now" (green) / "Closed" (grey) / "Open 24 hours" |
-| `VerifiedDate` | "Verified 3 days ago"; amber "Verification due" when `verification_due` |
+| `ListingCard` | Top line "Category · 1.4 km" (no distance when none), name (a link to `/listing/[slug]`), `VerifiedDate` and `OpenNowBadge`, the address with the area under it, then Call + Directions side by side; "Sponsored" tag when `sponsored`. No Call button when the listing has no phone number |
+| `CallButton` | `tel:+234…` link labelled "Call", primary button |
+| `DirectionsButton` | Secondary button labelled "Directions"; opens `https://www.google.com/maps/dir/?api=1&destination=lat,lng` (from the listing's latitude and longitude) in a new tab |
+| `OpenNowBadge` | "Open now" (green) / "Closed" (grey) / "Open 24 hours" (green, wins over Closed) |
+| `VerifiedDate` | "Verified 3 days ago" (a `pine-100` label); when `verification_due`, an amber "Verification due" label with "Verified 45 days ago" next to it, so the date is always shown (FR-08, US-07) |
 | `Disclaimer` | Directory / not medical advice text |
 | `ResultsMap` | Leaflet + OpenStreetMap map with pins; client component |
 | `ShareLocationButton` | Gets location with permission, opens WhatsApp/SMS with a Google Maps link |
