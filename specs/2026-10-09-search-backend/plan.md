@@ -132,4 +132,5 @@ Found while checking Task 3b: "Nigt Pharmcy" scored 0.50 and found nothing.
   flag off, and try a misspelled search on the live `/docs`.
 - [x] Update `LOG.md`, the [roadmap](../roadmap.md), and tick the boxes in this folder with their commit hashes.
 - [x] Commit: `docs(specs): search backend wrap-up (US-01, US-05)`. The pull request (#7) was opened as a draft early,
-  so CI ran on PostgreSQL 18. It stays a draft until the owner says to mark it ready.
+  so CI ran on PostgreSQL 18. The owner marked it ready and merged it as `cf23c1a`, then did the Render steps.
+  The docs follow-up (ticks, roadmap, LOG) went in a small docs pull request.

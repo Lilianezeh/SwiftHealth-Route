@@ -64,7 +64,7 @@ Feature folder: [requirements](2026-10-08-walking-skeleton-production/requiremen
 
 Phase 5 was bigger than a day, so it is split in two. The phase numbers after it stay the same.
 
-### Phase 5A: Search backend. In progress (all tasks done; draft PR #7 waits for the owner's merge)
+### Phase 5A: Search backend. Done (merged, PR #7)
 US-01, US-05. The hard part. FR-04, FR-05, FR-06, FR-08, FR-22, NFR-02, NFR-08.
 Feature folder: [requirements](2026-10-09-search-backend/requirements.md),
 [plan](2026-10-09-search-backend/plan.md), [validation](2026-10-09-search-backend/validation.md).
@@ -83,9 +83,11 @@ Tasks:
 - Task 3a, router tags with a capital letter: **done**
 - Task 3b, flag-driven demo listings for production, with an exact-slug cleanup: **done**
 - Task 3c, queries with two typos (each word is matched too): **done**
-- Task 4, wrap-up and local smoke test: **done**. After the merge the owner does the four Render steps in
-  [validation.md](2026-10-09-search-backend/validation.md), "After the merge". Known limit: typos in words of 3 to 5
-  letters can still be missed (see "To do later" in [LOG.md](../LOG.md)).
+- Task 4, wrap-up and local smoke test: **done**. After the merge the owner did the four Render steps in
+  [validation.md](2026-10-09-search-backend/validation.md), "After the merge": `REPORTER_KEY_SECRET` added, deploy
+  Live, `/health` ok, 4 demo listings seeded, live search checked (2026-10-09). The Render Blueprint is on manual sync,
+  so both variables were added by hand. Known limit: typos in words of 3 to 5 letters can still be missed (see "To do
+  later" in [LOG.md](../LOG.md)).
 
 The spike `spikes/open_now_nearest.py` still hides overdue listings; the real search labels them (FR-08), and
 `backend/tests/unit/test_search_service.py` checks that.
@@ -149,8 +151,8 @@ US-13.
 - 14a: CSV import and export (FR-39, FR-40, both Should)
 - 14b: daily backups and a tested restore (NFR-09)
 - 14c: anonymous analytics events (see "Analytics" in [prd.md](prd.md#analytics))
-- 14d: go through the release criteria in [prd.md](prd.md#release-criteria). Includes the demo cleanup: set
-  `REMOVE_DEMO_LISTINGS=true` in Render, redeploy, and confirm zero demo listings are left (`/search?q=DEMO` returns
+- 14d: go through the release criteria in [prd.md](prd.md#release-criteria). Includes the demo cleanup: add
+  `REMOVE_DEMO_LISTINGS=true` by hand in Render (the Blueprint is on manual sync, so it is not there yet), redeploy, and confirm zero demo listings are left (`/search?q=DEMO` returns
   `total` 0), then set it back to `false` (see [decision 13](2026-10-09-search-backend/requirements.md))
 
 ## After the MVP
