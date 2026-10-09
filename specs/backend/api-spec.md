@@ -125,10 +125,17 @@ Lists for filters and forms.
 {
   "areas": ["Independence Layout", "New Haven", "..."],
   "categories": [ { "slug": "pharmacy", "name": "Pharmacy", "is_emergency": false } ],
+  "services": ["Consultation", "Malaria test", "X-ray"],
   "blood_groups": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
   "report_reasons": ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"]
 }
 ```
+`areas` keep the order of the fixed list in `core/config.py`. `categories` are all rows of the categories table, sorted by
+`id`. `services` are the distinct service names of **published** listings, sorted alphabetically without regard to case, one
+entry per name (names that differ only in capitals count as one; the first spelling in alphabetical order is kept), and
+without the blood groups (blood groups are stored as service rows, see `blood_groups`). They are the choices for the `service`
+filter of `GET /search`, which matches a name without regard to case. `blood_groups` is a fixed list in `core/config.py`.
+`report_reasons` are the report reasons in the order shown. No login.
 
 ### GET /search — the hard part
 FR-04 to FR-08, US-01, US-05. Open-now, nearest-first search over trusted listings.
@@ -152,6 +159,9 @@ FR-04 to FR-08, US-01, US-05. Open-now, nearest-first search over trusted listin
 2. Apply filters. "Open now" checks today's hours and yesterday's past-midnight shift (see spike).
 3. Sort by distance when location is given, otherwise by name.
 4. Sponsored slot (FR-45, **built in roadmap phase 12c**; until then `sponsored` is always `false` and no listing is moved first): at most **one** listing with `featured_until` in the future that matches all filters (and is within the radius) is placed first with `sponsored: true`. It is not repeated lower down.
+
+**Privacy (NFR-07):** `lat` and `lng` are a visitor's position. They are used for this request only. The server logs must never keep
+them: the API access log shows `lat=redacted&lng=redacted`.
 
 **Response 200:** `{ "items": [ListingSummary], "total": 37 }`
 
