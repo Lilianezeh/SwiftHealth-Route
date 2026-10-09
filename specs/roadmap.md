@@ -62,19 +62,40 @@ Feature folder: [requirements](2026-10-08-walking-skeleton-production/requiremen
 - Task 3b, cold-start fix (`getHealth()` stops waiting after 8 seconds): **done**
 - Task 4, wrap-up: **done**
 
-### Phase 5: Search. Next
-US-01, US-05. The hard part.
+Phase 5 was bigger than a day, so it is split in two. The phase numbers after it stay the same.
+
+### Phase 5A: Search backend. In progress (all tasks done; draft PR #7 waits for the owner's merge)
+US-01, US-05. The hard part. FR-04, FR-05, FR-06, FR-08, FR-22, NFR-02, NFR-08.
+Feature folder: [requirements](2026-10-09-search-backend/requirements.md),
+[plan](2026-10-09-search-backend/plan.md), [validation](2026-10-09-search-backend/validation.md).
 - 5a: `hours.py`, open now in Africa/Lagos time, hours that cross midnight, and 24-hour listings always open
 - 5b: `search_service`, distance order, and the labelling and exclusion rules: overdue listings are labelled
   `verification_due` and stay visible (FR-08); listings reported "not working" by 2 users in 7 days are excluded (FR-22)
 - 5c: `GET /search`
-- 5d: Find page and location permission (FR-01, FR-03)
+
+Tasks:
+- Task 0, spec and `pg_trgm` check on Render: **done**
+- Task 1, `hours.py` (5a): **done**
+- Task 1b, `REPORTER_KEY_SECRET` and `hash_reporter_key`: **done**
+- Task 1c, PostgreSQL 18 in Docker Compose and backend CI: **done**
+- Task 2, `search_service`, repository and migration (`pg_trgm`, `user_reports.reporter_key`) (5b): **done**
+- Task 3, `GET /search` (5c): **done**
+- Task 3a, router tags with a capital letter: **done**
+- Task 3b, flag-driven demo listings for production, with an exact-slug cleanup: **done**
+- Task 3c, queries with two typos (each word is matched too): **done**
+- Task 4, wrap-up and local smoke test: **done**. After the merge the owner does the four Render steps in
+  [validation.md](2026-10-09-search-backend/validation.md), "After the merge". Known limit: typos in words of 3 to 5
+  letters can still be missed (see "To do later" in [LOG.md](../LOG.md)).
+
+The spike `spikes/open_now_nearest.py` still hides overdue listings; the real search labels them (FR-08), and
+`backend/tests/unit/test_search_service.py` checks that.
+
+### Phase 5B: Search frontend. Next
+US-01, US-05. Needs 5A merged.
+- 5d: Find page and location permission (FR-01, FR-03). The page should offer category buttons and nearby
+  suggestions (see "To do later" in [LOG.md](../LOG.md))
 - 5e: results page with filters (FR-04, FR-05, FR-06)
 - 5f: map view (FR-07, Should)
-
-Note for 5a and 5b: `backend/tests/unit/test_search_service.py` does not exist yet. Its tests must expect overdue
-listings to be labelled, not excluded. The spike `spikes/open_now_nearest.py` still hides them, so do not copy that
-part of the spike into the tests.
 
 ### Phase 6: Listing page. Next
 US-02, US-03, US-06, US-07.
@@ -128,7 +149,9 @@ US-13.
 - 14a: CSV import and export (FR-39, FR-40, both Should)
 - 14b: daily backups and a tested restore (NFR-09)
 - 14c: anonymous analytics events (see "Analytics" in [prd.md](prd.md#analytics))
-- 14d: go through the release criteria in [prd.md](prd.md#release-criteria)
+- 14d: go through the release criteria in [prd.md](prd.md#release-criteria). Includes the demo cleanup: set
+  `REMOVE_DEMO_LISTINGS=true` in Render, redeploy, and confirm zero demo listings are left (`/search?q=DEMO` returns
+  `total` 0), then set it back to `false` (see [decision 13](2026-10-09-search-backend/requirements.md))
 
 ## After the MVP
 

@@ -11,7 +11,7 @@ jobs:
     defaults: { run: { working-directory: backend } }
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18 # same major version as the Render database
         # Throwaway database for CI only, same values as .env.example. Not a secret.
         env:
           POSTGRES_USER: swifthealth

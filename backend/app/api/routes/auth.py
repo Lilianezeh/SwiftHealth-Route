@@ -8,7 +8,7 @@ from app.models import User
 from app.schemas.auth import LoginRequest, LoginResponse, TokenResponse, UserRead, VerifyCodeRequest
 from app.services import auth_service
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 WRONG_LOGIN_MESSAGE = "Invalid email or password"  # the same text for an unknown email and a wrong password
 DEACTIVATED_MESSAGE = "This account is deactivated."

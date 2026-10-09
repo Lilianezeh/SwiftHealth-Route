@@ -54,7 +54,11 @@ async def prepare_test_database() -> None:
 
     test_engine = create_async_engine(test_url)
     async with test_engine.begin() as connection:
+        await connection.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))  # search text match, FR-04
         # create_all is a sync call, so run_sync lets the async connection run it (SQLAlchemy asyncio docs).
+        # drop_all first: create_all never changes a table that exists, so a new column would be missing.
+        # Safe: this is the throwaway test database (the guard above refuses the development database).
+        await connection.run_sync(SQLModel.metadata.drop_all)
         await connection.run_sync(SQLModel.metadata.create_all)
     await test_engine.dispose()
 

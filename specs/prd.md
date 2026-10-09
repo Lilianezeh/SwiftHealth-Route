@@ -164,7 +164,7 @@ The MVP needs nine core entities. A Listing covers both health facilities and em
 | Opening hours | id, listing\_id, day\_of\_week, opens\_at, closes\_at, is\_closed | One row per day; 24-hour flag on Listing |
 | Service and fee | id, listing\_id, service\_name, fee\_min\_naira, fee\_max\_naira, fee\_collected\_at | Fees optional, stored as Decimal (2 places), always with the date collected; blood groups are stored here for blood banks |
 | Verification check | id, listing\_id, staff\_id, method (call/visit), result (pass/fail), person\_reached, notes, photo, checked\_at | Full history kept |
-| User report | id, listing\_id, reason, comment, reporter\_phone (optional), status, created\_at, resolved\_by, resolved\_at | Reporter phone deleted after resolution |
+| User report | id, listing\_id, reason, comment, reporter\_phone (optional), reporter\_key, status, created\_at, resolved\_by, resolved\_at | Reporter phone and reporter\_key deleted after resolution. reporter\_key is a keyed hash used to count different reporters, never the raw phone or IP |
 | User | id, name, email, phone, password\_hash, role (verifier, editor, admin, provider), is\_active, created\_at, last\_login\_at | Staff and provider accounts; no public user accounts in the MVP |
 | Audit entry | id, user\_id, listing\_id, action, field\_changed, old\_value, new\_value, reference, changed\_at | Written on every change; also records Paystack payments by reference |
 

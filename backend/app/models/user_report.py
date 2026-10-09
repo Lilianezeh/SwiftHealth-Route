@@ -14,6 +14,9 @@ class UserReport(SQLModel, table=True):
     reason: ReportReason
     comment: str | None = None
     reporter_phone: str | None = None
+    # Keyed hash of the phone, else of the client IP: counts different reporters for FR-22 without storing the
+    # raw IP. Cleared when the report is resolved, like reporter_phone (decisions 4 and 5 in the search spec).
+    reporter_key: str | None = None
     status: ReportStatus = Field(default=ReportStatus.open, index=True)
     created_at: datetime = Field(default_factory=utcnow)
     resolved_by: int | None = Field(default=None, foreign_key="users.id")
