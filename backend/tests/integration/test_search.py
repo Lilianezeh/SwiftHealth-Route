@@ -315,6 +315,32 @@ async def test_the_response_never_shows_internal_fields(
         assert hidden_word not in response.text
 
 
+async def test_q_is_the_public_name_and_it_is_described_in_docs() -> None:
+    # The URL keeps the usual short name `q`; inside the code it is `search_text` (CLAUDE.md, "Code style").
+    search_parameters = app.openapi()["paths"]["/search"]["get"]["parameters"]
+    parameters = {parameter["name"]: parameter for parameter in search_parameters}
+    assert "q" in parameters
+    assert "search_text" not in parameters
+    description = parameters["q"]["description"]
+    assert "facility name" in description and "area" in description and "service" in description
+
+
+async def test_the_code_name_search_text_is_not_a_second_public_name(
+    client: AsyncClient, session: AsyncSession, clock: list[datetime]
+) -> None:
+    await add_listing(session, "Ogui Road Pharmacy")
+    await add_listing(session, "Uwani Maternity Home", category_slug="maternity")
+    await session.commit()
+    assert names(await search(client, q="maternity")) == ["Uwani Maternity Home"]
+    assert len(names(await search(client, search_text="maternity"))) == 2  # ignored: no filter was applied
+
+
+async def test_a_too_long_q_is_a_422_that_names_q(client: AsyncClient, clock: list[datetime]) -> None:
+    response = await client.get("/search", params={"q": "a" * 101})
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"][-1] == "q"
+
+
 async def test_the_real_clock_is_used_when_nothing_replaces_it(
     client: AsyncClient, session: AsyncSession
 ) -> None:

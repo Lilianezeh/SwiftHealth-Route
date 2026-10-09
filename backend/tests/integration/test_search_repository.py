@@ -22,12 +22,12 @@ NOW = datetime(2026, 10, 6, 9, 0, tzinfo=timezone.utc)
 async def find_names(session: AsyncSession, **filters: object) -> list[str]:
     """Runs the repository query with the service's real rules, and returns the listing names, sorted."""
     arguments: dict[str, object] = {
-        "q": None, "category_slug": None, "service_name": None, "area": None, "is_24_hours": False,
+        "search_text": None, "category_slug": None, "service_name": None, "area": None, "is_24_hours": False,
         "reports_since": NOW - REPORT_WINDOW, "reports_to_exclude": REPORTS_TO_EXCLUDE,
         "match_threshold": MATCH_THRESHOLD,
     }
     arguments.update(filters)
-    arguments.setdefault("q_words", split_query_words(arguments["q"]))  # type: ignore[arg-type]
+    arguments.setdefault("search_words", split_query_words(arguments["search_text"]))  # type: ignore[arg-type]
     candidates = await search_repository.find_candidates(session, **arguments)  # type: ignore[arg-type]
     return sorted(candidate.listing.name for candidate in candidates)
 
@@ -116,7 +116,7 @@ async def test_q_finds_a_misspelled_facility_name(
     session: AsyncSession, query: str, expected_name: str
 ) -> None:
     await add_named_places(session)
-    assert expected_name in await find_names(session, q=query)
+    assert expected_name in await find_names(session, search_text=query)
 
 
 @pytest.mark.parametrize(
@@ -132,7 +132,7 @@ async def test_q_finds_a_misspelled_facility_name(
 )
 async def test_q_finds_a_misspelled_area(session: AsyncSession, query: str, expected_name: str) -> None:
     await add_named_places(session)
-    assert expected_name in await find_names(session, q=query)
+    assert expected_name in await find_names(session, search_text=query)
 
 
 @pytest.mark.parametrize(
@@ -152,7 +152,7 @@ async def test_q_finds_a_misspelled_service_name(
     session: AsyncSession, query: str, expected_name: str
 ) -> None:
     await add_named_places(session)
-    assert expected_name in await find_names(session, q=query)
+    assert expected_name in await find_names(session, search_text=query)
 
 
 # --- Two typos in one query (found in Task 3b): each word is also matched on its own, see decision 2 ---
@@ -179,7 +179,7 @@ async def test_q_finds_a_name_with_two_typos(session: AsyncSession, query: str, 
     await add_named_places(session)
     await add_listing(session, NIGHT_PHARMACY[0], area=NIGHT_PHARMACY[1], service_names=NIGHT_PHARMACY[2])
     await session.commit()
-    assert expected_name in await find_names(session, q=query)
+    assert expected_name in await find_names(session, search_text=query)
 
 
 @pytest.mark.parametrize(
@@ -200,15 +200,15 @@ async def test_q_words_may_match_the_name_the_area_and_the_services(
 ) -> None:
     await add_named_places(session)
     await session.commit()
-    assert expected_name in await find_names(session, q=query)
+    assert expected_name in await find_names(session, search_text=query)
 
 
 async def test_the_word_rule_needs_every_word_to_match(session: AsyncSession) -> None:
     await add_listing(session, NIGHT_PHARMACY[0], area=NIGHT_PHARMACY[1], service_names=NIGHT_PHARMACY[2])
     await session.commit()
-    assert await find_names(session, q="nigt pharmcy") == ["Night Pharmacy"]
-    assert await find_names(session, q="nigt xyzzy") == []  # one word matches, the other matches nothing
-    assert await find_names(session, q="nigt pharmcy xyzzy") == []
+    assert await find_names(session, search_text="nigt pharmcy") == ["Night Pharmacy"]
+    assert await find_names(session, search_text="nigt xyzzy") == []  # one word matches, the other nothing
+    assert await find_names(session, search_text="nigt pharmcy xyzzy") == []
 
 
 async def test_the_word_rule_is_not_used_for_a_query_with_too_many_words(session: AsyncSession) -> None:
@@ -217,8 +217,8 @@ async def test_the_word_rule_is_not_used_for_a_query_with_too_many_words(session
     await add_listing(session, NIGHT_PHARMACY[0], area=NIGHT_PHARMACY[1], service_names=NIGHT_PHARMACY[2])
     await session.commit()
     six_words = "nigt pharmcy new havn prescriptn filing"
-    assert await find_names(session, q=six_words) == ["Night Pharmacy"]
-    assert await find_names(session, q=f"{six_words} nigh") == []
+    assert await find_names(session, search_text=six_words) == ["Night Pharmacy"]
+    assert await find_names(session, search_text=f"{six_words} nigh") == []
 
 
 @pytest.mark.parametrize(
@@ -233,16 +233,16 @@ async def test_q_with_several_unrelated_words_finds_nothing(session: AsyncSessio
     await add_named_places(session)
     await add_listing(session, NIGHT_PHARMACY[0], area=NIGHT_PHARMACY[1], service_names=NIGHT_PHARMACY[2])
     await session.commit()
-    assert await find_names(session, q=query) == []
+    assert await find_names(session, search_text=query) == []
 
 
 async def test_look_alike_words_do_not_match_more_than_before(session: AsyncSession) -> None:
     # Known look-alikes (see "Threshold result" in the requirements). They must not grow with the word rule.
     await add_named_places(session)
     await session.commit()
-    assert await find_names(session, q="generator") == ["GRA General Hospital"]  # 0.60: the known limit
-    assert await find_names(session, q="pharaoh") == []  # 0.50: below the line, and must stay below
-    assert await find_names(session, q="hotel") == []
+    assert await find_names(session, search_text="generator") == ["GRA General Hospital"]  # 0.60: known limit
+    assert await find_names(session, search_text="pharaoh") == []  # 0.50: below the line, and must stay below
+    assert await find_names(session, search_text="hotel") == []
 
 
 @pytest.mark.parametrize(
@@ -251,32 +251,32 @@ async def test_look_alike_words_do_not_match_more_than_before(session: AsyncSess
 )
 async def test_q_with_an_unrelated_word_finds_nothing(session: AsyncSession, query: str) -> None:
     await add_named_places(session)
-    assert await find_names(session, q=query) == []
+    assert await find_names(session, search_text=query) == []
 
 
 async def test_a_misspelling_does_not_pull_in_a_different_place(session: AsyncSession) -> None:
     await add_named_places(session)
-    assert await find_names(session, q="pharmcy") == ["Ogui Road Pharmacy"]
-    assert await find_names(session, q="Uwani Maternty") == ["Uwani Maternity Home"]
+    assert await find_names(session, search_text="pharmcy") == ["Ogui Road Pharmacy"]
+    assert await find_names(session, search_text="Uwani Maternty") == ["Uwani Maternity Home"]
 
 
 async def test_q_matches_each_listing_once_even_when_two_services_match(session: AsyncSession) -> None:
     await add_listing(session, "Scan Centre", service_names=("Ultrasound scan", "Ultrasound doppler"))
     await session.commit()
-    assert await find_names(session, q="ultrasound") == ["Scan Centre"]
+    assert await find_names(session, search_text="ultrasound") == ["Scan Centre"]
 
 
 async def test_q_filters_together_with_the_other_filters(session: AsyncSession) -> None:
     await add_listing(session, "Ogui Road Pharmacy", area="Ogui", category_slug="pharmacy")
     await add_listing(session, "Ogui Road Clinic", area="Ogui", category_slug="clinic")
     await session.commit()
-    assert await find_names(session, q="Ogui", category_slug="clinic") == ["Ogui Road Clinic"]
+    assert await find_names(session, search_text="Ogui", category_slug="clinic") == ["Ogui Road Clinic"]
 
 
 @pytest.mark.parametrize("query", ["'; DROP TABLE listings; --", "100%", "under_score", "a" * 100, "\\"])
 async def test_q_with_odd_characters_returns_normally(session: AsyncSession, query: str) -> None:
     await add_named_places(session)
-    assert isinstance(await find_names(session, q=query), list)
+    assert isinstance(await find_names(session, search_text=query), list)
     assert len(await find_names(session)) == len(NAMED_PLACES)  # the table is intact
 
 

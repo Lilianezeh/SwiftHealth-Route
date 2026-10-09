@@ -97,6 +97,10 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 ## Code style
 - Readable names everywhere: no single-letter or cryptic names (use `response`, not `r`; `place`, not `p`).
   Someone new to the code should understand each name without asking.
+  Exception: a well-known public API convention such as the search parameter `q` may keep its short name in the URL
+  only. In the code it gets a readable name (`search_text`), mapped with an alias (`Field(alias="q")` or
+  `Query(alias="q")`), and it is described in `/docs` (`description=...`) so the short name is not a puzzle. The
+  throwaway `_` for a value you do not use is fine.
 - Python: type hints everywhere; follow the layers above; raise HTTPException only in routes (services raise
   clear domain errors that routes translate). Use Depends() for session and current user.
 - Async wherever code waits on I/O (database, httpx, routes and services using them); CPU-only code (security.py,

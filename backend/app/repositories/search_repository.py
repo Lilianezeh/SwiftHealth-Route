@@ -61,24 +61,26 @@ def listing_matches(text: str, match_threshold: float) -> ColumnElement[bool]:
     )
 
 
-def query_matches(q: str, q_words: Sequence[str], match_threshold: float) -> ColumnElement[bool]:
+def query_matches(
+    search_text: str, search_words: Sequence[str], match_threshold: float
+) -> ColumnElement[bool]:
     """The whole query matches, or (for 2 or more words) every word matches somewhere in the listing.
 
     The word rule only adds matches: "Nigt Pharmcy" scores 0.50 as a whole but each word scores 0.55 or more.
     A word may match the name, the area or a service, so "pharmcy ogui" finds a pharmacy in Ogui.
     """
-    whole_query = listing_matches(q, match_threshold)
-    if not q_words:
+    whole_query = listing_matches(search_text, match_threshold)
+    if not search_words:
         return whole_query
-    every_word = and_(*(listing_matches(word, match_threshold) for word in q_words))
+    every_word = and_(*(listing_matches(word, match_threshold) for word in search_words))
     return or_(whole_query, every_word)
 
 
 async def find_candidates(
     session: AsyncSession,
     *,
-    q: str | None,
-    q_words: Sequence[str],
+    search_text: str | None,
+    search_words: Sequence[str],
     category_slug: str | None,
     service_name: str | None,
     area: str | None,
@@ -101,8 +103,8 @@ async def find_candidates(
         conditions.append(
             exists().where(Service.listing_id == Listing.id, func.lower(Service.name) == service_name.lower())
         )
-    if q is not None:
-        conditions.append(query_matches(q, q_words, match_threshold))
+    if search_text is not None:
+        conditions.append(query_matches(search_text, search_words, match_threshold))
 
     query = (
         select(Listing, Category)

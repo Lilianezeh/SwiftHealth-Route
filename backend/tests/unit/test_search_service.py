@@ -119,6 +119,12 @@ def test_split_query_words(query: str | None, words: list[str]) -> None:
     assert split_query_words(query) == words
 
 
+def test_the_q_parameter_is_read_into_search_text() -> None:
+    assert SearchParams(q="  Nigt Pharmcy ").search_text == "Nigt Pharmcy"  # trimmed
+    assert SearchParams(q="   ").search_text is None  # blank means not given
+    assert SearchParams().search_text is None
+
+
 def test_distance_in_km_known_pair_and_same_point() -> None:
     assert distance_in_km(6.45, 7.5, 6.45, 7.5) == 0
     # One degree of latitude is about 111.2 km (Earth radius 6371 km).

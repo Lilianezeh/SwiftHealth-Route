@@ -70,8 +70,8 @@ async def search_listings(session: AsyncSession, params: SearchParams, moment: d
     """`moment` is passed in (never read from the clock here), so tests can choose the time."""
     candidates = await search_repository.find_candidates(
         session,
-        q=params.q,
-        q_words=split_query_words(params.q),
+        search_text=params.search_text,
+        search_words=split_query_words(params.search_text),
         category_slug=params.category,
         service_name=params.service,
         area=params.area,

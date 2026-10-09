@@ -12,7 +12,13 @@ MAX_LIMIT = 100
 
 
 class SearchParams(BaseModel):
-    q: str | None = Field(default=None, max_length=MAX_TEXT_LENGTH)
+    # The URL keeps the usual short name `q` (the alias). In the code it is `search_text` (see CLAUDE.md).
+    search_text: str | None = Field(
+        default=None,
+        alias="q",
+        max_length=MAX_TEXT_LENGTH,
+        description="Text to search for: facility name, area or service. Small misspellings are tolerated.",
+    )
     category: str | None = Field(default=None, max_length=MAX_TEXT_LENGTH)
     service: str | None = Field(default=None, max_length=MAX_TEXT_LENGTH)
     area: str | None = None
@@ -24,10 +30,10 @@ class SearchParams(BaseModel):
     limit: int = Field(default=20, ge=1, le=MAX_LIMIT)
     offset: int = Field(default=0, ge=0)
 
-    @field_validator("q", "category", "service")
+    @field_validator("search_text", "category", "service")
     @classmethod
     def blank_text_means_not_given(cls, text: str | None) -> str | None:
-        """`?q=` and `?q=%20` are the same as no `q` at all."""
+        """`?q=` and `?q=%20` are the same as no search text at all."""
         return text.strip() or None if text is not None else None
 
     @field_validator("area")
