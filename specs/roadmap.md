@@ -62,19 +62,34 @@ Feature folder: [requirements](2026-10-08-walking-skeleton-production/requiremen
 - Task 3b, cold-start fix (`getHealth()` stops waiting after 8 seconds): **done**
 - Task 4, wrap-up: **done**
 
-### Phase 5: Search. Next
-US-01, US-05. The hard part.
+Phase 5 was bigger than a day, so it is split in two. The phase numbers after it stay the same.
+
+### Phase 5A: Search backend. In progress
+US-01, US-05. The hard part. FR-04, FR-05, FR-06, FR-08, FR-22, NFR-02, NFR-08.
+Feature folder: [requirements](2026-10-09-search-backend/requirements.md),
+[plan](2026-10-09-search-backend/plan.md), [validation](2026-10-09-search-backend/validation.md).
 - 5a: `hours.py`, open now in Africa/Lagos time, hours that cross midnight, and 24-hour listings always open
 - 5b: `search_service`, distance order, and the labelling and exclusion rules: overdue listings are labelled
   `verification_due` and stay visible (FR-08); listings reported "not working" by 2 users in 7 days are excluded (FR-22)
 - 5c: `GET /search`
-- 5d: Find page and location permission (FR-01, FR-03)
-- 5e: results page with filters (FR-04, FR-05, FR-06)
-- 5f: map view (FR-07, Should)
+
+Tasks:
+- Task 0, spec and `pg_trgm` check on Render: next
+- Task 1, `hours.py` (5a): next
+- Task 1b, `REPORTER_KEY_SECRET` and `hash_reporter_key`: next
+- Task 2, `search_service`, repository and migration (`pg_trgm`, `user_reports.reporter_key`) (5b): next
+- Task 3, `GET /search` (5c): next
+- Task 4, wrap-up: next
 
 Note for 5a and 5b: `backend/tests/unit/test_search_service.py` does not exist yet. Its tests must expect overdue
 listings to be labelled, not excluded. The spike `spikes/open_now_nearest.py` still hides them, so do not copy that
 part of the spike into the tests.
+
+### Phase 5B: Search frontend. Next
+US-01, US-05. Needs 5A merged.
+- 5d: Find page and location permission (FR-01, FR-03)
+- 5e: results page with filters (FR-04, FR-05, FR-06)
+- 5f: map view (FR-07, Should)
 
 ### Phase 6: Listing page. Next
 US-02, US-03, US-06, US-07.
