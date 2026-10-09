@@ -24,6 +24,10 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `X ray` against `Xray`, the label quirk and typos at the source. It needs a place for the list (an admin-managed list,
   or the distinct names in use), which is a data-model question for the owner: the project has exactly 9 tables, so
   adding a table needs approval. The UI spec (3.4, "Services and fees") changes first.
+- **npm 11 install-scripts warning (Node 24 chore):** with Node 24 (npm 11.19) `npm install` warns that the install
+  scripts of `esbuild`, `sharp` and `unrs-resolver` are "not yet covered by allowScripts" and suggests
+  `npm install-scripts approve <package>`. Nothing is blocked today (lint, typecheck, tests and `next build` all pass).
+  Watch for the day npm enforces it; then approve those three packages in `package.json`.
 - **Node.js versions (check the schedule each autumn):** Node 20, which we run (frontend Dockerfile, `netlify.toml`, the
   frontend CI), reached end of life on 2026-04-30 (official [release schedule](https://github.com/nodejs/Release/blob/main/schedule.json),
   checked 2026-10-09). A chore moves the frontend to Node 24 (Active LTS until 2026-10-20, Maintenance LTS until

@@ -10,7 +10,7 @@
   publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "20" # the same major version as frontend/Dockerfile and the frontend CI workflow
+  NODE_VERSION = "24" # the same major version as frontend/Dockerfile and the frontend CI workflow (Node 20 ended 2026-04-30)
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
