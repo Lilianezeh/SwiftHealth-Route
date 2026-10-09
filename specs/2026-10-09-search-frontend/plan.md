@@ -49,10 +49,11 @@ Task 7).
 - [x] Add the packages and the reason to [tech-stack.md](../tech-stack.md).
 - [x] Run lint, typecheck and tests, then commit: `chore(web): component test tooling, exact versions (NFR-10)`.
 
-### Task 2: Types and the API layer (tests first, with fake timers)
-- [ ] Write the tests for `request.ts`, `search.ts`, `meta.ts` and `searchQuery.ts` first; they fail.
-- [ ] Write the types, `requestJson` (5 s notice, 45 s limit, cancel), `searchListings`, `getMeta` and the query functions.
-- [ ] Run lint, typecheck and tests, then commit: `feat(web): search and meta API client with a 45 s limit and a waking-up notice (US-01, FR-04, FR-05)`.
+### Task 2: Types and the API layer (tests first, with fake timers) (done, this commit)
+- [x] Write the tests for `request.ts`, `search.ts`, `meta.ts` and `searchQuery.ts` first; they fail (4 test files
+  failed with "Cannot find module"). A fifth file, `api-boundary.test.ts`, guards the layers and passed from the start.
+- [x] Write the types, `requestJson` (5 s notice, 45 s limit, cancel), `searchListings`, `getMeta` and the query functions.
+- [x] Run lint, typecheck and tests (73 of 73 pass), then commit: `feat(web): search and meta API client with a 45 s limit and a waking-up notice (US-01, FR-04, FR-05)`.
 
 ### Task 3: Location (tests first)
 - [ ] Write the tests for `locationStore.ts` and `useLocation.ts` first (a fake `navigator.geolocation`).
