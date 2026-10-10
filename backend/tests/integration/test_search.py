@@ -24,6 +24,7 @@ MY_LATITUDE, MY_LONGITUDE = 6.4500, 7.5080
 SUMMARY_FIELDS = {
     "id", "slug", "name", "category", "area", "address", "latitude", "longitude", "distance_km",
     "is_open_now", "is_24_hours", "primary_phone", "last_verified_at", "verification_due", "sponsored",
+    "hours_note",
 }
 
 
@@ -362,3 +363,81 @@ async def test_the_real_clock_is_used_when_nothing_replaces_it(
     assert moment.tzinfo is not None
     assert abs(datetime.now(timezone.utc) - moment) < timedelta(seconds=5)
     assert (await client.get("/search")).status_code == 200
+
+
+# --- hours_note: the next opening or closing time (specs/2026-10-10-next-open-close-time/) ---
+# Requirements: FR-06, US-01, FR-05. The clock is fixed at Tuesday 10:00 in Lagos.
+async def test_hours_note_closes_for_an_open_listing(
+    client: AsyncClient, session: AsyncSession, clock: list[datetime]
+) -> None:
+    await add_listing(session, "Day Pharmacy", opening_hours=every_day(time(8, 0), time(21, 0)))
+    await session.commit()
+
+    item = (await search(client))["items"][0]
+
+    assert item["is_open_now"] is True
+    assert item["hours_note"] == "Closes 9:00 PM"
+
+
+async def test_hours_note_opens_for_a_closed_listing(
+    client: AsyncClient, session: AsyncSession, clock: list[datetime]
+) -> None:
+    await add_listing(session, "Day Pharmacy", opening_hours=every_day(time(8, 0), time(21, 0)))
+    await session.commit()
+    clock[0] = TUESDAY_10_00_IN_LAGOS + timedelta(hours=12)  # 22:00 in Lagos
+
+    item = (await search(client))["items"][0]
+
+    assert item["is_open_now"] is False
+    assert item["hours_note"] == "Opens 8:00 AM tomorrow"
+
+
+async def test_hours_note_is_null_for_a_24_hour_listing_and_for_a_listing_without_hours(
+    client: AsyncClient, session: AsyncSession, clock: list[datetime]
+) -> None:
+    await add_listing(session, "All Night Pharmacy", is_24_hours=True)
+    await add_listing(session, "No Hours Pharmacy")
+    await session.commit()
+
+    notes = {item["name"]: item["hours_note"] for item in (await search(client))["items"]}
+
+    assert notes == {"All Night Pharmacy": None, "No Hours Pharmacy": None}
+
+
+async def test_hours_note_follows_lagos_time_not_utc(
+    client: AsyncClient, session: AsyncSession, clock: list[datetime]
+) -> None:
+    await add_listing(session, "Late Pharmacy", opening_hours=every_day(time(20, 0), time(2, 0)))
+    await session.commit()
+    # 23:30 UTC on Tuesday is 00:30 on Wednesday in Lagos: the shift that began on Tuesday is still running.
+    clock[0] = datetime(2026, 10, 6, 23, 30, tzinfo=timezone.utc)
+
+    item = (await search(client))["items"][0]
+
+    assert item["is_open_now"] is True
+    assert item["hours_note"] == "Closes 2:00 AM"  # same Lagos date, so no "tomorrow"
+
+
+async def test_hours_note_agrees_with_is_open_now_for_every_result(
+    client: AsyncClient, session: AsyncSession, clock: list[datetime]
+) -> None:
+    await add_listing(session, "Open Pharmacy", opening_hours=every_day(time(8, 0), time(21, 0)))
+    await add_listing(session, "Closed Pharmacy", opening_hours=every_day(time(12, 0), time(18, 0)))
+    await add_listing(session, "Night Pharmacy", opening_hours=every_day(time(22, 0), time(6, 0)))
+    await session.commit()
+
+    for item in (await search(client))["items"]:
+        assert item["hours_note"].startswith("Closes" if item["is_open_now"] else "Opens"), item
+
+
+async def test_hours_note_is_given_to_every_item_of_a_later_page(
+    client: AsyncClient, session: AsyncSession, clock: list[datetime]
+) -> None:
+    for number in range(5):
+        await add_listing(session, f"Pharmacy {number}", opening_hours=every_day(time(8, 0), time(21, 0)))
+    await session.commit()
+
+    second_page = await search(client, limit=2, offset=2)
+
+    assert len(second_page["items"]) == 2
+    assert [item["hours_note"] for item in second_page["items"]] == ["Closes 9:00 PM", "Closes 9:00 PM"]

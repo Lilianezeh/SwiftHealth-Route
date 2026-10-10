@@ -151,10 +151,14 @@ US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-
   that adds the 12 categories production was missing. Feature folder: [requirements](2026-10-10-reference-categories/requirements.md),
   [plan](2026-10-10-reference-categories/plan.md), [validation](2026-10-10-reference-categories/validation.md). **Done:** merged and deployed (PR #15); production `GET /meta`
   returns 12 categories.
-- **Hide the emergency categories in the Filters sheet** (frontend, `feature/hide-emergency-filters`): in progress. The public
-  sheet shows only the five everyday categories, in the Find order; `GET /meta` stays as it is. Feature folder:
+- **Hide the emergency categories in the Filters sheet** (frontend, `feature/hide-emergency-filters`): **done**, merged and
+  checked on the live site (PR #16). The public sheet shows only the five everyday categories, in the Find order; `GET /meta` stays as it is. Feature folder:
   [requirements](2026-10-10-hide-emergency-filters/requirements.md), [plan](2026-10-10-hide-emergency-filters/plan.md),
   [validation](2026-10-10-hide-emergency-filters/validation.md).
+- **The next opening or closing time on search results** (backend, `feature/next-open-close-time`): in progress.
+  `GET /search` returns `hours_note` ("Closes 9:00 PM", "Opens Monday 7:30 AM"), worked out in Africa/Lagos time. Feature
+  folder: [requirements](2026-10-10-next-open-close-time/requirements.md), [plan](2026-10-10-next-open-close-time/plan.md),
+  [validation](2026-10-10-next-open-close-time/validation.md). Next after it: a small frontend PR that shows it on the card.
 
 #### Phase 5B-2: Map view. Next
 FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Needs 5B-1 merged.

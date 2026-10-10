@@ -31,6 +31,14 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `search_service` with `services/hours.py` in Africa/Lagos time (the code that already decides open now), then the card
   shows it. The api-spec (`ListingSummary` gets a new field) and the UI spec change first; tests first, including past
   midnight, 24-hour places, closed days and the week wrapping. Then the frontend shows it in one line under the labels.
+  **In progress (2026-10-10):** branch `feature/next-open-close-time`, folder `specs/2026-10-10-next-open-close-time/`. The
+  field is `hours_note`, a ready-made text from the server (owner's decision). Owner's wording changes: full day names ("Opens
+  Monday 7:30 AM"), "Closes at midnight" and "Opens at midnight" (never "12:00 AM"), and `null` when a listing has no hours
+  recorded. The card change is the next small frontend PR.
+- **Reminder: `hours_note` is English only (owner's decision, 2026-10-10).** "Closes", "Opens", "tomorrow", the day names and
+  "midnight" are written in the backend code (`services/hours.py`). If SwiftHealth ever adds another language, this text needs
+  translating, and at that point reconsider sending the time as data and formatting it on the frontend. Revisit before any
+  second language is planned.
 - **Small backend PR after phase 5B-1: all the spec categories in every database (found in the phone test, 2026-10-10).**
   The Filters sheet in production lists only Clinic, Pharmacy and Laboratory, because production has only the categories
   that the demo listings needed (`seed/demo_listings.py` adds just those). Categories are reference data, so every database
@@ -46,8 +54,8 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   2026-10-10).** `GET /meta` keeps returning all 12 categories with `is_emergency` (the phase 10 editor needs them); the
   public Filters sheet (`FiltersDialog`) shows only the 5 everyday ones, because SwiftRescue (`/emergency`) groups the
   emergency categories and Blood has its own page. A shared link such as `/search?category=ambulance` must keep working
-  (`/search` still accepts any slug) and keep showing a readable label for it. **In progress (2026-10-10):** branch
-  `feature/hide-emergency-filters`, folder `specs/2026-10-10-hide-emergency-filters/`. Owner's decisions: the list follows the
+  (`/search` still accepts any slug) and keep showing a readable label for it. **Done 2026-10-10 (PR #16, checked on the live
+  site):** folder `specs/2026-10-10-hide-emergency-filters/`. Owner's decisions: the list follows the
   Find shortcut order (Hospital, Clinic, Pharmacy, Maternity, Laboratory) with anything else after it, and an emergency
   category stays visible, with its real name, only while it is the one selected from a link.
 - **Done 2026-10-10: all spec categories in every database (PR #15).** The migration ran in Render's log, production

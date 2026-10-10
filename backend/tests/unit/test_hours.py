@@ -8,7 +8,7 @@ from datetime import datetime, time, timedelta, timezone
 import pytest
 
 from app.models import OpeningHours
-from app.services.hours import LAGOS_TIME, is_open_at
+from app.services.hours import LAGOS_TIME, NextChange, hours_note, is_open_at, next_change
 
 MONDAY, TUESDAY, WEDNESDAY, SATURDAY, SUNDAY = 0, 1, 2, 5, 6
 
@@ -154,3 +154,216 @@ def test_a_moment_without_a_time_zone_is_refused() -> None:
     opening_hours = every_day(time(8, 0), time(21, 0))
     with pytest.raises(ValueError, match="time zone"):
         is_open_at(opening_hours, False, datetime(2026, 10, 6, 10, 0))
+
+
+# --- the next opening or closing time (specs/2026-10-10-next-open-close-time/) ---
+# Requirements: FR-06, US-01, FR-05. `next_change` says what happens next and when; `hours_note` writes it.
+DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+FRIDAY = 4
+NORMAL_HOURS = every_day(time(8, 0), time(21, 0))
+LATE_SHIFT = every_day(time(20, 0), time(2, 0))
+
+
+def one_day(day: int, opens_at: time, closes_at: time) -> list[OpeningHours]:
+    return [hours_for(day, opens_at, closes_at)]
+
+
+def test_next_change_open_now_closes_later_today() -> None:
+    change = next_change(NORMAL_HOURS, False, lagos_moment(TUESDAY, 10))
+
+    assert change == NextChange("closes", lagos_moment(TUESDAY, 21))
+
+
+def test_next_change_on_a_shift_past_midnight_closes_tomorrow() -> None:
+    change = next_change(LATE_SHIFT, False, lagos_moment(TUESDAY, 23))
+
+    assert change == NextChange("closes", lagos_moment(WEDNESDAY, 2))
+
+
+def test_next_change_after_midnight_on_a_late_shift_closes_today() -> None:
+    change = next_change(LATE_SHIFT, False, lagos_moment(TUESDAY, 1))
+
+    assert change == NextChange("closes", lagos_moment(TUESDAY, 2))  # from Monday's row
+
+
+def test_next_change_closed_now_opens_later_today() -> None:
+    change = next_change(NORMAL_HOURS, False, lagos_moment(TUESDAY, 6))
+
+    assert change == NextChange("opens", lagos_moment(TUESDAY, 8))
+
+
+def test_next_change_after_closing_opens_tomorrow() -> None:
+    change = next_change(NORMAL_HOURS, False, lagos_moment(TUESDAY, 22))
+
+    assert change == NextChange("opens", lagos_moment(WEDNESDAY, 8))
+
+
+def test_next_change_skips_closed_days_and_finds_a_later_day() -> None:
+    opening_hours = [hours_for(MONDAY, time(9, 0), time(17, 0)), hours_for(FRIDAY, time(10, 0), time(14, 0))]
+    opening_hours += [hours_for(day, None, None, is_closed=True) for day in (1, 2, 3)]
+    friday_opening = NextChange("opens", lagos_moment(FRIDAY, 10))
+
+    assert next_change(opening_hours, False, lagos_moment(MONDAY, 18)) == friday_opening
+    assert next_change(opening_hours, False, lagos_moment(TUESDAY, 9)) == friday_opening
+
+
+def test_next_change_wraps_from_sunday_to_monday() -> None:
+    opening_hours = [hours_for(MONDAY, time(9, 0), time(17, 0))]
+
+    change = next_change(opening_hours, False, lagos_moment(SUNDAY, 23))
+
+    assert change == NextChange("opens", lagos_moment(SUNDAY, 9) + timedelta(days=1))  # Monday 2026-10-12
+
+
+def test_next_change_at_the_opening_minute_is_closes_and_at_the_closing_minute_is_opens() -> None:
+    at_opening = next_change(NORMAL_HOURS, False, lagos_moment(TUESDAY, 8))
+    at_closing = next_change(NORMAL_HOURS, False, lagos_moment(TUESDAY, 21))
+
+    assert at_opening == NextChange("closes", lagos_moment(TUESDAY, 21))
+    assert at_closing == NextChange("opens", lagos_moment(WEDNESDAY, 8))
+
+
+def test_next_change_is_none_for_a_24_hour_listing() -> None:
+    assert next_change(NORMAL_HOURS, True, lagos_moment(TUESDAY, 10)) is None
+    assert next_change([], True, lagos_moment(TUESDAY, 10)) is None
+
+
+@pytest.mark.parametrize("opening_hours", [
+    pytest.param([], id="no rows"),
+    pytest.param([hours_for(day, None, None, is_closed=True) for day in range(7)], id="only closed days"),
+    pytest.param([hours_for(day, None, None) for day in range(7)], id="rows without times"),
+    pytest.param(every_day(time(9, 0), time(9, 0)), id="zero-length rows"),
+])
+def test_next_change_is_none_without_hours(opening_hours: list[OpeningHours]) -> None:
+    assert next_change(opening_hours, False, lagos_moment(TUESDAY, 10)) is None
+
+
+def test_next_change_joins_shifts_that_meet_at_midnight() -> None:
+    # Monday 18:00 to midnight and Tuesday midnight to 03:00 are one opening: it closes at 03:00.
+    opening_hours = [hours_for(MONDAY, time(18, 0), time(0, 0)), hours_for(TUESDAY, time(0, 0), time(3, 0))]
+    closes_at_3 = NextChange("closes", lagos_moment(TUESDAY, 3))
+
+    assert next_change(opening_hours, False, lagos_moment(MONDAY, 22)) == closes_at_3
+    assert next_change(opening_hours, False, lagos_moment(TUESDAY, 1)) == closes_at_3
+    before_the_shift = next_change(opening_hours, False, lagos_moment(MONDAY, 17))
+    assert before_the_shift == NextChange("opens", lagos_moment(MONDAY, 18))
+
+
+def test_next_change_joins_shifts_across_the_end_of_the_week() -> None:
+    opening_hours = [hours_for(SUNDAY, time(18, 0), time(0, 0)), hours_for(MONDAY, time(0, 0), time(3, 0))]
+
+    change = next_change(opening_hours, False, lagos_moment(SUNDAY, 22))
+
+    assert change == NextChange("closes", lagos_moment(SUNDAY, 3) + timedelta(days=1))  # Monday 03:00
+
+
+def test_next_change_works_from_a_utc_moment_and_needs_a_time_zone() -> None:
+    utc_moment = datetime(2026, 10, 6, 9, 0, tzinfo=timezone.utc)  # Tuesday 10:00 in Lagos
+
+    assert next_change(NORMAL_HOURS, False, utc_moment) == NextChange("closes", lagos_moment(TUESDAY, 21))
+    with pytest.raises(ValueError, match="time zone"):
+        next_change(NORMAL_HOURS, False, datetime(2026, 10, 6, 10, 0))
+
+
+# The words. Each case: the weekly hours, the moment, and the text the api-spec lists.
+def daily(opens_at: tuple[int, int], closes_at: tuple[int, int]) -> list[OpeningHours]:
+    return every_day(time(*opens_at), time(*closes_at))
+
+
+FORM_CASES = [  # (weekly hours, weekday, hour, minute of the moment, the text the api-spec lists)
+    (NORMAL_HOURS, TUESDAY, 10, 0, "Closes 9:00 PM"),
+    (daily((8, 0), (12, 30)), TUESDAY, 10, 0, "Closes 12:30 PM"),
+    (LATE_SHIFT, TUESDAY, 23, 0, "Closes 2:00 AM tomorrow"),
+    (daily((20, 0), (0, 30)), TUESDAY, 23, 0, "Closes 12:30 AM tomorrow"),
+    (LATE_SHIFT, TUESDAY, 1, 0, "Closes 2:00 AM"),
+    (daily((8, 0), (0, 0)), TUESDAY, 20, 0, "Closes at midnight"),
+    (daily((7, 30), (21, 0)), TUESDAY, 6, 0, "Opens 7:30 AM"),
+    (daily((12, 0), (21, 0)), TUESDAY, 8, 0, "Opens 12:00 PM"),
+    (daily((7, 30), (21, 0)), TUESDAY, 22, 0, "Opens 7:30 AM tomorrow"),
+    (one_day(MONDAY, time(7, 30), time(17, 0)), TUESDAY, 12, 0, "Opens Monday 7:30 AM"),
+    (one_day(WEDNESDAY, time(0, 0), time(6, 0)), TUESDAY, 20, 0, "Opens at midnight"),
+    (one_day(MONDAY, time(0, 0), time(6, 0)), WEDNESDAY, 12, 0, "Opens Monday at midnight"),
+]
+
+
+@pytest.mark.parametrize(
+    ("opening_hours", "day", "hour", "minute", "expected"), FORM_CASES, ids=[case[-1] for case in FORM_CASES]
+)
+def test_hours_note_forms(
+    opening_hours: list[OpeningHours], day: int, hour: int, minute: int, expected: str
+) -> None:
+    assert hours_note(opening_hours, False, lagos_moment(day, hour, minute)) == expected
+
+
+def test_hours_note_uses_full_day_names() -> None:
+    for day, name in enumerate(DAY_NAMES):
+        moment = lagos_moment((day + 3) % 7, 12)  # always four days before the opening day
+
+        assert hours_note(one_day(day, time(9, 0), time(17, 0)), False, moment) == f"Opens {name} 9:00 AM"
+
+
+def test_hours_note_midnight_has_no_clock_time_and_no_12_00_am() -> None:
+    until_midnight = every_day(time(8, 0), time(0, 0))
+    opens_at_midnight = one_day(WEDNESDAY, time(0, 0), time(6, 0))
+
+    assert hours_note(until_midnight, False, lagos_moment(TUESDAY, 20)) == "Closes at midnight"
+    assert hours_note(until_midnight, False, lagos_moment(TUESDAY, 23, 59)) == "Closes at midnight"
+    assert "12:00 AM" not in hours_note(opens_at_midnight, False, lagos_moment(TUESDAY, 20))
+
+
+def test_hours_note_ignores_seconds() -> None:
+    note = hours_note(every_day(time(8, 0, 30), time(21, 0, 45)), False, lagos_moment(TUESDAY, 10))
+
+    assert note == "Closes 9:00 PM"
+
+
+def test_hours_note_is_none_for_24_hours_and_for_no_hours() -> None:
+    moment = lagos_moment(TUESDAY, 10)
+
+    assert hours_note(NORMAL_HOURS, True, moment) is None
+    assert hours_note([], False, moment) is None
+    assert hours_note([hours_for(day, None, None, is_closed=True) for day in range(7)], False, moment) is None
+
+
+# The note and the existing "open now" rule must never disagree.
+WEEKLY_SCHEDULES = {
+    "normal hours": NORMAL_HOURS,
+    "a shift past midnight": LATE_SHIFT,
+    "weekdays only, weekend missing": [hours_for(day, time(9, 0), time(17, 0)) for day in range(5)],
+    "shifts that meet at midnight": [
+        hours_for(SUNDAY, time(18, 0), time(0, 0)),  # joined with Monday 00:00, across the end of the week
+        hours_for(MONDAY, time(0, 0), time(3, 0)),
+        hours_for(TUESDAY, time(18, 0), time(0, 0)),  # joined with Wednesday 00:00
+        hours_for(WEDNESDAY, time(0, 0), time(5, 0)),
+        hours_for(FRIDAY, time(12, 0), time(2, 0)),  # Friday to Saturday 02:00
+        hours_for(5, time(22, 0), time(0, 0)),  # Saturday to midnight; Sunday starts at 18:00: a gap
+    ],
+    "a split week": [
+        hours_for(MONDAY, time(8, 0), time(12, 0)),
+        hours_for(WEDNESDAY, time(14, 0), time(20, 0)),
+        hours_for(FRIDAY, time(0, 0), time(23, 0)),
+        hours_for(5, time(22, 0), time(3, 0)),
+        hours_for(SUNDAY, None, None, is_closed=True),
+    ],
+}
+
+
+@pytest.mark.parametrize("schedule_name", list(WEEKLY_SCHEDULES))
+def test_hours_note_agrees_with_is_open_at_for_every_minute_of_eight_days(schedule_name: str) -> None:
+    opening_hours = WEEKLY_SCHEDULES[schedule_name]
+    one_minute = timedelta(minutes=1)
+
+    for minutes in range(8 * 24 * 60):
+        moment = lagos_moment(MONDAY, 0) + timedelta(minutes=minutes)
+        is_open = is_open_at(opening_hours, False, moment)
+        change = next_change(opening_hours, False, moment)
+        note = hours_note(opening_hours, False, moment)
+        where = (schedule_name, moment, note)
+
+        assert change is not None and note is not None, where
+        assert change.at > moment, where
+        assert note.startswith("Closes" if is_open else "Opens"), where
+        assert change.kind == ("closes" if is_open else "opens"), where
+        # It is the next change: just before it the state is the current one, and at it the other one.
+        assert is_open_at(opening_hours, False, change.at - one_minute) == is_open, where
+        assert is_open_at(opening_hours, False, change.at) != is_open, where

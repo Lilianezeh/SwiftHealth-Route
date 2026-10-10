@@ -27,3 +27,6 @@ class ListingSummary(BaseModel):
     last_verified_at: datetime | None
     verification_due: bool  # true when the re-check date has passed and the listing is still shown (FR-08)
     sponsored: bool  # always false until roadmap phase 12c
+    # The next change in opening hours, in English and Lagos time ("Closes 9:00 PM", "Opens Monday 7:30 AM").
+    # null for a 24-hour listing, a listing with no hours recorded, and the lists that do not fill it yet.
+    hours_note: str | None = None
