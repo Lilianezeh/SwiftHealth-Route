@@ -21,6 +21,9 @@ export type ListingSummary = {
   last_verified_at: string | null; // ISO 8601, UTC
   verification_due: boolean;
   sponsored: boolean;
+  // The next opening or closing time as English text from the API, in Lagos time ("Closes 9:00 PM", "Opens Monday 7:30 AM").
+  // null for a 24-hour listing and for a listing with no hours recorded.
+  hours_note: string | null;
 };
 
 /** The answer of GET /search. */

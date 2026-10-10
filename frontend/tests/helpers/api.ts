@@ -45,6 +45,7 @@ export function listing(overrides: Partial<ListingSummary> = {}): ListingSummary
     last_verified_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     verification_due: false,
     sponsored: false,
+    hours_note: "Closes 9:00 PM",
     ...overrides,
   };
 }
