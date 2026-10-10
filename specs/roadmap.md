@@ -135,9 +135,11 @@ US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-
 - Task 2, types and API layer: **done**
 - Task 3, location: **done**
 - Task 4, cards and small parts (with the Figma reference mapped to design tokens): **done**
-- Task 5, the Find page: next
-- Task 6, the results page: next
-- Task 7, wrap-up, smoke test on a phone, draft pull request: next
+- Task 5, the Find page: **done**
+- Task 5b, blue palette (owner's colour change, 2026-10-10): **done**
+- Task 6, the results page: **done**
+- Task 7, wrap-up: checks and build **done** (`/find` 114 kB, `/search` 115 kB first load); draft pull request open; the
+  smoke test in DevTools and on a phone is next (the owner does it)
 
 #### Phase 5B-2: Map view. Next
 FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Needs 5B-1 merged.

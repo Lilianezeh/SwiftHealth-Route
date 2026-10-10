@@ -189,3 +189,24 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - To do (after building): rename project to "SwiftHealth Route" and update the tagline (currently "Emergency, Hospital & Pharmacy Finder"). Before renaming, check that the name is free on Play Store and App Store, plus the domain, social handles and CAC business name. Then update app title, README, specs, pitch decks, project docs and the Netlify/Render names.
 
 - To do: lint-on-edit hook uses the wrong ESLint for frontend files (no node_modules on host, so npx fetches ESLint 10, which can't read our config). Real lint (npm run lint in Docker, plus Frontend CI) still works. Fix later, probably by running ESLint inside the frontend container.
+
+- Proposed (not final): product name "SwiftHealth Route", tagline "Hospitals, pharmacies and emergency help, open near you." The rename is pending a CAC business-name check and a trademark check (together with the Play Store, App Store, domain and social handle checks above). Do not rename anything until those checks pass; then apply it in the rename chore after 5B-1.
+
+- To do (own feature, after phase 5B-2): home page refresh with photos: the hero, the category cards, and the ambulance and fire service pictures in SwiftRescue. Needs the owner's photos (rights and licence confirmed), compressed for slow 3G (NFR-01) with alt text, and the UI spec first. The SwiftRescue pictures must not slow `/emergency`, which has to work offline.
+
+## Day 7 — 2026-10-10
+- **Built:** Phase 5B-1, the Find page (`/find`) and the results page (`/search`), frontend only (branch
+  `feature/search-frontend`). Search box, category shortcuts, "Open now near me", two "near you" cards that load on their
+  own, `/blood` "Coming soon"; on `/search` the filters sheet (a native `<dialog>`), Load more, and the slow-API states
+  (skeleton, "The service is waking up" after 5 s, error and Retry after 45 s). Location is asked only after a tap, once per
+  tab, kept in `sessionStorage` rounded to 3 decimals and never put in an address. Also: `lucide-react` icons (decorative,
+  beside text), the focus ring (forest, or paper on the forest header), and the blue palette (owner's colour change).
+  342 tests passing, lint and typecheck clean. First Load JS: `/find` 114 kB, `/search` 115 kB.
+- **Broke / fixed:** a pasted colour-change request arrived inside pasted text twice; Claude did not apply it until the
+  owner typed the instruction in plain text. A test that passed alone timed out in the full run (slow laptop in Docker), so
+  the test limit is now 20 s. A button test matched `bg-pine` inside `hover:bg-pine-50`; the pattern was made exact.
+- **Still open:** the DevTools and phone smoke tests (owner), the small backend PR for "Closes 9:00 PM", the rename to
+  "SwiftHealth Route" (pending CAC and trademark checks), the photo refresh of the home page (after 5B-2).
+- **Learned:** [write this in your own words]
+- **AI use:** Claude Code wrote the tests first and then the code for each task; I chose the design rules, approved the
+  plan, the icon package and the colour change, and decided what to keep out of scope.

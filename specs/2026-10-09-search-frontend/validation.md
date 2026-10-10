@@ -15,91 +15,102 @@ The host has no Node, so the commands run in the frontend container:
 ## Tests per task
 
 ### Task 1: `tests/unit/setup.test.tsx`
-- [ ] `renders a heading in a jsdom page` (proves the config: `.tsx`, the `@/` alias, JSX, jest-dom matchers)
+- [x] `renders a heading in a jsdom page` (proves the config: `.tsx`, the `@/` alias, JSX, jest-dom matchers)
 
 ### Task 2: `request.test.ts`, `search.test.ts`, `meta.test.ts`, `searchQuery.test.ts`
 All timing tests use `vi.useFakeTimers()`: no test waits for real time.
-- [ ] `requestJson returns the parsed answer for a fast API`
-- [ ] `requestJson calls onSlow once after 5 seconds and still returns the answer that comes later`
-- [ ] `requestJson does not call onSlow when the answer comes before 5 seconds`
-- [ ] `requestJson gives up after 45 seconds with an ApiTimeoutError` (checked at 44 999 ms and 45 000 ms)
-- [ ] `requestJson throws ApiError with the status for a 4xx or 5xx answer` (404, 422, 500)
-- [ ] `requestJson throws ApiNetworkError when fetch itself fails`
-- [ ] `requestJson stops waiting when the caller cancels` (a new search cancels the old one; no timer is left running)
-- [ ] `searchListings sends only the filters that are set` (no empty `q`, no `lat` without `lng`)
-- [ ] `searchListings sends lat and lng together as plain numbers`
-- [ ] `searchListings returns items and total typed as in the api-spec`
-- [ ] `getMeta returns the five lists (areas, categories, services, blood groups, report reasons)` and
+- [x] `requestJson returns the parsed answer for a fast API`
+- [x] `requestJson calls onSlow once after 5 seconds and still returns the answer that comes later`
+- [x] `requestJson does not call onSlow when the answer comes before 5 seconds`
+- [x] `requestJson gives up after 45 seconds with an ApiTimeoutError` (checked at 44 999 ms and 45 000 ms)
+- [x] `requestJson throws ApiError with the status for a 4xx or 5xx answer` (404, 422, 500, 503)
+- [x] `requestJson throws ApiNetworkError when fetch itself fails`
+- [x] `requestJson stops waiting when the caller cancels` (a new search cancels the old one; no timer is left running)
+- [x] `searchListings sends only the filters that are set` (no empty `q`, no `lat` without `lng`)
+- [x] `searchListings sends lat and lng together as plain numbers`
+- [x] `searchListings returns items and total typed as in the api-spec`
+- [x] `getMeta returns the five lists (areas, categories, services, blood groups, report reasons)` and
   `getMeta is fetched once and kept in memory`
-- [ ] `filtersToQuery and queryToFilters round-trip every filter` (`q`, `category`, `service`, `area`, `open_now`,
+- [x] `filtersToQuery and queryToFilters round-trip every filter` (`q`, `category`, `service`, `area`, `open_now`,
   `is_24_hours`, `radius_km`)
-- [ ] `queryToFilters ignores unknown, empty or invalid values` (`radius_km=abc`, `open_now=maybe`)
-- [ ] `filtersToQuery never writes lat or lng` (NFR-07: no position in the address)
-- [ ] `no code outside lib/api calls fetch` (a test that scans `src/` for `fetch(`)
+- [x] `queryToFilters ignores unknown, empty or invalid values` (`radius_km=abc`, `open_now=maybe`)
+- [x] `filtersToQuery never writes lat or lng` (NFR-07: no position in the address)
+- [x] `no code outside lib/api calls fetch` (a test that scans `src/` for `fetch(`)
 
 ### Task 3: `locationStore.test.ts`, `useLocation.test.tsx`
-- [ ] `saves the position rounded to 3 decimals` (6.451234 becomes 6.451; 7.509876 becomes 7.51)
-- [ ] `keeps the position in sessionStorage and never in localStorage or a cookie`
-- [ ] `remembers a refusal for the tab and does not ask again`
-- [ ] `saves and reads the chosen area; a position clears nothing it should not`
-- [ ] `survives a sessionStorage that throws` (private mode: the page still works, nothing is saved)
-- [ ] `useLocation does not ask the browser until a button calls ask()` (no prompt on page load)
-- [ ] `useLocation moves from idle to asking to granted with a rounded position`
-- [ ] `useLocation reports denied, unavailable and timed out as separate states`
-- [ ] `useLocation reads a saved position without asking again`
-- [ ] `nothing logs or puts the position in the address` (console spies stay empty; `location.search` stays unchanged)
+- [x] `saves the position rounded to 3 decimals` (6.451234 becomes 6.451; 7.509876 becomes 7.51)
+- [x] `keeps the position in sessionStorage and never in localStorage or a cookie`
+- [x] `remembers a refusal for the tab and does not ask again`
+- [x] `saves and reads the chosen area; a position clears nothing it should not`
+- [x] `survives a sessionStorage that throws` (private mode: the page still works, nothing is saved)
+- [x] `useLocation does not ask the browser until a button calls ask()` (no prompt on page load)
+- [x] `useLocation moves from idle to asking to granted with a rounded position`
+- [x] `useLocation reports denied, unavailable and timed out as separate states`
+- [x] `useLocation reads a saved position without asking again`
+- [x] `nothing logs or puts the position in the address` (console spies stay empty; `location.search` stays unchanged)
 
 ### Task 4: `distance.test.ts`, `dates.test.ts`, `OpenNowBadge.test.tsx`, `VerifiedDate.test.tsx`, `CallButton.test.tsx`, `DirectionsButton.test.tsx`, `ListingCard.test.tsx`
-- [ ] `design-tokens.test.ts`: every token of the UI spec table exists in `globals.css`; every text and background pair is at
-  least 4.5:1; no component or page writes a hex or `rgb(a)` colour; a pending test for the focus ring (see Design differences)
-- [ ] `distance.test.ts`: the distance in kilometres as the API sends it (1.4 is "1.4 km", 12.5 is "12.5 km", 1 is "1 km",
+- [x] `design-tokens.test.ts`: every token of the UI spec table exists in `globals.css`; every text and background pair is at
+  least 4.5:1; no component or page writes a hex or `rgb(a)` colour; the focus ring is real (forest, paper inside `.on-dark`,
+  3 px); after the colour change of 2026-10-10 the accent is never a background or text colour
+- [x] `distance.test.ts`: the distance in kilometres as the API sends it (1.4 is "1.4 km", 12.5 is "12.5 km", 1 is "1 km",
   0 is "Under 0.1 km", null is nothing; there are no metres)
-- [ ] `dates.test.ts`: "Verified today", "1 day ago", "3 days ago", "45 days ago" (the current time is passed in); a future
+- [x] `dates.test.ts`: "Verified today", "1 day ago", "3 days ago", "45 days ago" (the current time is passed in); a future
   date counts as today; no date is "Not yet verified"
-- [ ] `OpenNowBadge says Open now, Closed or Open 24 hours in words` (24 hours wins over closed; the dot is hidden from screen readers)
-- [ ] `VerifiedDate shows "Verified 3 days ago", and the amber "Verification due" with the date next to it when verification_due is true`
-- [ ] `CallButton is a tel: link with the +234 number, labelled for screen readers with the facility name, and at least 50 px high`
-- [ ] `CallButton shows nothing for a number that is not +234 and ten digits`
-- [ ] `DirectionsButton opens the Google Maps directions link for the listing's latitude and longitude in a new tab with noopener`
-- [ ] `ListingCard shows name, category, area, address, distance, both labels, Call and Directions`
-- [ ] `ListingCard hides the distance when it is null and shows a Sponsored tag only when sponsored`
-- [ ] `ListingCard renders HTML in a name as text` (an XSS string stays text)
-- [ ] `ListingCard without a primary phone shows no Call button` (the Directions button stays)
-- [ ] `ListingCard links the name to /listing/[slug]` and `has no text under 16 px` (no `text-xs` or `text-sm`)
+- [x] `OpenNowBadge says Open now, Closed or Open 24 hours in words` (24 hours wins over closed; the dot is hidden from screen readers)
+- [x] `VerifiedDate shows "Verified 3 days ago", and the amber "Verification due" with the date next to it when verification_due is true`
+- [x] `CallButton is a tel: link with the +234 number, labelled for screen readers with the facility name, and at least 50 px high`
+- [x] `CallButton shows nothing for a number that is not +234 and ten digits`
+- [x] `DirectionsButton opens the Google Maps directions link for the listing's latitude and longitude in a new tab with noopener`
+- [x] `ListingCard shows name, category, area, address, distance, both labels, Call and Directions`
+- [x] `ListingCard hides the distance when it is null and shows a Sponsored tag only when sponsored`
+- [x] `ListingCard renders HTML in a name as text` (an XSS string stays text)
+- [x] `ListingCard without a primary phone shows no Call button` (the Directions button stays)
+- [x] `ListingCard links the name to /listing/[slug]` and `has no text under 16 px` (no `text-xs` or `text-sm`)
+- [x] `icons.test.ts`, `icons-in-components.test.tsx`, `DecorativeIcon.test.tsx` (added with the icons decision): the version is
+  pinned, icons are imported one by one, hidden from screen readers, and always beside text
 
-### Task 5: `SearchBox.test.tsx`, `CategoryShortcuts.test.tsx`, `LocationPrompt.test.tsx`, `NearbySuggestions.test.tsx`, `FindPage.test.tsx`
-- [ ] `SearchBox is a GET form to /search with the field named q`
-- [ ] `CategoryShortcuts has the five shortcuts as links with the right slugs, and Blood goes to /blood`
-- [ ] `FindPage has the heading "What do you need?" and the emergency button links to /emergency`
-- [ ] `LocationPrompt does not ask the browser on load, and asks after the button`
-- [ ] `LocationPrompt shows the area list when the visitor refuses` (areas from `getMeta`)
-- [ ] `Open now near me goes to /search?open_now=true with the position kept in session storage, not in the address`
-- [ ] `NearbySuggestions loads the two cards independently` (one slow, one fast: the fast one shows first)
-- [ ] `NearbySuggestions: one failing card shows its own error and Retry; the other card is unaffected`
-- [ ] `NearbySuggestions: an empty card shows "No open pharmacy found nearby" with a link to search all places`
-- [ ] `NearbySuggestions: with an area and no position, it asks for area=... and shows no distance`
-- [ ] `NearbySuggestions has the button "See all open places near me"`
-- [ ] `NearbySuggestions is hidden until there is a position or an area`
+### Task 5: `SearchBox.test.tsx`, `CategoryShortcuts.test.tsx`, `AreaSelect.test.tsx`, `NearbySuggestions.test.tsx`, `NearYou.test.tsx`, `FindPage.test.tsx`
+(The plan named a `LocationPrompt` test; the prompt is tested through `NearYou`, which owns it.)
+- [x] `SearchBox is a plain GET form to /search, so it works without JavaScript` and `sends the text as q` (not a client component)
+- [x] `CategoryShortcuts has the five shortcuts of FR-01 as plain links to a search by category, and Blood last` (to `/blood`)
+- [x] `FindPage has one h1, "What do you need?"` and `has the two large buttons` (the emergency one links to `/emergency`)
+- [x] `NearYou does not ask the browser for the position when the page loads, and makes no search`, and `asks only after the tap`
+- [x] `NearYou: when the visitor refuses, says so and keeps the area list; the choice of an area shows the cards`
+  (`AreaSelect` lists the areas of `GET /meta`, with an error and Retry)
+- [x] `the Open now near me button goes to /search?open_now=true` with a position (kept in session storage, not in the address),
+  asks first when there is none, and does not leave the page when the visitor refuses
+- [x] `NearbySuggestions loads the two cards independently` (one error does not stop the other; the waking-up notice at 5 s and
+  the error at 45 s are per card)
+- [x] `NearbySuggestions: one failing card shows its own error and Retry; Retry asks again for that card only`
+- [x] `NearbySuggestions: an empty card shows "No open pharmacy found nearby" with a link to search all places` (never an empty card)
+- [x] `NearbySuggestions: with an area and no position, it asks by area, sends no lat or lng and shows no distance`
+- [x] `NearbySuggestions has the button "See all open places near me"` (with the area in the link when there is no position)
+- [x] `NearbySuggestions makes no request without a position or an area`; `NearYou` with a saved position shows the two cards at
+  once and no "Show places near me" button
+- [x] `/blood says "Coming soon" and links back to /find`
 
 ### Task 6: `useSearchResults.test.tsx`, `FiltersDialog.test.tsx`, `ResultsList.test.tsx`, `SearchStatus.test.tsx`, `SearchPage.test.tsx`
-- [ ] `shows skeleton cards while loading, never a blank screen`
-- [ ] `shows "The service is waking up. This can take up to a minute." after 5 seconds` (fake timers; announced politely)
-- [ ] `shows the error state with Retry after 45 seconds, and Retry searches again`
-- [ ] `shows the error state with Retry for a server error`
-- [ ] `shows the count line: "12 places, nearest first" with a position and "12 places, A to Z" without`
-- [ ] `shows the empty state "No matches. Try removing a filter or widening the distance."`
-- [ ] `Load more asks for the next 20 and adds them; the button goes when everything is shown`
-- [ ] `a new filter cancels the request in flight and starts a new one` (no old answer replaces the new one)
-- [ ] `FiltersDialog opens with the button, shows the choices from /meta, closes with Esc and gives focus back`
-- [ ] `FiltersDialog service is a pick-from-list of the services from /meta, with "Any service" first`
-- [ ] `FiltersDialog keeps a service from a shared link that is not in the list, as the selected choice`
-- [ ] `FiltersDialog Apply writes the filters into the address without lat or lng, and replaces the history entry`
-- [ ] `FiltersDialog distance is disabled with a hint when there is no position`
-- [ ] `FiltersDialog Clear filters empties every filter`
-- [ ] `the page reads its filters from the address (a shared link)`
-- [ ] `the page sends lat and lng from the session store to the API and not into the address`
-- [ ] `a verification-due listing in the results shows the amber label` (FR-08)
-- [ ] `the main search box is pre-filled from q`
+- [x] `shows skeleton cards while loading, never a blank screen` (`SearchStatus`, and the page)
+- [x] `shows "The service is waking up. This can take up to a minute." after 5 seconds` (fake timers; a polite live region)
+- [x] `shows the error state with Retry after 45 seconds` (`useSearchResults`), and Retry searches again
+- [x] `shows the error state with Retry for a server error` (page and hook)
+- [x] `shows the count line: "12 places, nearest first" with a position and "12 places, A to Z" without` (and "1 place")
+- [x] `shows the empty state "No matches. Try removing a filter or widening the distance."`
+- [x] `Load more asks for the next 20 and adds them; the button goes when everything is shown` (also: no duplicates, and a
+  failed Load more keeps the list and says so)
+- [x] `a new filter cancels the request in flight and starts a new one` (no old answer replaces the new one)
+- [x] `FiltersDialog opens with the button, shows the choices from /meta, and gives focus back when it closes` (the `close`
+  event is what Esc sends; the real Esc key and the backdrop are checked by hand, see the smoke test)
+- [x] `FiltersDialog service is a pick-from-list of the services from /meta, with "Any service" first`
+- [x] `FiltersDialog keeps a service from a shared link that is not in the list, as the selected choice`
+- [x] `FiltersDialog Apply writes the filters into the address without lat or lng, and replaces the history entry`
+- [x] `FiltersDialog distance is disabled with a hint when there is no position` (and Apply leaves it out)
+- [x] `FiltersDialog Clear filters empties every filter` (the search text stays)
+- [x] `the page reads its filters from the address (a shared link)` (and ignores `lat` and `lng` in it)
+- [x] `the page sends lat and lng from the session store to the API and not into the address`
+- [x] `a verification-due listing in the results shows the amber label` (FR-08)
+- [x] `the main search box is pre-filled from q` (and keeps the other filters as hidden fields)
 
 ## Review-focus edge cases
 
@@ -107,30 +118,37 @@ All timing tests use `vi.useFakeTimers()`: no test waits for real time.
   and no error is shown. With it paused for over 45 s: the error and Retry appear, and Retry works after unpausing.
 - [ ] **Permission refused, and a refusal remembered.** The area list appears, the tab does not ask again, and a new tab
   asks again.
-- [ ] **No position and no area.** `/search` works (sorted A to Z), the distance control is disabled with a hint.
-- [ ] **A shared link.** Copy `/search?category=pharmacy&open_now=true`; it holds no position and opens with filters set.
+- [x] **No position and no area.** `/search` works (sorted A to Z), the distance control is disabled with a hint. (Tests:
+  `the page without a position shows 'A to Z'`, `FiltersDialog distance is disabled with a hint`; still to look at by hand.)
+- [x] **A shared link.** `/search?category=pharmacy&open_now=true` holds no position and opens with filters set. (Tests:
+  `the page reads its filters from the address`, `ignores lat and lng in the address`.)
 - [ ] **Location privacy.** The address bar, the browser history, `localStorage`, cookies and the console never hold the
   position. In the Network tab the position appears only as `lat` and `lng` of `GET /search`.
-- [ ] **Layers.** Pages are thin; components do not call `fetch`; `lib/api/` is the only caller of the API (a test scans
-  for it); no `any`; client components only where needed (`"use client"`).
-- [ ] **Overdue listings** show "Verification due" and still show their Call button.
+- [x] **Layers.** Pages are thin; components do not call `fetch`; `lib/api/` is the only caller of the API (a test scans
+  for it); no `any` (`git grep` finds none); client components only where needed (`"use client"`: the ten files that use
+  state, effects or click handlers; `/find` and `/search` pages, `SearchBox`, `CategoryShortcuts` and `ResultsList` are server-safe).
+- [x] **Overdue listings** show "Verification due" and still show their Call button (`ListingCard.test.tsx`).
 - [ ] **Slow 3G.** The Find page is usable before the API answers; skeletons show; nothing jumps when results arrive.
 - [ ] **320 px wide.** No sideways scrolling on `/find` or `/search`, the dialog fits, buttons are at least 48 px.
 - [ ] **Keyboard and screen reader.** Tab order is sensible, the focus ring is visible, the dialog traps focus, status
   messages are read out, buttons have names.
-- [ ] **Page weight.** `/find` and `/search` First Load JS from `npm run build` is written here: _not measured yet_. No
-  Leaflet on these pages.
+- [x] **Page weight.** First Load JS from `npm run build` (2026-10-10, Next.js 15.5, after Task 6): `/find` **114 kB**,
+  `/search` **115 kB**, of which **103 kB** is shared by every page (the framework). The pages themselves add 4.55 kB and
+  5.84 kB. No Leaflet on these pages (it is not imported).
 
 ## Security checklist
 
-- [ ] Listing text (names, areas, addresses) is rendered as text only; no `dangerouslySetInnerHTML`.
-- [ ] External links (`DirectionsButton`) use `rel="noopener noreferrer"`; `tel:` links hold only the `+234...` number.
-- [ ] The position goes to one place only (`GET /search` as `lat` and `lng`); no analytics, no third party, no
-  `localStorage`, no cookie, no console output. `git grep -n "console\." frontend/src` finds nothing.
-- [ ] No secrets, no `.env` change; the only configuration is the existing public `NEXT_PUBLIC_API_URL`.
-- [ ] The new packages are dev-only, pinned to exact versions (no `^` or `~`), chosen for Node 24, and `npm audit` shows no
-  new high issue from them.
-- [ ] Nothing under `backend/` changed (`git diff --stat origin/main -- backend` is empty).
+- [x] Listing text (names, areas, addresses) is rendered as text only; no `dangerouslySetInnerHTML` (`git grep` finds none;
+  `ListingCard` and `ResultsList` tests render a `<img onerror>` name as text).
+- [x] External links (`DirectionsButton`) use `rel="noopener noreferrer"`; `tel:` links hold only the `+234...` number.
+- [x] The position goes to one place only (`GET /search` as `lat` and `lng`); no analytics, no third party, no
+  `localStorage`, no cookie, no console output. `git grep -n "console\." frontend/src` finds nothing (checked 2026-10-10).
+  The page tests check the position is not in the page or the address.
+- [x] No secrets, no `.env` change; the only configuration is the existing public `NEXT_PUBLIC_API_URL`.
+- [x] The five test packages are dev-only and pinned to exact versions (no `^` or `~`), chosen for Node 24. `lucide-react`
+  1.47.0 is a runtime dependency (owner-approved, exact version). `npm audit` shows the same 11 findings as before
+  (recorded in `LOG.md`).
+- [x] Nothing under `backend/` changed (`git diff --stat origin/main -- backend` is empty, checked 2026-10-10).
 
 ## Smoke test in DevTools
 
@@ -194,10 +212,16 @@ others when that task comes. Colours are never copied as hex into components: th
 | Find page: area select always visible | "Or choose an area" + Filters button | area list only when location is refused (FR-03); filters belong to `/search` | Task 5: the spec's behaviour | Spec wins |
 | Filters | category chips inline toggles | native `<dialog>` sheet with open now, category, area, service, distance | Task 6: the dialog | Spec wins |
 | Category chips | All, Hospital, Pharmacy, Laboratory, Clinic, Blood, More | Hospitals, Clinics, Pharmacies, Maternity, Labs, Blood (FR-01) | Task 5: the spec's six, in Figma's chip style (a scrolling row, 48 px) | Spec wins on the list; the look is kept |
-| Loading | a message card with a spinner and the waking-up sentence at once | skeletons; the sentence after 5 s | Task 6: skeletons first, the sentence after 5 s | Spec wins; a spinner may be added if it respects reduced motion |
+| Loading | a message card with a spinner and the waking-up sentence at once | skeletons; the sentence after 5 s | Task 6: skeletons first, the sentence after 5 s | Spec wins; no spinner was added (see below) |
 | Error | "We could not load places", "Try again" | "We couldn't load this. Check your connection and try again." + Retry | Task 6: the spec's words | Spec wins |
 | Empty | "No places found", "Clear search" | "No matches. Try removing a filter or widening the distance." | Task 6: the spec's words | Spec wins |
 | Near-you cards | eyebrow, title, "1.2 km · New Haven", badge, hours, Call, Directions | `ListingCard` in the near-you section | Task 5: the same `ListingCard` with the eyebrow "Closest open pharmacy" above it | One card component, no hours line (see above) |
+| List \| Map toggle | not in the Figma file | UI spec 2.3, item 2: the map is phase 5B-2 | **not built**: only the list shows | Phase 5B-2 |
+| Hero on `/find` | one block with the heading, location line, search, chips and filters on teal-950 | heading, two large choices, search box (2.2) | the forest hero holds the heading and the two large choices; the search box, shortcuts and Near you are on `paper` below it | The search box and the primary button sit better on the light background (the focus ring and contrast are checked there) |
+| Spinner while loading | a spinner in the message card | skeletons | **not built**; the skeleton pulses, and does not move under `prefers-reduced-motion` | Skeletons are what the spec asks for |
+| Filters sheet buttons | none described | **Apply** and **Clear filters** (2.3) | Apply, Clear filters and a Close button; Clear keeps the search text | The Close button gives a way out on a phone without the Esc key |
+| Bright blue accent `#1A9FD2` | none | owner's colour change, 2026-10-10: decoration only | a 4 px line under the header; never behind text | White on it is only 3.0:1 |
+| Search box on `/search` | none | pre-filled search box (2.3) | pre-filled, and it keeps the other filters as hidden fields | Searching new text should not drop the filters; the position is never one of them |
 
 ## Merge checklist
 
