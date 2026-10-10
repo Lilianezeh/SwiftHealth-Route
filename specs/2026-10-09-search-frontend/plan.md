@@ -35,51 +35,74 @@ Task 7).
 
 ## Tasks
 
-### Task 0: Spec
-- [ ] Update the UI spec as listed in the Files table (spec first), then commit:
+### Task 0: Spec (done, `1623bf3`)
+- [x] Update the UI spec as listed in the Files table (spec first), then commit:
   `docs(specs): UI spec for the Find page, the near-you section and the results states (FR-01, FR-03, FR-05)`.
   (The feature folders themselves were committed with the 5B-0 spec.)
 
-### Task 1: Test tooling
-- [ ] Choose the five versions for Node 24 by the rule in decision 10 (check each with `npm view`), install them with
+### Task 1: Test tooling (done, `d32b460`)
+- [x] Choose the five versions for Node 24 by the rule in decision 10 (check each with `npm view`), install them with
   exact versions (`npm install --save-exact --save-dev` inside the frontend container), update `vitest.config.ts` and add `tests/setup.ts`. Write one small component test first (a heading
   renders) and watch it fail without the config, then pass with it.
-- [ ] Add the packages and the reason to [tech-stack.md](../tech-stack.md).
-- [ ] Run lint, typecheck and tests, then commit: `chore(web): component test tooling, exact versions (NFR-10)`.
+  (Before the packages and the config, the new `.tsx` test was not even picked up: the old config only collected
+  `*.test.ts`, so its 4 tests did not run. After the config: 16 of 16 tests pass.)
+- [x] Add the packages and the reason to [tech-stack.md](../tech-stack.md).
+- [x] Run lint, typecheck and tests, then commit: `chore(web): component test tooling, exact versions (NFR-10)`.
 
-### Task 2: Types and the API layer (tests first, with fake timers)
-- [ ] Write the tests for `request.ts`, `search.ts`, `meta.ts` and `searchQuery.ts` first; they fail.
-- [ ] Write the types, `requestJson` (5 s notice, 45 s limit, cancel), `searchListings`, `getMeta` and the query functions.
-- [ ] Run lint, typecheck and tests, then commit: `feat(web): search and meta API client with a 45 s limit and a waking-up notice (US-01, FR-04, FR-05)`.
+### Task 2: Types and the API layer (tests first, with fake timers) (done, `f0f5768`)
+- [x] Write the tests for `request.ts`, `search.ts`, `meta.ts` and `searchQuery.ts` first; they fail (4 test files
+  failed with "Cannot find module"). A fifth file, `api-boundary.test.ts`, guards the layers and passed from the start.
+- [x] Write the types, `requestJson` (5 s notice, 45 s limit, cancel), `searchListings`, `getMeta` and the query functions.
+- [x] Run lint, typecheck and tests (73 of 73 pass), then commit: `feat(web): search and meta API client with a 45 s limit and a waking-up notice (US-01, FR-04, FR-05)`.
 
-### Task 3: Location (tests first)
-- [ ] Write the tests for `locationStore.ts` and `useLocation.ts` first (a fake `navigator.geolocation`).
-- [ ] Write the store (rounding, remembered refusal, area) and the hook (idle, asking, granted, denied, unavailable,
+### Task 3: Location (tests first) (done, `2702b68`)
+- [x] Write the tests for `locationStore.ts` and `useLocation.ts` first (a fake `navigator.geolocation`); both files failed
+  to load before the code existed.
+- [x] Write the store (rounding, remembered refusal, area) and the hook (idle, asking, granted, denied, unavailable,
   timed out). The browser prompt only runs after a call from a button.
-- [ ] Run lint, typecheck and tests, then commit: `feat(web): location in session storage, asked once (FR-03, NFR-07)`.
+- [x] Mutation check (privacy code): no rounding (5 tests failed), the position in `localStorage` (14), a `console.log` of
+  the position (2), the position also in a cookie (3). Restored.
+- [x] Run lint, typecheck and tests (111 of 111 pass), then commit: `feat(web): location in session storage, asked once (FR-03, NFR-07)`.
 
-### Task 4: Cards and small parts (tests first)
-- [ ] Write the tests for the formatters, the badge, the date, the two buttons and `ListingCard` first.
-- [ ] Write them. Check tap size classes (48 px), text size (16 px), words as well as colour, the link formats.
-- [ ] Run lint, typecheck and tests, then commit: `feat(web): ListingCard, call and directions buttons, open and verified labels (FR-06, FR-08, NFR-10)`.
+### Task 4: Cards and small parts (tests first) (done, `3c0013e`; follow-ups: focus ring `0f91149`, icons `17cc5c1`)
+- [x] **Before starting:** the owner shared the Figma Make details (`docs/design/figma-find-page-design.md`, decision 13).
+  Every difference from the UI spec is in the "Design differences" table of [validation.md](validation.md); the UI spec
+  wins. The file is committed with this task. The UI spec got the new tokens, the button and text rules and the card
+  rows first.
+- [x] Write the tests first: `design-tokens.test.ts` (tokens exist, contrast pairs, no hex in components), the formatters,
+  the badge, the date, the two buttons and `ListingCard`. They failed first (7 files could not load their modules; 12
+  token tests failed).
+- [x] Write the tokens in `globals.css`, the formatters, a shared button style and the components. Check tap size classes
+  (50 px), text size (16 px), words as well as colour, the link formats. No icons (no icon library in the stack).
+  `npm run build` proves Tailwind generates the new token classes. The footer and the home page had `text-sm` (14 px),
+  against the 16 px rule; both are now `text-base`.
+- [x] Run lint, typecheck and tests (202 pass, 1 pending), then commit: `feat(web): ListingCard, call and directions buttons, open and verified labels (FR-06, FR-08, NFR-10)`.
 
-### Task 5: The Find page (tests first)
-- [ ] Write the tests for `SearchBox`, `CategoryShortcuts`, `LocationPrompt`, `NearbySuggestions` (two independent cards,
-  empty message, error and Retry) and the page first.
-- [ ] Write them, the `/find` page and the `/blood` "Coming soon" stub.
-- [ ] Run lint, typecheck and tests, then commit: `feat(web): Find page with category shortcuts and near-you suggestions (FR-01, FR-03, US-01)`.
+### Task 5: The Find page (tests first) (done, `ccbbb8e`)
+- [x] Write the tests for `SearchBox`, `CategoryShortcuts`, `AreaSelect`, `NearbySuggestions` (two independent cards,
+  empty message, error and Retry), `NearYou` (which holds the location prompt) and the page first. They failed first (the
+  components did not exist).
+- [x] Write them, the `/find` page and the `/blood` "Coming soon" stub.
+- [x] Run lint, typecheck and tests (279 pass), then commit: `feat(web): Find page with category shortcuts and near-you suggestions (FR-01, FR-03, US-01)`.
 
-### Task 6: The results page (tests first)
-- [ ] Write the tests for `useSearchResults` (loading, the notice at 5 s, the limit at 45 s, Retry, Load more, a new search
-  cancels the old one), `FiltersDialog`, `ResultsList`, `SearchStatus` and the page first.
-- [ ] Write them and the `/search` page (a server shell with the results in a `Suspense` client part).
-- [ ] Run lint, typecheck and tests, then commit: `feat(web): results page with filters, load more and slow-API states (US-01, US-05, FR-04 to FR-06)`.
+### Task 5b: Blue palette (owner's colour change, 2026-10-10) (done, `8bcad04`)
+- [x] UI spec tokens first, then the tests (`design-tokens.test.ts`, `SiteHeader.test.tsx`), then `globals.css`, the browser
+  chrome colours, the button hover states and the accent line under the header. Its own commit, as asked.
+
+### Task 6: The results page (tests first) (done, `8f1f7fd`)
+- [x] Write the tests for `useSearchResults` (loading, the notice at 5 s, the limit at 45 s, Retry, Load more, a new search
+  cancels the old one), `FiltersDialog`, `ResultsList`, `SearchStatus` and the page first. They failed first.
+- [x] Write them and the `/search` page (a server shell with the results in a `Suspense` client part).
+- [x] Run lint, typecheck and tests (342 pass), then commit: `feat(web): results page with filters, load more and slow-API states (US-01, US-05, FR-04 to FR-06)`.
 
 ### Task 7: Wrap-up
-- [ ] Run the checks, `npm run build` and the smoke test in [validation.md](validation.md): DevTools (Slow 3G, 320 px, a paused
-  backend), then the phone on the Netlify deploy preview (the owner adds the preview address to `CORS_ORIGINS` first).
-- [ ] Push the branch and open the draft pull request. Check that `Backend CI` did not start and `Frontend CI` did, and
-  write what `gh pr checks` shows in [validation.md](validation.md).
-- [ ] Update `LOG.md`, the [roadmap](../roadmap.md), the UI spec if the build changed anything, and tick the boxes in
-  this folder with their commit hashes. Give the owner the merge steps and the clean-up (remove the preview address from
-  `CORS_ORIGINS`), written for a beginner.
+- [x] Run the checks and `npm run build`: lint, typecheck and 342 tests clean; build clean, First Load JS `/find` 114 kB and
+  `/search` 115 kB (see validation.md).
+- [ ] The smoke test in [validation.md](validation.md): DevTools (Slow 3G, 320 px, a paused backend), then the phone on the
+  Netlify deploy preview (the owner adds the preview address to `CORS_ORIGINS` first). **The owner does these**; they are
+  manual.
+- [x] Push the branch and open the draft pull request (#14). `Frontend CI` ran and passed, `Backend CI` did not start; what
+  `gh pr checks` showed is written in [validation.md](validation.md).
+- [x] Update `LOG.md`, the [roadmap](../roadmap.md), the UI spec (colour change), and tick the boxes in this folder with
+  their commit hashes. The merge steps and the clean-up (remove the preview address from `CORS_ORIGINS`) are in the pull
+  request description.

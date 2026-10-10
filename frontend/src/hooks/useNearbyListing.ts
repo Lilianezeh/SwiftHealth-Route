@@ -1,0 +1,51 @@
+"use client";
+
+/** Loads the single closest listing for one "near you" card. Requirements: FR-03, US-01, FR-04. UI spec 2.2, item 6.
+ *
+ * Each card has its own hook, so the two cards load independently: one can fail or wait while the other is shown.
+ * With a position the API sorts by distance; with only an area it is sent as `area` and there is no distance.
+ * The caller gives the card a `key` that changes with the position and the area, so a new place starts a new load.
+ */
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { RequestCancelledError } from "@/lib/api/request";
+import { searchListings, type Position } from "@/lib/api/search";
+import type { SearchFilters } from "@/lib/search/searchQuery";
+import type { ListingSummary } from "@/types/api";
+
+export type NearbyState = {
+  status: "loading" | "slow" | "ready" | "error"; // "slow": no answer after 5 seconds, the skeleton stays
+  listing: ListingSummary | null; // null when ready with no result
+};
+
+const ONE_RESULT = { limit: 1, offset: 0 };
+
+export function useNearbyListing(baseFilters: SearchFilters, position: Position | null, area: string | null) {
+  const [state, setState] = useState<NearbyState>({ status: "loading", listing: null });
+  const [attempt, setAttempt] = useState(0);
+  const filters = useMemo<SearchFilters>(
+    () => (position || !area ? baseFilters : { ...baseFilters, area }),
+    [baseFilters, position, area],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    searchListings(filters, position, ONE_RESULT, {
+      signal: controller.signal,
+      onSlow: () => setState((current) => (current.status === "loading" ? { ...current, status: "slow" } : current)),
+    })
+      .then((response) => setState({ status: "ready", listing: response.items[0] ?? null }))
+      .catch((error: unknown) => {
+        if (error instanceof RequestCancelledError) return; // replaced or left the page: not a failure
+        setState({ status: "error", listing: null });
+      });
+    return () => controller.abort();
+  }, [filters, position, attempt]);
+
+  const retry = useCallback(() => {
+    setState({ status: "loading", listing: null });
+    setAttempt((current) => current + 1);
+  }, []);
+
+  return { ...state, retry };
+}

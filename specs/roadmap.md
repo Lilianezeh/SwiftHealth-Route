@@ -129,20 +129,22 @@ deploy preview must build with it. It is also the first frontend-only pull reque
 - After the merge the owner reported (2026-10-09): Netlify's deploy log shows Node 24.x, no `NODE_VERSION` override is
   set in the Netlify dashboard, and the live site still says "connected".
 
-#### Phase 5B-1: Find page and results page. Next (spec written, starts after 5B-0 and the Node chore are merged)
+#### Phase 5B-1: Find page and results page. In progress (branch `feature/search-frontend`, draft pull request #14)
 US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-10-09-search-frontend/requirements.md),
 [plan](2026-10-09-search-frontend/plan.md), [validation](2026-10-09-search-frontend/validation.md). Frontend-only:
 `Backend CI` must not run on it either.
 - 5d: Find page and location permission (FR-01, FR-03), category buttons and nearby suggestions
 - 5e: results page with filters (FR-04, FR-05, FR-06), loaded in the browser with a 45 s limit
-- Task 0, UI spec: next
-- Task 1, component test tooling: next
-- Task 2, types and API layer: next
-- Task 3, location: next
-- Task 4, cards and small parts: next
-- Task 5, the Find page: next
-- Task 6, the results page: next
-- Task 7, wrap-up, smoke test on a phone, draft pull request: next
+- Task 0, UI spec: **done**
+- Task 1, component test tooling: **done**
+- Task 2, types and API layer: **done**
+- Task 3, location: **done**
+- Task 4, cards and small parts (with the Figma reference mapped to design tokens): **done**
+- Task 5, the Find page: **done**
+- Task 5b, blue palette (owner's colour change, 2026-10-10): **done**
+- Task 6, the results page: **done**
+- Task 7, wrap-up: checks and build **done** (`/find` 114 kB, `/search` 115 kB first load); draft pull request open; the
+  smoke test in DevTools and on a phone is next (the owner does it)
 
 #### Phase 5B-2: Map view. Next
 FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Needs 5B-1 merged.

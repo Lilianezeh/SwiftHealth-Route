@@ -24,6 +24,39 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `X ray` against `Xray`, the label quirk and typos at the source. It needs a place for the list (an admin-managed list,
   or the distinct names in use), which is a data-model question for the owner: the project has exactly 9 tables, so
   adding a table needs approval. The UI spec (3.4, "Services and fees") changes first.
+- **Small backend PR after phase 5B-1: the next opening or closing time on the card.** Figma shows "Closes 9:00 PM" and
+  "Opens 7:30 AM tomorrow" on each card. `ListingSummary` has no opening hours today (they are in `ListingDetail`, phase 6),
+  so the card shows only the badge (owner's decision, 2026-10-09: keep it that way for now). Plan: `GET /search` returns a
+  short text for the next change, for example "Closes 9:00 PM" or "Opens 7:30 AM tomorrow", computed in
+  `search_service` with `services/hours.py` in Africa/Lagos time (the code that already decides open now), then the card
+  shows it. The api-spec (`ListingSummary` gets a new field) and the UI spec change first; tests first, including past
+  midnight, 24-hour places, closed days and the week wrapping. Then the frontend shows it in one line under the labels.
+- **Small backend PR after phase 5B-1: all the spec categories in every database (found in the phone test, 2026-10-10).**
+  The Filters sheet in production lists only Clinic, Pharmacy and Laboratory, because production has only the categories
+  that the demo listings needed (`seed/demo_listings.py` adds just those). Categories are reference data, so every database
+  needs all twelve of `seed_data.CATEGORIES` (the five everyday ones and the seven emergency ones), whatever listings it has.
+  Plan (owner's idea, accepted): an idempotent Alembic data migration that inserts each missing category with
+  `INSERT ... ON CONFLICT (slug) DO NOTHING`, with the same `is_emergency` and `recheck_days` values as the seed (14 days for
+  emergency, 45 for the rest, FR-33), and never updates or deletes a row or touches `listings`. Safe to run twice. A seed
+  script is not enough, because the production seed is flag-driven and does not run on deploy. Tests first (empty table, a
+  table with three categories, a second run changes nothing, a renamed row stays as it is). Decide in that PR whether
+  `GET /meta` should list the emergency categories: the public Filters sheet should probably show only the everyday ones
+  (the frontend can hide `is_emergency`, or the API can), because SwiftRescue is its own section.
+- **Decided on 2026-10-09 (Figma work, phase 5B-1):** (1) the focus ring is `forest` on light backgrounds and `paper` on a
+  `forest` background (class `on-dark`), both well over 3:1; (2) `lucide-react`, exact version, one icon per import,
+  decorative and always beside a label; (3) the card has no hours line until the backend PR above; (4) small text and links
+  use `forest`, because the old green `pine` on `paper` was 4.4:1.
+- **Decided on 2026-10-10 (colour change):** the green palette became blue. `forest` and `pine` are `#1B6F93`, `pine-dark`
+  `#134F6A` is for hover and press, `accent` `#1A9FD2` is decoration only (the line under the header; 3:1 on white, so
+  never behind text). Open, closed, amber and emergency colours, `paper`, `ink`, `ink-soft` and `line` did not change; the
+  two light tints became light blues. The token names `forest` and `pine` were kept so no component had to change. Main
+  blue is 5.6:1 on white and 5.1:1 on `paper`, so it now passes for small text on both.
+- **`npm audit` in the frontend shows 11 findings (2 critical, 7 high, 2 moderate), the same before and after phase 5B-1's
+  test packages (checked 2026-10-09):** the critical ones are `vitest` and `tinypool` (dev-only test runner; the fix is
+  vitest 5, a major upgrade); the high ones are the `eslint-config-next` chain (`braces`, `micromatch`, `fast-glob`; dev-only),
+  `postcss` inside `next`, and `sharp` (libvips CVEs; used by Next's image optimisation, which we do not use yet); `next`
+  itself is moderate (the suggested fix is Next 16, a major upgrade, and `next` is pinned on purpose since React2Shell).
+  None blocks the pilot. Review before launch (roadmap 13c or 14d) and plan the vitest 5 and Next upgrades as their own chores.
 - **npm 11 install-scripts warning (Node 24 chore):** with Node 24 (npm 11.19) `npm install` warns that the install
   scripts of `esbuild`, `sharp` and `unrs-resolver` are "not yet covered by allowScripts" and suggests
   `npm install-scripts approve <package>`. Nothing is blocked today (lint, typecheck, tests and `next build` all pass).
@@ -167,3 +200,24 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - To do (after building): rename project to "SwiftHealth Route" and update the tagline (currently "Emergency, Hospital & Pharmacy Finder"). Before renaming, check that the name is free on Play Store and App Store, plus the domain, social handles and CAC business name. Then update app title, README, specs, pitch decks, project docs and the Netlify/Render names.
 
 - To do: lint-on-edit hook uses the wrong ESLint for frontend files (no node_modules on host, so npx fetches ESLint 10, which can't read our config). Real lint (npm run lint in Docker, plus Frontend CI) still works. Fix later, probably by running ESLint inside the frontend container.
+
+- Proposed (not final): product name "SwiftHealth Route", tagline "Hospitals, pharmacies and emergency help, open near you." The rename is pending a CAC business-name check and a trademark check (together with the Play Store, App Store, domain and social handle checks above). Do not rename anything until those checks pass; then apply it in the rename chore after 5B-1.
+
+- To do (own feature, after phase 5B-2): home page refresh with photos: the hero, the category cards, and the ambulance and fire service pictures in SwiftRescue. Needs the owner's photos (rights and licence confirmed), compressed for slow 3G (NFR-01) with alt text, and the UI spec first. The SwiftRescue pictures must not slow `/emergency`, which has to work offline.
+
+## Day 7 — 2026-10-10
+- **Built:** Phase 5B-1, the Find page (`/find`) and the results page (`/search`), frontend only (branch
+  `feature/search-frontend`). Search box, category shortcuts, "Open now near me", two "near you" cards that load on their
+  own, `/blood` "Coming soon"; on `/search` the filters sheet (a native `<dialog>`), Load more, and the slow-API states
+  (skeleton, "The service is waking up" after 5 s, error and Retry after 45 s). Location is asked only after a tap, once per
+  tab, kept in `sessionStorage` rounded to 3 decimals and never put in an address. Also: `lucide-react` icons (decorative,
+  beside text), the focus ring (forest, or paper on the forest header), and the blue palette (owner's colour change).
+  342 tests passing, lint and typecheck clean. First Load JS: `/find` 114 kB, `/search` 115 kB.
+- **Broke / fixed:** a pasted colour-change request arrived inside pasted text twice; Claude did not apply it until the
+  owner typed the instruction in plain text. A test that passed alone timed out in the full run (slow laptop in Docker), so
+  the test limit is now 20 s. A button test matched `bg-pine` inside `hover:bg-pine-50`; the pattern was made exact.
+- **Still open:** the DevTools and phone smoke tests (owner), the small backend PR for "Closes 9:00 PM", the rename to
+  "SwiftHealth Route" (pending CAC and trademark checks), the photo refresh of the home page (after 5B-2).
+- **Learned:** [write this in your own words]
+- **AI use:** Claude Code wrote the tests first and then the code for each task; I chose the design rules, approved the
+  plan, the icon package and the colour change, and decided what to keep out of scope.

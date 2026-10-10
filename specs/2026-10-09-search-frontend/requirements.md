@@ -80,7 +80,11 @@ the layers `app/` to `components/` to `hooks/` to `lib/api/`. The only additions
    110 m) is our addition: nearest-first order stays right and we keep less than the phone gave us (NFR-07). A refusal is
    remembered for the tab too, so the site asks once (FR-03). The browser's prompt is shown only after a tap on a
    button, never on page load. The backend side is the [5B-0 feature](../2026-10-09-meta-endpoint/requirements.md):
-   the API access log no longer keeps `lat` and `lng`.
+   the API access log no longer keeps `lat` and `lng`. **Added after the phone test (owner, 2026-10-10):** a stored
+   position is used only while the browser's permission is not `denied` (checked with `navigator.permissions.query`);
+   if it is `denied` the position is forgotten and the area list is shown, and if the browser cannot check, the stored
+   position is used as before. Reason: a new tab can get a copy of the opener's `sessionStorage`, so a position stored
+   before the visitor blocked the site kept being used (NFR-07).
 4. **The Find page is a server page with small interactive parts.** The search box is
    `<form action="/search" method="get">`, the shortcuts are links, "Get emergency help" is a link. Only the
    location prompt, the area list and the "near you" section are client components. Category shortcuts use fixed
@@ -104,7 +108,7 @@ the layers `app/` to `components/` to `hooks/` to `lib/api/`. The only additions
    filter needs the exact name, so the visitor picks it instead of typing it. A `service` value in a shared link that is
    not in the list is still sent to the API and shown as the selected choice. Typing in the main search box also finds
    services, with typo tolerance.
-7. **Cards and states follow the UI spec.** `ListingCard` (name, category, area, distance "1.4 km away", open badge,
+7. **Cards and states follow the UI spec.** `ListingCard` (name, category, area, distance "1.4 km", open badge,
    verified date, Call and Directions, "Sponsored" tag when `sponsored`), `CallButton` (`tel:+234...`),
    `DirectionsButton` (the Google Maps link from the listing's latitude and longitude, opens in a new tab with
    `rel="noopener noreferrer"`), `OpenNowBadge` ("Open now", "Closed", "Open 24 hours": words, not only colour) and
@@ -124,6 +128,9 @@ the layers `app/` to `components/` to `hooks/` to `lib/api/`. The only additions
     running the tests. Candidates on 2026-10-09: `@testing-library/react` 16.3.3 (accepts React 19), `@testing-library/dom`
     10.4.2, `@testing-library/user-event` 14.6.7, `@testing-library/jest-dom` 7.0.1 (needs Node 22 or newer), `jsdom`
     30.1.2 (needs 22.22.2 or 24.15 or newer; a lower 27.x or 26.1.0 is the fallback if vitest 3.2.x does not run with it).
+    **Installed in Task 1 (2026-10-09), all five at the candidate versions:** `jsdom` 30.1.2, `@testing-library/react`
+    16.3.3, `@testing-library/dom` 10.4.2, `@testing-library/jest-dom` 7.0.1, `@testing-library/user-event` 14.6.7; the
+    component test set-up runs with vitest 3.2.7 on Node 24.21, so no fallback was needed.
     Nothing is shipped to a phone. Fake timers (`vi.useFakeTimers`) test the 5 second notice and the 45 second limit
     without waiting. `vitest.config.ts` also gets: test files `*.test.ts` and `*.test.tsx`, the `@/` alias to `src/`, and
     `esbuild: { jsx: "automatic" }` because `tsconfig.json` keeps `jsx: "preserve"` for Next.js. The versions and the
@@ -133,6 +140,17 @@ the layers `app/` to `components/` to `hooks/` to `lib/api/`. The only additions
     owner adds that one address to `CORS_ORIGINS` in Render by hand, and takes it out after the merge
     ([validation.md](validation.md), "Smoke test on a phone"). Whether the preview gets `NEXT_PUBLIC_API_URL` is checked
     in the same test.
+13. **The owner's Figma Make file is a visual reference, not the spec (owner's rule, 2026-10-09).** The owner shares the
+    details (frames, colours, spacing, text) before Task 4, when the components start. Where the Figma file and
+    [ui-spec.md](../frontend/ui-spec.md) or the design rules differ (the tokens forest, pine, amber, paper, ink and
+    emergency; tap targets of 48 px; text of 16 px or more; contrast; the standard states; 320 px wide), **the UI spec
+    and the design rules win**. The Figma notes are in `docs/design/figma-find-page-design.md` (committed with Task 4),
+    and Figma colours map to our tokens, never to hex values in components (ten role-named tokens were added to the UI
+    spec for colours it had none for). Each difference is written down in the "Design differences" table of
+    [validation.md](validation.md), with what was built and why, so the owner can decide whether to change the spec.
+    Figma elements that the spec does not mention (extra sections, animations, images) are not built until the owner says
+    so; they go in that table as "not built". Nothing is copied from Figma that costs weight on a slow phone (large images,
+    web fonts) without asking.
 12. **No new runtime package, no Leaflet on these pages.** The weight of `/find` and `/search` is read from the build
     output and recorded. Components are in `components/listings/` and `components/search/`, hooks in `hooks/`, the
     location store in `lib/location/`, and no component calls `fetch` (CLAUDE.md).

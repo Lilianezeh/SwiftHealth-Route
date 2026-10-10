@@ -9,7 +9,7 @@ export default async function Home() {
       <p className="mt-4 text-lg">
         Emergency, hospital and pharmacy finder. Verified listings, one-tap calling and directions, with SwiftRescue for emergencies. Now in Enugu.
       </p>
-      <p className="mt-8 text-sm">
+      <p className="mt-8 text-base">
         API status: <strong>{health ? "connected" : "not reachable"}</strong>
       </p>
     </section>

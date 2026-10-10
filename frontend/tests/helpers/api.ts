@@ -1,0 +1,85 @@
+/** Helpers for component tests: a fake API behind `fetch`, a fake phone position, and sample listings. */
+import { vi } from "vitest";
+
+import type { ListingSummary, MetaResponse } from "@/types/api";
+
+export const AREAS = ["GRA", "New Haven", "Ogui"];
+
+export const META: MetaResponse = {
+  areas: AREAS,
+  categories: [{ slug: "pharmacy", name: "Pharmacy", is_emergency: false }],
+  services: ["Consultation", "X-ray"],
+  blood_groups: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+  report_reasons: ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"],
+};
+
+export function listing(overrides: Partial<ListingSummary> = {}): ListingSummary {
+  return {
+    id: 12,
+    slug: "night-pharmacy-a",
+    name: "Night Pharmacy A",
+    category: { slug: "pharmacy", name: "Pharmacy" },
+    area: "New Haven",
+    address: "12 Example Road",
+    latitude: 6.452,
+    longitude: 7.51,
+    distance_km: 1.4,
+    is_open_now: true,
+    is_24_hours: false,
+    primary_phone: "+2340000000012",
+    last_verified_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    verification_due: false,
+    sponsored: false,
+    ...overrides,
+  };
+}
+
+export function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status });
+}
+
+type SearchHandler = (parameters: URLSearchParams, signal?: AbortSignal) => Response | Promise<Response>;
+
+/** Puts a fake API behind fetch. Returns the list of addresses that were asked for. */
+export function stubApi(handlers: { meta?: () => Response | Promise<Response>; search?: SearchHandler }) {
+  const requests: URL[] = [];
+  const fetchStub = vi.fn(async (address: string, init?: RequestInit) => {
+    const url = new URL(address);
+    requests.push(url);
+    if (url.pathname === "/meta") return (handlers.meta ?? (() => json(META)))();
+    if (url.pathname === "/search") {
+      return (handlers.search ?? (() => json({ items: [], total: 0 })))(url.searchParams, init?.signal ?? undefined);
+    }
+    return json({ detail: "Not found" }, 404);
+  });
+  vi.stubGlobal("fetch", fetchStub);
+  return { requests, fetchStub, searches: () => requests.filter((url) => url.pathname === "/search") };
+}
+
+/** A fetch answer that never comes. Like a real fetch, it fails when the request is cancelled (the 45 second limit). */
+export function neverAnswers(_parameters?: URLSearchParams, signal?: AbortSignal): Promise<Response> {
+  return new Promise<Response>((_resolve, reject) => {
+    signal?.addEventListener("abort", () => reject(new DOMException("The operation was aborted.", "AbortError")));
+  });
+}
+
+type SuccessCallback = (position: GeolocationPosition) => void;
+type ErrorCallback = (error: GeolocationPositionError) => void;
+
+/** Puts a fake phone position behind navigator.geolocation. */
+export function stubGeolocation(outcome: { latitude: number; longitude: number } | { errorCode: number }) {
+  const getCurrentPosition = vi.fn((success: SuccessCallback, failure: ErrorCallback) => {
+    if ("errorCode" in outcome) failure({ code: outcome.errorCode, message: "" } as GeolocationPositionError);
+    else success({ coords: { latitude: outcome.latitude, longitude: outcome.longitude } } as GeolocationPosition);
+  });
+  Object.defineProperty(navigator, "geolocation", { value: { getCurrentPosition }, configurable: true });
+  return getCurrentPosition;
+}
+
+/** A run of different listings (ids firstId, firstId + 1, ...), named "Place 1", "Place 2"... */
+export function manyListings(count: number, firstId = 1): ListingSummary[] {
+  return Array.from({ length: count }, (_unused, index) => {
+    const id = firstId + index;
+    return listing({ id, slug: `place-${id}`, name: `Place ${id}` });
+  });
+}

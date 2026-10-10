@@ -1,12 +1,32 @@
 @import "tailwindcss";
 
+/* Design tokens: the table in specs/frontend/ui-spec.md ("Design tokens"). Components use them as Tailwind classes
+   (bg-pine, text-ink-soft, border-line, shadow-card) and never write a colour by hand. Every text and background pair
+   is checked for 4.5:1 contrast by tests/unit/design-tokens.test.ts. */
 @theme {
-  --color-forest: #12302a;
-  --color-pine: #2f7d6b;
+  /* Blue palette (owner's colour change, 2026-10-10). The names forest and pine are kept, so no component changes. */
+  --color-forest: #1b6f93;
+  --color-pine: #1b6f93;
+  --color-pine-dark: #134f6a; /* hover and press */
+  --color-accent: #1a9fd2; /* decoration only: never behind text, never a text colour (3:1 on white) */
   --color-amber: #e8913a;
   --color-paper: #f6f3ec;
   --color-ink: #1d2421;
   --color-emergency: #b3261e;
+
+  /* From the Figma Make reference (docs/design/figma-find-page-design.md), added to the spec on 2026-10-09 */
+  --color-ink-soft: #4b5c59;
+  --color-line: #d7e1df;
+  --color-pine-100: #dcecf4;
+  --color-pine-50: #eef6fa;
+  --color-open: #147a48;
+  --color-open-bg: #e7f6ed;
+  --color-closed: #465451;
+  --color-closed-bg: #edf1f0;
+  --color-amber-ink: #8b5c00;
+  --color-amber-wash: #fff4d6;
+
+  --shadow-card: 0 2px 12px color-mix(in srgb, var(--color-forest) 7%, transparent);
 }
 
 body {
@@ -14,7 +34,13 @@ body {
   color: var(--color-ink);
 }
 
+/* Focus ring: forest on light backgrounds (5.6:1 on white), paper on a forest background (5.1:1). Both are over the 3:1
+   that WCAG 2.2 asks of a focus indicator. A container with a forest background has the class `on-dark`. */
 :focus-visible {
-  outline: 3px solid var(--color-amber);
+  outline: 3px solid var(--color-forest);
   outline-offset: 2px;
+}
+
+.on-dark :focus-visible {
+  outline-color: var(--color-paper);
 }

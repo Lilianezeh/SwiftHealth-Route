@@ -13,24 +13,68 @@ Sketches go in `docs/screens/`.
 - Tagline: *Emergency, Hospital & Pharmacy Finder*.
 
 ### Layout (every page, from `src/app/layout.tsx`)
-- **Header:** SwiftHealth logo/name (links to `/find`) on the left; red **SwiftRescue** button on the right, always visible, links to `/emergency`.
+- **Header:** SwiftHealth logo/name (links to `/find`) on the left; red **SwiftRescue** button on the right, always visible, links to `/emergency`. `forest` background with a 4 px `accent` line under it.
 - **Footer:** About · How we verify · Privacy · Terms · Contact · List your facility.
 - Mobile-first; content max width 720 px on public pages, 1200 px in admin.
 
 ### Design tokens (in `src/styles/globals.css`)
 | Token | Value | Use |
 | --- | --- | --- |
-| forest | `#12302a` | Header, headings |
-| pine | `#2f7d6b` | Primary buttons, links |
-| amber | `#e8913a` | Highlights, focus ring, "Sponsored" tag |
+| forest | `#1B6F93` | Header, headings, links, the focus ring. Main blue (owner's colour change, 2026-10-10; was dark green `#12302a`) |
+| pine | `#1B6F93` | Primary buttons, button borders. Main blue, the same value as `forest` (was green `#2f7d6b`); the two names are kept so no component changes |
+| pine-dark | `#134F6A` | Hover and active state of buttons (white text on it: 8.9:1) |
+| accent | `#1A9FD2` | Decoration only (the line under the header). Never behind text and never a text colour: white on it is only 3.0:1 |
+| amber | `#e8913a` | Highlights, "Sponsored" tag background (dark `ink` text on it). Not the focus ring: amber is only 2.2 to 2.5:1 on light backgrounds |
 | paper | `#f6f3ec` | Page background |
 | ink | `#1d2421` | Body text |
 | emergency | `#b3261e` | SwiftRescue button, 112 card only |
+| ink-soft | `#4b5c59` | Secondary text (area line, "Verified 3 days ago"); 6.4:1 on paper |
+| line | `#d7e1df` | Card borders and dividers |
+| pine-100 | `#DCECF4` | Background of the "Verified" label (light blue tint of the main blue) |
+| pine-50 | `#EEF6FA` | Light panels (the empty "near you" box, empty-state icon circle) (lighter blue tint) |
+| open | `#147a48` on open-bg `#e7f6ed` | "Open now" and "Open 24 hours" label (4.8:1) |
+| closed | `#465451` on closed-bg `#edf1f0` | "Closed" label (7.0:1) |
+| amber-ink | `#8b5c00` on amber-wash `#fff4d6` | "Verification due" label and the error icon (5.3:1); the plain `amber` is too light for small text |
+| shadow-card | `0 2px 12px` of forest at 7% | Card shadow |
+
+Components use these tokens (Tailwind classes such as `bg-pine`, `text-ink-soft`), never a hex value. Ten colours were
+added on 2026-10-09 from the owner's Figma Make reference (`docs/design/figma-find-page-design.md`); every pair of text and
+background colour is checked by `tests/unit/design-tokens.test.ts` to be at least 4.5:1 (NFR-10). Read the table with the
+rule that the spec tokens win over the Figma colours: Figma's teal-950 is `forest`, teal-700 is `pine`, its page
+background is `paper`, its red is `emergency`.
+
+**Colour change, 2026-10-10 (owner's decision):** the green palette became blue. `forest` and `pine` are `#1B6F93`,
+`pine-dark` `#134F6A` is for hover and active states, `accent` `#1A9FD2` is decoration only, and the two light tints
+(`pine-100`, `pine-50`) became light blues. The open (green), closed (grey), amber and emergency (red) colours, and
+`paper`, `ink`, `ink-soft` and `line`, did not change. The main blue is 5.6:1 on white and 5.1:1 on `paper`, so it passes
+for small text on both (the old `pine` did not on `paper`).
+
+### Buttons and text
+- **Primary** (Call, Retry): `pine` background, white text; `pine-dark` on hover and press. **Secondary** (Directions,
+  See all, Clear filters): white background, `pine` border, `forest` text; `pine-50` background and `pine-dark` border on
+  hover, `pine-100` on press. **Emergency** (SwiftRescue only): `emergency` background, white text. 16 px text,
+  semi-bold, at least 50 px high (never under 48 px), radius 12 px.
+- Every piece of text is 16 px or larger, including badges, the area line and "Verified 3 days ago" (NFR-10). Card titles
+  are 18 px. The system font stack is used; no web font is downloaded.
+- Cards: white, 1 px `line` border, 16 px radius, `shadow-card`, 16 px inside.
+- Status is shown with words as well as colour ("Open now", "Closed", "Verification due").
 
 ### Accessibility and performance (NFR-01, NFR-04, NFR-10)
 - Tap targets at least 48 × 48 px; body text 16 px or larger; visible focus ring.
+- **Focus ring** (owner's decision, 2026-10-09): 3 px, 2 px offset. `forest` on light backgrounds (5.6:1 on white, 5.1:1 on
+  `paper`); `paper` on a `forest` background (5.1:1). A container with a `forest` background has the class `on-dark`, which
+  switches the ring for everything inside it (the header and the Find page hero). Both are at least 3:1 (WCAG 2.2, 1.4.11).
+  A test in `tests/unit/design-tokens.test.ts` checks it.
+- **Icons** (owner's decision, 2026-10-09): from `lucide-react`, imported one by one by name (never the whole set, never a
+  dynamic icon). They are decorative (`aria-hidden`) and always sit next to a text label; an icon is never the only content
+  of a button or link, and it never carries information alone.
 - Works from 320 px wide; no sideways scrolling.
 - Pages are server components unless they need interaction; only maps, forms and filters are client components.
+  One exception: the results list of `/search` is a client component too. It loads in the browser with a 45 second limit
+  (see "Standard states"), because the free API can take about a minute to wake and the hosting gives up on a server page
+  after about 30 seconds. This means results need JavaScript (revisit after the Render upgrade, `LOG.md`).
+- A visitor's position is kept in `sessionStorage` for the tab only, rounded to 3 decimals. It is never in a page address,
+  a cookie, `localStorage` or a log, and it is sent only as `lat` and `lng` to `GET /search`.
 - Images compressed; no large libraries on public pages except Leaflet on the map view.
 
 ### Standard states (every data screen)
@@ -38,17 +82,18 @@ Sketches go in `docs/screens/`.
 | --- | --- |
 | Loading | Skeleton cards (grey blocks), never a blank screen |
 | Empty | Plain message + next step, e.g. "No open pharmacies within 10 km. Try a wider area." with a button |
-| Error | "We couldn't load this. Check your connection and try again." + Retry button |
+| Waking up | On data screens loaded in the browser (`/search`, the near-you cards): after 5 seconds without an answer, "The service is waking up. This can take up to a minute." (announced to screen readers; the skeleton stays) |
+| Error | "We couldn't load this. Check your connection and try again." + Retry button. Also shown 45 seconds after a request started without an answer |
 | Offline | On `/emergency`: show the cached list with "Offline — showing saved contacts from [date]" |
 
 ### Reusable components (`src/components/`)
 | Component | Purpose |
 | --- | --- |
-| `ListingCard` | Name, category, area, distance, open/closed badge, last-verified date, Call + Directions buttons; "Sponsored" tag when `sponsored` |
-| `CallButton` | `tel:+234…` link, full-width on mobile |
-| `DirectionsButton` | Opens `https://www.google.com/maps/dir/?api=1&destination=lat,lng` |
-| `OpenNowBadge` | "Open now" (green) / "Closed" (grey) / "Open 24 hours" |
-| `VerifiedDate` | "Verified 3 days ago"; amber "Verification due" when `verification_due` |
+| `ListingCard` | Top line "Category · 1.4 km" (no distance when none), name (a link to `/listing/[slug]`), `VerifiedDate` and `OpenNowBadge`, the address with the area under it, then Call + Directions side by side; "Sponsored" tag when `sponsored`. No Call button when the listing has no phone number |
+| `CallButton` | `tel:+234…` link labelled "Call", primary button |
+| `DirectionsButton` | Secondary button labelled "Directions"; opens `https://www.google.com/maps/dir/?api=1&destination=lat,lng` (from the listing's latitude and longitude) in a new tab |
+| `OpenNowBadge` | "Open now" (green) / "Closed" (grey) / "Open 24 hours" (green, wins over Closed) |
+| `VerifiedDate` | "Verified 3 days ago" (a `pine-100` label); when `verification_due`, an amber "Verification due" label with "Verified 45 days ago" next to it, so the date is always shown (FR-08, US-07) |
 | `Disclaimer` | Directory / not medical advice text |
 | `ResultsMap` | Leaflet + OpenStreetMap map with pins; client component |
 | `ShareLocationButton` | Gets location with permission, opens WhatsApp/SMS with a Google Maps link |
@@ -74,19 +119,22 @@ Sketches go in `docs/screens/`.
 FR-01, FR-03. **Purpose:** the app's start screen.
 1. Heading **"What do you need?"**
 2. Two large buttons side by side (stacked on small screens): **Find a healthcare facility** (scrolls to search) · **Get emergency help** (`/emergency`, red).
-3. Search box: "Search hospitals, pharmacies, labs…" → `/search?q=…`.
-4. Category shortcuts: Hospitals · Clinics · Pharmacies · Maternity · Labs · Blood (→ `/blood`).
-5. "Open now near me" button → `/search?open_now=true` with location.
-**Location:** ask once for permission; if refused, show an area dropdown (from `GET /meta`).
+3. Search box: "Search hospitals, pharmacies, labs…" → `/search?q=…`. It is a plain form (a GET to `/search`), so it works before any script has loaded.
+4. Category shortcuts (plain links): Hospitals `/search?category=hospital` · Clinics `clinic` · Pharmacies `pharmacy` · Maternity `maternity` · Labs `laboratory` · Blood (→ `/blood`, a "Coming soon" page until phase 8).
+5. "Open now near me" button → asks for the position (after the tap), then `/search?open_now=true`. The position is not in the address.
+6. **Near you** (once there is a position or a chosen area; before that, a "Show places near me" button and the area list): two cards, **Closest open pharmacy** (`category=pharmacy&open_now=true&limit=1`) and **Closest open 24-hour place** (`is_24_hours=true&limit=1`), each a `ListingCard`, then a button **See all open places near me** (`/search?open_now=true`). With an area and no position, the same two calls use `area=` and show no distance. The two cards load independently. A card with no result says "No open pharmacy found nearby" or "No 24-hour place found nearby" with a link to search all places, never an empty card; a failed card shows its own error and Retry.
+**Location:** the browser asks for permission only after a tap on a button, and only once per tab (a refusal is remembered for the tab). If refused, show an area dropdown (from `GET /meta`).
+**A stored position is used only while the browser still allows it** (found in the phone test, 2026-10-10: a tab opened from a page gets a copy of its `sessionStorage`, so a position stored before the visitor blocked the site was still used). Before using a stored position, the pages ask the browser for the permission with `navigator.permissions.query({ name: "geolocation" })`. If it says `denied`, the stored position is deleted, the refusal is remembered for the tab, and the page behaves as for a refusal (the message "We could not use your location. Choose an area instead." and the area list); a chosen area is kept. `granted` and `prompt` keep the stored position. If the browser has no permission check, or the check fails, nothing changes: the stored position is used as before. Until the check has answered, results wait for it (one search, not two).
 
 ### 2.3 Search results — `/search`
 FR-04 to FR-08, US-01, US-05. **API:** `GET /search`, `GET /meta`.
-1. Search box (pre-filled) and a **Filters** button opening a sheet: category, service, area, open now, 24 hours, distance (5 / 10 / 20 km).
-2. Toggle: **List** | **Map**.
-3. Result count: "12 places, nearest first".
+1. Search box (pre-filled) and a **Filters** button opening a sheet (a native `<dialog>` styled as a bottom sheet; **Esc, a tap on the backdrop outside the sheet, Close, Apply and Clear filters all close it, and focus goes back to the Filters button**; a press that starts inside the sheet and ends outside does not close it): category (list from `GET /meta`), service (pick from the `services` list of `GET /meta`, with "Any service"), area (from `GET /meta`), open now, 24 hours, distance (5 / 10 / 20 km; only usable when there is a position, otherwise disabled with a hint). **Apply** and **Clear filters**.
+2. Toggle: **List** | **Map** (the map is phase 5B-2; until then only the list shows).
+3. Result count: "12 places, nearest first" with a position, "12 places, A to Z" without one.
 4. List of `ListingCard`s; sponsored card (if any) first with "Sponsored" tag.
-5. "Load more" button (pagination).
-**URL holds all filters** (`/search?category=pharmacy&open_now=true`) so results can be shared.
+5. "Load more" button (pagination, 20 at a time; page state, not in the address).
+**URL holds all filters** (`/search?category=pharmacy&open_now=true`) so results can be shared, but **never the position** (`lat`, `lng`): it is read from `sessionStorage`. Applying filters replaces the address without adding history entries. A shared link opens with the filters set and, for the receiver, no position.
+**States:** skeleton cards while loading; after 5 seconds "The service is waking up. This can take up to a minute."; error with Retry after 45 seconds or on an error answer.
 **Empty:** "No matches. Try removing a filter or widening the distance."
 
 ### 2.4 Listing page — `/listing/[slug]`
