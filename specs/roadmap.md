@@ -149,9 +149,12 @@ US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-
 #### Small PRs after 5B-1 (found in the phone test, 2026-10-10)
 - **All spec categories in every database** (backend, `feature/reference-categories`): an idempotent Alembic data migration
   that adds the 12 categories production was missing. Feature folder: [requirements](2026-10-10-reference-categories/requirements.md),
-  [plan](2026-10-10-reference-categories/plan.md), [validation](2026-10-10-reference-categories/validation.md). In progress.
-- **Hide the emergency categories in the Filters sheet** (frontend, after the one above): next. The public sheet should show
-  only the five everyday categories; `GET /meta` stays as it is. See `LOG.md`.
+  [plan](2026-10-10-reference-categories/plan.md), [validation](2026-10-10-reference-categories/validation.md). **Done:** merged and deployed (PR #15); production `GET /meta`
+  returns 12 categories.
+- **Hide the emergency categories in the Filters sheet** (frontend, `feature/hide-emergency-filters`): in progress. The public
+  sheet shows only the five everyday categories, in the Find order; `GET /meta` stays as it is. Feature folder:
+  [requirements](2026-10-10-hide-emergency-filters/requirements.md), [plan](2026-10-10-hide-emergency-filters/plan.md),
+  [validation](2026-10-10-hide-emergency-filters/validation.md).
 
 #### Phase 5B-2: Map view. Next
 FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Needs 5B-1 merged.

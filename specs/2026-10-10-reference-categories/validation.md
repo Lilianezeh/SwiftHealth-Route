@@ -47,9 +47,8 @@ They failed first: before the revision file existed, every one of them failed.
 
 ## Security checklist
 
-- [ ] The migration runs with the same database user as the app, and needs no extra permission. (It does: Render's start
-  command runs `alembic upgrade head` with the app's own connection, as it did for the two earlier revisions. Confirm in
-  the deploy log after the merge.)
+- [x] The migration runs with the same database user as the app, and needs no extra permission. (Render's start command runs
+  `alembic upgrade head` with the app's own connection. Owner, after the deploy: the migration ran in Render's log.)
 - [x] No listing, user, report or audit row changes (`test_listings_and_every_other_table_are_untouched`; and on the
   development database the listings count was 30 before and after).
 - [x] `git diff --stat origin/main` shows no change under `frontend/`, `backend/app/` or `backend/seed/` (checked 2026-10-10).
@@ -73,15 +72,21 @@ scratch URL was taken from the container's own `DATABASE_URL` with the database 
 ## After the deploy (owner, production)
 
 Render deploys on merge and runs `alembic upgrade head` when the service starts (it wakes up slowly on the free plan).
-- [ ] **Production `GET /meta` returns 12 categories.** Wait until the newest deploy says **Live**, then run
+Results, after PR #15 was merged and deployed (owner, 2026-10-10; the two marked "re-read" were read again from the public
+API by Claude for this record):
+- [x] **Production `GET /meta` returns 12 categories.** Wait until the newest deploy says **Live**, then run
   `curl -s https://swifthealth-api.onrender.com/meta | grep -o '"slug"' | wc -l`. The answer must be `12`. (Or open
-  <https://swifthealth-api.onrender.com/meta> in a browser and count the entries of `categories`.)
-- [ ] The three categories that were there are still first, with the same names (Clinic, Pharmacy, Laboratory), and `is_emergency`
-  is true for exactly seven entries.
-- [ ] Nothing happened to the listings: `curl -s "https://swifthealth-api.onrender.com/search?limit=1"` gives the same `total` as
+  <https://swifthealth-api.onrender.com/meta> in a browser and count the entries of `categories`.) Owner: it returns 12
+  categories. Also in Render's log: the migration `all spec categories` ran.
+- [x] The three categories that were there are still first, with the same names (Clinic, Pharmacy, Laboratory), and `is_emergency`
+  is true for exactly seven entries. (Re-read: `clinic`, `pharmacy`, `laboratory`, `hospital`, `maternity` first, 12 in total,
+  7 with `is_emergency` true.)
+- [x] Nothing happened to the listings: `curl -s "https://swifthealth-api.onrender.com/search?limit=1"` gives the same `total` as
   before the deploy. **Before the deploy (read from production on 2026-10-10): `total` is 4, and `GET /meta` has exactly 3
-  categories: `clinic`, `pharmacy`, `laboratory`.** After the deploy `total` must still be 4 and `/meta` must have 12.
-- [ ] The Filters sheet on the live site lists the categories (until the frontend PR hides the emergency ones, it lists all 12).
+  categories: `clinic`, `pharmacy`, `laboratory`.** After the deploy: the owner reports the search total is still 4
+  (re-read: `"total":4`).
+- [x] The Filters sheet on the live site lists the categories (until the frontend PR hides the emergency ones, it lists all 12).
+  Owner: Hospital and Maternity now show in Filters.
 
 ## Merge checklist
 
@@ -93,4 +98,5 @@ Render deploys on merge and runs `alembic upgrade head` when the service starts 
   "Pages changed" skipping. The PR is clean and mergeable.
 - [x] The api-spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date (Task 0, `f3cafb3`; the final status lines are
   updated after the merge).
-- [ ] The pull request stays a draft until every box above is ticked.
+- [x] The pull request stays a draft until every box above is ticked. (It was marked ready on the owner's instruction before the
+  "After the deploy" boxes could be ticked; they are all ticked now, and PR #15 is merged and deployed.)

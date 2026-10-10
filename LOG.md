@@ -46,8 +46,12 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   2026-10-10).** `GET /meta` keeps returning all 12 categories with `is_emergency` (the phase 10 editor needs them); the
   public Filters sheet (`FiltersDialog`) shows only the 5 everyday ones, because SwiftRescue (`/emergency`) groups the
   emergency categories and Blood has its own page. A shared link such as `/search?category=ambulance` must keep working
-  (`/search` still accepts any slug) and keep showing a readable label for it. Decide there whether to sort the list in the
-  shortcut order (production's ids put Clinic, Pharmacy, Laboratory first). UI spec 2.3 changes first, then a test, then the code.
+  (`/search` still accepts any slug) and keep showing a readable label for it. **In progress (2026-10-10):** branch
+  `feature/hide-emergency-filters`, folder `specs/2026-10-10-hide-emergency-filters/`. Owner's decisions: the list follows the
+  Find shortcut order (Hospital, Clinic, Pharmacy, Maternity, Laboratory) with anything else after it, and an emergency
+  category stays visible, with its real name, only while it is the one selected from a link.
+- **Done 2026-10-10: all spec categories in every database (PR #15).** The migration ran in Render's log, production
+  `GET /meta` returns 12 categories, the search total is still 4, and Hospital and Maternity show in Filters.
 - **Decided on 2026-10-09 (Figma work, phase 5B-1):** (1) the focus ring is `forest` on light backgrounds and `paper` on a
   `forest` background (class `on-dark`), both well over 3:1; (2) `lucide-react`, exact version, one icon per import,
   decorative and always beside a label; (3) the card has no hours line until the backend PR above; (4) small text and links
