@@ -25,22 +25,22 @@ No migration, no model change, no frontend change.
 
 ## Tasks
 
-### Task 0: Spec
-- [ ] Write this folder, the api-spec text, the roadmap line and the `LOG.md` notes (including "English only"). Commit:
+### Task 0: Spec (done, `a265f68`)
+- [x] Write this folder, the api-spec text, the roadmap line and the `LOG.md` notes (including "English only"). Commit:
   `docs(specs): the next opening or closing time on search results, spec (FR-06, US-01, FR-05)`.
 
-### Task 1: The hours logic (tests first)
-- [ ] Write the tests for `next_change`, the wording and the consistency check (names in [validation.md](validation.md)).
+### Task 1: The hours logic (tests first) (done, `2aac578`)
+- [x] Write the tests for `next_change`, the wording and the consistency check (names in [validation.md](validation.md)).
   They fail: the functions do not exist.
-- [ ] Write `next_change`, `describe_next_change` and `hours_note` in `services/hours.py` (plain `def`: pure logic, no waiting).
-- [ ] Run `pytest -q -W error` and `ruff check .` in the backend container, then commit:
+- [x] Write `next_change`, `describe_next_change` and `hours_note` in `services/hours.py` (plain `def`: pure logic, no waiting).
+- [x] Run `pytest -q -W error` and `ruff check .` in the backend container, then commit:
   `feat(search): the next opening or closing time, in Lagos time (FR-06, US-01, FR-05)`.
 
-### Task 2: In the search answer (tests first)
-- [ ] Write the integration tests (the field is in every item; the values for open, closed and 24-hour listings with a fixed
+### Task 2: In the search answer (tests first) (done, `e76e18e`)
+- [x] Write the integration tests (the field is in every item; the values for open, closed and 24-hour listings with a fixed
   clock; the field never disagrees with `is_open_now`; paging gives it to every returned item). They fail.
-- [ ] Add the field to `ListingSummary` and fill it in `to_summary`.
-- [ ] Run `pytest -q -W error` and `ruff check .`, time `GET /search`, then commit:
+- [x] Add the field to `ListingSummary` and fill it in `to_summary`.
+- [x] Run `pytest -q -W error` and `ruff check .`, time `GET /search`, then commit:
   `feat(search): GET /search returns hours_note (FR-06, US-01)`.
 
 ### Task 3: Wrap-up
