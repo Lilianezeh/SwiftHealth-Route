@@ -84,9 +84,13 @@ The clock is fixed at Tuesday 10:00 in Lagos. They failed first (8 tests) and pa
 
 ## After the deploy (owner, production)
 
-- [ ] `curl -s "https://swifthealth-api.onrender.com/search?limit=5"` shows `hours_note` on every item, and it agrees with
-  `is_open_now`. (The demo listings may have no hours: then `null` is right.)
-- [ ] `total` is still 4, and nothing else in the answer changed.
+Done after PR #17 was merged and deployed (owner, 2026-10-10; the values below were also re-read from the public API by Claude).
+- [x] `curl -s "https://swifthealth-api.onrender.com/search?limit=5"` shows `hours_note` on every item, and it agrees with
+  `is_open_now`. (The demo listings may have no hours: then `null` is right.) Owner: `hours_note` shows on every listing. Re-read:
+  "DEMO – After Hours Pharmacy" open, "Closes 2:00 AM tomorrow"; "DEMO – Day Clinic" closed, "Opens 8:00 AM tomorrow";
+  "DEMO – Diagnostic Laboratory" closed, "Opens Monday 8:00 AM"; "DEMO – Always Open Pharmacy" is a 24-hour listing, so its
+  `hours_note` is `null` by design (the badge says "Open 24 hours").
+- [x] `total` is still 4, and nothing else in the answer changed. (Owner: total is still 4; re-read: `"total":4`.)
 
 ## Merge checklist
 

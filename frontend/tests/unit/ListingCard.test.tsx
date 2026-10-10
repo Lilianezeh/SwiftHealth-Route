@@ -24,6 +24,7 @@ const NIGHT_PHARMACY: ListingSummary = {
   last_verified_at: "2026-10-06T09:00:00Z",
   verification_due: false,
   sponsored: false,
+  hours_note: "Closes 9:00 PM",
 };
 
 function renderCard(changes: Partial<ListingSummary> = {}) {
@@ -143,5 +144,53 @@ describe("ListingCard", () => {
     expect(className).toMatch(/\bbg-white\b/);
     expect(className).toMatch(/\bborder-line\b/);
     expect(className).toMatch(/\bshadow-card\b/);
+  });
+});
+
+describe("ListingCard hours line (hours_note)", () => {
+  it("shows the hours line under the address, before the Call and Directions buttons", () => {
+    renderCard({ hours_note: "Closes 9:00 PM" });
+
+    const address = screen.getByText("New Haven"); // the last line of the address block
+    const hours = screen.getByText("Closes 9:00 PM");
+    const call = screen.getByRole("link", { name: /^Call/ });
+    expect(address.compareDocumentPosition(hours) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(hours.compareDocumentPosition(call) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("shows the text the API gives, word for word", () => {
+    renderCard({ hours_note: "Opens Monday 7:30 AM", is_open_now: false });
+
+    expect(screen.getByText("Opens Monday 7:30 AM")).toBeInTheDocument();
+  });
+
+  it("shows no hours line and no extra icon when hours_note is null (a 24-hour listing)", () => {
+    const withNote = renderCard({ hours_note: "Closes 9:00 PM" });
+    const iconsWithNote = withNote.container.querySelectorAll("svg").length;
+    withNote.unmount();
+
+    const withoutNote = renderCard({ hours_note: null, is_24_hours: true });
+
+    expect(withoutNote.container.querySelectorAll("svg")).toHaveLength(iconsWithNote - 1);
+    expect(screen.queryByText(/^(Closes|Opens) /)).not.toBeInTheDocument();
+  });
+
+  it("still shows Verification due, the date and the Call button next to the hours line", () => {
+    renderCard({ verification_due: true, last_verified_at: "2026-08-25T12:00:00Z", hours_note: "Closes 9:00 PM" });
+
+    expect(screen.getByText("Verification due")).toBeInTheDocument();
+    expect(screen.getByText("Verified 45 days ago")).toBeInTheDocument();
+    expect(screen.getByText("Closes 9:00 PM")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^Call/ })).toBeInTheDocument();
+  });
+
+  it("has two different clocks that mean different things: the amber label and the grey hours line", () => {
+    renderCard({ verification_due: true, last_verified_at: "2026-08-25T12:00:00Z", hours_note: "Closes 9:00 PM" });
+
+    const due = screen.getByText("Verification due");
+    const hours = screen.getByText("Closes 9:00 PM");
+    expect(due.className).toMatch(/\btext-amber-ink\b/);
+    expect(hours.parentElement?.className).toMatch(/\btext-ink-soft\b/);
+    expect(hours.parentElement?.className).not.toMatch(/amber/);
   });
 });

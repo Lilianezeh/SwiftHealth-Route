@@ -29,6 +29,7 @@ const LISTING: ListingSummary = {
   last_verified_at: "2026-10-06T09:00:00Z",
   verification_due: false,
   sponsored: false,
+  hours_note: "Closes 9:00 PM",
 };
 
 function svgsIn(element: HTMLElement): SVGElement[] {
@@ -73,6 +74,15 @@ describe("icons in the listing components", () => {
     const addressRow = address.parentElement?.parentElement as HTMLElement; // the row: pin, then the address block
     expect(svgsIn(addressRow)).toHaveLength(1);
     expect(addressRow).toHaveTextContent("12 Example Road");
+  });
+
+  it("the hours line has a clock beside the text of the API, and its icon is decorative", () => {
+    render(<ListingCard listing={LISTING} now={NOW} />);
+
+    const hours = screen.getByText("Closes 9:00 PM").parentElement as HTMLElement;
+    expect(svgsIn(hours)).toHaveLength(1);
+    expect(svgsIn(hours)[0].getAttribute("aria-hidden")).toBe("true");
+    expect(hours).toHaveTextContent("Closes 9:00 PM");
   });
 
   it("every icon in a card is hidden from screen readers and sits next to text", () => {

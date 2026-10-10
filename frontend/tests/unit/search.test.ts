@@ -23,6 +23,7 @@ const NIGHT_PHARMACY: ListingSummary = {
   last_verified_at: "2026-10-01T10:00:00Z",
   verification_due: false,
   sponsored: false,
+  hours_note: "Closes 9:00 PM",
 };
 
 let requestedUrls: URL[];

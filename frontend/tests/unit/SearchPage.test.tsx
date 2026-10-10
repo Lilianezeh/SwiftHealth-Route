@@ -206,6 +206,25 @@ describe("the /search page", () => {
     expect(within(await screen.findByRole("article")).getByText("Verification due")).toBeInTheDocument();
   });
 
+  it("shows hours_note on each result card", async () => {
+    stubApi({
+      search: () =>
+        json({
+          items: [
+            listing({ id: 1, name: "Open Pharmacy", hours_note: "Closes 9:00 PM" }),
+            listing({ id: 2, name: "Closed Clinic", is_open_now: false, hours_note: "Opens Monday 8:00 AM" }),
+            listing({ id: 3, name: "All Night Pharmacy", is_24_hours: true, hours_note: null }),
+          ],
+          total: 3,
+        }),
+    });
+    render(<SearchPage />);
+
+    expect(await screen.findByText("Closes 9:00 PM")).toBeInTheDocument();
+    expect(screen.getByText("Opens Monday 8:00 AM")).toBeInTheDocument();
+    expect(screen.getAllByText(/^(Closes|Opens) /)).toHaveLength(2); // the 24-hour listing has no line
+  });
+
   it("applying filters from the dialog replaces the address (no lat or lng)", async () => {
     savePosition({ latitude: 6.101, longitude: 7.202 });
     stubApi({ search: () => json({ items: [listing()], total: 1 }) });

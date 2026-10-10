@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { CallButton } from "@/components/listings/CallButton";
 import { DirectionsButton } from "@/components/listings/DirectionsButton";
+import { HoursNote } from "@/components/listings/HoursNote";
 import { OpenNowBadge } from "@/components/listings/OpenNowBadge";
 import { VerifiedDate } from "@/components/listings/VerifiedDate";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
@@ -50,6 +51,8 @@ export function ListingCard({ listing, now }: ListingCardProps) {
           <p className="text-ink-soft">{listing.area}</p>
         </div>
       </div>
+
+      <HoursNote note={listing.hours_note} />
 
       <div className="grid grid-cols-2 gap-3">
         {listing.primary_phone && <CallButton phone={listing.primary_phone} facilityName={listing.name} />}

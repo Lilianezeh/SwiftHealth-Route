@@ -177,3 +177,18 @@ describe("NearbySuggestions", () => {
     expect(container.innerHTML).not.toMatch(/6\.101|7\.202/);
   });
 });
+
+describe("NearbySuggestions hours line", () => {
+  it("shows the hours_note of each near-you card, and nothing for a 24-hour place", async () => {
+    answer(
+      () => json({ items: [listing({ hours_note: "Closes 2:00 AM tomorrow" })], total: 1 }),
+      () => json({ items: [listing({ id: 2, name: "All Night Pharmacy", is_24_hours: true, hours_note: null })], total: 1 }),
+    );
+    render(<NearbySuggestions position={POSITION} area={null} />);
+
+    expect(await within(pharmacyCard()).findByText("Closes 2:00 AM tomorrow")).toBeInTheDocument();
+    await within(twentyFourHourCard()).findByRole("link", { name: "All Night Pharmacy" });
+    // "Closest open 24-hour place" is the card's title, so the pattern needs the space after the verb.
+    expect(within(twentyFourHourCard()).queryByText(/^(Closes|Opens) /)).not.toBeInTheDocument();
+  });
+});
