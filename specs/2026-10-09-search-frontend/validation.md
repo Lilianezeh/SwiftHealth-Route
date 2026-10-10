@@ -48,6 +48,10 @@ All timing tests use `vi.useFakeTimers()`: no test waits for real time.
 - [x] `useLocation reports denied, unavailable and timed out as separate states`
 - [x] `useLocation reads a saved position without asking again`
 - [x] `nothing logs or puts the position in the address` (console spies stay empty; `location.search` stays unchanged)
+- [x] Added after the phone test (`b43effe`): `permission.test.ts` (the browser's answer is read, never a prompt; unsupported, throwing,
+  rejecting or unknown answers mean "unknown"), `useLocation` with a stored position (denied deletes it and keeps the area;
+  granted, prompt and "cannot check" keep it; not ready until the browser answers), `NearYou` and `SearchPage` with a blocked
+  site (no lat or lng, one search, no way to the results without asking)
 
 ### Task 4: `distance.test.ts`, `dates.test.ts`, `OpenNowBadge.test.tsx`, `VerifiedDate.test.tsx`, `CallButton.test.tsx`, `DirectionsButton.test.tsx`, `ListingCard.test.tsx`
 - [x] `design-tokens.test.ts`: every token of the UI spec table exists in `globals.css`; every text and background pair is at
@@ -207,12 +211,17 @@ Phone: Honor X6B, mobile data, reported by the owner on 2026-10-10.
     back. This is a documented browser behaviour, not yet seen on the phone; it is not proven.
   - **Not reproduced.** A real-browser test was tried (Playwright Chromium) but the container lacks system libraries
     (`libnspr4`), and adding them needs `sudo apt`, which was not done. Unit tests cannot show browser tab behaviour.
-  - Questions for the owner: how was the new tab opened (address bar, tab switcher "+", a long-press link, Duplicate tab)? Had
-    the first tab allowed location before you blocked it? Does a tab opened from a closed browser, by typing the address,
-    ask or refuse correctly?
-  - Likely fix, to be agreed first: before using a stored position, read the browser's permission with
-    `navigator.permissions.query({ name: "geolocation" })`; if it says `denied`, forget the stored position and show the
-    area list. That also covers a block set after the position was stored. Spec and tests first.
+  - The owner's answers (2026-10-10): the first tab had allowed location; the owner does not remember how the new tab was
+    opened; and after closing all tabs and typing the address fresh, the page refused correctly ("We could not use your
+    location. Choose an area instead." with the area list). That fits the cause: a fresh tab has no stored position and
+    the block works; a tab with a copied or kept position skipped the browser. Still not proven in a browser.
+  - **Fix (owner approved, 2026-10-10; commit `b43effe`):** before a stored position is used, the app reads the browser's
+    permission with `navigator.permissions.query({ name: "geolocation" })` (it never prompts). `denied`: the position is
+    deleted, the refusal is remembered, the area list is shown, the chosen area stays. `granted` or `prompt`: unchanged.
+    A browser with no such check, or a check that fails: unchanged (the old behaviour), as the owner asked. Spec first
+    (UI spec 2.2, requirements decision 3), 25 tests first, mutation check on this privacy code (5 and 1 tests fail).
+  - **To check again on the phone** (new preview): allow location in a tab, block the site in Chrome, open a new tab from
+    that tab (any way), tap **Open now near me**. Expected: the refusal message and the area list, no distances.
 - **The category list in production shows only Clinic, Pharmacy and Laboratory.** Production has only the categories the demo
   listings needed. Not a frontend bug: categories are reference data. It is a small backend PR after this one (an
   idempotent Alembic data migration; see "To do later" in `LOG.md`), and it does not block this merge. Until then the
