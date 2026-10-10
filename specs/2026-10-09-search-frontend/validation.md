@@ -225,9 +225,14 @@ others when that task comes. Colours are never copied as hex into components: th
 
 ## Merge checklist
 
-- [ ] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean.
-- [ ] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run (the paths filter). Write
-  what `gh pr checks` showed here: _not checked yet_.
+- [x] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean (2026-10-10: 342 tests; build with
+  `/find` 114 kB and `/search` 115 kB).
+- [x] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run (the paths filter). What
+  `gh pr checks 14` showed (2026-10-10, after `1b0dd97`): `frontend` **pass** (1m4s, run 38037797147); the only workflow that ran
+  was Frontend CI, no Backend CI run exists for the branch; Netlify `deploy-preview` **pass**
+  (<https://deploy-preview-14--swifthealth-ng.netlify.app>); "Header rules" and "Redirect rules" skipping, "Pages changed" skipping.
+  Note: the first push did not start any GitHub workflow because the pull request had a merge conflict with `main`
+  (`specs/roadmap.md`, from PR #13); merging `main` into the branch fixed it.
 - [ ] The UI spec, `tech-stack.md`, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
 - [ ] The preview address is removed from `CORS_ORIGINS` in Render after the merge.
 - [ ] The pull request stays a draft until every box above is ticked.
