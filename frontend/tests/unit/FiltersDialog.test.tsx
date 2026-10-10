@@ -54,7 +54,7 @@ describe("FiltersDialog", () => {
     const dialog = await openDialog();
 
     expect(dialog).toHaveAttribute("open");
-    expect(optionsOf(within(dialog).getByRole("combobox", { name: "Category" }))).toEqual(["Any category", "Pharmacy"]);
+    expect(optionsOf(within(dialog).getByRole("combobox", { name: "Category" }))).toContain("Pharmacy");
     expect(optionsOf(within(dialog).getByRole("combobox", { name: "Area" }))).toEqual(["Any area", ...AREAS]);
   });
 
@@ -253,5 +253,102 @@ describe("FiltersDialog", () => {
     for (const label of dialog.querySelectorAll("label")) {
       expect(label.className, label.textContent ?? "").toMatch(/min-h-12|text-base/);
     }
+  });
+});
+
+// The category list. Requirements: FR-05, FR-15, FR-01, NFR-10. Decisions 1 to 4 in
+// specs/2026-10-10-hide-emergency-filters/requirements.md. The META fixture is production's 12 categories in production's order
+// (Clinic, Pharmacy, Laboratory, Hospital, Maternity, then the seven emergency ones).
+describe("FiltersDialog category list", () => {
+  const EVERYDAY_IN_FIND_ORDER = ["Hospital", "Clinic", "Pharmacy", "Maternity", "Laboratory"];
+  const EMERGENCY_NAMES = META.categories.filter((item) => item.is_emergency).map((item) => item.name);
+
+  function categorySelect(dialog: HTMLElement): HTMLElement {
+    return within(dialog).getByRole("combobox", { name: "Category" });
+  }
+
+  function metaWith(extraCategories: typeof META.categories) {
+    stubApi({ meta: () => json({ ...META, categories: [...META.categories, ...extraCategories] }) });
+  }
+
+  it("lists only the everyday categories, after 'Any category', and none of the seven emergency ones", async () => {
+    const dialog = await openDialog();
+
+    const options = optionsOf(categorySelect(dialog));
+    expect(options).toHaveLength(1 + 5);
+    for (const emergencyName of EMERGENCY_NAMES) expect(options).not.toContain(emergencyName);
+  });
+
+  it("orders the categories like the Find shortcuts, whatever order /meta gives", async () => {
+    const dialog = await openDialog();
+
+    expect(optionsOf(categorySelect(dialog))).toEqual(["Any category", ...EVERYDAY_IN_FIND_ORDER]);
+  });
+
+  it("puts a new everyday category after the five, and keeps the /meta order among unknown ones", async () => {
+    metaWith([
+      { slug: "eye-care", name: "Eye care", is_emergency: false },
+      { slug: "dental", name: "Dental", is_emergency: false },
+    ]);
+    const dialog = await openDialog();
+
+    expect(optionsOf(categorySelect(dialog))).toEqual([
+      "Any category", ...EVERYDAY_IN_FIND_ORDER, "Eye care", "Dental",
+    ]);
+  });
+
+  it("does not offer a new emergency category (the filter is is_emergency, not a list of slugs)", async () => {
+    metaWith([{ slug: "coast-guard", name: "Coast guard", is_emergency: true }]);
+    const dialog = await openDialog();
+
+    expect(optionsOf(categorySelect(dialog))).not.toContain("Coast guard");
+  });
+
+  it("keeps an emergency category that is selected from a shared link, with its real name, selected", async () => {
+    const dialog = await openDialog({ category: "ambulance" });
+
+    const select = categorySelect(dialog);
+    expect(select).toHaveValue("ambulance");
+    expect(optionsOf(select)).toEqual(["Any category", ...EVERYDAY_IN_FIND_ORDER, "Ambulance"]);
+    expect(within(select).getByRole("option", { name: "Ambulance", selected: true })).toBeInTheDocument();
+  });
+
+  it("Apply keeps the emergency category from the link in the address", async () => {
+    const dialog = await openDialog({ category: "ambulance" });
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Apply" }));
+
+    expect(navigation.replace).toHaveBeenCalledWith("/search?category=ambulance");
+  });
+
+  it("keeps the emergency category in the list while the visitor is only choosing inside the open sheet", async () => {
+    const dialog = await openDialog({ category: "ambulance" });
+
+    await userEvent.selectOptions(categorySelect(dialog), "pharmacy");
+
+    expect(optionsOf(categorySelect(dialog))).toContain("Ambulance");
+  });
+
+  it("drops the emergency category from the list once another category is applied and the sheet is opened again", async () => {
+    const { rerender } = render(<FiltersDialog filters={{ category: "ambulance" }} hasPosition={true} />);
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    const dialog = screen.getByRole("dialog", { name: "Filters", hidden: true });
+    await within(dialog).findByRole("option", { name: "Pharmacy" });
+    await userEvent.selectOptions(categorySelect(dialog), "pharmacy");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Apply" }));
+    expect(navigation.replace).toHaveBeenCalledWith("/search?category=pharmacy");
+
+    rerender(<FiltersDialog filters={{ category: "pharmacy" }} hasPosition={true} />); // the address changed
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+
+    expect(optionsOf(categorySelect(dialog))).toEqual(["Any category", ...EVERYDAY_IN_FIND_ORDER]);
+  });
+
+  it("shows the slug when a selected category is not in /meta at all (the old behaviour)", async () => {
+    const dialog = await openDialog({ category: "mystery" });
+
+    const select = categorySelect(dialog);
+    expect(select).toHaveValue("mystery");
+    expect(optionsOf(select)).toContain("mystery");
   });
 });

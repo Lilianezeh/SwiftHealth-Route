@@ -7,7 +7,22 @@ export const AREAS = ["GRA", "New Haven", "Ogui"];
 
 export const META: MetaResponse = {
   areas: AREAS,
-  categories: [{ slug: "pharmacy", name: "Pharmacy", is_emergency: false }],
+  // The 12 categories of production, in the order GET /meta gives them there (sorted by id): the three that the demo
+  // listings needed come first, then the ones the categories migration added.
+  categories: [
+    { slug: "clinic", name: "Clinic", is_emergency: false },
+    { slug: "pharmacy", name: "Pharmacy", is_emergency: false },
+    { slug: "laboratory", name: "Laboratory", is_emergency: false },
+    { slug: "hospital", name: "Hospital", is_emergency: false },
+    { slug: "maternity", name: "Maternity", is_emergency: false },
+    { slug: "ambulance", name: "Ambulance", is_emergency: true },
+    { slug: "fire", name: "Fire", is_emergency: true },
+    { slug: "police", name: "Police", is_emergency: true },
+    { slug: "emergency-unit", name: "24-hour emergency unit", is_emergency: true },
+    { slug: "roadside-assistance", name: "Roadside assistance", is_emergency: true },
+    { slug: "security", name: "Security", is_emergency: true },
+    { slug: "blood-bank", name: "Blood bank", is_emergency: true },
+  ],
   services: ["Consultation", "X-ray"],
   blood_groups: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
   report_reasons: ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"],

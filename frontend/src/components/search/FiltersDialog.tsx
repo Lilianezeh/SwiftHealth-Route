@@ -13,6 +13,7 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { DISTANCE_CHOICES_KM } from "@/config/search";
 import { useMeta } from "@/hooks/useMeta";
+import { chooseFilterCategories } from "@/lib/search/categoryChoices";
 import { filtersToQuery, type SearchFilters } from "@/lib/search/searchQuery";
 import type { MetaResponse } from "@/types/api";
 
@@ -49,8 +50,10 @@ function FiltersForm({ filters, hasPosition, meta, metaFailed, onRetryMeta, onAp
   const [radius, setRadius] = useState(filters.radius_km === undefined ? "" : String(filters.radius_km));
 
   const isLoaded = meta !== null;
+  // Everyday categories in the Find order. The category applied now (from the address) stays even if it is an emergency
+  // one; a category that /meta does not know is shown by its slug.
   const categoryChoices = withCurrentValue(
-    (meta?.categories ?? []).map((item) => ({ value: item.slug, label: item.name })), category, isLoaded,
+    chooseFilterCategories(meta?.categories ?? [], filters.category), filters.category ?? "", isLoaded,
   );
   const serviceChoices = withCurrentValue((meta?.services ?? []).map((name) => ({ value: name, label: name })), service, isLoaded);
   const areaChoices = withCurrentValue((meta?.areas ?? []).map((name) => ({ value: name, label: name })), area, isLoaded);
