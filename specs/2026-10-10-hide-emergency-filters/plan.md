@@ -22,15 +22,17 @@ No backend change, no new package, no change to `GET /meta`, the Find page or `/
 
 ## Tasks
 
-### Task 0: Spec
-- [ ] Write this folder, the UI spec sentence, the roadmap line and the `LOG.md` note. Commit:
+### Task 0: Spec (done, `7919925`)
+- [x] Write this folder, the UI spec sentence, the roadmap line and the `LOG.md` note. Commit:
   `docs(specs): hide the emergency categories in the Filters sheet, spec (FR-05, FR-15, NFR-10)`.
 
-### Task 1: The sheet (tests first)
-- [ ] Widen `META.categories` in `tests/helpers/api.ts` to the 12 categories, in the order production gives, and write the tests
+### Task 1: The sheet (tests first) (done, `846c879`)
+- [x] Widen `META.categories` in `tests/helpers/api.ts` to the 12 categories, in the order production gives, and write the tests
   (names in [validation.md](validation.md)). They fail: today the sheet lists whatever `/meta` gives.
-- [ ] Change `categoryChoices` in `FiltersDialog.tsx` (decisions 1 to 3).
-- [ ] Run `npm run lint`, `npm run typecheck` and `npm test` in the frontend container, then commit:
+- [x] Add the pure function `lib/search/categoryChoices.ts` (`chooseFilterCategories`, with its own unit tests) and use it for
+  `categoryChoices` in `FiltersDialog.tsx` (decisions 1 to 3). (The plan said one function in the dialog; a separate small
+  file is easier to test.)
+- [x] Run `npm run lint`, `npm run typecheck` and `npm test` (on the host, because Docker Desktop was off), then commit:
   `feat(web): the Filters sheet offers only everyday categories, in the Find order (FR-05, FR-15, NFR-10)`.
 
 ### Task 2: Wrap-up

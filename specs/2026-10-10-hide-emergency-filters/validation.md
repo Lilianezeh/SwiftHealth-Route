@@ -15,28 +15,35 @@ The host has no Node packages, so the commands run in the frontend container:
 ### Task 1: `tests/unit/FiltersDialog.test.tsx`
 The `META` fixture has the 12 categories in production's order (Clinic, Pharmacy, Laboratory, Hospital, Maternity, then the seven
 emergency ones).
-- [ ] `lists only the everyday categories, after "Any category", and none of the seven emergency ones`
-- [ ] `orders the categories like the Find shortcuts, whatever order /meta gives`
-- [ ] `puts a new everyday category after the five, and keeps the /meta order among unknown ones`
-- [ ] `does not offer a new emergency category` (the filter is `is_emergency`, not a list of slugs)
-- [ ] `keeps an emergency category that is selected from a shared link, with its real name, selected` (`?category=ambulance`
+Done in `846c879`. The tests were written first and failed without the change (6 of the dialog tests, and the new unit file
+could not load its module). Test names are those in `FiltersDialog.test.tsx` ("FiltersDialog category list") and
+`categoryChoices.test.ts` (the pure function: order, label, unknown categories, no duplicates, the input is not changed).
+- [x] `lists only the everyday categories, after "Any category", and none of the seven emergency ones`
+- [x] `orders the categories like the Find shortcuts, whatever order /meta gives`
+- [x] `puts a new everyday category after the five, and keeps the /meta order among unknown ones`
+- [x] `does not offer a new emergency category` (the filter is `is_emergency`, not a list of slugs)
+- [x] `keeps an emergency category that is selected from a shared link, with its real name, selected` (`?category=ambulance`
   shows "Ambulance" selected)
-- [ ] `Apply keeps the emergency category from the link in the address` (`/search?category=ambulance`)
-- [ ] `the emergency category from a link leaves the list once another category is applied and the sheet is opened again`
-  (and `stays while the visitor is only choosing inside the open sheet`)
-- [ ] `shows the slug when a selected category is not in /meta at all` (the old behaviour)
-- [ ] The existing tests of the sheet still pass (services, areas, Apply, Clear filters, the backdrop and the error with Retry).
+- [x] `Apply keeps the emergency category from the link in the address` (`/search?category=ambulance`)
+- [x] `drops the emergency category from the list once another category is applied and the sheet is opened again`
+  (and `keeps the emergency category in the list while the visitor is only choosing inside the open sheet`)
+- [x] `shows the slug when a selected category is not in /meta at all` (the old behaviour)
+- [x] The existing tests of the sheet still pass (services, areas, Apply, Clear filters, the backdrop and the error with Retry).
+  Whole frontend suite: 391 passed.
 
 ## Review-focus edge cases
 
-- [ ] **Only one place changed.** `git grep "meta.categories\|meta?.categories" frontend/src` finds only `FiltersDialog.tsx`.
-- [ ] **`GET /meta` untouched.** `git diff --stat origin/main` shows nothing under `backend/`.
-- [ ] **A shared link.** `/search?category=ambulance` still filters the results and the sheet does not say "Any category".
+- [x] **Only one place changed.** `git grep "meta.categories\|meta?.categories" frontend/src` finds only `FiltersDialog.tsx`
+  (checked 2026-10-10).
+- [x] **`GET /meta` untouched.** `git diff --stat origin/main -- backend` is empty (checked 2026-10-10).
+- [x] **A shared link.** `/search?category=ambulance` still filters the results (nothing in `/search` changed) and the sheet
+  does not say "Any category" (`keeps an emergency category that is selected from a shared link...`). Still to look at by hand, below.
 
 ## Security checklist
 
-- [ ] Category names are rendered as text only (they come from `GET /meta`; React escapes them); no `dangerouslySetInnerHTML`.
-- [ ] No new package, no secrets, no `.env` change.
+- [x] Category names are rendered as text only (they come from `GET /meta`; React escapes them); `git grep dangerouslySetInnerHTML
+  frontend/src` finds nothing.
+- [x] No new package, no secrets, no `.env` change (`git diff` shows no `package.json`, lock file or `.env`).
 
 ## Smoke test (owner, on the Netlify deploy preview)
 
@@ -48,7 +55,9 @@ emergency ones).
 
 ## Merge checklist
 
-- [ ] `npm run lint`, `npm run typecheck` and `npm test` are clean.
+- [x] `npm run lint`, `npm run typecheck` and `npm test` are clean (2026-10-10, on `846c879`: 391 tests pass; `tsc --noEmit` and
+  ESLint report nothing). Docker Desktop was not running, so they were run on the host after `npm ci --ignore-scripts`; the
+  Frontend CI run on the pull request repeats them on Node 24 in GitHub.
 - [ ] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. Write what `gh pr checks` showed
   here: _not checked yet_.
 - [ ] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
