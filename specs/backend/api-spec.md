@@ -74,12 +74,24 @@ Used in search results, emergency groups and blood results.
   "primary_phone": "+2348030000000",
   "last_verified_at": "2026-10-01T10:00:00Z",
   "verification_due": false,
-  "sponsored": false
+  "sponsored": false,
+  "hours_note": "Closes 9:00 PM"
 }
 ```
 
 - `distance_km` is `null` when the caller sends no location.
 - `sponsored` is `true` only for a featured listing shown in a sponsored slot (see `/search`).
+- `hours_note` is a short English text for the next change in opening hours, worked out in Africa/Lagos time, or `null`
+  ([feature](../2026-10-10-next-open-close-time/requirements.md)). `/search` fills it; the emergency and blood lists return `null`
+  until they are built to fill it. It always agrees with `is_open_now`: it starts with "Closes" when the listing is open now and
+  with "Opens" when it is closed. The forms are: "Closes 9:00 PM", "Closes 2:00 AM tomorrow", "Closes at midnight", "Opens 7:30 AM",
+  "Opens 7:30 AM tomorrow", "Opens Monday 7:30 AM", "Opens at midnight", "Opens Monday at midnight". Times are 12-hour with
+  minutes and no leading zero ("9:00 PM", "12:30 PM"); 00:00 is written "midnight" and has no clock time. The day is left out
+  for a change later today, is "tomorrow" for the next Lagos date, and is the full day name for a later date. Midnight at the
+  start of tomorrow means the coming midnight, so it has no day word ("Opens at midnight"); midnight at the start of a later
+  day names the day ("Opens Monday at midnight"). Two shifts that meet at midnight (one ends at 00:00 and the next day starts at
+  00:00) count as one opening. It is `null` for a 24-hour listing (the badge already says "Open 24 hours"), for a listing with
+  no hours recorded (no rows, only closed days, or rows without times), and when nothing changes within the next 7 days.
 
 ### ListingDetail
 

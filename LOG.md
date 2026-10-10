@@ -31,6 +31,14 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `search_service` with `services/hours.py` in Africa/Lagos time (the code that already decides open now), then the card
   shows it. The api-spec (`ListingSummary` gets a new field) and the UI spec change first; tests first, including past
   midnight, 24-hour places, closed days and the week wrapping. Then the frontend shows it in one line under the labels.
+  **In progress (2026-10-10):** branch `feature/next-open-close-time`, folder `specs/2026-10-10-next-open-close-time/`. The
+  field is `hours_note`, a ready-made text from the server (owner's decision). Owner's wording changes: full day names ("Opens
+  Monday 7:30 AM"), "Closes at midnight" and "Opens at midnight" (never "12:00 AM"), and `null` when a listing has no hours
+  recorded. The card change is the next small frontend PR.
+- **Reminder: `hours_note` is English only (owner's decision, 2026-10-10).** "Closes", "Opens", "tomorrow", the day names and
+  "midnight" are written in the backend code (`services/hours.py`). If SwiftHealth ever adds another language, this text needs
+  translating, and at that point reconsider sending the time as data and formatting it on the frontend. Revisit before any
+  second language is planned.
 - **Small backend PR after phase 5B-1: all the spec categories in every database (found in the phone test, 2026-10-10).**
   The Filters sheet in production lists only Clinic, Pharmacy and Laboratory, because production has only the categories
   that the demo listings needed (`seed/demo_listings.py` adds just those). Categories are reference data, so every database
