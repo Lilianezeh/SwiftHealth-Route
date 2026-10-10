@@ -159,7 +159,9 @@ US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-
   checked in production (PR #17).
   `GET /search` returns `hours_note` ("Closes 9:00 PM", "Opens Monday 7:30 AM"), worked out in Africa/Lagos time. Feature
   folder: [requirements](2026-10-10-next-open-close-time/requirements.md), [plan](2026-10-10-next-open-close-time/plan.md),
-  [validation](2026-10-10-next-open-close-time/validation.md). Next: a small frontend PR that shows it on the card.
+  [validation](2026-10-10-next-open-close-time/validation.md). Next: a small frontend PR that shows it on the card
+  (`feature/hours-note-on-card`, in progress): [requirements](2026-10-10-hours-note-on-card/requirements.md),
+  [plan](2026-10-10-hours-note-on-card/plan.md), [validation](2026-10-10-hours-note-on-card/validation.md).
 
 #### Phase 5B-2: Map view. Next
 FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Needs 5B-1 merged.

@@ -89,7 +89,7 @@ for small text on both (the old `pine` did not on `paper`).
 ### Reusable components (`src/components/`)
 | Component | Purpose |
 | --- | --- |
-| `ListingCard` | Top line "Category · 1.4 km" (no distance when none), name (a link to `/listing/[slug]`), `VerifiedDate` and `OpenNowBadge`, the address with the area under it, then Call + Directions side by side; "Sponsored" tag when `sponsored`. No Call button when the listing has no phone number |
+| `ListingCard` | Top line "Category · 1.4 km" (no distance when none), name (a link to `/listing/[slug]`), `VerifiedDate` and `OpenNowBadge`, the address with the area under it, then **the hours line** (a `Clock` icon and the `hours_note` text of the API, for example "Closes 9:00 PM" or "Opens 7:30 AM tomorrow", in `ink-soft`, 16 px; nothing at all when `hours_note` is `null`, which it is for a 24-hour listing and for one with no hours recorded), then Call + Directions side by side; "Sponsored" tag when `sponsored`. No Call button when the listing has no phone number |
 | `CallButton` | `tel:+234…` link labelled "Call", primary button |
 | `DirectionsButton` | Secondary button labelled "Directions"; opens `https://www.google.com/maps/dir/?api=1&destination=lat,lng` (from the listing's latitude and longitude) in a new tab |
 | `OpenNowBadge` | "Open now" (green) / "Closed" (grey) / "Open 24 hours" (green, wins over Closed) |

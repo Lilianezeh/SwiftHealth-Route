@@ -34,7 +34,15 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   **Backend done 2026-10-10 (PR #17, checked in production):** branch `feature/next-open-close-time`, folder `specs/2026-10-10-next-open-close-time/`. The
   field is `hours_note`, a ready-made text from the server (owner's decision). Owner's wording changes: full day names ("Opens
   Monday 7:30 AM"), "Closes at midnight" and "Opens at midnight" (never "12:00 AM"), and `null` when a listing has no hours
-  recorded. The card change is the next small frontend PR.
+  recorded. The card change is the next small frontend PR: **in progress (2026-10-10)**, branch `feature/hours-note-on-card`,
+  folder `specs/2026-10-10-hours-note-on-card/` (owner's decisions: a grey `Clock` line under the address, nothing shown when
+  `hours_note` is `null`).
+- **Idea (owner, 2026-10-10): refresh the results when the tab is reopened after a long time.** The results, the "Open now"
+  badge and `hours_note` are fixed at the moment they load, so a page left open overnight can still say "Opens 8:00 AM
+  tomorrow" when it is already that morning. Idea: when the tab becomes visible again (the `visibilitychange` event) after,
+  say, 30 minutes, load the results again (keep the filters and the page the visitor is on, or at least the first page). Decide
+  the time limit, whether to keep "Load more" pages, and whether a small "Updated" notice is needed. A small frontend PR with
+  its own spec, tests first; not part of the card change.
 - **Reminder: `hours_note` is English only (owner's decision, 2026-10-10).** "Closes", "Opens", "tomorrow", the day names and
   "midnight" are written in the backend code (`services/hours.py`). If SwiftHealth ever adds another language, this text needs
   translating, and at that point reconsider sending the time as data and formatting it on the frontend. Revisit before any
