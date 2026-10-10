@@ -64,7 +64,9 @@ setting** (CLAUDE.md: exactly 9 tables). It is a data migration on the existing 
    lists Clinic, Pharmacy, Laboratory first and then the new ones in the order the migration inserts them (hospital,
    maternity, then the seven emergency categories). New ones are inserted in the seed's order, so a new database matches
    the seed. The order in production is odd but harmless: the frontend does not depend on it. The frontend PR that hides
-   the emergency categories may also sort the Filters list; that is its decision, not this one.
+   the emergency categories may also sort the Filters list; that is its decision, not this one. (Found in the smoke test:
+   `ON CONFLICT DO NOTHING` still uses up a sequence number, so the new ids have gaps, for example 13, 16, 18. The order is
+   unchanged and nothing relies on consecutive ids.)
 8. **The tests run the revision's `upgrade()` on the test database.** `tests/conftest.py` builds the tables with
    `create_all`, so there is no Alembic history in the test database. The tests load the revision file and run its
    `upgrade()` through Alembic's `Operations` on a connection, which executes the same SQL as `alembic upgrade head`.

@@ -22,21 +22,22 @@ No change to `backend/app/`, `backend/seed/`, any model, the frontend, `render.y
 
 ## Tasks
 
-### Task 0: Spec
-- [ ] Write this folder, the api-spec sentence, the roadmap item and the `LOG.md` notes. Commit:
+### Task 0: Spec (done, `f3cafb3`)
+- [x] Write this folder, the api-spec sentence, the roadmap item and the `LOG.md` notes. Commit:
   `docs(specs): all spec categories in every database, spec (FR-05, FR-15, FR-33)`.
 
-### Task 1: The migration (tests first)
-- [ ] Write the tests (names in [validation.md](validation.md)). They fail: the revision does not exist.
-- [ ] Create the revision with `docker compose exec backend alembic revision -m "all spec categories"` and write `upgrade()` by
-  hand (Alembic cannot detect data): one `INSERT ... ON CONFLICT (slug) DO NOTHING` per category, with the values of
-  decisions 3 and 4, and an empty `downgrade()` with a comment saying why.
-- [ ] Run `pytest -q` and `ruff check .` in the backend container, then commit:
+### Task 1: The migration (tests first) (done, `e25e5cc`)
+- [x] Write the tests (names in [validation.md](validation.md)). They fail: the revision does not exist.
+- [x] Create the revision with `docker compose exec backend alembic revision -m "all spec categories"` (revision
+  `f6184e303abb`) and write `upgrade()` by hand (Alembic cannot detect data): one `INSERT ... ON CONFLICT (slug) DO NOTHING`
+  per category, with the values of decisions 3 and 4, and an empty `downgrade()` with a comment saying why. (The container
+  created the file as root; `chown` to the host user was needed before it could be edited.)
+- [x] Run `pytest -q` and `ruff check .` in the backend container (642 passed with `-W error`; ruff clean), then commit:
   `feat(db): add all spec categories to every database, idempotent data migration (FR-05, FR-15, FR-33)`.
 
 ### Task 2: Wrap-up
-- [ ] Smoke test on scratch databases and the dev database (see [validation.md](validation.md)): `alembic upgrade head` from
-  empty, on a database with only Clinic, Pharmacy and Laboratory, and a second time.
+- [x] Smoke test on scratch databases and the dev database (see [validation.md](validation.md)): `alembic upgrade head` from
+  empty, on a database with only Clinic, Pharmacy and Laboratory, and a second time. All passed on 2026-10-10.
 - [ ] Push the branch and open the draft pull request. Check that `Backend CI` ran and that `Frontend CI` did not (nothing
   under `frontend/` changes); write what `gh pr checks` shows in [validation.md](validation.md).
 - [ ] After the merge and the Render deploy, the owner does the production check in [validation.md](validation.md) (12
