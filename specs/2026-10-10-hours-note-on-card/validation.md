@@ -56,7 +56,9 @@ They failed first (8 tests, and `HoursNote` could not be imported) and pass; 16 
 
 - [x] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean (2026-10-10, on `5ef2e6b`: 407 tests pass; the
   build gives `/find` 114 kB and `/search` 116 kB first load, 115 kB before).
-- [ ] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. Write what `gh pr checks` showed
-  here: _not checked yet_.
+- [x] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. What `gh pr checks 18` showed
+  (2026-10-10, after `cddd9fc`): `frontend` **pass** (1m22s, run 38082362177); the only workflow run on the branch is Frontend
+  CI (no Backend CI run); Netlify `deploy-preview` pass (<https://deploy-preview-18--swifthealth-ng.netlify.app>). The PR is
+  clean and mergeable.
 - [x] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date (Task 0; the status lines are set to done after the merge).
 - [ ] The pull request stays a draft until every box above is ticked.

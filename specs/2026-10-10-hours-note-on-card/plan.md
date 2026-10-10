@@ -37,7 +37,7 @@ No backend change, no new package.
   `feat(web): the card shows the next opening or closing time (FR-06, US-01, NFR-10)`.
 
 ### Task 2: Wrap-up
-- [ ] Run `npm run build` (page weight), push the branch and open the draft pull request. Check that `Frontend CI` ran and
+- [x] Run `npm run build` (page weight), push the branch and open the draft pull request (#18). Check that `Frontend CI` ran and
   `Backend CI` did not; write what `gh pr checks` shows in [validation.md](validation.md).
 - [ ] The owner checks the live site after the merge (see [validation.md](validation.md)). Then update the roadmap and `LOG.md`,
   and tick the boxes with their commit hashes.
