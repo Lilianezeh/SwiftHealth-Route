@@ -111,6 +111,8 @@ All timing tests use `vi.useFakeTimers()`: no test waits for real time.
 - [x] `the page sends lat and lng from the session store to the API and not into the address`
 - [x] `a verification-due listing in the results shows the amber label` (FR-08)
 - [x] `the main search box is pre-filled from q` (and keeps the other filters as hidden fields)
+- [x] `FiltersDialog closes when the backdrop is tapped` (added after the phone test, `55e2cae`): focus returns, taps inside
+  the sheet and a press that starts inside do not close it, a stray click does not close a reopened sheet, Esc still works
 
 ## Review-focus edge cases
 
@@ -128,8 +130,10 @@ All timing tests use `vi.useFakeTimers()`: no test waits for real time.
   for it); no `any` (`git grep` finds none); client components only where needed (`"use client"`: the ten files that use
   state, effects or click handlers; `/find` and `/search` pages, `SearchBox`, `CategoryShortcuts` and `ResultsList` are server-safe).
 - [x] **Overdue listings** show "Verification due" and still show their Call button (`ListingCard.test.tsx`).
-- [ ] **Slow 3G.** The Find page is usable before the API answers; skeletons show; nothing jumps when results arrive.
-- [ ] **320 px wide.** No sideways scrolling on `/find` or `/search`, the dialog fits, buttons are at least 48 px.
+- [x] **Slow 3G.** The Find page is usable before the API answers; skeletons show; nothing jumps when results arrive.
+  (Owner, DevTools, 2026-10-10: "slow 3g ok".)
+- [x] **320 px wide.** No sideways scrolling on `/find` or `/search`, the dialog fits, buttons are at least 48 px.
+  (Owner, DevTools, 2026-10-10: "320px ok".)
 - [ ] **Keyboard and screen reader.** Tab order is sensible, the focus ring is visible, the dialog traps focus, status
   messages are read out, buttons have names.
 - [x] **Page weight.** First Load JS from `npm run build` (2026-10-10, Next.js 15.5, after Task 6): `/find` **114 kB**,
@@ -152,27 +156,46 @@ All timing tests use `vi.useFakeTimers()`: no test waits for real time.
 
 ## Smoke test in DevTools
 
-- [ ] `docker compose up`, open <http://localhost:3000/find>, Chrome DevTools, device **320 px**, network **Slow 3G**, CPU
-  4x slowdown. The page is usable, the search box and shortcuts work, the shortcuts open `/search?category=...`.
+Reported by the owner on 2026-10-10: "320px ok, slow 3g ok, esc ok, backdrop tap does not close the dialog" (the backdrop bug
+is fixed in `55e2cae`, with tests). Only what the owner reported is ticked; the rest was not reported.
+- [x] `docker compose up`, open <http://localhost:3000/find>, Chrome DevTools, device **320 px**, network **Slow 3G**. The
+  page is usable and skeletons show (owner: "320px ok, slow 3g ok"). The 4x CPU slowdown was not mentioned.
 - [ ] Tap **Open now near me**: allow location (DevTools can fake a position near 6.45, 7.50). Results are nearest first.
-- [ ] Refuse location: the area list appears and works. Reload: the tab does not ask again.
+  (Not reported for DevTools; allow and block were confirmed on the phone, below.)
+- [ ] Refuse location: the area list appears and works. Reload: the tab does not ask again. (Blocking was confirmed on the
+  phone; the area list and the reload were not reported.)
 - [ ] `docker compose pause backend`, search, wait 6 seconds: the waking-up message. `docker compose unpause backend`:
-  results appear. Pause for over 45 s: the error and Retry.
-- [ ] Filters: category, open now, 24 hours, distance 5 km, service `X-ray`; the address updates; Load more works.
+  results appear. Pause for over 45 s: the error and Retry. (Owner: on the sleeping production API "waking up message
+  showed and results arrived". The over-45-second error was not tried.)
+- [ ] Filters: category, open now, 24 hours, distance 5 km, service `X-ray`; the address updates; Load more works. (Filters
+  worked on the phone; the list was not reported item by item. **Esc closes the sheet: confirmed.** The backdrop tap did
+  not close it: fixed in `55e2cae`, to be looked at again on the preview.)
 - [ ] `/find` "near you": two cards load on their own; with a position far from any pharmacy a card says nothing was found.
+  (Not reported.)
 
 ## Smoke test on a phone (Netlify deploy preview)
 
 The preview has its own address, `https://deploy-preview-<number>--swifthealth-ng.netlify.app`, which the API's CORS
 list does not contain. Do these steps in order and report what you see.
-- [ ] In Render, open `swifthealth-api`, **Environment**, find `CORS_ORIGINS` and add the preview address to the end,
-  separated by a comma, with no space and no trailing slash. Click **Save and deploy**, wait for **Live**.
-- [ ] On your Android phone open the preview address. It shows `/find`. (If the page says the service is not reachable
-  at once, the preview may not have `NEXT_PUBLIC_API_URL`: tell the developer.)
+Phone: Honor X6B, mobile data, reported by the owner on 2026-10-10.
+- [x] In Render, open `swifthealth-api`, **Environment**, find `CORS_ORIGINS` and add the preview address to the end,
+  separated by a comma, with no space and no trailing slash. Click **Save and deploy**, wait for **Live**. (Done by the
+  owner; the preview then loaded data. **Still to do after the merge: remove the preview address again.**)
+- [x] On your Android phone open the preview address. It shows `/find`. (It worked.)
 - [ ] Type a misspelled name and search; use **Open now near me** and allow location; try refusing in a second tab.
-- [ ] Note how long the first search takes if the API was asleep, and whether the waking-up message appeared.
-- [ ] Report anything that was too small to tap, too small to read, or confusing. This box is the "real phone on 3G" check
-  of the PRD release criteria for this feature only; the full check stays in roadmap phase 14d.
+  (Owner: location allow and block worked. The misspelled-name search was not reported.)
+- [x] Note how long the first search takes if the API was asleep, and whether the waking-up message appeared. (Owner:
+  "waking up message showed and results arrived". The time was not written down.)
+- [x] Report anything that was too small to tap, too small to read, or confusing. (Owner: Call, Directions and Filters
+  worked; two issues found: the backdrop tap, fixed in `55e2cae`, and the short category list, see below.) This box is the
+  "real phone on 3G" check of the PRD release criteria for this feature only; the full check stays in roadmap phase 14d.
+
+**Found in the phone test, 2026-10-10:**
+- **Backdrop tap did not close the Filters sheet.** Fixed in this pull request (`55e2cae`), with tests; Esc and focus return still work.
+- **The category list in production shows only Clinic, Pharmacy and Laboratory.** Production has only the categories the demo
+  listings needed. Not a frontend bug: categories are reference data. It is a small backend PR after this one (an
+  idempotent Alembic data migration; see "To do later" in `LOG.md`), and it does not block this merge. Until then the
+  Filters sheet in production offers three categories.
 
 ## Design differences (Figma Make reference against the UI spec; decision 13)
 
@@ -233,6 +256,7 @@ others when that task comes. Colours are never copied as hex into components: th
   (<https://deploy-preview-14--swifthealth-ng.netlify.app>); "Header rules" and "Redirect rules" skipping, "Pages changed" skipping.
   Note: the first push did not start any GitHub workflow because the pull request had a merge conflict with `main`
   (`specs/roadmap.md`, from PR #13); merging `main` into the branch fixed it.
-- [ ] The UI spec, `tech-stack.md`, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
+- [x] The UI spec, `tech-stack.md`, the [roadmap](../roadmap.md) and `LOG.md` are up to date (checked 2026-10-10 after the
+  backdrop fix: the UI spec lists the ways to close the sheet; `LOG.md` has the categories item).
 - [ ] The preview address is removed from `CORS_ORIGINS` in Render after the merge.
 - [ ] The pull request stays a draft until every box above is ticked.
