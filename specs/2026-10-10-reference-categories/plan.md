@@ -38,7 +38,7 @@ No change to `backend/app/`, `backend/seed/`, any model, the frontend, `render.y
 ### Task 2: Wrap-up
 - [x] Smoke test on scratch databases and the dev database (see [validation.md](validation.md)): `alembic upgrade head` from
   empty, on a database with only Clinic, Pharmacy and Laboratory, and a second time. All passed on 2026-10-10.
-- [ ] Push the branch and open the draft pull request. Check that `Backend CI` ran and that `Frontend CI` did not (nothing
+- [x] Push the branch and open the draft pull request (#15). Check that `Backend CI` ran and that `Frontend CI` did not (nothing
   under `frontend/` changes); write what `gh pr checks` shows in [validation.md](validation.md).
 - [ ] After the merge and the Render deploy, the owner does the production check in [validation.md](validation.md) (12
   categories in `GET /meta`). Then update the roadmap and `LOG.md`, and tick the boxes with their commit hashes.

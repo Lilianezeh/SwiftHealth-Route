@@ -87,8 +87,10 @@ Render deploys on merge and runs `alembic upgrade head` when the service starts 
 
 - [x] `pytest -q` and `ruff check .` are clean in the backend container (642 passed with `-W error`, ruff "All checks passed",
   2026-10-10, on `e25e5cc`).
-- [ ] On the draft pull request `Backend CI` runs and is green, and `Frontend CI` does not run (nothing under `frontend/` changed).
-  Write what `gh pr checks` showed here: _not checked yet_.
+- [x] On the draft pull request `Backend CI` runs and is green, and `Frontend CI` does not run (nothing under `frontend/` changed).
+  What `gh pr checks` showed on PR #15 (2026-10-10): `backend` **pass** (1m8s, run 38069826990); the only GitHub workflow run on
+  the branch is Backend CI (no Frontend CI run exists); Netlify `deploy-preview` pass, "Header rules", "Redirect rules" and
+  "Pages changed" skipping. The PR is clean and mergeable.
 - [x] The api-spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date (Task 0, `f3cafb3`; the final status lines are
   updated after the merge).
 - [ ] The pull request stays a draft until every box above is ticked.
