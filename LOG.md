@@ -39,9 +39,15 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `INSERT ... ON CONFLICT (slug) DO NOTHING`, with the same `is_emergency` and `recheck_days` values as the seed (14 days for
   emergency, 45 for the rest, FR-33), and never updates or deletes a row or touches `listings`. Safe to run twice. A seed
   script is not enough, because the production seed is flag-driven and does not run on deploy. Tests first (empty table, a
-  table with three categories, a second run changes nothing, a renamed row stays as it is). Decide in that PR whether
-  `GET /meta` should list the emergency categories: the public Filters sheet should probably show only the everyday ones
-  (the frontend can hide `is_emergency`, or the API can), because SwiftRescue is its own section.
+  table with three categories, a second run changes nothing, a renamed row stays as it is). **In progress (2026-10-10):**
+  branch `feature/reference-categories`, folder `specs/2026-10-10-reference-categories/`. The recheck days come from FR-33
+  in the PRD (14 and 45); nothing new.
+- **Small frontend PR after the categories PR: hide the emergency categories in the Filters sheet (owner's decision,
+  2026-10-10).** `GET /meta` keeps returning all 12 categories with `is_emergency` (the phase 10 editor needs them); the
+  public Filters sheet (`FiltersDialog`) shows only the 5 everyday ones, because SwiftRescue (`/emergency`) groups the
+  emergency categories and Blood has its own page. A shared link such as `/search?category=ambulance` must keep working
+  (`/search` still accepts any slug) and keep showing a readable label for it. Decide there whether to sort the list in the
+  shortcut order (production's ids put Clinic, Pharmacy, Laboratory first). UI spec 2.3 changes first, then a test, then the code.
 - **Decided on 2026-10-09 (Figma work, phase 5B-1):** (1) the focus ring is `forest` on light backgrounds and `paper` on a
   `forest` background (class `on-dark`), both well over 3:1; (2) `lucide-react`, exact version, one icon per import,
   decorative and always beside a label; (3) the card has no hours line until the backend PR above; (4) small text and links
