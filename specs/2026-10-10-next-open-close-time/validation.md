@@ -92,8 +92,9 @@ The clock is fixed at Tuesday 10:00 in Lagos. They failed first (8 tests) and pa
 
 - [x] `pytest -q -W error` and `ruff check .` are clean in the backend container (685 passed, 642 before this feature; ruff "All
   checks passed", 2026-10-10, on `e76e18e`).
-- [ ] On the draft pull request `Backend CI` runs and is green, and `Frontend CI` does not run. Write what `gh pr checks` showed
-  here: _not checked yet_.
+- [x] On the draft pull request `Backend CI` runs and is green, and `Frontend CI` does not run. What `gh pr checks 17` showed
+  (2026-10-10, after `8c0b92d`): `backend` **pass** (1m27s, run 38079792119); the only workflow run on the branch is Backend CI
+  (no Frontend CI run); Netlify `deploy-preview` pass. The PR is clean and mergeable.
 - [x] The api-spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date (including the English-only reminder); the status
   lines are set to done after the merge.
 - [ ] The pull request stays a draft until every box above is ticked.

@@ -44,7 +44,7 @@ No migration, no model change, no frontend change.
   `feat(search): GET /search returns hours_note (FR-06, US-01)`.
 
 ### Task 3: Wrap-up
-- [ ] Push the branch and open the draft pull request. Check that `Backend CI` ran and `Frontend CI` did not; write what
+- [x] Push the branch and open the draft pull request (#17). Check that `Backend CI` ran and `Frontend CI` did not; write what
   `gh pr checks` shows in [validation.md](validation.md).
 - [ ] After the merge and the deploy, the owner checks production (see [validation.md](validation.md)). Then update the roadmap
   and `LOG.md`, and tick the boxes with their commit hashes. The card change is the next frontend PR.
