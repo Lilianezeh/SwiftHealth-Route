@@ -54,8 +54,8 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   frontend CI), reached end of life on 2026-04-30 (official [release schedule](https://github.com/nodejs/Release/blob/main/schedule.json),
   checked 2026-10-09). A chore moves the frontend to Node 24 (Active LTS until 2026-10-20, Maintenance LTS until
   2028-04-30). Node 22 ends 2027-04-30. Node 26 becomes LTS on 2026-10-28: move to it in 2027, well before 2028-04-30.
-  After the chore, check in Netlify (Project configuration, Environment variables and Dependency management) that no
-  old `NODE_VERSION` value overrides `netlify.toml`.
+  Done after the Node 24 chore (PR #12, 2026-10-09): Netlify's deploy log shows Node 24.x and no `NODE_VERSION`
+  override is set in the dashboard.
 - **After the Render upgrade (phase 14d), results without JavaScript:** phase 5B-1 loads search results in the browser
   (45 s limit, because the free API takes up to a minute to wake and Netlify gives up on a server page after about
   30 s). That needs JavaScript, and Opera Mini's extreme mode, common in Nigeria, runs very little of it. NFR-04 names
