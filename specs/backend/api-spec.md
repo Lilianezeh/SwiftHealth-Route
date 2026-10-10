@@ -131,7 +131,9 @@ Lists for filters and forms.
 }
 ```
 `areas` keep the order of the fixed list in `core/config.py`. `categories` are all rows of the categories table, sorted by
-`id`. `services` are the distinct service names of **published** listings, sorted alphabetically without regard to case, one
+`id`. Every database has all 12 categories of the seed (the five everyday ones and the seven emergency ones, FR-01 and FR-15): an
+idempotent data migration adds any that are missing, so production does not depend on which demo listings it has
+([feature](../2026-10-10-reference-categories/requirements.md)). `services` are the distinct service names of **published** listings, sorted alphabetically without regard to case, one
 entry per service, and without the blood groups (blood groups are stored as service rows, see `blood_groups`). **Same service
 rule:** two names are the same service when they are equal after trimming spaces at both ends, joining runs of spaces into
 one, removing hyphens and lower-casing (`X-ray`, `x-ray`, ` X-ray ` and `Xray` are one service; `X ray` is another). The label
