@@ -58,7 +58,9 @@ could not load its module). Test names are those in `FiltersDialog.test.tsx` ("F
 - [x] `npm run lint`, `npm run typecheck` and `npm test` are clean (2026-10-10, on `846c879`: 391 tests pass; `tsc --noEmit` and
   ESLint report nothing). Docker Desktop was not running, so they were run on the host after `npm ci --ignore-scripts`; the
   Frontend CI run on the pull request repeats them on Node 24 in GitHub.
-- [ ] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. Write what `gh pr checks` showed
-  here: _not checked yet_.
+- [x] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. What `gh pr checks 16` showed
+  (2026-10-10, after `18eadbb`): `frontend` **pass** (1m23s, run 38072766930); the only workflow run on the branch is Frontend
+  CI (no Backend CI run); Netlify `deploy-preview` pass (<https://deploy-preview-16--swifthealth-ng.netlify.app>). The PR is
+  clean and mergeable.
 - [ ] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
 - [ ] The pull request stays a draft until every box above is ticked.
