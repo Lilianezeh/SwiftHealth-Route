@@ -31,7 +31,7 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `search_service` with `services/hours.py` in Africa/Lagos time (the code that already decides open now), then the card
   shows it. The api-spec (`ListingSummary` gets a new field) and the UI spec change first; tests first, including past
   midnight, 24-hour places, closed days and the week wrapping. Then the frontend shows it in one line under the labels.
-  **In progress (2026-10-10):** branch `feature/next-open-close-time`, folder `specs/2026-10-10-next-open-close-time/`. The
+  **Backend done 2026-10-10 (PR #17, checked in production):** branch `feature/next-open-close-time`, folder `specs/2026-10-10-next-open-close-time/`. The
   field is `hours_note`, a ready-made text from the server (owner's decision). Owner's wording changes: full day names ("Opens
   Monday 7:30 AM"), "Closes at midnight" and "Opens at midnight" (never "12:00 AM"), and `null` when a listing has no hours
   recorded. The card change is the next small frontend PR.
