@@ -151,8 +151,8 @@ US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-
   that adds the 12 categories production was missing. Feature folder: [requirements](2026-10-10-reference-categories/requirements.md),
   [plan](2026-10-10-reference-categories/plan.md), [validation](2026-10-10-reference-categories/validation.md). **Done:** merged and deployed (PR #15); production `GET /meta`
   returns 12 categories.
-- **Hide the emergency categories in the Filters sheet** (frontend, `feature/hide-emergency-filters`): in progress. The public
-  sheet shows only the five everyday categories, in the Find order; `GET /meta` stays as it is. Feature folder:
+- **Hide the emergency categories in the Filters sheet** (frontend, `feature/hide-emergency-filters`): **done**, merged and
+  checked on the live site (PR #16). The public sheet shows only the five everyday categories, in the Find order; `GET /meta` stays as it is. Feature folder:
   [requirements](2026-10-10-hide-emergency-filters/requirements.md), [plan](2026-10-10-hide-emergency-filters/plan.md),
   [validation](2026-10-10-hide-emergency-filters/validation.md).
 

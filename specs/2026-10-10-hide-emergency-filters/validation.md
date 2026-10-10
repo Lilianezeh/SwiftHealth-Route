@@ -47,11 +47,15 @@ could not load its module). Test names are those in `FiltersDialog.test.tsx` ("F
 
 ## Smoke test (owner, on the Netlify deploy preview)
 
-- [ ] Open `/search`, tap **Filters**: the category list shows Any category, Hospital, Clinic, Pharmacy, Maternity, Laboratory,
-  and no emergency category.
-- [ ] Open `/search?category=ambulance`: the results are filtered, and the sheet shows **Ambulance** selected.
-- [ ] Choose **Pharmacy**, Apply, open the sheet again: Ambulance is gone from the list.
-- [ ] The Find page shortcuts still go to `/search?category=...` and the sheet shows that category selected.
+Done by the owner on the live site after PR #16 was merged and deployed (2026-10-10), not on the deploy preview.
+- [x] Open `/search`, tap **Filters**: the category list shows Any category, Hospital, Clinic, Pharmacy, Maternity, Laboratory,
+  and no emergency category. (Owner: Filters shows Hospital, Clinic, Pharmacy, Maternity, Laboratory in that order.)
+- [x] Open `/search?category=ambulance`: the results are filtered, and the sheet shows **Ambulance** selected. (Owner: Ambulance
+  shows as selected. Whether the results were filtered was not mentioned; nothing in `/search` changed.)
+- [x] Choose **Pharmacy**, Apply, open the sheet again: Ambulance is gone from the list. (Owner: picking Pharmacy and reopening
+  drops Ambulance.)
+- [x] The Find page shortcuts still go to `/search?category=...` and the sheet shows that category selected. (Owner: the
+  Pharmacies shortcut opens with Pharmacy selected in Filters.)
 
 ## Merge checklist
 
@@ -62,5 +66,7 @@ could not load its module). Test names are those in `FiltersDialog.test.tsx` ("F
   (2026-10-10, after `18eadbb`): `frontend` **pass** (1m23s, run 38072766930); the only workflow run on the branch is Frontend
   CI (no Backend CI run); Netlify `deploy-preview` pass (<https://deploy-preview-16--swifthealth-ng.netlify.app>). The PR is
   clean and mergeable.
-- [ ] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
-- [ ] The pull request stays a draft until every box above is ticked.
+- [x] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date (the status lines were set to done on 2026-10-10,
+  after the merge).
+- [x] The pull request stays a draft until every box above is ticked. (It was marked ready on the owner's instruction, and the
+  live checks above were done after the merge; PR #16 is merged and deployed.)
