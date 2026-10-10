@@ -21,6 +21,15 @@ describe("SiteHeader", () => {
     expect(header.className).toMatch(/\bon-dark\b/);
   });
 
+  it("has a bright blue accent line under it (decoration: a border, never a background behind text)", () => {
+    render(<SiteHeader />);
+
+    const header = screen.getByRole("banner");
+    expect(header.className).toMatch(/\bborder-b-4\b/);
+    expect(header.className).toMatch(/\bborder-accent\b/);
+    expect(header.className).not.toMatch(/\bbg-accent\b/);
+  });
+
   it("keeps its tap targets at 48 px or more", () => {
     render(<SiteHeader />);
 

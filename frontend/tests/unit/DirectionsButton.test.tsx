@@ -36,7 +36,7 @@ describe("DirectionsButton", () => {
     expect(className).toMatch(/\btext-base\b/);
     expect(className).toMatch(/\bborder-pine\b/);
     expect(className).toMatch(/\btext-forest\b/);
-    expect(className).not.toMatch(/\bbg-pine\b/);
+    expect(className).not.toMatch(/(^|\s)bg-pine(\s|$)/); // the filled background is for the primary button only
   });
 
   it("does not put the facility name into the address", () => {

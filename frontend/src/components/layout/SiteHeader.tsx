@@ -7,7 +7,7 @@ import { siteConfig } from "@/config/site";
  */
 export function SiteHeader() {
   return (
-    <header className="on-dark flex items-center justify-between bg-forest px-4 py-2 text-paper">
+    <header className="on-dark flex items-center justify-between border-b-4 border-accent bg-forest px-4 py-2 text-paper">
       <Link href="/find" className="inline-flex min-h-12 items-center text-lg font-semibold">
         {siteConfig.name}
       </Link>

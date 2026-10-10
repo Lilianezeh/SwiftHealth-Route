@@ -11,18 +11,20 @@ import { describe, expect, it } from "vitest";
 const SRC = fileURLToPath(new URL("../../src", import.meta.url));
 const GLOBALS_CSS = readFileSync(join(SRC, "styles/globals.css"), "utf8");
 
-// The table of the UI spec. The first six are the original tokens and win over any Figma colour.
+// The table of the UI spec. Blue palette: owner's colour change of 2026-10-10 (green became blue).
 const SPEC_TOKENS: Record<string, string> = {
-  forest: "#12302a",
-  pine: "#2f7d6b",
+  forest: "#1b6f93",
+  pine: "#1b6f93",
+  "pine-dark": "#134f6a",
+  accent: "#1a9fd2",
   amber: "#e8913a",
   paper: "#f6f3ec",
   ink: "#1d2421",
   emergency: "#b3261e",
   "ink-soft": "#4b5c59",
   line: "#d7e1df",
-  "pine-100": "#dff3ef",
-  "pine-50": "#f0faf8",
+  "pine-100": "#dcecf4",
+  "pine-50": "#eef6fa",
   open: "#147a48",
   "open-bg": "#e7f6ed",
   closed: "#465451",
@@ -58,13 +60,20 @@ describe("the tokens of the UI spec", () => {
     expect(readTokens()).toMatchObject(SPEC_TOKENS);
   });
 
-  it("keep the six original tokens unchanged (the spec wins over Figma)", () => {
+  it("make forest and pine the main blue, and keep the colours the owner did not change", () => {
     const tokens = readTokens();
-    expect(tokens.forest).toBe("#12302a");
-    expect(tokens.pine).toBe("#2f7d6b");
+    expect(tokens.forest).toBe("#1b6f93");
+    expect(tokens.pine).toBe("#1b6f93");
+    expect(tokens["pine-dark"]).toBe("#134f6a");
+    expect(tokens.accent).toBe("#1a9fd2");
     expect(tokens.paper).toBe("#f6f3ec");
     expect(tokens.ink).toBe("#1d2421");
     expect(tokens.emergency).toBe("#b3261e");
+    expect(tokens.amber).toBe("#e8913a");
+    expect([tokens.open, tokens["open-bg"], tokens.closed, tokens["closed-bg"]]).toEqual([
+      "#147a48", "#e7f6ed", "#465451", "#edf1f0",
+    ]);
+    expect([tokens["amber-ink"], tokens["amber-wash"]]).toEqual(["#8b5c00", "#fff4d6"]);
   });
 
   it("have a card shadow token made from forest, not from a hand-written colour", () => {
@@ -80,7 +89,12 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
 
   it.each([
     ["white", "pine", "primary button"],
+    ["white", "pine-dark", "primary button on hover and press"],
+    ["forest", "pine-100", "Verified label"],
+    ["pine-dark", "pine-50", "secondary button text on hover"],
+    ["pine-dark", "pine-100", "secondary button text on press"],
     ["white", "forest", "text on the dark header"],
+    ["paper", "forest", "paper text on the header"],
     ["forest", "white", "secondary button, headings on a card"],
     ["forest", "paper", "headings and links on the page"],
     ["ink", "paper", "body text"],
@@ -99,8 +113,13 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     expect(contrast(colour(foreground), colour(background))).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("does not use plain pine for small text on paper (4.4:1, under the minimum)", () => {
-    expect(contrast(tokens.pine, tokens.paper)).toBeLessThan(4.5); // why links use forest, see Design differences
+  it("the main blue is readable as small text on paper (the old green pine was 4.4:1)", () => {
+    expect(contrast(tokens.pine, tokens.paper)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("the bright blue accent is not readable as text (3:1), so it is decoration only", () => {
+    expect(contrast(tokens.accent, WHITE)).toBeLessThan(4.5);
+    expect(contrast(WHITE, tokens.accent)).toBeLessThan(4.5);
   });
 
   it("the amber of the Sponsored tag stays a background with dark text on it", () => {
@@ -172,6 +191,21 @@ describe("components use tokens, not hand-written colours", () => {
     expect(layout).toContain(`themeColor: "${tokens.forest}"`);
     expect(manifest).toContain(`theme_color: "${tokens.forest}"`);
     expect(manifest).toContain(`background_color: "${tokens.paper}"`);
+  });
+
+  it("the bright blue accent is never a background or a text colour (it is decoration only, such as a border)", () => {
+    const offenders = sourceFiles(SRC)
+      .map((file) => relative(SRC, file))
+      .filter((file) => /\b(?:bg|text|from|to|via)-accent\b/.test(readFileSync(join(SRC, file), "utf8")));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("buttons darken to pine-dark on hover and press", () => {
+    const buttons = readFileSync(join(SRC, "components/ui/buttonStyles.ts"), "utf8");
+    expect(buttons).toMatch(/hover:bg-pine-dark/);
+    expect(buttons).toMatch(/active:bg-pine-dark/);
+    expect(buttons).toMatch(/hover:border-pine-dark/);
   });
 
   it("no text is smaller than 16 px (no text-xs or text-sm class anywhere)", () => {

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: `${siteConfig.name}: ${siteConfig.tagline}. Verified listings, one-tap calling, now in Enugu.`,
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#12302a" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1b6f93" };
 
 /** Root layout: wraps every page with the header and footer. */
 export default function RootLayout({ children }: { children: React.ReactNode }) {

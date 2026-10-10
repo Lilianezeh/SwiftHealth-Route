@@ -34,7 +34,12 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **Decided on 2026-10-09 (Figma work, phase 5B-1):** (1) the focus ring is `forest` on light backgrounds and `paper` on a
   `forest` background (class `on-dark`), both well over 3:1; (2) `lucide-react`, exact version, one icon per import,
   decorative and always beside a label; (3) the card has no hours line until the backend PR above; (4) small text and links
-  use `forest`, because `pine` on `paper` is 4.4:1.
+  use `forest`, because the old green `pine` on `paper` was 4.4:1.
+- **Decided on 2026-10-10 (colour change):** the green palette became blue. `forest` and `pine` are `#1B6F93`, `pine-dark`
+  `#134F6A` is for hover and press, `accent` `#1A9FD2` is decoration only (the line under the header; 3:1 on white, so
+  never behind text). Open, closed, amber and emergency colours, `paper`, `ink`, `ink-soft` and `line` did not change; the
+  two light tints became light blues. The token names `forest` and `pine` were kept so no component had to change. Main
+  blue is 5.6:1 on white and 5.1:1 on `paper`, so it now passes for small text on both.
 - **`npm audit` in the frontend shows 11 findings (2 critical, 7 high, 2 moderate), the same before and after phase 5B-1's
   test packages (checked 2026-10-09):** the critical ones are `vitest` and `tinypool` (dev-only test runner; the fix is
   vitest 5, a major upgrade); the high ones are the `eslint-config-next` chain (`braces`, `micromatch`, `fast-glob`; dev-only),

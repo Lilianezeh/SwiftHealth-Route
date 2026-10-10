@@ -13,37 +13,46 @@ Sketches go in `docs/screens/`.
 - Tagline: *Emergency, Hospital & Pharmacy Finder*.
 
 ### Layout (every page, from `src/app/layout.tsx`)
-- **Header:** SwiftHealth logo/name (links to `/find`) on the left; red **SwiftRescue** button on the right, always visible, links to `/emergency`.
+- **Header:** SwiftHealth logo/name (links to `/find`) on the left; red **SwiftRescue** button on the right, always visible, links to `/emergency`. `forest` background with a 4 px `accent` line under it.
 - **Footer:** About · How we verify · Privacy · Terms · Contact · List your facility.
 - Mobile-first; content max width 720 px on public pages, 1200 px in admin.
 
 ### Design tokens (in `src/styles/globals.css`)
 | Token | Value | Use |
 | --- | --- | --- |
-| forest | `#12302a` | Header, headings |
-| pine | `#2f7d6b` | Primary buttons, links |
+| forest | `#1B6F93` | Header, headings, links, the focus ring. Main blue (owner's colour change, 2026-10-10; was dark green `#12302a`) |
+| pine | `#1B6F93` | Primary buttons, button borders. Main blue, the same value as `forest` (was green `#2f7d6b`); the two names are kept so no component changes |
+| pine-dark | `#134F6A` | Hover and active state of buttons (white text on it: 8.9:1) |
+| accent | `#1A9FD2` | Decoration only (the line under the header). Never behind text and never a text colour: white on it is only 3.0:1 |
 | amber | `#e8913a` | Highlights, "Sponsored" tag background (dark `ink` text on it). Not the focus ring: amber is only 2.2 to 2.5:1 on light backgrounds |
 | paper | `#f6f3ec` | Page background |
 | ink | `#1d2421` | Body text |
 | emergency | `#b3261e` | SwiftRescue button, 112 card only |
 | ink-soft | `#4b5c59` | Secondary text (area line, "Verified 3 days ago"); 6.4:1 on paper |
 | line | `#d7e1df` | Card borders and dividers |
-| pine-100 | `#dff3ef` | Background of the "Verified" label |
-| pine-50 | `#f0faf8` | Light panels (the empty "near you" box, empty-state icon circle) |
+| pine-100 | `#DCECF4` | Background of the "Verified" label (light blue tint of the main blue) |
+| pine-50 | `#EEF6FA` | Light panels (the empty "near you" box, empty-state icon circle) (lighter blue tint) |
 | open | `#147a48` on open-bg `#e7f6ed` | "Open now" and "Open 24 hours" label (4.8:1) |
 | closed | `#465451` on closed-bg `#edf1f0` | "Closed" label (7.0:1) |
 | amber-ink | `#8b5c00` on amber-wash `#fff4d6` | "Verification due" label and the error icon (5.3:1); the plain `amber` is too light for small text |
 | shadow-card | `0 2px 12px` of forest at 7% | Card shadow |
 
-Components use these tokens (Tailwind classes such as `bg-pine`, `text-ink-soft`), never a hex value. The last eight rows (ten colours) were
+Components use these tokens (Tailwind classes such as `bg-pine`, `text-ink-soft`), never a hex value. Ten colours were
 added on 2026-10-09 from the owner's Figma Make reference (`docs/design/figma-find-page-design.md`); every pair of text and
 background colour is checked by `tests/unit/design-tokens.test.ts` to be at least 4.5:1 (NFR-10). Read the table with the
-rule that the six original tokens win over the Figma colours: Figma's teal-950 is `forest`, teal-700 is `pine`, its page
+rule that the spec tokens win over the Figma colours: Figma's teal-950 is `forest`, teal-700 is `pine`, its page
 background is `paper`, its red is `emergency`.
 
+**Colour change, 2026-10-10 (owner's decision):** the green palette became blue. `forest` and `pine` are `#1B6F93`,
+`pine-dark` `#134F6A` is for hover and active states, `accent` `#1A9FD2` is decoration only, and the two light tints
+(`pine-100`, `pine-50`) became light blues. The open (green), closed (grey), amber and emergency (red) colours, and
+`paper`, `ink`, `ink-soft` and `line`, did not change. The main blue is 5.6:1 on white and 5.1:1 on `paper`, so it passes
+for small text on both (the old `pine` did not on `paper`).
+
 ### Buttons and text
-- **Primary** (Call, Retry): `pine` background, white text. **Secondary** (Directions, See all, Clear filters): white
-  background, `pine` border, `forest` text. **Emergency** (SwiftRescue only): `emergency` background, white text. 16 px text,
+- **Primary** (Call, Retry): `pine` background, white text; `pine-dark` on hover and press. **Secondary** (Directions,
+  See all, Clear filters): white background, `pine` border, `forest` text; `pine-50` background and `pine-dark` border on
+  hover, `pine-100` on press. **Emergency** (SwiftRescue only): `emergency` background, white text. 16 px text,
   semi-bold, at least 50 px high (never under 48 px), radius 12 px.
 - Every piece of text is 16 px or larger, including badges, the area line and "Verified 3 days ago" (NFR-10). Card titles
   are 18 px. The system font stack is used; no web font is downloaded.
@@ -52,8 +61,8 @@ background is `paper`, its red is `emergency`.
 
 ### Accessibility and performance (NFR-01, NFR-04, NFR-10)
 - Tap targets at least 48 × 48 px; body text 16 px or larger; visible focus ring.
-- **Focus ring** (owner's decision, 2026-10-09): 3 px, 2 px offset. `forest` on light backgrounds (14:1 on white, 12:1 on
-  `paper`); `paper` on a `forest` background (12:1). A container with a `forest` background has the class `on-dark`, which
+- **Focus ring** (owner's decision, 2026-10-09): 3 px, 2 px offset. `forest` on light backgrounds (5.6:1 on white, 5.1:1 on
+  `paper`); `paper` on a `forest` background (5.1:1). A container with a `forest` background has the class `on-dark`, which
   switches the ring for everything inside it (the header and the Find page hero). Both are at least 3:1 (WCAG 2.2, 1.4.11).
   A test in `tests/unit/design-tokens.test.ts` checks it.
 - **Icons** (owner's decision, 2026-10-09): from `lucide-react`, imported one by one by name (never the whole set, never a

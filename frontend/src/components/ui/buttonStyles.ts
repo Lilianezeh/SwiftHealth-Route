@@ -7,8 +7,9 @@ const BASE =
   "inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl px-4 text-base font-semibold";
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: "bg-pine text-white",
-  secondary: "border border-pine bg-white text-forest",
+  primary: "bg-pine text-white hover:bg-pine-dark active:bg-pine-dark",
+  secondary:
+    "border border-pine bg-white text-forest hover:border-pine-dark hover:bg-pine-50 active:border-pine-dark active:bg-pine-100",
   emergency: "bg-emergency text-white", // SwiftRescue only (UI spec: Buttons and text)
 };
 
