@@ -34,8 +34,8 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   **Backend done 2026-10-10 (PR #17, checked in production):** branch `feature/next-open-close-time`, folder `specs/2026-10-10-next-open-close-time/`. The
   field is `hours_note`, a ready-made text from the server (owner's decision). Owner's wording changes: full day names ("Opens
   Monday 7:30 AM"), "Closes at midnight" and "Opens at midnight" (never "12:00 AM"), and `null` when a listing has no hours
-  recorded. The card change is the next small frontend PR: **in progress (2026-10-10)**, branch `feature/hours-note-on-card`,
-  folder `specs/2026-10-10-hours-note-on-card/` (owner's decisions: a grey `Clock` line under the address, nothing shown when
+  recorded. The card change is the next small frontend PR: **done 2026-10-10 (PR #18, checked on the live site)**, branch
+  `feature/hours-note-on-card`, folder `specs/2026-10-10-hours-note-on-card/` (owner's decisions: a grey `Clock` line under the address, nothing shown when
   `hours_note` is `null`).
 - **Idea (owner, 2026-10-10): refresh the results when the tab is reopened after a long time.** The results, the "Open now"
   badge and `hours_note` are fixed at the moment they load, so a page left open overnight can still say "Opens 8:00 AM

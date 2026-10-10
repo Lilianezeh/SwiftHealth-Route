@@ -33,8 +33,9 @@ They failed first (8 tests, and `HoursNote` could not be imported) and pass; 16 
 
 ## Review-focus edge cases
 
-- [ ] **A long note at 320 px.** "Closes 12:30 AM tomorrow" and "Opens Wednesday at midnight" wrap inside the card; no sideways
-  scrolling. (The test checks that the line is a normal wrapping block; still to look at in DevTools, below.)
+- [x] **A long note at 320 px.** "Closes 12:30 AM tomorrow" and "Opens Wednesday at midnight" wrap inside the card; no sideways
+  scrolling. (The test checks that the line is a normal wrapping block. Owner, live site in DevTools at 320 px, 2026-10-10: the
+  longest note wraps cleanly.)
 - [x] **No gap.** A card without a note renders nothing for it (`HoursNote shows nothing at all...`: the component's output is
   empty, so there is no row, no margin and no icon).
 - [x] **Only the card changed.** `git diff --stat origin/main -- backend` is empty and no package or lock file changed
@@ -48,9 +49,13 @@ They failed first (8 tests, and `HoursNote` could not be imported) and pass; 16 
 
 ## After the deploy (owner, live site)
 
-- [ ] `/find`: the near-you cards show a line such as "Closes 2:00 AM tomorrow" or "Opens 8:00 AM tomorrow" under the address.
-- [ ] `/search`: each card of an open or closed listing shows its line; the 24-hour listing ("Always Open Pharmacy") shows no line.
-- [ ] At 320 px (DevTools) the line wraps and nothing scrolls sideways.
+Done by the owner on the live site after PR #18 was merged and deployed (2026-10-10).
+- [x] `/find`: the near-you cards show a line such as "Closes 2:00 AM tomorrow" or "Opens 8:00 AM tomorrow" under the address.
+  (Owner: the near-you cards show the clock line.)
+- [x] `/search`: each card of an open or closed listing shows its line; the 24-hour listing ("Always Open Pharmacy") shows no line.
+  (Owner: the search cards show the clock line, and Always Open Pharmacy has none.)
+- [x] At 320 px (DevTools) the line wraps and nothing scrolls sideways. (Owner: the longest note wraps cleanly with no page-level
+  sideways scroll; only the category chip row scrolls, as designed.)
 
 ## Merge checklist
 
@@ -61,4 +66,5 @@ They failed first (8 tests, and `HoursNote` could not be imported) and pass; 16 
   CI (no Backend CI run); Netlify `deploy-preview` pass (<https://deploy-preview-18--swifthealth-ng.netlify.app>). The PR is
   clean and mergeable.
 - [x] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date (Task 0; the status lines are set to done after the merge).
-- [ ] The pull request stays a draft until every box above is ticked.
+- [x] The pull request stays a draft until every box above is ticked. (It was marked ready on the owner's instruction, and the live
+  checks above were done after the merge; PR #18 is merged and deployed.)
