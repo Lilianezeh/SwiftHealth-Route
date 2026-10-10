@@ -127,7 +127,7 @@ FR-01, FR-03. **Purpose:** the app's start screen.
 
 ### 2.3 Search results — `/search`
 FR-04 to FR-08, US-01, US-05. **API:** `GET /search`, `GET /meta`.
-1. Search box (pre-filled) and a **Filters** button opening a sheet (a native `<dialog>` styled as a bottom sheet): category (list from `GET /meta`), service (pick from the `services` list of `GET /meta`, with "Any service"), area (from `GET /meta`), open now, 24 hours, distance (5 / 10 / 20 km; only usable when there is a position, otherwise disabled with a hint). **Apply** and **Clear filters**.
+1. Search box (pre-filled) and a **Filters** button opening a sheet (a native `<dialog>` styled as a bottom sheet; **Esc, a tap on the backdrop outside the sheet, Close, Apply and Clear filters all close it, and focus goes back to the Filters button**; a press that starts inside the sheet and ends outside does not close it): category (list from `GET /meta`), service (pick from the `services` list of `GET /meta`, with "Any service"), area (from `GET /meta`), open now, 24 hours, distance (5 / 10 / 20 km; only usable when there is a position, otherwise disabled with a hint). **Apply** and **Clear filters**.
 2. Toggle: **List** | **Map** (the map is phase 5B-2; until then only the list shows).
 3. Result count: "12 places, nearest first" with a position, "12 places, A to Z" without one.
 4. List of `ListingCard`s; sponsored card (if any) first with "Sponsored" tag.

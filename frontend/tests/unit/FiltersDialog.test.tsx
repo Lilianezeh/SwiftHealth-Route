@@ -150,6 +150,65 @@ describe("FiltersDialog", () => {
     expect(navigation.replace).not.toHaveBeenCalled();
   });
 
+  // A tap outside the sheet lands on the <dialog> element itself (the backdrop is part of it). The sheet's own content is
+  // inside an inner box, so a tap on the heading, a field or the padding never lands on the <dialog> itself.
+  it("closes when the backdrop is tapped, without changing the address", async () => {
+    const dialog = await openDialog();
+
+    await userEvent.click(dialog);
+
+    expect(dialog).not.toHaveAttribute("open");
+    expect(navigation.replace).not.toHaveBeenCalled();
+  });
+
+  it("gives focus back to the Filters button after a backdrop tap", async () => {
+    const dialog = await openDialog();
+
+    await userEvent.click(dialog);
+
+    expect(screen.getByRole("button", { name: "Filters" })).toHaveFocus();
+  });
+
+  it("stays open when the sheet's own content is tapped", async () => {
+    const dialog = await openDialog();
+
+    await userEvent.click(within(dialog).getByRole("heading", { name: "Filters" }));
+    await userEvent.click(within(dialog).getByRole("combobox", { name: "Category" }));
+    await userEvent.click(within(dialog).getByRole("checkbox", { name: "Open now" }));
+
+    expect(dialog).toHaveAttribute("open");
+  });
+
+  it("stays open when a press starts inside the sheet and ends on the backdrop (selecting text, a slipped finger)", async () => {
+    const dialog = await openDialog();
+
+    fireEvent.pointerDown(within(dialog).getByRole("heading", { name: "Filters" }));
+    fireEvent.click(dialog); // the browser sends the click to the nearest shared parent: the dialog
+
+    expect(dialog).toHaveAttribute("open");
+  });
+
+  it("a press that starts on the backdrop closes it, and one stray click afterwards does not close a reopened sheet", async () => {
+    const dialog = await openDialog();
+    await userEvent.click(dialog);
+    expect(dialog).not.toHaveAttribute("open");
+
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    fireEvent.click(dialog); // no press started on the backdrop
+
+    expect(dialog).toHaveAttribute("open");
+  });
+
+  it("Esc still closes it (the browser sends cancel, then close) and focus goes back", async () => {
+    const dialog = await openDialog();
+
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+    (dialog as HTMLDialogElement).close(); // what the browser does after cancel
+
+    expect(dialog).not.toHaveAttribute("open");
+    expect(screen.getByRole("button", { name: "Filters" })).toHaveFocus();
+  });
+
   it("gives focus back to the Filters button when it closes (Esc and Close both send the close event)", async () => {
     const dialog = await openDialog();
 

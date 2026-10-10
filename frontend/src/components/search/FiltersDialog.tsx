@@ -173,6 +173,7 @@ export function FiltersDialog({ filters, hasPosition }: FiltersDialogProps) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const pressStartedOnBackdrop = useRef(false);
   const titleId = useId();
   const { status, meta, retry } = useMeta(); // kept here, so the sheet shows the choices at once when it is opened again
   // Opening the sheet again starts a fresh form, so changes that were not applied are forgotten.
@@ -200,26 +201,39 @@ export function FiltersDialog({ filters, hasPosition }: FiltersDialogProps) {
         <DecorativeIcon icon={SlidersHorizontal} />
         Filters
       </button>
+      {/* The backdrop is part of the <dialog>, so a tap outside the sheet lands on the <dialog> itself. The padding is on an
+          inner box, so a tap on the sheet never lands on the <dialog> itself. The press must also START on the backdrop, so
+          selecting text or a finger that slips off the sheet does not close it. Esc is handled by the browser. */}
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}
-        onClose={() => buttonRef.current?.focus()} // Esc, Close and Apply all end here: focus goes back to the button
-        className="mx-auto mb-0 mt-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-paper p-4 text-ink backdrop:bg-ink/50"
+        onClose={() => buttonRef.current?.focus()} // Esc, Close, Apply and a backdrop tap all end here: focus goes back to the button
+        onPointerDown={(event) => {
+          pressStartedOnBackdrop.current = event.target === event.currentTarget;
+        }}
+        onClick={(event) => {
+          const closesSheet = event.target === event.currentTarget && pressStartedOnBackdrop.current;
+          pressStartedOnBackdrop.current = false;
+          if (closesSheet) closeSheet();
+        }}
+        className="mx-auto mb-0 mt-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-paper p-0 text-ink backdrop:bg-ink/50"
       >
-        <h2 id={titleId} className="mb-4 text-2xl font-bold text-forest">
-          Filters
-        </h2>
-        <FiltersForm
-          key={openCount}
-          filters={filters}
-          hasPosition={hasPosition}
-          meta={meta}
-          metaFailed={status === "error"}
-          onRetryMeta={retry}
-          onApply={goTo}
-          onClear={() => goTo({ q: filters.q })}
-          onClose={closeSheet}
-        />
+        <div className="p-4">
+          <h2 id={titleId} className="mb-4 text-2xl font-bold text-forest">
+            Filters
+          </h2>
+          <FiltersForm
+            key={openCount}
+            filters={filters}
+            hasPosition={hasPosition}
+            meta={meta}
+            metaFailed={status === "error"}
+            onRetryMeta={retry}
+            onApply={goTo}
+            onClear={() => goTo({ q: filters.q })}
+            onClose={closeSheet}
+          />
+        </div>
       </dialog>
     </>
   );
