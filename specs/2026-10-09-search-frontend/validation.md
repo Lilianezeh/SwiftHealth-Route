@@ -161,12 +161,12 @@ is fixed in `55e2cae`, with tests). Only what the owner reported is ticked; the 
 - [x] `docker compose up`, open <http://localhost:3000/find>, Chrome DevTools, device **320 px**, network **Slow 3G**. The
   page is usable and skeletons show (owner: "320px ok, slow 3g ok"). The 4x CPU slowdown was not mentioned.
 - [ ] Tap **Open now near me**: allow location (DevTools can fake a position near 6.45, 7.50). Results are nearest first.
-  (Not reported for DevTools; allow and block were confirmed on the phone, below.)
-- [ ] Refuse location: the area list appears and works. Reload: the tab does not ask again. (Blocking was confirmed on the
-  phone; the area list and the reload were not reported.)
+  (Not reported for DevTools. Allow was confirmed on the phone, below.)
+- [ ] Refuse location: the area list appears and works. Reload: the tab does not ask again. (**Not confirmed, and the first
+  phone try failed**: see "Found in the phone test" below.)
 - [ ] `docker compose pause backend`, search, wait 6 seconds: the waking-up message. `docker compose unpause backend`:
-  results appear. Pause for over 45 s: the error and Retry. (Owner: on the sleeping production API "waking up message
-  showed and results arrived". The over-45-second error was not tried.)
+  results appear. Pause for over 45 s: the error and Retry. (Not tested yet: the owner corrected an earlier note on
+  2026-10-10.)
 - [ ] Filters: category, open now, 24 hours, distance 5 km, service `X-ray`; the address updates; Load more works. (Filters
   worked on the phone; the list was not reported item by item. **Esc closes the sheet: confirmed.** The backdrop tap did
   not close it: fixed in `55e2cae`, to be looked at again on the preview.)
@@ -183,15 +183,36 @@ Phone: Honor X6B, mobile data, reported by the owner on 2026-10-10.
   owner; the preview then loaded data. **Still to do after the merge: remove the preview address again.**)
 - [x] On your Android phone open the preview address. It shows `/find`. (It worked.)
 - [ ] Type a misspelled name and search; use **Open now near me** and allow location; try refusing in a second tab.
-  (Owner: location allow and block worked. The misspelled-name search was not reported.)
-- [x] Note how long the first search takes if the API was asleep, and whether the waking-up message appeared. (Owner:
-  "waking up message showed and results arrived". The time was not written down.)
+  (Owner: allow worked. **Block did not work as it should**: see below. The misspelled-name search was not reported.)
+- [ ] Note how long the first search takes if the API was asleep, and whether the waking-up message appeared. (Not tested yet;
+  the owner corrected an earlier note on 2026-10-10.)
 - [x] Report anything that was too small to tap, too small to read, or confusing. (Owner: Call, Directions and Filters
   worked; two issues found: the backdrop tap, fixed in `55e2cae`, and the short category list, see below.) This box is the
   "real phone on 3G" check of the PRD release criteria for this feature only; the full check stays in roadmap phase 14d.
 
 **Found in the phone test, 2026-10-10:**
 - **Backdrop tap did not close the Filters sheet.** Fixed in this pull request (`55e2cae`), with tests; Esc and focus return still work.
+- **Blocked location still gave "nearest first" with distances (owner's correction, 2026-10-10).** On the Honor X6B, Chrome,
+  the owner blocked location for the preview site, opened a new tab, tapped **Open now near me**, and the results were
+  nearest first with distances, with no question asked. **Investigation (2026-10-10, no fix made yet):**
+  - In the code a position has only two sources: the browser's `getCurrentPosition` (success), or the key
+    `swifthealth.position` in `sessionStorage`. There is no IP lookup, no server-side location and no `localStorage`.
+    The distances came from one of these two.
+  - By design a stored position wins: `Open now near me` goes straight to `/search` when a position is stored, and the
+    app does not ask again. So if a position was in the tab's `sessionStorage`, a block set afterwards in Chrome has no
+    effect on that tab. A browser that was really blocked would have answered `getCurrentPosition` with an error, and the
+    app would have shown "We could not use your location. Choose an area instead."
+  - So the most likely cause is a stored position that was **copied into the new tab**: browsers copy `sessionStorage`
+    into a tab opened from a page (a link, `window.open`, "Duplicate tab"), and Chrome restores it for a tab it brings
+    back. This is a documented browser behaviour, not yet seen on the phone; it is not proven.
+  - **Not reproduced.** A real-browser test was tried (Playwright Chromium) but the container lacks system libraries
+    (`libnspr4`), and adding them needs `sudo apt`, which was not done. Unit tests cannot show browser tab behaviour.
+  - Questions for the owner: how was the new tab opened (address bar, tab switcher "+", a long-press link, Duplicate tab)? Had
+    the first tab allowed location before you blocked it? Does a tab opened from a closed browser, by typing the address,
+    ask or refuse correctly?
+  - Likely fix, to be agreed first: before using a stored position, read the browser's permission with
+    `navigator.permissions.query({ name: "geolocation" })`; if it says `denied`, forget the stored position and show the
+    area list. That also covers a block set after the position was stored. Spec and tests first.
 - **The category list in production shows only Clinic, Pharmacy and Laboratory.** Production has only the categories the demo
   listings needed. Not a frontend bug: categories are reference data. It is a small backend PR after this one (an
   idempotent Alembic data migration; see "To do later" in `LOG.md`), and it does not block this merge. Until then the
