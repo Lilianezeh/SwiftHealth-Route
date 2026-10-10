@@ -25,15 +25,15 @@ No backend change, no new package.
 
 ## Tasks
 
-### Task 0: Spec
-- [ ] Write this folder, the UI spec sentence, the difference row, the roadmap line and the `LOG.md` notes (including the idea of
+### Task 0: Spec (done, `658ab12`)
+- [x] Write this folder, the UI spec sentence, the difference row, the roadmap line and the `LOG.md` notes (including the idea of
   refreshing stale results). Commit: `docs(specs): hours_note on the cards, spec (FR-06, US-01, NFR-10)`.
 
-### Task 1: The line on the card (tests first)
-- [ ] Write the tests (names in [validation.md](validation.md)) and give the fixtures `hours_note`. They fail: the component and
+### Task 1: The line on the card (tests first) (done, `5ef2e6b`)
+- [x] Write the tests (names in [validation.md](validation.md)) and give the fixtures `hours_note`. They fail: the component and
   the type do not exist.
-- [ ] Add the type, `HoursNote` and the line in `ListingCard`.
-- [ ] Run `npm run lint`, `npm run typecheck` and `npm test` in the frontend container, then commit:
+- [x] Add the type, `HoursNote` and the line in `ListingCard`.
+- [x] Run `npm run lint`, `npm run typecheck` and `npm test` in the frontend container, then commit:
   `feat(web): the card shows the next opening or closing time (FR-06, US-01, NFR-10)`.
 
 ### Task 2: Wrap-up
