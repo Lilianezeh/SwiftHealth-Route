@@ -63,3 +63,31 @@ describe("SearchBox", () => {
     expect(screen.getByRole("button").className).toMatch(/min-h-\[50px\]/);
   });
 });
+
+describe("SearchBox on the results page", () => {
+  it("keeps the other filters of the current search as hidden fields, but never the search text twice or a position", () => {
+    render(
+      <SearchBox
+        defaultValue="nigt"
+        filters={{ q: "nigt", category: "pharmacy", service: "X-ray", area: "Ogui", open_now: true, is_24_hours: true, radius_km: 10 }}
+      />,
+    );
+
+    const hidden = [...screen.getByRole("search").querySelectorAll("input[type=hidden]")].map((input) => [
+      input.getAttribute("name"), input.getAttribute("value"),
+    ]);
+    expect(hidden).toEqual([
+      ["category", "pharmacy"], ["service", "X-ray"], ["area", "Ogui"], ["open_now", "true"], ["is_24_hours", "true"],
+      ["radius_km", "10"],
+    ]);
+    expect(hidden.map(([name]) => name)).not.toContain("q");
+    expect(hidden.map(([name]) => name)).not.toContain("lat");
+    expect(hidden.map(([name]) => name)).not.toContain("lng");
+  });
+
+  it("has no hidden fields on the Find page", () => {
+    render(<SearchBox />);
+
+    expect(screen.getByRole("search").querySelectorAll("input[type=hidden]")).toHaveLength(0);
+  });
+});

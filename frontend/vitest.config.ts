@@ -10,5 +10,8 @@ export default defineConfig({
   test: {
     include: ["tests/unit/**/*.test.{ts,tsx}"],
     setupFiles: ["tests/setup.ts"],
+    // The default 5 s is too short for a full run in Docker on a laptop: component tests render many elements and a
+    // test that passes alone can time out when 30 files run together.
+    testTimeout: 20_000,
   },
 });

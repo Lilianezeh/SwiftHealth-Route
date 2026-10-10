@@ -75,3 +75,11 @@ export function stubGeolocation(outcome: { latitude: number; longitude: number }
   Object.defineProperty(navigator, "geolocation", { value: { getCurrentPosition }, configurable: true });
   return getCurrentPosition;
 }
+
+/** A run of different listings (ids firstId, firstId + 1, ...), named "Place 1", "Place 2"... */
+export function manyListings(count: number, firstId = 1): ListingSummary[] {
+  return Array.from({ length: count }, (_unused, index) => {
+    const id = firstId + index;
+    return listing({ id, slug: `place-${id}`, name: `Place ${id}` });
+  });
+}
