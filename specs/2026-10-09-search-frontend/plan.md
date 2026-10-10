@@ -101,8 +101,8 @@ Task 7).
 - [ ] The smoke test in [validation.md](validation.md): DevTools (Slow 3G, 320 px, a paused backend), then the phone on the
   Netlify deploy preview (the owner adds the preview address to `CORS_ORIGINS` first). **The owner does these**; they are
   manual.
-- [ ] Push the branch and open the draft pull request. Check that `Backend CI` did not start and `Frontend CI` did, and
-  write what `gh pr checks` shows in [validation.md](validation.md).
+- [x] Push the branch and open the draft pull request (#14). `Frontend CI` ran and passed, `Backend CI` did not start; what
+  `gh pr checks` showed is written in [validation.md](validation.md).
 - [x] Update `LOG.md`, the [roadmap](../roadmap.md), the UI spec (colour change), and tick the boxes in this folder with
   their commit hashes. The merge steps and the clean-up (remove the preview address from `CORS_ORIGINS`) are in the pull
   request description.

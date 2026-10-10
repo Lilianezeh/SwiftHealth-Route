@@ -169,13 +169,16 @@ is fixed in `55e2cae`, with tests). Only what the owner reported is ticked; the 
 - [ ] Refuse location: the area list appears and works. Reload: the tab does not ask again. (**Not confirmed, and the first
   phone try failed**: see "Found in the phone test" below.)
 - [ ] `docker compose pause backend`, search, wait 6 seconds: the waking-up message. `docker compose unpause backend`:
-  results appear. Pause for over 45 s: the error and Retry. (Not tested yet: the owner corrected an earlier note on
-  2026-10-10.)
-- [ ] Filters: category, open now, 24 hours, distance 5 km, service `X-ray`; the address updates; Load more works. (Filters
-  worked on the phone; the list was not reported item by item. **Esc closes the sheet: confirmed.** The backdrop tap did
-  not close it: fixed in `55e2cae`, to be looked at again on the preview.)
+  results appear. Pause for over 45 s: the error and Retry. (On the phone, the sleeping production API showed the waking-up
+  message and then the results, 2026-10-10. **Still not tried by hand: the pause of over 45 s, the error and Retry.** The
+  45 second limit is covered by `useSearchResults.test.tsx`.)
+- [x] Filters: category, open now, 24 hours, distance 5 km, service `X-ray`; the address updates; Load more works. (Owner on
+  the Honor X6B, 2026-10-10: Filters worked, Esc closes the sheet, and after the fix `55e2cae` a backdrop tap closes it.
+  Load more did not appear because production has only 4 listings; **the owner accepted the automated test for it**:
+  `SearchPage.test.tsx`, "Load more asks for the next 20 and adds them", and the failure case.)
 - [ ] `/find` "near you": two cards load on their own; with a position far from any pharmacy a card says nothing was found.
-  (Not reported.)
+  (Owner on the phone, 2026-10-10: the near-you cards show. **Not tried by hand: the empty card.** It is covered by
+  `NearbySuggestions.test.tsx`.)
 
 ## Smoke test on a phone (Netlify deploy preview)
 
@@ -186,10 +189,12 @@ Phone: Honor X6B, mobile data, reported by the owner on 2026-10-10.
   separated by a comma, with no space and no trailing slash. Click **Save and deploy**, wait for **Live**. (Done by the
   owner; the preview then loaded data. **Still to do after the merge: remove the preview address again.**)
 - [x] On your Android phone open the preview address. It shows `/find`. (It worked.)
-- [ ] Type a misspelled name and search; use **Open now near me** and allow location; try refusing in a second tab.
-  (Owner: allow worked. **Block did not work as it should**: see below. The misspelled-name search was not reported.)
-- [ ] Note how long the first search takes if the API was asleep, and whether the waking-up message appeared. (Not tested yet;
-  the owner corrected an earlier note on 2026-10-10.)
+- [x] Type a misspelled name and search; use **Open now near me** and allow location; try refusing in a second tab.
+  (Owner, Honor X6B, 2026-10-10: the misspelled search found "DEMO – After Hours Pharmacy"; allow worked. The first try
+  at blocking failed (a stored position was kept in a copied tab, see below); after the fix `b43effe`, allow then block, and
+  a new tab opened from the page refused and showed the area list.)
+- [x] Note how long the first search takes if the API was asleep, and whether the waking-up message appeared. (Owner,
+  2026-10-10: the sleeping API showed the waking-up message and then the results. The time was not written down.)
 - [x] Report anything that was too small to tap, too small to read, or confusing. (Owner: Call, Directions and Filters
   worked; two issues found: the backdrop tap, fixed in `55e2cae`, and the short category list, see below.) This box is the
   "real phone on 3G" check of the PRD release criteria for this feature only; the full check stays in roadmap phase 14d.
