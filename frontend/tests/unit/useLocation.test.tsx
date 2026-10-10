@@ -4,11 +4,13 @@
  * The browser's own permission prompt is shown only after a tap (ask()), never when the page loads, and only once per
  * tab: a refusal is remembered. A fake navigator.geolocation stands in for the phone.
  */
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useLocation } from "@/hooks/useLocation";
-import { isLocationDenied, readArea, readPosition, savePosition } from "@/lib/location/locationStore";
+import { isLocationDenied, readArea, readPosition, saveArea, savePosition } from "@/lib/location/locationStore";
+
+import { stubGeolocationPermission, stubSlowGeolocationPermission } from "../helpers/permission";
 
 type SuccessCallback = (position: GeolocationPosition) => void;
 type ErrorCallback = (error: GeolocationPositionError) => void;
@@ -40,6 +42,7 @@ beforeEach(() => {
   window.localStorage.clear();
   getCurrentPosition = vi.fn();
   Object.defineProperty(navigator, "geolocation", { value: { getCurrentPosition }, configurable: true });
+  stubGeolocationPermission("unsupported"); // like jsdom itself: no permission check unless a test adds one
 });
 
 afterEach(() => {
@@ -147,6 +150,89 @@ describe("useLocation", () => {
     expect(result.current.status).toBe("granted");
     expect(result.current.position).toEqual({ latitude: 6.451, longitude: 7.51 });
     expect(getCurrentPosition).not.toHaveBeenCalled();
+  });
+
+  // A stored position is used only while the browser still allows it (UI spec 2.2, "Location"; phone test 2026-10-10:
+  // a tab opened from a page gets a copy of its sessionStorage, so a position stored before the visitor blocked the site
+  // was still used).
+  describe("with a stored position and the browser's permission check", () => {
+    const STORED = { latitude: 6.451, longitude: 7.51 };
+
+    it("forgets the stored position when the permission is denied, remembers the refusal, and keeps the area", async () => {
+      savePosition(STORED);
+      saveArea("Ogui");
+      stubGeolocationPermission("denied");
+
+      const { result } = renderHook(() => useLocation());
+      await waitFor(() => expect(result.current.ready).toBe(true));
+
+      expect(result.current.status).toBe("denied");
+      expect(result.current.position).toBeNull();
+      expect(result.current.area).toBe("Ogui");
+      expect(readPosition()).toBeNull(); // deleted from the tab, not only hidden
+      expect(isLocationDenied()).toBe(true);
+      expect(getCurrentPosition).not.toHaveBeenCalled(); // reading the permission never prompts the visitor
+    });
+
+    it.each(["granted", "prompt"] as const)("keeps the stored position when the permission is %s", async (state) => {
+      savePosition(STORED);
+      stubGeolocationPermission(state);
+
+      const { result } = renderHook(() => useLocation());
+      await waitFor(() => expect(result.current.ready).toBe(true));
+
+      expect(result.current.status).toBe("granted");
+      expect(result.current.position).toEqual(STORED);
+      expect(readPosition()).toEqual(STORED);
+    });
+
+    it.each(["unsupported", "throws", "rejects", "unknown-state"] as const)(
+      "keeps the stored position, as before, when the browser cannot check (%s)",
+      async (behaviour) => {
+        savePosition(STORED);
+        stubGeolocationPermission(behaviour);
+
+        const { result } = renderHook(() => useLocation());
+        await waitFor(() => expect(result.current.ready).toBe(true));
+
+        expect(result.current.status).toBe("granted");
+        expect(result.current.position).toEqual(STORED);
+      },
+    );
+
+    it("is not ready until the browser has answered, so a page waits for it (one search, not two)", async () => {
+      savePosition(STORED);
+      const answer = stubSlowGeolocationPermission();
+
+      const { result } = renderHook(() => useLocation());
+      expect(result.current.ready).toBe(false);
+      expect(result.current.position).toBeNull(); // the stored position is not offered before the check
+
+      await act(async () => answer("denied"));
+
+      expect(result.current.ready).toBe(true);
+      expect(result.current.position).toBeNull();
+    });
+
+    it("does not even ask the browser about the permission when nothing is stored, and is ready at once", () => {
+      const query = stubGeolocationPermission("denied");
+
+      const { result } = renderHook(() => useLocation());
+
+      expect(result.current.ready).toBe(true);
+      expect(query).not.toHaveBeenCalled();
+    });
+
+    it("does nothing, and does not complain, if the answer arrives after the page is gone", async () => {
+      savePosition(STORED);
+      const answer = stubSlowGeolocationPermission();
+      const { unmount } = renderHook(() => useLocation());
+
+      unmount();
+      await act(async () => answer("denied"));
+
+      expect(readPosition()).toEqual(STORED); // a page that is gone changes nothing
+    });
   });
 
   it("reads and saves the chosen area", () => {

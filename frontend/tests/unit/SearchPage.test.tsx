@@ -10,6 +10,7 @@ import { savePosition } from "@/lib/location/locationStore";
 
 import { json, listing, manyListings, neverAnswers, stubApi } from "../helpers/api";
 import { installDialogSupport } from "../helpers/dialog";
+import { stubGeolocationPermission } from "../helpers/permission";
 import { readSource } from "../helpers/source";
 
 const navigation = vi.hoisted(() => ({ replace: vi.fn(), push: vi.fn(), query: "" }));
@@ -25,6 +26,7 @@ beforeEach(() => {
   navigation.replace.mockReset();
   navigation.push.mockReset();
   navigation.query = "";
+  stubGeolocationPermission("unsupported"); // like jsdom itself, unless a test adds a permission check
 });
 
 afterEach(() => {
@@ -86,6 +88,19 @@ describe("the /search page", () => {
     expect(navigation.replace).not.toHaveBeenCalled();
     expect(navigation.push).not.toHaveBeenCalled();
     expect(container.innerHTML).not.toMatch(/6\.101|7\.202/);
+  });
+
+  it("does not use a stored position when the browser says the site is blocked: one search, without lat or lng, A to Z", async () => {
+    savePosition({ latitude: 6.101, longitude: 7.202 });
+    stubGeolocationPermission("denied");
+    const { searches } = stubApi({ search: () => json({ items: [listing({ distance_km: null })], total: 1 }) });
+    render(<SearchPage />);
+
+    expect(await screen.findByText("1 place, A to Z")).toBeInTheDocument();
+
+    expect(searches()).toHaveLength(1); // it waited for the permission check, so no first search with the old position
+    expect(searches()[0].searchParams.has("lat")).toBe(false);
+    expect(searches()[0].searchParams.has("lng")).toBe(false);
   });
 
   it("without a position, shows 'A to Z' and the distance is not available", async () => {

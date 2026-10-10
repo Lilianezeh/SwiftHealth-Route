@@ -80,7 +80,11 @@ the layers `app/` to `components/` to `hooks/` to `lib/api/`. The only additions
    110 m) is our addition: nearest-first order stays right and we keep less than the phone gave us (NFR-07). A refusal is
    remembered for the tab too, so the site asks once (FR-03). The browser's prompt is shown only after a tap on a
    button, never on page load. The backend side is the [5B-0 feature](../2026-10-09-meta-endpoint/requirements.md):
-   the API access log no longer keeps `lat` and `lng`.
+   the API access log no longer keeps `lat` and `lng`. **Added after the phone test (owner, 2026-10-10):** a stored
+   position is used only while the browser's permission is not `denied` (checked with `navigator.permissions.query`);
+   if it is `denied` the position is forgotten and the area list is shown, and if the browser cannot check, the stored
+   position is used as before. Reason: a new tab can get a copy of the opener's `sessionStorage`, so a position stored
+   before the visitor blocked the site kept being used (NFR-07).
 4. **The Find page is a server page with small interactive parts.** The search box is
    `<form action="/search" method="get">`, the shortcuts are links, "Get emergency help" is a link. Only the
    location prompt, the area list and the "near you" section are client components. Category shortcuts use fixed

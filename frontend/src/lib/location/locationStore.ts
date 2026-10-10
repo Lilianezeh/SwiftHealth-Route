@@ -89,6 +89,11 @@ export function readArea(): string | null {
   return stored ? stored : null;
 }
 
+/** Forgets the position only (the chosen area and the refusal stay). */
+export function clearPosition(): void {
+  removeItem(POSITION_KEY);
+}
+
 /** Forgets the position, the refusal and the area. */
 export function clearLocation(): void {
   removeItem(POSITION_KEY);

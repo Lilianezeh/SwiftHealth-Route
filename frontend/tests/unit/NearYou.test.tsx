@@ -11,6 +11,7 @@ import { resetMetaCache } from "@/lib/api/meta";
 import { markLocationDenied, readArea, savePosition } from "@/lib/location/locationStore";
 
 import { json, listing, stubApi, stubGeolocation } from "../helpers/api";
+import { stubGeolocationPermission } from "../helpers/permission";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -22,6 +23,7 @@ beforeEach(() => {
   window.localStorage.clear();
   resetMetaCache();
   push.mockReset();
+  stubGeolocationPermission("unsupported"); // like jsdom itself, unless a test adds a permission check
 });
 
 afterEach(() => {
@@ -181,5 +183,47 @@ describe("the 'Open now near me' button", () => {
     expect(button.className).toMatch(/min-h-\[50px\]|min-h-\[52px\]/);
     expect(within(button).getByText("Open now near me")).toBeInTheDocument();
     expect(button.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  });
+});
+
+// The phone test of 2026-10-10: the first tab allowed location, a new tab got a copy of its sessionStorage, and the visitor
+// had blocked the site. The stored position must not be used.
+describe("NearYou with a stored position but a blocked site", () => {
+  it("ignores the stored position: says so, shows the area list, and sends no lat or lng", async () => {
+    savePosition({ latitude: 6.452, longitude: 7.51 });
+    stubGeolocationPermission("denied");
+    const getCurrentPosition = stubGeolocation({ latitude: 6.1, longitude: 7.1 });
+    const { searches } = apiWithOnePharmacy();
+    render(<NearYou />);
+
+    expect(await screen.findByText("We could not use your location. Choose an area instead.")).toBeInTheDocument();
+    expect(await screen.findByRole("combobox", { name: "Choose an area" })).toBeInTheDocument();
+    expect(searches()).toHaveLength(0);
+    expect(getCurrentPosition).not.toHaveBeenCalled();
+  });
+
+  it("'Open now near me' does not go to the results, and does not ask the browser again", async () => {
+    savePosition({ latitude: 6.452, longitude: 7.51 });
+    stubGeolocationPermission("denied");
+    const getCurrentPosition = stubGeolocation({ latitude: 6.1, longitude: 7.1 });
+    apiWithOnePharmacy();
+    render(<NearYou />);
+    await screen.findByText("We could not use your location. Choose an area instead.");
+
+    await userEvent.click(screen.getByRole("button", { name: "Open now near me" }));
+
+    expect(push).not.toHaveBeenCalled();
+    expect(getCurrentPosition).not.toHaveBeenCalled();
+  });
+
+  it("with the permission still granted, the stored position is used as before", async () => {
+    savePosition({ latitude: 6.452, longitude: 7.51 });
+    stubGeolocationPermission("granted");
+    apiWithOnePharmacy();
+    render(<NearYou />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Open now near me" }));
+
+    expect(push).toHaveBeenCalledWith("/search?open_now=true");
   });
 });

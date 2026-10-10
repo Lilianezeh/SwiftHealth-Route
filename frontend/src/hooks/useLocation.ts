@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Position } from "@/lib/api/search";
 import {
+  clearPosition,
   isLocationDenied,
   markLocationDenied,
   readArea,
@@ -18,6 +19,7 @@ import {
   saveArea,
   savePosition,
 } from "@/lib/location/locationStore";
+import { isPermissionCheckSupported, readGeolocationPermission } from "@/lib/location/permission";
 
 export type LocationStatus = "idle" | "asking" | "granted" | "denied" | "unavailable" | "timeout";
 
@@ -35,11 +37,31 @@ export function useLocation() {
 
   useEffect(() => {
     isMounted.current = true;
+    let isCurrent = true;
     const position = readPosition(); // read after the first render, so the server and the browser render the same page
-    const status: LocationStatus = position ? "granted" : isLocationDenied() ? "denied" : "idle";
-    setState({ status, position, area: readArea(), ready: true });
+    const area = readArea();
+
+    if (position && isPermissionCheckSupported()) {
+      // A stored position is used only while the browser still allows it: a tab can get a copy of another tab's
+      // sessionStorage, and the visitor may have blocked the site since. Until the browser answers we are not ready,
+      // so a page makes one search, not two.
+      readGeolocationPermission().then((permission) => {
+        if (!isCurrent) return;
+        if (permission === "denied") {
+          clearPosition();
+          markLocationDenied(); // the refusal is remembered for the tab, as for any refusal
+          setState({ status: "denied", position: null, area, ready: true });
+        } else {
+          setState({ status: "granted", position, area, ready: true }); // granted, prompt, or the browser cannot say
+        }
+      });
+    } else {
+      const status: LocationStatus = position ? "granted" : isLocationDenied() ? "denied" : "idle";
+      setState({ status, position, area, ready: true });
+    }
     return () => {
       isMounted.current = false;
+      isCurrent = false;
     };
   }, []);
 

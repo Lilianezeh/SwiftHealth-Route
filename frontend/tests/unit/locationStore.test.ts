@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   clearLocation,
+  clearPosition,
   isLocationDenied,
   markLocationDenied,
   readArea,
@@ -86,6 +87,17 @@ describe("the position", () => {
     window.sessionStorage.setItem(window.sessionStorage.key(0) as string, stored);
 
     expect(readPosition()).toBeNull();
+  });
+
+  it("is removed alone by clearPosition: the chosen area stays, and the refusal is not set by it", () => {
+    savePosition({ latitude: 6.451, longitude: 7.51 });
+    saveArea("Ogui");
+
+    clearPosition();
+
+    expect(readPosition()).toBeNull();
+    expect(readArea()).toBe("Ogui");
+    expect(isLocationDenied()).toBe(false);
   });
 
   it("is removed by clearLocation, together with the area and the refusal", () => {
