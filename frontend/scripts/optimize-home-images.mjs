@@ -7,7 +7,7 @@
  * then saved at the highest quality that keeps the file under its budget. `sharp` is the image library that Next.js installs
  * for itself; it is not in package.json, and this script is not part of the app.
  */
-import { mkdir, stat } from "node:fs/promises";
+import { mkdir, stat, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
@@ -55,7 +55,7 @@ async function makeOne({ source, target, width, height, budgetKb, crop }) {
   for (let quality = FIRST_QUALITY; quality >= LOWEST_QUALITY; quality -= QUALITY_STEP) {
     const output = await sharp(resizedPixels).webp({ quality, effort: 6 }).toBuffer();
     if (output.length <= budgetKb * KILOBYTE) {
-      await sharp(output).toFile(`${TARGET_FOLDER}${target}`);
+      await writeFile(`${TARGET_FOLDER}${target}`, output); // the very bytes that were measured, not encoded a second time
       return { target, width, height, quality, kilobytes: output.length / KILOBYTE, budgetKb };
     }
   }

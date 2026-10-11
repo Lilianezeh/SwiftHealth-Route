@@ -147,8 +147,11 @@ For the owner, in a browser (see the smoke test):
 - [x] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean (2026-10-11, on `7da9ee2`): lint and
   typecheck clean, 582 tests passing, the build passes. `/` is static: 6.5 kB, 113 kB first load JS (it was dynamic, 103 kB);
   `/emergency` is 105 kB.
-- [ ] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. Write what `gh pr checks` shows:
-  _(fill in)_.
+- [x] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. What `gh pr checks 21` showed
+  (2026-10-11, after `83db4c4`): `frontend` **pass** (1m37s, run 38181298116); the only workflow run on the branch is Frontend
+  CI (no Backend CI run); Netlify `Header rules` and `Redirect rules` pass, `Pages changed` skipping, `deploy-preview` pass:
+  <https://deploy-preview-21--swifthealth-ng.netlify.app>. The preview answers 200 on `/` and `/emergency`, and serves
+  `hero-phone.webp`, `hero.webp` and `hero2.webp` as `image/webp`; its `<picture>` has the phone-only `<source>`.
 - [x] `git diff --stat origin/main -- backend` is empty (2026-10-11).
 - [ ] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
 - [ ] The smoke test above is done on the preview.
