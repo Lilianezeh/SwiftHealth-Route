@@ -58,6 +58,11 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   centre, zoom or position in an address and does not store them. The Privacy page (`/privacy`, "Coming soon") is part of
   NFR-07; write this in it, and have the final wording checked with the rest of the policy (NFR-13). Due: with the Privacy
   page, before launch.
+- **After the Render upgrade: server-rendered listing pages for Google (owner's decision, 2026-10-11).** The listing page
+  (phase 6b) loads its data in the browser, like `/search`, because the free API can take about a minute to wake and Netlify
+  gives up on a server page after about 30 seconds. So Google cannot read the listing text yet (NFR-12, a Should). Once the API
+  answers at once, render `/listing/[slug]` on the server, with a title and description per listing, and keep the browser
+  load as the fallback. Needs its own spec, tests first.
 - **Reminder: `hours_note` is English only (owner's decision, 2026-10-10).** "Closes", "Opens", "tomorrow", the day names and
   "midnight" are written in the backend code (`services/hours.py`). If SwiftHealth ever adds another language, this text needs
   translating, and at that point reconsider sending the time as data and formatting it on the frontend. Revisit before any

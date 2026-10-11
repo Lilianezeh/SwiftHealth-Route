@@ -79,7 +79,7 @@ Sixteen stories define the MVP; each has a test that tells us when it is done.
 | ID | Requirement | Priority |
 | --- | --- | --- |
 | FR-09 | Shows name, category, address, landmark, phone numbers, opening hours by day, services, estimated fee ranges with date collected, entrance photo, last-verified date | Must |
-| FR-10 | Call button for each phone number (tel: link); Directions button (Google Maps link from GPS pin) | Must |
+| FR-10 | Call button for each phone number (tel: link); a WhatsApp button beside Call for each number marked as a WhatsApp number (wa.me link, no location in the message); Directions button (Google Maps link from GPS pin) | Must |
 | FR-11 | Fees are always labelled "Estimate — confirm with the facility" | Must |
 | FR-12 | Share listing via WhatsApp or copy link | Should |
 | FR-13 | Disclaimer on every listing: SwiftHealth is a directory and does not give medical advice | Must |

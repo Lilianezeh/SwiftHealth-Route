@@ -177,10 +177,27 @@ FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Merged a
 - Still to do before launch (`LOG.md`, "To do later"): "Search this area", the tile provider review, and map tiles on the
   Privacy page.
 
-### Phase 6: Listing page. Next
-US-02, US-03, US-06, US-07.
-- 6a: `GET /listings/{slug}`
-- 6b: page with Call and Directions buttons (FR-09 to FR-13)
+### Phase 6: Listing page. In progress
+US-02, US-03, US-06, US-07. Split in two pull requests, like phase 5: the API first, then the page (owner, 2026-10-11).
+
+#### Phase 6a: `GET /listings/{slug}`. In progress (branch `feature/listing-detail-api`)
+FR-09 to FR-11, FR-13, US-06, US-07, FR-08, FR-22. Backend-only: `Frontend CI` must not run on it. Feature folder:
+[requirements](2026-10-11-listing-detail-api/requirements.md), [plan](2026-10-11-listing-detail-api/plan.md),
+[validation](2026-10-11-listing-detail-api/validation.md). It also records the owner's decisions for 6b. It adds one column,
+`phone_numbers.is_whatsapp` (default false, with a migration); the project still has exactly 9 tables.
+- Task 0, spec (api-spec, PRD FR-10, feature folder, roadmap, `LOG.md`): in progress
+- Task 1, `is_whatsapp`: model and migration: next
+- Task 2, the repository: next
+- Task 3, schemas and service: next
+- Task 4, the route: next
+- Task 5, wrap-up (draft pull request, production check): next
+
+#### Phase 6b: the listing page. Next (`feature/listing-page`, after 6a is merged)
+US-02, US-03, FR-09 to FR-13 (FR-12 Share is a Should). The page with Call, WhatsApp (for numbers marked as WhatsApp) and
+Directions buttons, the 12-hour hours table, the fees, share, the report link and the notice for a reported listing. It loads
+in the browser, like `/search`. It also changes the Directions icon everywhere (cards, map popups, the page) to a diamond road
+sign with a right-turn arrow, drawn in code. Its feature folder and the UI spec 2.4 changes come first (Task 0). The owner's
+decisions are in the 6a requirements (6b decisions 1 to 10).
 
 ### Phase 7: SwiftRescue, the emergency section. Next
 US-04, US-09, US-14.
