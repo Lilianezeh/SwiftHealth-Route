@@ -163,8 +163,15 @@ US-01, US-05, FR-01, FR-03 to FR-06, FR-08. Feature folder: [requirements](2026-
   (`feature/hours-note-on-card`): **done**, merged and checked on the live site (PR #18): [requirements](2026-10-10-hours-note-on-card/requirements.md),
   [plan](2026-10-10-hours-note-on-card/plan.md), [validation](2026-10-10-hours-note-on-card/validation.md).
 
-#### Phase 5B-2: Map view. Next
-FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Needs 5B-1 merged.
+#### Phase 5B-2: Map view. In progress (branch `feature/map-view`)
+FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. 5B-1 is merged. Feature folder:
+[requirements](2026-10-11-map-view/requirements.md), [plan](2026-10-11-map-view/plan.md),
+[validation](2026-10-11-map-view/validation.md). Frontend-only: `Backend CI` must not run on it.
+- Task 0, spec (UI spec, feature folder, roadmap, `LOG.md` reminders): in progress
+- Task 1, exact Leaflet pins (no `react-leaflet`), `view` helpers and map constants: next
+- Task 2, the map: blue pin drawn in code, position dot, popups with Call and Directions, keyboard, credit: next
+- Task 3, the List | Map toggle and `?view=map` on `/search`: next
+- Task 4, wrap-up: build and page weight, draft pull request, smoke test (the owner does it): next
 
 ### Phase 6: Listing page. Next
 US-02, US-03, US-06, US-07.

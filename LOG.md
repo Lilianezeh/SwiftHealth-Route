@@ -43,6 +43,21 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   say, 30 minutes, load the results again (keep the filters and the page the visitor is on, or at least the first page). Decide
   the time limit, whether to keep "Load more" pages, and whether a small "Updated" notice is needed. A small frontend PR with
   its own spec, tests first; not part of the card change.
+- **Idea (owner, 2026-10-11): a "Search this area" button on the map.** After the visitor moves the map, a button searches
+  again for the part of the map on screen. Left out of phase 5B-2 on purpose: the API has no search by map area (it has
+  `lat`, `lng` and `radius_km`), so it needs an api-spec change first (a bounding box, or the map centre and a radius), and
+  the centre of the map must still never go into the address (NFR-07). Its own spec, tests first.
+- **Before launch: review the map tile provider (owner, 2026-10-11).** Phase 5B-2 loads tiles from the public OpenStreetMap
+  server, `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. Read the OpenStreetMap tile usage policy
+  (<https://operations.osmfoundation.org/policies/tiles/>) against our expected traffic and decide whether to keep it or move
+  to another tile provider, which may have a cost and an API key. The address is in one place, `frontend/src/config/map.ts`,
+  and the credit stays visible whichever provider is used (the new provider's own credit text). Due: before the public launch.
+- **Before launch: say on the Privacy page that the map loads tiles from OpenStreetMap (owner, 2026-10-11).** When someone
+  opens the map, their browser asks OpenStreetMap's servers for map tiles, so that service can see the visitor's IP address
+  and which part of the map they look at. SwiftHealth does not send the visitor's position to it, does not put the map
+  centre, zoom or position in an address and does not store them. The Privacy page (`/privacy`, "Coming soon") is part of
+  NFR-07; write this in it, and have the final wording checked with the rest of the policy (NFR-13). Due: with the Privacy
+  page, before launch.
 - **Reminder: `hours_note` is English only (owner's decision, 2026-10-10).** "Closes", "Opens", "tomorrow", the day names and
   "midnight" are written in the backend code (`services/hours.py`). If SwiftHealth ever adds another language, this text needs
   translating, and at that point reconsider sending the time as data and formatting it on the frontend. Revisit before any

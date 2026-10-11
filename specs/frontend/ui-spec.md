@@ -95,7 +95,9 @@ for small text on both (the old `pine` did not on `paper`).
 | `OpenNowBadge` | "Open now" (green) / "Closed" (grey) / "Open 24 hours" (green, wins over Closed) |
 | `VerifiedDate` | "Verified 3 days ago" (a `pine-100` label); when `verification_due`, an amber "Verification due" label with "Verified 45 days ago" next to it, so the date is always shown (FR-08, US-07) |
 | `Disclaimer` | Directory / not medical advice text |
-| `ResultsMap` | Leaflet + OpenStreetMap map with pins; client component |
+| `ResultsMap` | Plain Leaflet (no wrapper package) with OpenStreetMap tiles; one pin per result that has a real position, and a dot for the visitor's own position when there is one. Client component, loaded only when the map is shown (see 2.3, "Map view") |
+| `MapPopup` | The content of a pin's popup: name (a link to `/listing/[slug]`), "Category · 1.4 km", `OpenNowBadge`, the "Sponsored" tag when `sponsored`, then `CallButton` and `DirectionsButton` side by side (no Call button when the listing has no phone number) |
+| `ViewToggle` | **List** \| **Map**: two buttons in one group, the current one marked with `aria-pressed`; each at least 48 px high |
 | `ShareLocationButton` | Gets location with permission, opens WhatsApp/SMS with a Google Maps link |
 | `ReportLink` | "Report a problem" → `/report/[id]` |
 
@@ -129,13 +131,45 @@ FR-01, FR-03. **Purpose:** the app's start screen.
 ### 2.3 Search results — `/search`
 FR-04 to FR-08, US-01, US-05. **API:** `GET /search`, `GET /meta`.
 1. Search box (pre-filled) and a **Filters** button opening a sheet (a native `<dialog>` styled as a bottom sheet; **Esc, a tap on the backdrop outside the sheet, Close, Apply and Clear filters all close it, and focus goes back to the Filters button**; a press that starts inside the sheet and ends outside does not close it): category (the categories of `GET /meta` that are **not** emergency categories, `is_emergency: false`, in the order of the Find shortcuts: Hospital, Clinic, Pharmacy, Maternity, Laboratory, then any other everyday category in the order `GET /meta` gives; the emergency categories belong to SwiftRescue and Blood has its own page, so they are not offered here. A category that is already selected from a shared link, such as `/search?category=ambulance`, stays in the list with its real name from `GET /meta` and stays selected, so the sheet never says "Any category" while the results are filtered), service (pick from the `services` list of `GET /meta`, with "Any service"), area (from `GET /meta`), open now, 24 hours, distance (5 / 10 / 20 km; only usable when there is a position, otherwise disabled with a hint). **Apply** and **Clear filters**.
-2. Toggle: **List** | **Map** (the map is phase 5B-2; until then only the list shows).
+2. Toggle: **List** | **Map** (`ViewToggle`; the map is phase 5B-2, see "Map view" below). The list is the default and always complete.
 3. Result count: "12 places, nearest first" with a position, "12 places, A to Z" without one.
 4. List of `ListingCard`s; sponsored card (if any) first with "Sponsored" tag.
 5. "Load more" button (pagination, 20 at a time; page state, not in the address).
-**URL holds all filters** (`/search?category=pharmacy&open_now=true`) so results can be shared, but **never the position** (`lat`, `lng`): it is read from `sessionStorage`. Applying filters replaces the address without adding history entries. A shared link opens with the filters set and, for the receiver, no position.
+**URL holds all filters** (`/search?category=pharmacy&open_now=true`) so results can be shared, but **never the position** (`lat`, `lng`): it is read from `sessionStorage`. Applying filters replaces the address without adding history entries. A shared link opens with the filters set and, for the receiver, no position. The address may also hold `view=map` (see "Map view"); it is not a filter.
 **States:** skeleton cards while loading; after 5 seconds "The service is waking up. This can take up to a minute."; error with Retry after 45 seconds or on an error answer.
 **Empty:** "No matches. Try removing a filter or widening the distance."
+
+**Map view** (phase 5B-2, FR-07; owner's decisions, 2026-10-11). The same results as the list, drawn on a map.
+- **View in the address.** `view=map` in the address shows the map; no `view`, or any other value, shows the list. The list is
+  the default and is always complete: it is never replaced by the map. The toggle, a new search from the search box and
+  Apply or Clear in the Filters sheet all keep `view=map`. Changing the view with the toggle **adds a history entry**
+  (owner's decision, 2026-10-11), so Back from the map returns to the list; tapping the view that is already shown does nothing.
+  Filters still replace the address without a history entry, as above. **Never in the address:** the map centre, the zoom, the visitor's position. They are not kept in
+  `sessionStorage`, `localStorage` or a cookie either; a map always opens fitted to its results.
+- **Same data, no new request.** The map shows the results already loaded (a "Load more" adds pins). Changing the view does not
+  call the API again. The count line, the loading, "waking up", error and empty states are the same as in the list; the map
+  appears only when there is at least one result.
+- **Loaded on demand.** Leaflet and its styles load only when the map is shown (a dynamic import with no server rendering), so
+  the list view keeps its weight (NFR-01). While it loads, the area shows the skeleton.
+- **Tiles and credit.** OpenStreetMap tiles from `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. The credit "© OpenStreetMap
+  contributors", linking to <https://www.openstreetmap.org/copyright>, is always visible on the map (Leaflet's attribution
+  control), at 16 px and wrapping at 320 px. The tile provider is to be reviewed before launch (`LOG.md`).
+- **Pins.** Drawn in code as a small inline SVG (a Leaflet `divIcon`), no image files. Blue (`forest`) with a white border and a
+  white plus, so it reads on any tile. Never red: red belongs to emergency actions. Every pin looks the same: a sponsored
+  result has the same pin (its popup shows "Sponsored"). A result with no real position (not a number, or outside
+  -90..90 and -180..180) gets no pin, and the map says "N places have no position on the map. Switch to List to see them."
+- **The visitor's position** (only when there is one, from `sessionStorage`): a dark (`ink`) dot with a white ring, round where
+  the pins are pointed, never red, not clickable and not a tab stop. A line under the map says "● Your position" so the
+  meaning does not depend on colour. With only a chosen area, there is no dot.
+- **Opening the map.** It fits all the pins (and the dot when there is one) with some padding; one pin gives a close zoom; the
+  map is refitted when the results change (a new search, or "Load more"). The fit is only in memory.
+- **Popups and keyboard.** Each pin is a tab stop with the accessible name "Name, Category" and opens its popup with Enter or
+  Space (and on a tap). When the popup opens, focus moves into it, to the listing name link, so Call and Directions are one
+  Tab away. **Esc** closes the popup and puts focus back on its pin. The popup's close button, the zoom buttons and the pins
+  are at least 48 × 48 px; all text is 16 px or larger; the focus ring is the one of "Accessibility and performance". The map
+  has an accessible name ("Map of the search results"), and the arrow keys and + / − work on it (Leaflet's keyboard support).
+- **Not in this phase.** A "Search this area" button, clustering, a map on the listing page or on SwiftRescue (`LOG.md`, the
+  roadmap).
 
 ### 2.4 Listing page — `/listing/[slug]`
 FR-09 to FR-13, US-02, US-03, US-06, US-07. **API:** `GET /listings/{slug}`.
