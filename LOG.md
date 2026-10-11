@@ -276,10 +276,14 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   deprecated `keyCode` and the test tool does not send it, so Enter and Space are handled on `keydown`. Leaflet's own styles
   would turn the white text of the Call button blue and start at 12 px text; `map.css` overrides them (checked as rule text
   only: jsdom draws no CSS, so the smoke test must look at it).
-- **Still open:** the smoke test in DevTools and on a phone (owner); the three reminders in "To do later" (Search this area,
-  the tile provider review, tiles on the Privacy page); the home page photo refresh is now free to start after the merge.
+- **Smoke test (owner, preview of PR #19, laptop and Honor phone): all passed.** Both pins framed together, popups with Call
+  (white on blue) and Directions, large zoom and close buttons, readable credit, Back and Forward between List and Map, keyboard
+  Tab, Enter and Esc on the pins, the map files loaded only after tapping Map, 320 px with no page-level sideways scroll; on the
+  phone pinch zoom, Call opens the dialler, Directions opens Google Maps.
+- **Still open:** the merge of PR #19 (owner); the three reminders in "To do later" (Search this area, the tile provider
+  review, tiles on the Privacy page); the home page photo refresh is now free to start after the merge.
 - **Learned:** [write this in your own words]
 - **AI use:** Claude Code wrote the spec first, then the tests and the code for each task; I chose the pin and dot design,
   the keyboard rules, the history entry for the toggle and the default centre, and decided what to keep out of scope.
-- **Tomorrow:** the smoke test and the merge of 5B-2; then phase 6, the listing page (`GET /listings/{slug}` and the Call and
+- **Tomorrow:** the merge of 5B-2; then phase 6, the listing page (`GET /listings/{slug}` and the Call and
   Directions page, US-02, US-03, US-06, US-07).

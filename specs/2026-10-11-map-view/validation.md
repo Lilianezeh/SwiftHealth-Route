@@ -105,12 +105,13 @@ In `SearchMapView.test.tsx` the map is a stand-in that lists its pins; the real 
   from fitting a single point); two results at the same position both have a pin; no results shows the empty message and no map.
 - [x] **A result with no real position.** Not on the map, still in the list, and the map says how many are missing.
 - [x] **Position dot only with a position.** An area with no position shows pins only. The dot is not a tab stop.
-- [ ] **Back and forward.** The tests prove that each tap on the toggle that changes the view pushes an address and a filter
-  replaces it. The real browser Back and Forward are for the smoke test: List, Map, Back shows the list again with its filters;
-  Forward shows the map; after a filter is applied on the map, Back goes to the list.
-- [ ] **Slow 3G.** The build shows that Leaflet is not in the first load of `/search` (118 kB; the map is a separate 148 kB, 42.5 kB
-  gzip, chunk). That the chunk is fetched only on the tap (or with `view=map`), with the skeleton while it loads, is for the
-  smoke test (DevTools, Network, Slow 3G).
+- [x] **Back and forward.** The tests prove that each tap on the toggle that changes the view pushes an address and a filter
+  replaces it. The real browser Back and Forward were checked in the smoke test (owner, laptop and phone: Back and Forward
+  switch between List and Map, and Back from the map returns to the list).
+- [x] **Slow 3G.** The build shows that Leaflet is not in the first load of `/search` (118 kB; the map is a separate 148 kB, 42.5 kB
+  gzip, chunk). The owner checked in the smoke test that the map's JavaScript files load only after tapping Map (cache
+  disabled, starting from the list). Not separately recorded: the Slow 3G throttle and how the skeleton looks while the chunk
+  loads.
 - [x] **A facility name with `<script>` or `&` in it** is text in the pin's accessible name and in the popup (tests above).
 - [x] **Leaflet in jsdom.** jsdom draws no CSS and has no layout, so these are checked only in the smoke test: the 48 px buttons,
   the 16 px credit, the white-on-blue Call button in a popup (`revert-layer`), the focus ring on a pin, the position of a popup
@@ -134,20 +135,32 @@ In `SearchMapView.test.tsx` the map is a stand-in that lists its pins; the real 
 
 ## Smoke test (owner, after the pull request has a preview)
 
-- [ ] DevTools at 320 px: `/search?category=pharmacy` shows the list; tap **Map**; the address gets `view=map` and nothing else
+Done by the owner on the preview of PR #19 (<https://deploy-preview-19--swifthealth-ng.netlify.app>), on a laptop and on an
+Honor phone, 2026-10-11. The owner reported that all of the smoke tests passed. What the owner named:
+- the map shows both pins framed together; the popups have Call (white on blue) and Directions; the zoom and close buttons are
+  large; the OpenStreetMap credit is readable;
+- Back and Forward switch between List and Map;
+- keyboard Tab, Enter and Esc work on the pins;
+- the map's JavaScript files load only after tapping Map (checked with the cache disabled, starting from the list);
+- 320 px fits, with no page-level sideways scroll;
+- on the phone: pinch zoom works, Call opens the dialler, Directions opens Google Maps, and Back returns to the list.
+
+- [x] DevTools at 320 px: `/search?category=pharmacy` shows the list; tap **Map**; the address gets `view=map` and nothing else
   changed; the map, pins and credit fit; no sideways scrolling.
-- [ ] Tap a pin: the popup shows the name, category and distance, Call and Directions; Directions opens Google Maps with the
+- [x] Tap a pin: the popup shows the name, category and distance, Call and Directions; Directions opens Google Maps with the
   place; Call starts a call on a phone. The Call button is white on blue (not blue on blue) and the buttons are 48 px high.
-- [ ] Allow the location: the dark dot appears with "Your position" under the map; the pins stay blue; nothing is red.
-- [ ] Keyboard only: Tab reaches the toggle, then the map, the pins, the popup's name link, Call and Directions; Esc closes the
+- [x] Allow the location: the dark dot appears with "Your position" under the map; the pins stay blue; nothing is red.
+- [x] Keyboard only: Tab reaches the toggle, then the map, the pins, the popup's name link, Call and Directions; Esc closes the
   popup and focus returns to the pin; arrow keys and + / − move and zoom the map. The focus ring is visible on a pin.
-- [ ] Open `/search?view=map&open_now=true` in a new tab and from a shared link: the map opens fitted to the results, with no
+- [x] Open `/search?view=map&open_now=true` in a new tab and from a shared link: the map opens fitted to the results, with no
   position. Reload: same.
-- [ ] Apply a filter and search again from the box in map view: still the map. Back from the map returns to the list.
-- [ ] The OpenStreetMap credit is visible at 16 px, with no sideways scrolling at 320 px, and the zoom and popup close buttons
+- [x] Apply a filter and search again from the box in map view: still the map. Back from the map returns to the list.
+- [x] The OpenStreetMap credit is visible at 16 px, with no sideways scrolling at 320 px, and the zoom and popup close buttons
   are easy to tap.
-- [ ] DevTools, Network, Slow 3G: the list loads without the Leaflet chunk; it is fetched only when **Map** is tapped.
-- [ ] On a real phone on mobile data: the list loads as before; the map loads after the tap; tiles show; pinch zoom works.
+- [x] The list loads without the Leaflet chunk; it is fetched only when **Map** is tapped. (Owner: checked in the Network
+  panel with the cache disabled, starting from the list; the Slow 3G throttle was not named in the report.)
+- [x] On a real phone: the map loads after the tap; pinch zoom works. (Owner, Honor phone. Whether this was on mobile data or
+  Wi-Fi was not named in the report.)
 
 ## Merge checklist
 
@@ -162,8 +175,9 @@ In `SearchMapView.test.tsx` the map is a stand-in that lists its pins; the real 
   <https://deploy-preview-19--swifthealth-ng.netlify.app/search?category=pharmacy>).
 - [x] `git diff --stat origin/main -- backend` is empty (2026-10-11).
 - [x] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date, including the three reminders (Task 0 and Task 4).
-- [ ] The smoke test above is done on the preview or the live site.
-- [ ] The pull request stays a draft until every box above is ticked.
+- [x] The smoke test above is done on the preview or the live site (owner, 2026-10-11, preview of PR #19).
+- [x] The pull request stays a draft until every box above is ticked. (Every box is ticked; the pull request was marked ready
+  on the owner's instruction, 2026-10-11.)
 
 Note: this branch also carries `a534a6f` (the live results of the hours line, a docs-only commit that was not yet on `main`),
 so the pull request shows it too.

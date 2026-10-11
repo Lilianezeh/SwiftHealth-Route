@@ -171,8 +171,9 @@ FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. 5B-1 is 
 - Task 1, exact Leaflet pins (no `react-leaflet`), `view` helpers and map constants: **done**
 - Task 2, the map: blue pin drawn in code, position dot, popups with Call and Directions, keyboard, credit: **done**
 - Task 3, the List | Map toggle (adds a history entry) and `?view=map` on `/search`: **done**
-- Task 4, wrap-up: build and page weight **done** (`/search` 118 kB first load, the map is a separate 148 kB chunk); draft
-  pull request open; the smoke test in DevTools and on a phone is next (the owner does it)
+- Task 4, wrap-up: build and page weight **done** (`/search` 118 kB first load, the map is a separate 148 kB chunk); pull
+  request #19 open, `Frontend CI` green; the smoke test on the preview (laptop, 320 px, keyboard, Honor phone) **done, all
+  passed**; ready for the owner to merge
 
 ### Phase 6: Listing page. Next
 US-02, US-03, US-06, US-07.

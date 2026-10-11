@@ -75,5 +75,6 @@ below, test the pure helper in a test and keep that check in the smoke test of [
   (118 kB, accepted by the owner; the list view was 115 kB).
 - [x] Push the branch and open the draft pull request (#19, `d2df649`). `Frontend CI` ran and passed, `Backend CI` did not run;
   `gh pr checks` and the link of the Netlify preview are in [validation.md](validation.md).
-- [ ] The owner does the smoke test (DevTools at 320 px, a real phone, keyboard only). Then update the roadmap and `LOG.md`
-  once more, and tick the boxes with their commit hashes.
+- [x] The owner did the smoke test on the preview (laptop, 320 px, keyboard only, and an Honor phone): all passed. The boxes of
+  [validation.md](validation.md) are ticked, and the roadmap and `LOG.md` say so.
+- [ ] Merge by the owner. Then the roadmap and `LOG.md` change from "in progress" to "done (merged, PR #19)".
