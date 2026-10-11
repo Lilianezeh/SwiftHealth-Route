@@ -58,6 +58,11 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   centre, zoom or position in an address and does not store them. The Privacy page (`/privacy`, "Coming soon") is part of
   NFR-07; write this in it, and have the final wording checked with the rest of the policy (NFR-13). Due: with the Privacy
   page, before launch.
+- **After the Render upgrade: server-rendered listing pages for Google (owner's decision, 2026-10-11).** The listing page
+  (phase 6b) loads its data in the browser, like `/search`, because the free API can take about a minute to wake and Netlify
+  gives up on a server page after about 30 seconds. So Google cannot read the listing text yet (NFR-12, a Should). Once the API
+  answers at once, render `/listing/[slug]` on the server, with a title and description per listing, and keep the browser
+  load as the fallback. Needs its own spec, tests first.
 - **Reminder: `hours_note` is English only (owner's decision, 2026-10-10).** "Closes", "Opens", "tomorrow", the day names and
   "midnight" are written in the backend code (`services/hours.py`). If SwiftHealth ever adds another language, this text needs
   translating, and at that point reconsider sending the time as data and formatting it on the frontend. Revisit before any
@@ -264,7 +269,8 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   plan, the icon package and the colour change, and decided what to keep out of scope.
 
 ## Day 8 — 2026-10-11
-- **Built:** Phase 5B-2, the map view on `/search` (FR-07), frontend only (branch `feature/map-view`). `?view=map` and a
+- **Built:** Phase 5B-2, the map view on `/search` (FR-07), frontend only (branch `feature/map-view`, **done: merged as PR
+  #19, `d4c1a94`**). `?view=map` and a
   List | Map toggle that adds a history entry (Back from the map returns to the list); plain Leaflet with OpenStreetMap
   tiles and the credit; a blue pin drawn in code; a dark dot for the visitor's position; popups with Call and Directions;
   pins reachable with the keyboard. The list stays the default and complete, and the address never holds a position,
@@ -278,12 +284,14 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   only: jsdom draws no CSS, so the smoke test must look at it).
 - **Smoke test (owner, preview of PR #19, laptop and Honor phone): all passed.** Both pins framed together, popups with Call
   (white on blue) and Directions, large zoom and close buttons, readable credit, Back and Forward between List and Map, keyboard
-  Tab, Enter and Esc on the pins, the map files loaded only after tapping Map, 320 px with no page-level sideways scroll; on the
-  phone pinch zoom, Call opens the dialler, Directions opens Google Maps.
-- **Still open:** the merge of PR #19 (owner); the three reminders in "To do later" (Search this area, the tile provider
-  review, tiles on the Privacy page); the home page photo refresh is now free to start after the merge.
-- **Learned:** [write this in your own words]
+  Tab, Enter and Esc on the pins, the map files loaded only after tapping Map (laptop, Chrome throttled to 3G, cache disabled,
+  on Wi-Fi through the phone's hotspot), 320 px with no page-level sideways scroll; on the phone (mobile data) pinch zoom, Call
+  opens the dialler, Directions opens Google Maps. The backend `CORS_ORIGINS` was changed for this test and is back to the live
+  site only.
+- **Still open:** the three reminders in "To do later" (Search this area, the tile provider review, tiles on the Privacy
+  page); the home page photo refresh is now free to start.
+- **Learned:** Never trust a coordinate without checking it: the default map centre was 6 km off, and I caught it by checking it in Google Maps and picking Holy Ghost Cathedral myself. I also learned that a big library like a map can load only when someone taps for it, so people on slow data who just want the list don't pay for it.
 - **AI use:** Claude Code wrote the spec first, then the tests and the code for each task; I chose the pin and dot design,
   the keyboard rules, the history entry for the toggle and the default centre, and decided what to keep out of scope.
-- **Tomorrow:** the merge of 5B-2; then phase 6, the listing page (`GET /listings/{slug}` and the Call and
-  Directions page, US-02, US-03, US-06, US-07).
+- **Tomorrow:** phase 6, the listing page (`GET /listings/{slug}` and the Call and Directions page, US-02, US-03, US-06,
+  US-07), or the home page photo refresh; the owner chooses.

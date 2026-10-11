@@ -83,6 +83,7 @@ Sixteen stories define the MVP; each has a test that tells us when it is done.
 | FR-11 | Fees are always labelled "Estimate — confirm with the facility" | Must |
 | FR-12 | Share listing via WhatsApp or copy link | Should |
 | FR-13 | Disclaimer on every listing: SwiftHealth is a directory and does not give medical advice | Must |
+| FR-47 | A WhatsApp button beside Call for each number marked as a WhatsApp number (wa.me link, no location in the message) | Should |
 
 **Emergency section**
 

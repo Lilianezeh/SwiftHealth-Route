@@ -15,6 +15,7 @@ from app.repositories.search_repository import SearchCandidate
 from app.schemas.listing import CategorySummary, ListingSummary
 from app.schemas.search import SearchParams, SearchResponse
 from app.services.hours import hours_note, is_open_at
+from app.services.verification import is_verification_due
 
 REPORT_WINDOW = timedelta(days=7)  # FR-22
 REPORTS_TO_EXCLUDE = 2  # FR-22: different reporters saying "not working"
@@ -46,7 +47,6 @@ def to_summary(
     candidate: SearchCandidate, distance: float | None, is_open_now: bool, moment: datetime
 ) -> ListingSummary:
     listing = candidate.listing
-    overdue = listing.next_check_due is not None and listing.next_check_due < moment
     return ListingSummary(
         id=listing.id,
         slug=listing.slug,
@@ -61,7 +61,7 @@ def to_summary(
         is_24_hours=listing.is_24_hours,
         primary_phone=candidate.primary_phone,
         last_verified_at=listing.last_verified_at,
-        verification_due=overdue,
+        verification_due=is_verification_due(listing.next_check_due, moment),
         sponsored=False,  # the sponsored slot is roadmap phase 12c
         # Worked out here, after paging, so only the 20 results at most that are returned pay for it.
         hours_note=hours_note(candidate.opening_hours, listing.is_24_hours, moment),

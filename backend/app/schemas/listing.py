@@ -1,7 +1,15 @@
-"""Listing shapes shared by search, emergency and blood results. See specs/backend/api-spec.md section 2."""
-from datetime import datetime
+"""Listing shapes shared by search, emergency, blood results and the listing page.
 
-from pydantic import BaseModel
+See specs/backend/api-spec.md section 2.
+"""
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Annotated
+
+from pydantic import BaseModel, PlainSerializer
+
+# Money is a Decimal in Python and a string with 2 decimals in JSON, e.g. "1500.00" (api-spec, Conventions).
+Naira = Annotated[Decimal, PlainSerializer(lambda amount: f"{amount:.2f}", return_type=str, when_used="json")]
 
 
 class CategorySummary(BaseModel):
@@ -30,3 +38,40 @@ class ListingSummary(BaseModel):
     # The next change in opening hours, in English and Lagos time ("Closes 9:00 PM", "Opens Monday 7:30 AM").
     # null for a 24-hour listing, a listing with no hours recorded, and the lists that do not fill it yet.
     hours_note: str | None = None
+
+
+class PhoneRead(BaseModel):
+    number: str  # +234...
+    label: str | None  # Front desk, Emergency...
+    is_primary: bool
+    is_whatsapp: bool  # only when staff or the provider said so (FR-47); false by default
+
+
+class OpeningHoursRead(BaseModel):
+    """One day of the week. A day with no hours is closed, with null times (api-spec, ListingDetail)."""
+
+    day_of_week: int  # 0 = Monday ... 6 = Sunday
+    opens_at: str | None  # "HH:MM", local time; null when closed
+    closes_at: str | None  # earlier than opens_at means the shift runs past midnight
+    is_closed: bool
+
+
+class ServiceRead(BaseModel):
+    name: str
+    fee_min_naira: Naira | None
+    fee_max_naira: Naira | None
+    fee_collected_at: date | None
+
+
+class ListingDetail(ListingSummary):
+    """The public listing page (FR-09): the summary plus everything a visitor needs before they go."""
+
+    landmark: str | None
+    description: str | None
+    entrance_photo_url: str | None
+    phones: list[PhoneRead]  # the primary number first
+    opening_hours: list[OpeningHoursRead]  # always 7, Monday first
+    services: list[ServiceRead]
+    # The FR-22 rule that hides a listing from search. The listing is still shown, so the page can warn.
+    recently_reported_not_working: bool
+    disclaimer: str  # FR-13

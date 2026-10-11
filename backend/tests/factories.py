@@ -44,10 +44,13 @@ async def add_listing(
     opening_hours: list[OpeningHours] | None = None,
     service_names: tuple[str, ...] = (),
     phone: str | None = FICTIONAL_PHONE,
+    phones: list[PhoneNumber] | None = None,
+    services: list[Service] | None = None,
     last_verified_at: datetime | None = None,
     next_check_due: datetime | None = None,
     featured_until: datetime | None = None,
 ) -> Listing:
+    """`phones` and `services`, when given, replace `phone` and `service_names` (rows built by the test)."""
     category = await get_or_add_category(session, category_slug)
     listing = Listing(
         slug=re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-"), name=name, category_id=category.id,
@@ -55,8 +58,10 @@ async def add_listing(
         is_24_hours=is_24_hours, last_verified_at=last_verified_at, next_check_due=next_check_due,
         featured_until=featured_until,
     )
-    phones = [PhoneNumber(listing_id=0, number=phone, is_primary=True)] if phone else []
-    services = [Service(listing_id=0, name=service_name) for service_name in service_names]
+    if phones is None:
+        phones = [PhoneNumber(listing_id=0, number=phone, is_primary=True)] if phone else []
+    if services is None:
+        services = [Service(listing_id=0, name=service_name) for service_name in service_names]
     return await listing_repository.add_listing_with_details(
         session, listing, phones, opening_hours or [], services
     )

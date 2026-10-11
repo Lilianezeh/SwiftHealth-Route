@@ -102,18 +102,32 @@ Used in search results, emergency groups and blood results.
   "landmark": "Opposite the market",
   "description": "Open late every day.",
   "entrance_photo_url": "https://res.cloudinary.com/...",
-  "phones": [ { "number": "+2348030000000", "label": "Front desk", "is_primary": true } ],
+  "phones": [ { "number": "+2348030000000", "label": "Front desk", "is_primary": true, "is_whatsapp": false } ],
   "opening_hours": [
-    { "day_of_week": 0, "opens_at": "20:00", "closes_at": "02:00", "is_closed": false }
+    { "day_of_week": 0, "opens_at": "20:00", "closes_at": "02:00", "is_closed": false },
+    { "day_of_week": 1, "opens_at": null, "closes_at": null, "is_closed": true }
   ],
   "services": [
     { "name": "Malaria test", "fee_min_naira": "1500.00", "fee_max_naira": "3000.00", "fee_collected_at": "2026-09-28" }
   ],
+  "recently_reported_not_working": false,
   "disclaimer": "SwiftHealth is a directory and does not give medical advice. Fees are estimates; confirm with the facility."
 }
 ```
 
-- `opening_hours` always has 7 entries, `day_of_week` 0 = Monday … 6 = Sunday. `closes_at` earlier than `opens_at` means the shift runs past midnight.
+(The `opening_hours` example shows 2 of the 7 entries.)
+
+- `opening_hours` always has 7 entries, in order, `day_of_week` 0 = Monday … 6 = Sunday. `opens_at` and `closes_at` are `"HH:MM"` in 24-hour local time (Africa/Lagos), without seconds. `closes_at` earlier than `opens_at` means the shift runs past midnight.
+  A day with no row, a day marked closed, and a day whose row has no opening or closing time are all returned as `"is_closed": true` with `opens_at` and `closes_at` set to `null` (owner's decision, 2026-10-11: a day with no hours is shown as closed). If a day has more than one row, the one with the lowest `id` is used. The page writes the times in 12-hour form ("8:00 PM"); the API never does.
+- `phones` lists every number of the listing, the primary one first, then the others in the order they were added (by `id`). `number` is always `+234…`. `primary_phone` (from `ListingSummary`) is the number of the first primary phone, or `null`.
+  `is_whatsapp` (FR-47) is `true` only when someone who knows (staff or the provider) has said that this number is on WhatsApp; it
+  is `false` by default and is never guessed from the number (owner's decision, 2026-10-11). It is the `is_whatsapp` column of
+  `phone_numbers` (a new column with a migration, not a new table). The page shows a WhatsApp button for those numbers only.
+- `services` are sorted by name (ignoring case), then by `id`. `fee_min_naira` and `fee_max_naira` are strings with 2 decimals, or `null`; `fee_collected_at` is `YYYY-MM-DD`, or `null`. The API sends what is stored: it does not fill a missing maximum from the minimum. How the page words them is a UI matter.
+- `recently_reported_not_working` is `true` when at least 2 different reporters called the listing "not working" in the last 7 days: the rule that hides the listing from `/search` (FR-22, same window and count). The listing itself is still returned (owner's decision, 2026-10-11: a direct link keeps working, and the page shows a notice). Nothing about the reports themselves (who, when, comments, phone) is ever returned.
+- `is_open_now`, `verification_due`, `last_verified_at` and `hours_note` are worked out exactly as for `/search`. `distance_km` is always `null` (the call has no position) and `sponsored` is always `false`.
+- `disclaimer` is the fixed text above on every listing (FR-13). The fee label "Estimate — confirm with the facility" (FR-11) is the page's, next to each fee.
+- Never returned: `status`, `next_check_due`, `owner_id`, `created_by`, `featured_until`, report details.
 
 ### UserRead
 
@@ -186,7 +200,8 @@ them: the API access log shows `lat=redacted&lng=redacted`.
 **Tests:** past-midnight open/closed (01:30 vs 03:00) · distance order · flagged listing excluded · overdue listing labelled `verification_due` · draft never returned · only one sponsored item.
 
 ### GET /listings/{slug}
-FR-09 to FR-13, US-06, US-07. **Response 200:** `ListingDetail` · **404** if not published.
+FR-09 to FR-13, FR-47, US-06, US-07, FR-22. **Path:** `slug` (exact match; no query parameters). **Response 200:** `ListingDetail` · **404** `{ "detail": "Listing not found" }` if there is no listing with this slug, or its `status` is not `"published"` (draft, pending review, hidden and re-check due all look the same to the public, so nothing leaks about unpublished listings). A listing past its re-check date but still published is returned with `verification_due: true` (FR-08). The call changes nothing and writes no audit entry.
+**Tests:** published returns 200 with every field · draft, pending, hidden, `recheck_due` and unknown slug return 404 · 7 opening-hours entries (missing day closed, past-midnight row) · primary phone first · `is_whatsapp` per phone (false unless set) · fees as 2-decimal strings, a null fee stays null · overdue listing has `verification_due: true` and is still returned · 2 different reporters in 7 days set `recently_reported_not_working` and the listing is still returned · 1 reporter, an old report, a resolved report, and 2 reports from the same reporter do not · `hours_note` and `is_open_now` agree with `/search` · none of the internal fields appear · the number of database queries does not grow with the number of phones or services.
 
 ### GET /emergency
 FR-14 to FR-19, FR-25, FR-26. The SwiftRescue page data.
@@ -307,14 +322,14 @@ FR-31. Verifier, editor, admin. Creates a `draft`.
   "name": "Night Pharmacy A", "category": "pharmacy", "area": "New Haven",
   "address": "12 Example Road", "landmark": "Opposite the market",
   "latitude": 6.452, "longitude": 7.51, "description": null, "is_24_hours": false,
-  "phones": [ { "number": "08030000000", "label": "Front desk", "is_primary": true } ],
+  "phones": [ { "number": "08030000000", "label": "Front desk", "is_primary": true, "is_whatsapp": false } ],
   "opening_hours": [ { "day_of_week": 0, "opens_at": "20:00", "closes_at": "02:00", "is_closed": false } ],
   "services": [ { "name": "Malaria test", "fee_min_naira": "1500.00", "fee_max_naira": "3000.00", "fee_collected_at": "2026-09-28" } ]
 }
 ```
 **Response 201:** staff `ListingDetail`
 
-**Rules:** slug generated from name + area (unique; add `-2`, `-3` if taken). `created_by` = caller. Exactly one primary phone. `area` must be in `/meta` areas. Audit entry `create`.
+**Rules:** slug generated from name + area (unique; add `-2`, `-3` if taken). `created_by` = caller. Exactly one primary phone. `is_whatsapp` is optional and defaults to `false` (the endpoint itself is phase 10; the column is added in phase 6a). `area` must be in `/meta` areas. Audit entry `create`.
 
 ### PATCH /listings/{listing_id}
 FR-31. Same body as POST, all fields optional. `phones`, `opening_hours` and `services`, when sent, **replace** the existing lists.
