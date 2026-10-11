@@ -155,8 +155,11 @@ In `SearchMapView.test.tsx` the map is a stand-in that lists its pins; the real 
   `/search` is 118 kB first load (it was 115 kB: the toggle and the dynamic-import runtime); `/find` is 115 kB. The map is a
   separate chunk of 148 kB (42.5 kB gzip) and its style file 3 kB (gzip), loaded only with the map. The colour variables that
   `map.css` uses (`--color-forest`, `--color-white`, `--color-ink`) are defined in the global style file of the build.
-- [ ] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. Write what `gh pr checks`
-  shows: _(fill in)_.
+- [x] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. What `gh pr checks 19` showed
+  (2026-10-11, after `d2df649`): `frontend` **pass** (1m6s, run 38122443122); the only workflow run on the branch is Frontend
+  CI (no Backend CI run); Netlify `Header rules` and `Redirect rules` pass, `Pages changed` skipping, `deploy-preview` pass:
+  <https://deploy-preview-19--swifthealth-ng.netlify.app> (the smoke test link:
+  <https://deploy-preview-19--swifthealth-ng.netlify.app/search?category=pharmacy>).
 - [x] `git diff --stat origin/main -- backend` is empty (2026-10-11).
 - [x] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date, including the three reminders (Task 0 and Task 4).
 - [ ] The smoke test above is done on the preview or the live site.
