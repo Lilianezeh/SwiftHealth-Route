@@ -94,7 +94,7 @@ runs `alembic upgrade head` before the demo step (`backend/Dockerfile`), so the 
 
 ### Task 5: Wrap-up
 - [x] Run the whole backend suite and ruff once, on its own: 769 passed in 85.69 s, ruff clean (on `ac424b1`).
-- [ ] Push the branch and open the draft pull request. Check that `Backend CI` ran and `Frontend CI` did not; write what
-  `gh pr checks` shows in [validation.md](validation.md).
+- [x] Push the branch and open the draft pull request (#20, `01d4ba2`). `Backend CI` ran and passed, `Frontend CI` did not run;
+  what `gh pr checks` showed is in [validation.md](validation.md).
 - [ ] After the merge and the Render deploy, the owner checks production (the migration ran, and a demo listing answers: see
   [validation.md](validation.md)). Then update the roadmap and `LOG.md` once, and tick the boxes with their commit hashes.

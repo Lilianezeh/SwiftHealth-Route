@@ -122,8 +122,10 @@ was finished).
 
 - [x] `pytest -q -W error` and `ruff check .` are clean in the backend container, run once on its own (2026-10-11, on
   `ac424b1`): **769 passed in 85.69 s**, ruff "All checks passed!".
-- [ ] On the draft pull request `Backend CI` runs and is green, and `Frontend CI` does not run. Write what `gh pr checks` shows:
-  _(fill in)_.
+- [x] On the draft pull request `Backend CI` runs and is green, and `Frontend CI` does not run. What `gh pr checks 20` showed
+  (2026-10-11, after `01d4ba2`): `backend` **pass** (1m31s, run 38161882617); the only workflow run on the branch is Backend
+  CI (no Frontend CI run); Netlify `Header rules`, `Pages changed` and `Redirect rules` skipping, `deploy-preview` pass. The PR
+  is #20.
 - [x] `git diff --stat origin/main -- frontend` is empty (2026-10-11).
 - [ ] The api-spec, the PRD (the new FR-47; FR-10 unchanged), the [roadmap](../roadmap.md) and `LOG.md` are up to date. (Done
   for the api-spec, the PRD and the roadmap; the `LOG.md` day entry is written after the merge and the production check.)
