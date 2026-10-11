@@ -113,10 +113,14 @@ was finished).
 
 ## After the deploy (owner, production)
 
-- [ ] The Render deploy log shows the migration ran (`alembic upgrade head`), and the service started.
-- [ ] `GET https://swifthealth-api.onrender.com/listings/<a demo slug>` returns 200 with the fields above, every `is_whatsapp`
-  `false`; a draft or unknown slug returns 404; `/docs` shows the endpoint. (The demo slugs are the fixed ones in
-  `seed/demo_listings_data.py`.)
+Done by the owner on production after PR #20 was merged (`6fdb5fa`) and deployed, 2026-10-11.
+- [x] The Render deploy ran the migration (`alembic upgrade head`), and the service started. (Owner: Render ran the migration.)
+- [x] `GET https://swifthealth-api.onrender.com/listings/<a demo slug>` returns 200 with the fields above, every `is_whatsapp`
+  `false`; an unknown slug returns 404; `/docs` shows the endpoint. (Owner: the listing came back with `is_whatsapp` false on
+  every phone, 7 `opening_hours` entries, `recently_reported_not_working` false and an `hours_note`; `/listings/does-not-exist`
+  returned 404 "Listing not found"; `/docs` lists `GET /listings/{slug}`. The demo slugs are the fixed ones in
+  `seed/demo_listings_data.py`. A draft slug was not named in the report: the 404 for a draft is covered by the tests.)
+- [x] Search is unchanged: the total is still 4 (owner).
 
 ## Merge checklist
 
@@ -127,10 +131,11 @@ was finished).
   CI (no Frontend CI run); Netlify `Header rules`, `Pages changed` and `Redirect rules` skipping, `deploy-preview` pass. The PR
   is #20.
 - [x] `git diff --stat origin/main -- frontend` is empty (2026-10-11).
-- [ ] The api-spec, the PRD (the new FR-47; FR-10 unchanged), the [roadmap](../roadmap.md) and `LOG.md` are up to date. (Done
-  for the api-spec, the PRD and the roadmap; the `LOG.md` day entry is written after the merge and the production check.)
-- [ ] The production check above is done after the deploy.
-- [ ] The pull request stays a draft until every box above is ticked.
+- [x] The api-spec, the PRD (the new FR-47; FR-10 unchanged), the [roadmap](../roadmap.md) and `LOG.md` are up to date (the
+  roadmap and the `LOG.md` day entry were finished after the merge and the production check).
+- [x] The production check above is done after the deploy.
+- [x] The pull request stays a draft until every box above is ticked. (It was marked ready on the owner's instruction, before
+  the deploy, so the two boxes that need production were ticked after the merge; PR #20 is merged and deployed.)
 
 Note: this branch also carries `5391ec9` (the 5B-2 "done" docs, a docs-only commit that was not yet on `main`), so the pull
 request shows it too.

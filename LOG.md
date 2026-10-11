@@ -295,3 +295,33 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   the keyboard rules, the history entry for the toggle and the default centre, and decided what to keep out of scope.
 - **Tomorrow:** phase 6, the listing page (`GET /listings/{slug}` and the Call and Directions page, US-02, US-03, US-06,
   US-07), or the home page photo refresh; the owner chooses.
+
+## Day 8, part 2 — 2026-10-11
+- **Built:** Phase 6a, `GET /listings/{slug}` (backend only; branch `feature/listing-detail-api`, **done: merged as PR #20,
+  `6fdb5fa`**). A published listing with its phones (the primary first), 7 opening-hours entries (`HH:MM`; a day with no hours
+  is closed), services with fees as 2-decimal strings, the fixed disclaimer, `hours_note`, `is_open_now` and
+  `verification_due`; anything not published and any unknown slug give the same 404 "Listing not found". New field
+  `recently_reported_not_working`: a listing that 2 different reporters called "not working" in 7 days is hidden from search
+  but still opens from its link, so the page can warn. New column `phone_numbers.is_whatsapp` (default false, with a migration
+  that is safe on filled tables; the seed and demo data never set it), and a new requirement FR-47 (Should), the WhatsApp
+  button of phase 6b. One shared `is_verification_due` rule for search and the listing page. 769 backend tests passing, ruff
+  clean; Backend CI green.
+- **Broke / fixed:** the first full-suite run never started, because I wrote its output to a scratch folder of an old session
+  that no longer existed. Two test runs at the same time shared the test database, which caused 2 failures and very slow runs;
+  from then on only one test process at a time (the same tests passed alone). Docker Desktop's WSL integration was off for a
+  while, so no test could run until the owner turned it back on. WhatsApp was first written into FR-10 and then moved to its own
+  FR-47 on the owner's instruction (FR-10 has its original wording). An older test said the categories revision was the only
+  migration head; it now checks that the history has one head.
+- **Production (owner):** Render ran the migration; `/listings/<slug>` returned the listing with `is_whatsapp` false on every
+  phone, 7 `opening_hours` entries, `recently_reported_not_working` false and an `hours_note`; `/listings/does-not-exist`
+  returned 404 "Listing not found"; the search total is still 4; `/docs` lists `GET /listings/{slug}`.
+- **Still open:** phase 6b, the listing page (the owner's decisions for it are in
+  `specs/2026-10-11-listing-detail-api/requirements.md`); the "Search this area", tile provider and Privacy page reminders; the
+  `wa.me` link format still has to be checked on WhatsApp's own help page before 6b builds it; server-rendered listing pages
+  for Google (after the Render upgrade).
+- **Learned:** [write this in your own words]
+- **AI use:** Claude Code wrote the spec first, then the tests and the code for each task; I chose the WhatsApp flag and its
+  rules (default false, never set by the seed), FR-47 as its own requirement, that a reported listing stays reachable with a
+  warning, the one shared rule for "verification due", and the decisions for the page (12-hour times, fee wording, the
+  notice, the new Directions icon).
+- **Tomorrow:** phase 6b, the listing page (`feature/listing-page`): spec first, then tests, then the page.
