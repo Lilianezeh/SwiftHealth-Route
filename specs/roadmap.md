@@ -187,10 +187,11 @@ FR-09 to FR-11, FR-13, FR-47, US-06, US-07, FR-08, FR-22. Backend-only: `Fronten
 `phone_numbers.is_whatsapp` (default false, with a migration); the project still has exactly 9 tables.
 - Task 0, spec (api-spec, PRD FR-47, feature folder, roadmap, `LOG.md`): **done**
 - Task 1, `is_whatsapp`: model and migration: **done**
-- Task 2, the repository: next
-- Task 3, schemas and service: next
-- Task 4, the route: next
-- Task 5, wrap-up (draft pull request, production check): next
+- Task 2, the repository: **done**
+- Task 3, schemas and service: **done**; Task 3b, one shared `verification_due` rule for search and the page: **done**
+- Task 4, the route: **done**
+- Task 5, wrap-up: full suite **done** (769 passed, ruff clean); draft pull request next; the production check after the merge
+  and the deploy (the owner)
 
 #### Phase 6b: the listing page. Next (`feature/listing-page`, after 6a is merged)
 US-02, US-03, FR-09 to FR-13 and FR-47 (FR-12 Share and FR-47 WhatsApp are Shoulds). The page with Call, WhatsApp (for numbers marked as WhatsApp) and

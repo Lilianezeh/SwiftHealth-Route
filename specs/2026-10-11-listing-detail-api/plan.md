@@ -27,7 +27,10 @@ until the merge checklist in [validation.md](validation.md) is ticked.
 | `backend/tests/integration/test_listing_repository.py` | Task 2: new |
 | `backend/tests/unit/test_listing_service.py` | Task 3: new |
 | `backend/tests/integration/test_listing_detail.py` | Task 4: new, through HTTP with a fixed clock |
-| `backend/tests/factories.py` | Tasks 2 to 4: small helpers if needed (phones with `is_whatsapp`, a report) |
+| `backend/tests/factories.py` | Tasks 2 to 4: `add_listing` takes `phones=` and `services=` lists (phones with `is_whatsapp`) |
+| `backend/app/services/verification.py`, `tests/unit/test_verification.py` | Task 3b: new. The one `is_verification_due` rule; `search_service` and `listing_service` both use it (added at the owner's request) |
+| `backend/app/services/search_service.py` | Task 3b: uses the shared rule instead of its own comparison |
+| `backend/tests/unit/test_categories_migration_list.py` | Task 1: "is the only head" becomes "the history has one head" (a newer revision follows it) |
 
 One new column (`phone_numbers.is_whatsapp`) and its migration; no new table, no new package, no frontend change. The seed and
 demo code are not changed: a new phone number is not a WhatsApp number unless something says so. In production the container
@@ -35,56 +38,63 @@ runs `alembic upgrade head` before the demo step (`backend/Dockerfile`), so the 
 
 ## Tasks
 
-### Task 0: Spec
-- [ ] Write this folder, the api-spec and PRD text, the roadmap lines and the `LOG.md` notes (the SEO reminder). Commit:
+### Task 0: Spec (done, `a5883e4` and `d4cbfce`)
+- [x] Write this folder, the api-spec and PRD text, the roadmap lines and the `LOG.md` notes (the SEO reminder). Commit:
   `docs(specs): listing detail API and the WhatsApp flag, spec (FR-09, FR-10, FR-13, US-06, US-07, FR-22)` (`a5883e4`; it
   first wrote the WhatsApp button into FR-10, and `docs(specs): WhatsApp is its own requirement, FR-47 (Should)` moved it to
   the new FR-47 and put FR-10 back to its original wording).
 
-### Task 1: `is_whatsapp`: model and migration (tests first)
-- [ ] Write the tests (names in [validation.md](validation.md)): the default is `false` (model and database), a `true` value is
+### Task 1: `is_whatsapp`: model and migration (tests first) (done, `81da415`)
+- [x] Write the tests (names in [validation.md](validation.md)): the default is `false` (model and database), a `true` value is
   saved and read back, the migration works on a table that already has rows (they become `false`), the column is `NOT NULL`,
   the downgrade drops it and keeps the rows, and no seed or demo phone is marked WhatsApp. They fail: the column does not exist.
   Teach `tests/revision_loader.py` to load a revision by its file name pattern.
-- [ ] Add the field to the model, then make the revision in the backend container:
-  `alembic revision --autogenerate -m "phone is_whatsapp"`. Edit it by hand: `server_default=sa.false()` on the new column
-  (autogenerate leaves it out, and a `NOT NULL` column cannot be added to a table with rows without it). Run
-  `alembic upgrade head`, `alembic downgrade -1`, `alembic upgrade head` on the local database, then
-  `alembic revision --autogenerate` again to see that it finds no difference (delete that empty file).
-- [ ] Run `pytest -q -W error` and `ruff check .`, then commit:
+- [x] Add the field to the model, then make the revision in the backend container:
+  `alembic revision --autogenerate -m "phone is_whatsapp"`. (The model declares the server default `false`, so autogenerate
+  wrote it into the revision and no hand edit of the column was needed; the file was only tidied.) Run
+  `alembic upgrade head`, `alembic downgrade -1`, `alembic upgrade head` on the local database, then `alembic check` to see
+  that it finds no difference ("No new upgrade operations detected").
+- [x] Run `pytest -q -W error` and `ruff check .`, then commit:
   `feat(db): phone_numbers.is_whatsapp, default false (FR-10)`. (The commit message says FR-10 and was left as it was; the
   requirement is FR-47.)
 
-### Task 2: The repository (tests first)
-- [ ] Write the tests: a published listing comes back with its category, phones, hours and services; draft, pending, hidden,
+### Task 2: The repository (tests first) (done, `0c8b786`)
+- [x] Write the tests: a published listing comes back with its category, phones, hours and services; draft, pending, hidden,
   re-check-due and unknown slugs come back as nothing; the report check counts different reporters only, in the window, open
   reports only; the number of queries does not grow with the number of phones or services. They fail: the functions do not
   exist.
-- [ ] Add `get_published_detail_by_slug` and `is_reported_not_working` (it uses `flagged_listing_ids` of `search_repository`).
-  One query for the listing and its category, one each for phones, hours and services, one for the reports.
-- [ ] Run the checks, then commit: `feat(listings): load a published listing with its details (FR-09, FR-22)`.
+- [x] Add `get_published_detail_by_slug` and `is_reported_not_working` (it uses `flagged_listing_ids` of `search_repository`).
+  Four queries for the detail (the listing with its category, then phones, hours and services), one for the reports.
+- [x] Run the checks, then commit: `feat(listings): load a published listing with its details (FR-09, FR-22)`.
 
-### Task 3: Schemas and the service (tests first)
-- [ ] Write the unit tests: the 7 entries (missing day, closed day, row without times, duplicate rows, a past-midnight row,
+### Task 3: Schemas and the service (tests first) (done, `97ef721`)
+- [x] Write the unit tests: the 7 entries (missing day, closed day, row without times, duplicate rows, a past-midnight row,
   Monday first, `HH:MM` text), the primary phone first, `is_whatsapp` carried through, the fees as strings, the sorted
   services, the disclaimer, the flags (`verification_due`, `recently_reported_not_working`), `hours_note` and `is_open_now`
   with a fixed moment, and `ListingNotFoundError` for nothing. They fail.
-- [ ] Add the schemas and `listing_service.get_published_listing`. The service takes the moment as an argument (never reads the
+- [x] Add the schemas and `listing_service.get_published_listing`. The service takes the moment as an argument (never reads the
   clock), reuses `is_open_at` and `hours_note` of `services/hours.py`, and raises `ListingNotFoundError` (no HTTP).
-- [ ] Run the checks, then commit: `feat(listings): the listing detail answer (FR-09, FR-10, FR-11, FR-13, FR-47, US-06, US-07, FR-08)`.
+- [x] Run the checks, then commit: `feat(listings): the listing detail answer (FR-09, FR-10, FR-11, FR-13, FR-47, US-06, US-07, FR-08)`.
 
-### Task 4: The route (tests first)
-- [ ] Write the integration tests through HTTP: 200 and the exact set of fields, the 404 body for every unpublished status and
+### Task 3b: One shared `verification_due` rule (tests first) (done, `5da249e`; the owner's request)
+- [x] `services/verification.py` has `is_verification_due(next_check_due, moment)`. Search results and the listing detail both
+  call it; the tests (`test_verification.py`) show the rule, that neither service keeps its own copy, and that search and
+  detail agree on five check dates. Commit: `refactor(search): one shared verification_due rule for search and the listing
+  page (FR-08, NFR-08)`.
+
+### Task 4: The route (tests first) (done, `ac424b1`)
+- [x] Write the integration tests through HTTP: 200 and the exact set of fields, the 404 body for every unpublished status and
   an unknown slug, the opening hours, the phones (with `is_whatsapp`) and the services in the answer, the fees as strings, the
   overdue and reported flags with the listing still returned, agreement with `/search` for `is_open_now` and `hours_note`, none
   of the internal fields, and that the route is public (no token) and writes no audit entry. They fail.
-- [ ] Add `GET /listings/{slug}` (`response_model=ListingDetail`, `tags=["Listings"]` already on the router). The route reads
+- [x] Add `GET /listings/{slug}` (`response_model=ListingDetail`, `tags=["Listings"]` already on the router). The route reads
   the request, calls the service and turns `ListingNotFoundError` into a 404 `{"detail": "Listing not found"}`. Check that
-  the OpenAPI page `/docs` shows the endpoint and its fields.
-- [ ] Run the checks, then commit: `feat(listings): GET /listings/{slug} (FR-09, FR-10, FR-13, FR-47, US-06, US-07, FR-22)`.
+  the OpenAPI page `/docs` shows the endpoint and its fields (a test reads `/openapi.json`).
+- [x] Run the checks, then commit: `feat(listings): GET /listings/{slug} (FR-09, FR-10, FR-13, FR-47, US-06, US-07, FR-22)`.
 
 ### Task 5: Wrap-up
-- [ ] Run the whole backend suite and ruff, push the branch and open the draft pull request. Check that `Backend CI` ran and
-  `Frontend CI` did not; write what `gh pr checks` shows in [validation.md](validation.md).
+- [x] Run the whole backend suite and ruff once, on its own: 769 passed in 85.69 s, ruff clean (on `ac424b1`).
+- [ ] Push the branch and open the draft pull request. Check that `Backend CI` ran and `Frontend CI` did not; write what
+  `gh pr checks` shows in [validation.md](validation.md).
 - [ ] After the merge and the Render deploy, the owner checks production (the migration ran, and a demo listing answers: see
   [validation.md](validation.md)). Then update the roadmap and `LOG.md` once, and tick the boxes with their commit hashes.
