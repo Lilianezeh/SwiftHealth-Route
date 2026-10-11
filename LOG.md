@@ -34,8 +34,8 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   **Backend done 2026-10-10 (PR #17, checked in production):** branch `feature/next-open-close-time`, folder `specs/2026-10-10-next-open-close-time/`. The
   field is `hours_note`, a ready-made text from the server (owner's decision). Owner's wording changes: full day names ("Opens
   Monday 7:30 AM"), "Closes at midnight" and "Opens at midnight" (never "12:00 AM"), and `null` when a listing has no hours
-  recorded. The card change is the next small frontend PR: **in progress (2026-10-10)**, branch `feature/hours-note-on-card`,
-  folder `specs/2026-10-10-hours-note-on-card/` (owner's decisions: a grey `Clock` line under the address, nothing shown when
+  recorded. The card change is the next small frontend PR: **done 2026-10-10 (PR #18, checked on the live site)**, branch
+  `feature/hours-note-on-card`, folder `specs/2026-10-10-hours-note-on-card/` (owner's decisions: a grey `Clock` line under the address, nothing shown when
   `hours_note` is `null`).
 - **Idea (owner, 2026-10-10): refresh the results when the tab is reopened after a long time.** The results, the "Open now"
   badge and `hours_note` are fixed at the moment they load, so a page left open overnight can still say "Opens 8:00 AM
@@ -43,6 +43,21 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   say, 30 minutes, load the results again (keep the filters and the page the visitor is on, or at least the first page). Decide
   the time limit, whether to keep "Load more" pages, and whether a small "Updated" notice is needed. A small frontend PR with
   its own spec, tests first; not part of the card change.
+- **Idea (owner, 2026-10-11): a "Search this area" button on the map.** After the visitor moves the map, a button searches
+  again for the part of the map on screen. Left out of phase 5B-2 on purpose: the API has no search by map area (it has
+  `lat`, `lng` and `radius_km`), so it needs an api-spec change first (a bounding box, or the map centre and a radius), and
+  the centre of the map must still never go into the address (NFR-07). Its own spec, tests first.
+- **Before launch: review the map tile provider (owner, 2026-10-11).** Phase 5B-2 loads tiles from the public OpenStreetMap
+  server, `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. Read the OpenStreetMap tile usage policy
+  (<https://operations.osmfoundation.org/policies/tiles/>) against our expected traffic and decide whether to keep it or move
+  to another tile provider, which may have a cost and an API key. The address is in one place, `frontend/src/config/map.ts`,
+  and the credit stays visible whichever provider is used (the new provider's own credit text). Due: before the public launch.
+- **Before launch: say on the Privacy page that the map loads tiles from OpenStreetMap (owner, 2026-10-11).** When someone
+  opens the map, their browser asks OpenStreetMap's servers for map tiles, so that service can see the visitor's IP address
+  and which part of the map they look at. SwiftHealth does not send the visitor's position to it, does not put the map
+  centre, zoom or position in an address and does not store them. The Privacy page (`/privacy`, "Coming soon") is part of
+  NFR-07; write this in it, and have the final wording checked with the rest of the policy (NFR-13). Due: with the Privacy
+  page, before launch.
 - **Reminder: `hours_note` is English only (owner's decision, 2026-10-10).** "Closes", "Opens", "tomorrow", the day names and
   "midnight" are written in the backend code (`services/hours.py`). If SwiftHealth ever adds another language, this text needs
   translating, and at that point reconsider sending the time as data and formatting it on the frontend. Revisit before any
@@ -247,3 +262,28 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **Learned:** [write this in your own words]
 - **AI use:** Claude Code wrote the tests first and then the code for each task; I chose the design rules, approved the
   plan, the icon package and the colour change, and decided what to keep out of scope.
+
+## Day 8 — 2026-10-11
+- **Built:** Phase 5B-2, the map view on `/search` (FR-07), frontend only (branch `feature/map-view`). `?view=map` and a
+  List | Map toggle that adds a history entry (Back from the map returns to the list); plain Leaflet with OpenStreetMap
+  tiles and the credit; a blue pin drawn in code; a dark dot for the visitor's position; popups with Call and Directions;
+  pins reachable with the keyboard. The list stays the default and complete, and the address never holds a position,
+  centre or zoom (NFR-07). `leaflet` 1.9.4 and `@types/leaflet` 1.9.22 are pinned exactly and `react-leaflet` is removed (it
+  was already in `package.json` with `^` ranges, unused). 507 tests passing (100 new), lint and typecheck clean. First Load
+  JS: `/search` 118 kB (115 kB before); the map is a separate 148 kB chunk, loaded only when it is shown.
+- **Broke / fixed:** the first default map centre Claude picked was not in central Enugu; the owner gave the Holy Ghost
+  Cathedral (6.4361, 7.4881) and it is now set, with a test. A test could not open a popup with Enter, because Leaflet reads the
+  deprecated `keyCode` and the test tool does not send it, so Enter and Space are handled on `keydown`. Leaflet's own styles
+  would turn the white text of the Call button blue and start at 12 px text; `map.css` overrides them (checked as rule text
+  only: jsdom draws no CSS, so the smoke test must look at it).
+- **Smoke test (owner, preview of PR #19, laptop and Honor phone): all passed.** Both pins framed together, popups with Call
+  (white on blue) and Directions, large zoom and close buttons, readable credit, Back and Forward between List and Map, keyboard
+  Tab, Enter and Esc on the pins, the map files loaded only after tapping Map, 320 px with no page-level sideways scroll; on the
+  phone pinch zoom, Call opens the dialler, Directions opens Google Maps.
+- **Still open:** the merge of PR #19 (owner); the three reminders in "To do later" (Search this area, the tile provider
+  review, tiles on the Privacy page); the home page photo refresh is now free to start after the merge.
+- **Learned:** [write this in your own words]
+- **AI use:** Claude Code wrote the spec first, then the tests and the code for each task; I chose the pin and dot design,
+  the keyboard rules, the history entry for the toggle and the default centre, and decided what to keep out of scope.
+- **Tomorrow:** the merge of 5B-2; then phase 6, the listing page (`GET /listings/{slug}` and the Call and
+  Directions page, US-02, US-03, US-06, US-07).

@@ -8,11 +8,13 @@ import { Search } from "lucide-react";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { filtersToQuery, type SearchFilters } from "@/lib/search/searchQuery";
+import { type ResultsView, withView } from "@/lib/search/searchView";
 
-type SearchBoxProps = { defaultValue?: string; filters?: SearchFilters };
+// `view="map"` adds a hidden `view=map` field, so searching again from the map view stays on the map (FR-07).
+type SearchBoxProps = { defaultValue?: string; filters?: SearchFilters; view?: ResultsView };
 
-export function SearchBox({ defaultValue = "", filters = {} }: SearchBoxProps) {
-  const otherFilters = [...new URLSearchParams(filtersToQuery({ ...filters, q: undefined }))];
+export function SearchBox({ defaultValue = "", filters = {}, view = "list" }: SearchBoxProps) {
+  const otherFilters = [...new URLSearchParams(withView(filtersToQuery({ ...filters, q: undefined }), view))];
 
   return (
     <form role="search" action="/search" method="get" className="flex flex-col gap-3 sm:flex-row">

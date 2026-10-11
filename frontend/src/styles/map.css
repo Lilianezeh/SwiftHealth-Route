@@ -1,0 +1,92 @@
+/* Styles of the results map (specs/frontend/ui-spec.md, 2.3 "Map view"). Requirements: FR-07, NFR-10.
+   Imported by ResultsMap right after leaflet.css, so it loads only when the map is shown, and wins over Leaflet's own rules
+   (the same specificity, later in the file). Colours are the design tokens (var(--color-...)), never a hand-written colour,
+   and never red: red is for emergency actions. */
+
+/* Leaflet starts at 12 px text; every text of the site is 16 px or larger. */
+.leaflet-container {
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* The pin: forest blue with a white border and a white plus. The marker is a 48 px box (a tap target) with the 36 px pin at
+   its bottom centre. */
+.map-pin {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  filter: drop-shadow(0 2px 2px color-mix(in srgb, var(--color-ink) 40%, transparent));
+}
+
+.map-pin__body {
+  fill: var(--color-forest);
+  stroke: var(--color-white);
+  stroke-width: 2px;
+}
+
+.map-pin__plus {
+  fill: var(--color-white);
+}
+
+/* The visitor's position: a dark round dot with a white ring. The same class is used for the legend under the map. */
+.map-position {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-position-dot {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  border: 3px solid var(--color-white);
+}
+
+/* Popups: 16 px text, and the buttons keep their own colours (Leaflet colours every link in the map, which would turn the
+   white text of the Call button blue). `revert-layer` gives back the colour that the Tailwind classes set. */
+.leaflet-container .leaflet-popup-content {
+  margin: 12px 16px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.leaflet-container .leaflet-popup-content p {
+  margin: 0;
+}
+
+.leaflet-container .map-popup a {
+  color: revert-layer;
+}
+
+/* The close button and the zoom buttons: 48 px, like every tap target of the site (Leaflet's are 24 and 30 px). */
+.leaflet-container a.leaflet-popup-close-button {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  font-size: 1.75rem;
+  line-height: 48px;
+  color: var(--color-ink);
+}
+
+.leaflet-container .leaflet-bar a {
+  width: 48px;
+  height: 48px;
+  line-height: 48px;
+  font-size: 1.5rem;
+}
+
+/* The credit: 16 px, on a solid white background so it can always be read, with links in the same blue as the site. */
+.leaflet-container .leaflet-control-attribution {
+  padding: 2px 8px;
+  background: var(--color-white);
+  color: var(--color-ink);
+}
+
+.leaflet-container .leaflet-control-attribution a {
+  color: var(--color-forest);
+  text-decoration: underline;
+}

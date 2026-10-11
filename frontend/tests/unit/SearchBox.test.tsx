@@ -17,6 +17,22 @@ describe("SearchBox", () => {
     expect(form.getAttribute("method")?.toLowerCase()).toBe("get");
   });
 
+  it("keeps the map view when searching again: a hidden view=map field, and none for the list (FR-07)", () => {
+    const { rerender } = render(<SearchBox view="map" filters={{ category: "pharmacy" }} />);
+    const hiddenOf = () =>
+      [...screen.getByRole("search").querySelectorAll("input[type=hidden]")].map((input) => [
+        input.getAttribute("name"),
+        input.getAttribute("value"),
+      ]);
+    expect(hiddenOf()).toEqual([["category", "pharmacy"], ["view", "map"]]);
+
+    rerender(<SearchBox view="list" filters={{ category: "pharmacy" }} />);
+    expect(hiddenOf()).toEqual([["category", "pharmacy"]]);
+
+    rerender(<SearchBox />);
+    expect(hiddenOf()).toEqual([]);
+  });
+
   it("is not a client component (it needs no script)", () => {
     const source = readSource("components/search/SearchBox.tsx");
     expect(source).not.toMatch(/["']use client["']/);
