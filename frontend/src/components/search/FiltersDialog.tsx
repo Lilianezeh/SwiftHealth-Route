@@ -15,9 +15,11 @@ import { DISTANCE_CHOICES_KM } from "@/config/search";
 import { useMeta } from "@/hooks/useMeta";
 import { chooseFilterCategories } from "@/lib/search/categoryChoices";
 import { filtersToQuery, type SearchFilters } from "@/lib/search/searchQuery";
+import { type ResultsView, withView } from "@/lib/search/searchView";
 import type { MetaResponse } from "@/types/api";
 
-type FiltersDialogProps = { filters: SearchFilters; hasPosition: boolean };
+// `view` is kept in the address when filters change (FR-07): Apply and Clear never switch the map back to the list.
+type FiltersDialogProps = { filters: SearchFilters; hasPosition: boolean; view?: ResultsView };
 
 type Choice = { value: string; label: string };
 
@@ -172,7 +174,7 @@ function SelectField({ id, label, value, onChange, anyLabel, choices, isLoading 
   );
 }
 
-export function FiltersDialog({ filters, hasPosition }: FiltersDialogProps) {
+export function FiltersDialog({ filters, hasPosition, view = "list" }: FiltersDialogProps) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -191,9 +193,9 @@ export function FiltersDialog({ filters, hasPosition }: FiltersDialogProps) {
     dialogRef.current?.close();
   }
 
-  /** Replaces the address (no new history entry). Only filters go in it, never the position. */
+  /** Replaces the address (no new history entry). Only filters and the view go in it, never the position. */
   function goTo(next: SearchFilters) {
-    const query = filtersToQuery(next);
+    const query = withView(filtersToQuery(next), view);
     router.replace(query ? `/search?${query}` : "/search");
     closeSheet();
   }

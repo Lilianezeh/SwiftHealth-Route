@@ -141,6 +141,38 @@ describe("FiltersDialog", () => {
     expect(dialog).not.toHaveAttribute("open");
   });
 
+  it("Apply keeps view=map in the address, and still replaces the history entry (FR-07)", async () => {
+    render(<FiltersDialog filters={{}} hasPosition={true} view="map" />);
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    const dialog = screen.getByRole("dialog", { name: "Filters", hidden: true });
+    await within(dialog).findByRole("option", { name: "Pharmacy" });
+
+    await userEvent.selectOptions(within(dialog).getByRole("combobox", { name: "Category" }), "pharmacy");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Apply" }));
+
+    expect(navigation.replace).toHaveBeenCalledWith("/search?category=pharmacy&view=map");
+    expect(navigation.push).not.toHaveBeenCalled();
+  });
+
+  it("Clear filters keeps view=map in the address (FR-07)", async () => {
+    render(<FiltersDialog filters={{ category: "pharmacy", q: "nigt" }} hasPosition={true} view="map" />);
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    const dialog = screen.getByRole("dialog", { name: "Filters", hidden: true });
+    await within(dialog).findByRole("option", { name: "Pharmacy" });
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Clear filters" }));
+
+    expect(navigation.replace).toHaveBeenCalledWith("/search?q=nigt&view=map");
+  });
+
+  it("Apply and Clear leave the list view without a view field (the default)", async () => {
+    const dialog = await openDialog({ category: "pharmacy" });
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Clear filters" }));
+
+    expect(navigation.replace).toHaveBeenCalledWith("/search");
+  });
+
   it("closes with the Close button without changing the address", async () => {
     const dialog = await openDialog();
 
