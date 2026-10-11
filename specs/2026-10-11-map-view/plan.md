@@ -77,4 +77,4 @@ below, test the pure helper in a test and keep that check in the smoke test of [
   `gh pr checks` and the link of the Netlify preview are in [validation.md](validation.md).
 - [x] The owner did the smoke test on the preview (laptop, 320 px, keyboard only, and an Honor phone): all passed. The boxes of
   [validation.md](validation.md) are ticked, and the roadmap and `LOG.md` say so.
-- [ ] Merge by the owner. Then the roadmap and `LOG.md` change from "in progress" to "done (merged, PR #19)".
+- [x] Merged by the owner (PR #19, `d4c1a94`, 2026-10-11). The roadmap and `LOG.md` say "done (merged, PR #19)".

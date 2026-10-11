@@ -110,8 +110,8 @@ In `SearchMapView.test.tsx` the map is a stand-in that lists its pins; the real 
   switch between List and Map, and Back from the map returns to the list).
 - [x] **Slow 3G.** The build shows that Leaflet is not in the first load of `/search` (118 kB; the map is a separate 148 kB, 42.5 kB
   gzip, chunk). The owner checked in the smoke test that the map's JavaScript files load only after tapping Map (cache
-  disabled, starting from the list). Not separately recorded: the Slow 3G throttle and how the skeleton looks while the chunk
-  loads.
+  disabled, starting from the list, with Chrome throttled to 3G on a laptop). Not separately recorded: how the skeleton looks
+  while the chunk loads.
 - [x] **A facility name with `<script>` or `&` in it** is text in the pin's accessible name and in the popup (tests above).
 - [x] **Leaflet in jsdom.** jsdom draws no CSS and has no layout, so these are checked only in the smoke test: the 48 px buttons,
   the 16 px credit, the white-on-blue Call button in a popup (`revert-layer`), the focus ring on a pin, the position of a popup
@@ -136,7 +136,7 @@ In `SearchMapView.test.tsx` the map is a stand-in that lists its pins; the real 
 ## Smoke test (owner, after the pull request has a preview)
 
 Done by the owner on the preview of PR #19 (<https://deploy-preview-19--swifthealth-ng.netlify.app>), on a laptop and on an
-Honor phone, 2026-10-11. The owner reported that all of the smoke tests passed. What the owner named:
+Honor phone (on mobile data), 2026-10-11. The owner reported that all of the smoke tests passed. What the owner named:
 - the map shows both pins framed together; the popups have Call (white on blue) and Directions; the zoom and close buttons are
   large; the OpenStreetMap credit is readable;
 - Back and Forward switch between List and Map;
@@ -158,9 +158,9 @@ Honor phone, 2026-10-11. The owner reported that all of the smoke tests passed. 
 - [x] The OpenStreetMap credit is visible at 16 px, with no sideways scrolling at 320 px, and the zoom and popup close buttons
   are easy to tap.
 - [x] The list loads without the Leaflet chunk; it is fetched only when **Map** is tapped. (Owner: checked in the Network
-  panel with the cache disabled, starting from the list; the Slow 3G throttle was not named in the report.)
-- [x] On a real phone: the map loads after the tap; pinch zoom works. (Owner, Honor phone. Whether this was on mobile data or
-  Wi-Fi was not named in the report.)
+  panel with the cache disabled, starting from the list, on a laptop with Chrome throttled to 3G. The laptop was on Wi-Fi
+  through the owner's phone hotspot.)
+- [x] On a real phone: the map loads after the tap; pinch zoom works. (Owner, Honor phone, on mobile data.)
 
 ## Merge checklist
 
