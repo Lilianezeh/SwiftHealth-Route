@@ -139,8 +139,9 @@ One `h1` (the hero heading); each following part has an `h2`.
    goes live."), **Open now means open now** ("Hours follow local time, including late-night places."), **Works on slow data**
    ("Light pages that load on a weak connection."), **Your location stays private** ("Your position stays in your browser and is
    used only to find places near you.").
-6. **SwiftRescue band** — red-accented band with `ambulance.webp` and `fire.webp`; `h2` **"In an emergency, every second counts."**
-   and a red button **"Open SwiftRescue"** (to `/emergency`). The band gives no medical advice.
+6. **SwiftRescue band** — a dark blue band (`forest`) with `ambulance.webp` and `fire.webp`; `h2` **"In an emergency, every second
+   counts."** and a red button **"Open SwiftRescue"** (to `/emergency`). The band gives no medical advice: only the heading, the
+   photos and the button.
 7. **For facility owners** — `owner.webp` and `h2` **"Run a hospital, clinic or pharmacy?"**; text **"List your facility for free
    and help people find you when they need you. We verify every listing before it goes live."**; button **"List your facility"**
    (to `/list-your-facility`).

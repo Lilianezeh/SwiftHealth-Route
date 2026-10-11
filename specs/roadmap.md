@@ -184,13 +184,14 @@ US-13, NFR-01, FR-02, NFR-04, NFR-10, NFR-07, NFR-12. Frontend-only: `Backend CI
 footer (with the photo credit), and 10 photos converted to WebP for 3G, with a smaller hero for phones. It also replaces the
 "Coming soon" text of `/emergency` with a minimal page (a red "Call 112" button), until phase 7. Phase 6b waits for its own
 branch after this one.
-- Task 0, spec (UI spec layout and 2.1, feature folder, roadmap, `LOG.md`): in progress
-- Task 1, the photos (script, WebP files, alt text): next
-- Task 2, header and footer: next
-- Task 3, hero, how it works, browse by type, why SwiftHealth: next
-- Task 4, the band, the facility part, About, the page: next
-- Task 5, the minimal `/emergency` page (a red "Call 112" button; the owner's addition, 112 checked against NCC pages): next
-- Task 6, wrap-up (checks, build, draft pull request, the owner's review on the preview): next
+- Task 0, spec (UI spec layout and 2.1, feature folder, roadmap, `LOG.md`): **done**
+- Task 1, the photos (script, WebP files, alt text): **done**
+- Task 2, header and footer: **done**
+- Task 3, hero, how it works, browse by type, why SwiftHealth: **done**
+- Task 4, the band, the facility part, About, the page: **done**
+- Task 5, the minimal `/emergency` page (a red "Call 112" button; the owner's addition, 112 checked against NCC pages): **done**
+- Task 6, wrap-up: checks and build **done** (582 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
+  review on the preview
 
 ### Phase 6: Listing page. In progress
 US-02, US-03, US-06, US-07. Split in two pull requests, like phase 5: the API first, then the page (owner, 2026-10-11).
