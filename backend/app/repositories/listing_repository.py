@@ -1,12 +1,34 @@
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy import func
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import AuditEntry, Listing, OpeningHours, PhoneNumber, Service, UserReport, VerificationCheck
-from app.models.base import CheckMethod, CheckResult
+from app.models import (
+    AuditEntry,
+    Category,
+    Listing,
+    OpeningHours,
+    PhoneNumber,
+    Service,
+    UserReport,
+    VerificationCheck,
+)
+from app.models.base import CheckMethod, CheckResult, ListingStatus
+from app.repositories.search_repository import flagged_listing_ids
+
+
+@dataclass
+class ListingDetailRows:
+    """A published listing and the rows that belong to it, as the database holds them (FR-09)."""
+
+    listing: Listing
+    category: Category
+    phones: list[PhoneNumber]  # in the order they were added (by id)
+    opening_hours: list[OpeningHours]  # by day of the week, Monday first
+    services: list[Service]  # in the order they were added (by id)
 
 
 async def get_by_id(session: AsyncSession, listing_id: int) -> Listing | None:
@@ -15,6 +37,62 @@ async def get_by_id(session: AsyncSession, listing_id: int) -> Listing | None:
 
 async def get_by_slug(session: AsyncSession, slug: str) -> Listing | None:
     return (await session.exec(select(Listing).where(Listing.slug == slug))).first()
+
+
+async def get_published_detail_by_slug(session: AsyncSession, slug: str) -> ListingDetailRows | None:
+    """The public detail of one listing, or None if no published listing has exactly this slug.
+
+    The status check is here, in the query, so no caller can forget it: a draft, a pending, a hidden and a
+    re-check-due listing are all "not found" (api-spec, trust rule 1). Four queries, however many phones or
+    services there are: the listing with its category, then the phones, the hours and the services.
+    """
+    found = (
+        await session.exec(
+            select(Listing, Category)
+            .join(Category, col(Category.id) == Listing.category_id)
+            .where(Listing.slug == slug, Listing.status == ListingStatus.published)
+        )
+    ).first()
+    if found is None:
+        return None
+    listing, category = found
+    phones = (
+        await session.exec(
+            select(PhoneNumber).where(PhoneNumber.listing_id == listing.id).order_by(col(PhoneNumber.id))
+        )
+    ).all()
+    opening_hours = (
+        await session.exec(
+            select(OpeningHours)
+            .where(OpeningHours.listing_id == listing.id)
+            .order_by(col(OpeningHours.day_of_week), col(OpeningHours.id))
+        )
+    ).all()
+    services = (
+        await session.exec(
+            select(Service).where(Service.listing_id == listing.id).order_by(col(Service.id))
+        )
+    ).all()
+    return ListingDetailRows(
+        listing=listing,
+        category=category,
+        phones=list(phones),
+        opening_hours=list(opening_hours),
+        services=list(services),
+    )
+
+
+async def is_reported_not_working(
+    session: AsyncSession, listing_id: int, *, reports_since: datetime, reports_to_flag: int
+) -> bool:
+    """True when enough different reporters called this listing "not working" since `reports_since`.
+
+    This is the FR-22 rule. It is the query that hides a listing from search
+    (`search_repository.flagged_listing_ids`), limited to this one listing, so the detail page and the
+    search results cannot disagree. Phase 9 moves it to a report repository.
+    """
+    query = flagged_listing_ids(reports_since, reports_to_flag).where(UserReport.listing_id == listing_id)
+    return (await session.exec(query)).first() is not None
 
 
 async def add_listing_with_details(
