@@ -262,3 +262,24 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **Learned:** [write this in your own words]
 - **AI use:** Claude Code wrote the tests first and then the code for each task; I chose the design rules, approved the
   plan, the icon package and the colour change, and decided what to keep out of scope.
+
+## Day 8 — 2026-10-11
+- **Built:** Phase 5B-2, the map view on `/search` (FR-07), frontend only (branch `feature/map-view`). `?view=map` and a
+  List | Map toggle that adds a history entry (Back from the map returns to the list); plain Leaflet with OpenStreetMap
+  tiles and the credit; a blue pin drawn in code; a dark dot for the visitor's position; popups with Call and Directions;
+  pins reachable with the keyboard. The list stays the default and complete, and the address never holds a position,
+  centre or zoom (NFR-07). `leaflet` 1.9.4 and `@types/leaflet` 1.9.22 are pinned exactly and `react-leaflet` is removed (it
+  was already in `package.json` with `^` ranges, unused). 507 tests passing (100 new), lint and typecheck clean. First Load
+  JS: `/search` 118 kB (115 kB before); the map is a separate 148 kB chunk, loaded only when it is shown.
+- **Broke / fixed:** the first default map centre Claude picked was not in central Enugu; the owner gave the Holy Ghost
+  Cathedral (6.4361, 7.4881) and it is now set, with a test. A test could not open a popup with Enter, because Leaflet reads the
+  deprecated `keyCode` and the test tool does not send it, so Enter and Space are handled on `keydown`. Leaflet's own styles
+  would turn the white text of the Call button blue and start at 12 px text; `map.css` overrides them (checked as rule text
+  only: jsdom draws no CSS, so the smoke test must look at it).
+- **Still open:** the smoke test in DevTools and on a phone (owner); the three reminders in "To do later" (Search this area,
+  the tile provider review, tiles on the Privacy page); the home page photo refresh is now free to start after the merge.
+- **Learned:** [write this in your own words]
+- **AI use:** Claude Code wrote the spec first, then the tests and the code for each task; I chose the pin and dot design,
+  the keyboard rules, the history entry for the toggle and the default centre, and decided what to keep out of scope.
+- **Tomorrow:** the smoke test and the merge of 5B-2; then phase 6, the listing page (`GET /listings/{slug}` and the Call and
+  Directions page, US-02, US-03, US-06, US-07).
