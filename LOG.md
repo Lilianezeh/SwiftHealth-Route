@@ -249,7 +249,9 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 
 - Proposed (not final): product name "SwiftHealth Route", tagline "Hospitals, pharmacies and emergency help, open near you." The rename is pending a CAC business-name check and a trademark check (together with the Play Store, App Store, domain and social handle checks above). Do not rename anything until those checks pass; then apply it in the rename chore after 5B-1.
 
-- To do (own feature, after phase 5B-2): home page refresh with photos: the hero, the category cards, and the ambulance and fire service pictures in SwiftRescue. Needs the owner's photos (rights and licence confirmed), compressed for slow 3G (NFR-01) with alt text, and the UI spec first. The SwiftRescue pictures must not slow `/emergency`, which has to work offline.
+- **In progress (2026-10-11): the home page redesign with photos**, branch `feature/home-redesign`, folder `specs/2026-10-11-home-redesign/`: the hero, the category cards, the SwiftRescue band with the ambulance and fire photos, the new header and footer. Still to do, in phase 7: pictures on `/emergency` itself. They must not slow `/emergency`, which has to work offline (NFR-03).
+- **Before launch: keep proof of the Magnific licence (owner, 2026-10-11).** All ten home page photos come from Magnific's free collection, and the footer says "Images designed by Magnific" with a link to https://www.magnific.com. Keep the download records (the page, the date, the licence shown) in one place, and have the attribution wording checked against Magnific's own licence terms with the rest of the legal review (NFR-13). We do not state here what the licence allows.
+- **Home page buttons and "Coming soon" pages (2026-10-11).** "Emergency help", "Open SwiftRescue" and the red header button go to `/emergency`. The owner added a minimal page there in the home redesign (a red "Call 112" button and one line), until the full phase 7 page; 112 was checked against NCC pages (see `specs/2026-10-11-home-redesign/requirements.md`, decision 18). "List your facility" goes to `/list-your-facility` (phase 10) and "About" is phase 13b: both still say "Coming soon". Open question for the owner: the PRD (FR-26) asks the SwiftRescue page to say that SwiftRescue does not dispatch or guarantee a response; the minimal page does not have that sentence yet.
 
 ## Day 7 — 2026-10-10
 - **Built:** Phase 5B-1, the Find page (`/find`) and the results page (`/search`), frontend only (branch
@@ -319,7 +321,7 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   `specs/2026-10-11-listing-detail-api/requirements.md`); the "Search this area", tile provider and Privacy page reminders; the
   `wa.me` link format still has to be checked on WhatsApp's own help page before 6b builds it; server-rendered listing pages
   for Google (after the Render upgrade).
-- **Learned:** [write this in your own words]
+- **Learned:** When tests fail for strange reasons, check the setup first. Docker had switched off, and two test runs at once broke each other, but the code was fine.
 - **AI use:** Claude Code wrote the spec first, then the tests and the code for each task; I chose the WhatsApp flag and its
   rules (default false, never set by the seed), FR-47 as its own requirement, that a reported listing stays reachable with a
   warning, the one shared rule for "verification due", and the decisions for the page (12-hour times, fee wording, the

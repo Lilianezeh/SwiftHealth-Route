@@ -13,8 +13,8 @@ Sketches go in `docs/screens/`.
 - Tagline: *Emergency, Hospital & Pharmacy Finder*.
 
 ### Layout (every page, from `src/app/layout.tsx`)
-- **Header:** SwiftHealth logo/name (links to `/find`) on the left; red **SwiftRescue** button on the right, always visible, links to `/emergency`. `forest` background with a 4 px `accent` line under it.
-- **Footer:** About · How we verify · Privacy · Terms · Contact · List your facility.
+- **Header** (new design, 2026-10-11, see 2.1): the **SwiftHealth** wordmark on the left (links to `/`); then **Find care** (`/find`), red **SwiftRescue** (`/emergency`) and **For facilities** (`/list-your-facility`). `forest` background with a 4 px `accent` line under it. On a phone the bar shows the wordmark, the red SwiftRescue button (always visible, FR-02) and a **Menu** button; the menu opens a panel with Find care and For facilities. From tablet width (768 px) all links are in the bar. The menu button is at least 48 px, has the word "Menu" beside its icon, and says whether it is open (`aria-expanded`); Esc closes the panel.
+- **Footer:** About · How we verify · Privacy · Terms · Contact · List your facility; then the photo credit "Images designed by Magnific" (a link to `https://www.magnific.com`, opens in a new tab); then "© 2026 SwiftHealth".
 - Mobile-first; content max width 720 px on public pages, 1200 px in admin.
 
 ### Design tokens (in `src/styles/globals.css`)
@@ -106,16 +106,55 @@ for small text on both (the old `pine` did not on `paper`).
 ## 2. Public screens
 
 ### 2.1 Landing page — `/`
-**Purpose:** pitch SwiftHealth to visitors, partners and investors.
-**Sections, top to bottom:**
-1. Hero: "Find open care, fast." + tagline + two buttons: **Find care** (`/find`) and **SwiftRescue** (`/emergency`).
-2. The problem: three short points (numbers go stale, no single source, hidden hours and fees).
-3. How it works: Search → Verified listing → Call or get directions.
-4. How we verify: call, visit, re-check, last-verified date (links to `/how-we-verify`).
-5. Who it's for: residents · facilities.
-6. Pricing: Residents — free, always. Facilities — free verified listing; Featured listing ₦5,000/month (placeholder) (shown with 2 decimals only when not whole, e.g. ₦5,000 or ₦5,000.50). Sponsors — fund SwiftRescue.
-7. Call to action for facilities: **List your facility**.
-**API:** none (static), except the small API-status check during development.
+**Redesigned 2026-10-11** (owner's brief; feature `specs/2026-10-11-home-redesign/`). **Purpose:** show a resident, a partner or a
+facility owner what SwiftHealth is, in one phone-sized scroll. **API:** none; the page is static. (The old API-status line and
+the old outline with "the problem", "how we verify" and "pricing" are gone: the featured-listing price belongs on the facility page.)
+
+**Rules for the whole page.** Phone first, from 320 px, no sideways scrolling. Blue palette (tokens only) and the system fonts.
+**Red is only for SwiftRescue and emergencies** (the header button, the hero's "Emergency help", the band's "Open SwiftRescue").
+No slideshow, no animation, no statistics, no testimonials. Text is 16 px or larger everywhere, "small" lines included. Every
+photo is a `next/image` (or its `getImageProps` for the hero `<picture>`) with fixed `width` and `height`, `unoptimized` (the
+files are final) and alt text; the hero loads at once and every other photo loads lazily. The first city is named once, in `siteConfig`, and the wording never says "Enugu only".
+One `h1` (the hero heading); each following part has an `h2`.
+
+**Parts, top to bottom** (the words below are the exact text):
+1. **Header** — see "Layout" above.
+2. **Hero** — `h1` **"Find open care near you, fast."** Line: **"Hospitals, pharmacies and emergency help, open near you. Now live
+   in Enugu, with more cities coming."** Buttons: **"Find care near me"** (white, `forest` text, to `/find`) and **"Emergency help"**
+   (red, to `/emergency`). Small line (16 px, secondary): **"Free to use · No sign-up needed"**.
+   - *Phone:* one photo fills the background of the hero with a dark blue overlay (`pine-dark` at 80% or more; the white text is
+     at least 4.5:1 on any photo). It is the small version, `hero-phone.webp` (640 px wide, about 50 kB): the hero is one
+     `<picture>` whose `<source media="(max-width: 767px)">` has `srcset="hero-phone.webp 640w"` and `sizes="100vw"`, and whose
+     `<img>` is `hero.webp` (1280 px) for wider screens. So a phone downloads neither `hero.webp` nor `hero2.webp`. The hero is
+     loaded at once (`loading="eager"`, `fetchPriority="high"`), without `priority`, so no big file is preloaded on a phone.
+   - *Tablet and desktop (768 px and up):* text on the left; on the right `hero.webp` large and `hero2.webp` smaller, in front,
+     overlapping it, with rounded corners. `hero2` is a lazy image in a box that is hidden below 768 px.
+3. **How it works** — `h2` "How it works". Three steps, each with an icon, a step number and a line: **"Search or share your
+   location"**, **"See who's open now"**, **"Call, WhatsApp or get directions"**.
+4. **Browse by type** — `h2` "Browse by type". Photo cards: **Hospital, Clinic, Maternity, Pharmacy, Laboratory**, each the
+   photo (`hospital`, `clinic`, `maternity`, `pharmacy`, `laboratory`, 640 × 480) over a label, the whole card one link to
+   `/search?category=<slug>` (`hospital`, `clinic`, `maternity`, `pharmacy`, `laboratory`). Two columns on a phone, five from
+   desktop width.
+5. **Why SwiftHealth** — `h2` "Why SwiftHealth". Four items with icons: **Verified listings** ("We check every listing before it
+   goes live."), **Open now means open now** ("Hours follow local time, including late-night places."), **Works on slow data**
+   ("Light pages that load on a weak connection."), **Your location stays private** ("Your position stays in your browser and is
+   used only to find places near you.").
+6. **SwiftRescue band** — red-accented band with `ambulance.webp` and `fire.webp`; `h2` **"In an emergency, every second counts."**
+   and a red button **"Open SwiftRescue"** (to `/emergency`). The band gives no medical advice.
+7. **For facility owners** — `owner.webp` and `h2` **"Run a hospital, clinic or pharmacy?"**; text **"List your facility for free
+   and help people find you when they need you. We verify every listing before it goes live."**; button **"List your facility"**
+   (to `/list-your-facility`).
+8. **About** — `h2` **"Starting in Enugu. Growing across Nigeria."**; text **"SwiftHealth makes it easier to find care that's
+   actually open. We're starting in Enugu, checking every listing ourselves, and adding new cities one at a time so every listing
+   stays trustworthy."**
+9. **Footer** — see "Layout" above.
+
+**Images** (in `frontend/public/images/home/`, made by `scripts/optimize-home-images.mjs`): `hero` and `hero2` under 150 kB each,
+`hero-phone` under 50 kB, the five category photos, `ambulance` and `fire` under 60 kB each, `owner` under 80 kB. First-load weight
+of the page stays under 500 KB (NFR-01): only the hero photo counts (the small one on a phone), because every other photo is lazy. Alt text is short and factual and is written after
+the converted photos have been looked at.
+**Known gap:** `/list-your-facility` and `/about` are still "Coming soon" pages (phases 10 and 13b). `/emergency` has the minimal
+page of 2.5 until phase 7.
 
 ### 2.2 Find home — `/find`
 FR-01, FR-03. **Purpose:** the app's start screen.
@@ -184,6 +223,12 @@ FR-09 to FR-13, US-02, US-03, US-06, US-07. **API:** `GET /listings/{slug}`.
 **404:** "This listing isn't available. It may be under re-verification." + link to search.
 
 ### 2.5 SwiftRescue — `/emergency`
+**Interim version, until phase 7** (owner's addition with the home page redesign, 2026-10-11; FR-14, FR-02): a static page with
+the `h1` "SwiftRescue", a large red **Call 112** button (a `tel:112` link, at least 48 px high, the `emergency` colour with white
+text) and the line **"Our full list of verified ambulance, fire and hospital emergency numbers is coming soon."** Nothing else:
+no list, no map, no advice. 112 is the NCC's national emergency number (sources in
+`specs/2026-10-11-home-redesign/requirements.md`, decision 18). Phase 7 replaces the whole page with the version below.
+
 FR-14 to FR-19, FR-24 to FR-26, US-04, US-09, US-14. **API:** `GET /emergency`.
 1. **112 card** at the top: "National emergency number — 112" with a large red **Call 112** button.
 2. **Share my location** button (`ShareLocationButton`).

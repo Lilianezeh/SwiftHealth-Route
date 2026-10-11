@@ -177,6 +177,21 @@ FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Merged a
 - Still to do before launch (`LOG.md`, "To do later"): "Search this area", the tile provider review, and map tiles on the
   Privacy page.
 
+### Home page redesign (phase 13a, pulled forward by the owner, 2026-10-11). In progress (branch `feature/home-redesign`)
+US-13, NFR-01, FR-02, NFR-04, NFR-10, NFR-07, NFR-12. Frontend-only: `Backend CI` must not run on it. Feature folder:
+[requirements](2026-10-11-home-redesign/requirements.md), [plan](2026-10-11-home-redesign/plan.md),
+[validation](2026-10-11-home-redesign/validation.md). The new home page in 9 parts, the new header (with a phone menu) and
+footer (with the photo credit), and 10 photos converted to WebP for 3G, with a smaller hero for phones. It also replaces the
+"Coming soon" text of `/emergency` with a minimal page (a red "Call 112" button), until phase 7. Phase 6b waits for its own
+branch after this one.
+- Task 0, spec (UI spec layout and 2.1, feature folder, roadmap, `LOG.md`): in progress
+- Task 1, the photos (script, WebP files, alt text): next
+- Task 2, header and footer: next
+- Task 3, hero, how it works, browse by type, why SwiftHealth: next
+- Task 4, the band, the facility part, About, the page: next
+- Task 5, the minimal `/emergency` page (a red "Call 112" button; the owner's addition, 112 checked against NCC pages): next
+- Task 6, wrap-up (checks, build, draft pull request, the owner's review on the preview): next
+
 ### Phase 6: Listing page. In progress
 US-02, US-03, US-06, US-07. Split in two pull requests, like phase 5: the API first, then the page (owner, 2026-10-11).
 
@@ -243,7 +258,8 @@ US-11, US-12.
 
 ### Phase 13: Landing page, information pages and polish. Next
 US-13.
-- 13a: landing page
+- 13a: landing page. **Pulled forward by the owner (2026-10-11): in progress, see "Home page redesign" below** (branch
+  `feature/home-redesign`)
 - 13b: About, How we verify, Privacy policy, Terms of use, Contact us (FR-23)
 - 13c: accessibility and speed pass (NFR-01, NFR-10)
 
