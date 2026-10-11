@@ -42,14 +42,18 @@ def test_emergency_categories_have_14_days_and_the_others_45() -> None:  # FR-33
     assert sum(1 for row in rows if row[2]) == 7
 
 
-def test_migration_follows_the_last_revision_and_is_the_only_head() -> None:
+def test_migration_follows_the_last_revision_and_the_history_has_one_head() -> None:
+    # It was the only head when it was written. The next revision (phone is_whatsapp, FR-10) follows it,
+    # so the check is now "one head" and "this revision is in the chain", not "this revision is the head".
     module = load_revision()
     config = Config(str(BACKEND_FOLDER / "alembic.ini"))
     config.set_main_option("script_location", str(BACKEND_FOLDER / "alembic"))
     config.set_main_option("path_separator", "os")  # silences Alembic's warning about the old default
+    scripts = ScriptDirectory.from_config(config)
 
     assert module.down_revision == LAST_REVISION_BEFORE_THIS_ONE
-    assert ScriptDirectory.from_config(config).get_heads() == [module.revision]
+    assert len(scripts.get_heads()) == 1
+    assert module.revision in [script.revision for script in scripts.walk_revisions()]
 
 
 def test_migration_sql_only_inserts_and_never_updates_or_deletes() -> None:
