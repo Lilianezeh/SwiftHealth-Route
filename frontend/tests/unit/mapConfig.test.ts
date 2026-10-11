@@ -47,6 +47,10 @@ describe("the default view and the zoom limits", () => {
     expect(Math.abs(DEFAULT_MAP_CENTRE.longitude)).toBeLessThanOrEqual(180);
   });
 
+  it("centres on the Holy Ghost Cathedral in Enugu city (owner's choice, 2026-10-11)", () => {
+    expect(DEFAULT_MAP_CENTRE).toEqual({ latitude: 6.4361, longitude: 7.4881 });
+  });
+
   it("keeps the zooms in the range the OpenStreetMap tiles have (0 to 19), the single-pin zoom closer than the default", () => {
     expect(DEFAULT_MAP_ZOOM).toBeGreaterThanOrEqual(0);
     expect(SINGLE_PIN_ZOOM).toBeGreaterThan(DEFAULT_MAP_ZOOM);
