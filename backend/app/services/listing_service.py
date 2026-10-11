@@ -17,6 +17,7 @@ from app.repositories.listing_repository import ListingDetailRows
 from app.schemas.listing import CategorySummary, ListingDetail, OpeningHoursRead, PhoneRead, ServiceRead
 from app.services.hours import has_usable_times, hours_note, is_open_at
 from app.services.search_service import REPORT_WINDOW, REPORTS_TO_EXCLUDE
+from app.services.verification import is_verification_due
 
 # FR-13
 DISCLAIMER = (
@@ -92,8 +93,7 @@ def to_detail(rows: ListingDetailRows, *, recently_reported: bool, moment: datet
         is_24_hours=listing.is_24_hours,
         primary_phone=primary_phone,
         last_verified_at=listing.last_verified_at,
-        # The same rule as a search result (FR-08): overdue but still published, so shown with the label.
-        verification_due=listing.next_check_due is not None and listing.next_check_due < moment,
+        verification_due=is_verification_due(listing.next_check_due, moment),  # FR-08, as in search
         sponsored=False,
         hours_note=hours_note(rows.opening_hours, listing.is_24_hours, moment),
         landmark=listing.landmark,
