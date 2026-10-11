@@ -1,6 +1,6 @@
 """phone is_whatsapp
 
-Adds the is_whatsapp flag to phone numbers (FR-10): true only when staff or the provider said the number is on WhatsApp.
+Adds the is_whatsapp flag to phone numbers (FR-47): true only when staff or the provider said the number is on WhatsApp.
 The server default is false, so the rows that already exist (production has demo rows) become false and the column can be
 NOT NULL on a filled table. No seed or demo number is ever set to true. Safe to downgrade: it drops the column only.
 Feature: specs/2026-10-11-listing-detail-api/ (decision 10).

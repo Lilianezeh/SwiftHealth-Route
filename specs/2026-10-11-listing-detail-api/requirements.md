@@ -8,9 +8,10 @@ done is in [validation.md](validation.md). This is the backend half of phase 6; 
 
 - **FR-09** ([prd.md](../prd.md)): the data of a listing page: name, category, address, landmark, phone numbers, opening hours
   by day, services, estimated fee ranges with the date collected, entrance photo, last-verified date.
-- **FR-10:** the phone numbers (`+234…`), which of them are on WhatsApp, and the position for the Call, WhatsApp and
-  Directions buttons. The buttons are phase 6b. (The WhatsApp button is the owner's addition to FR-10, written into
-  [prd.md](../prd.md) with this phase.)
+- **FR-10:** the phone numbers (`+234…`) and the position for the Call and Directions buttons. The buttons are phase 6b.
+- **FR-47** (Should): which phone numbers are on WhatsApp (`is_whatsapp`), for the WhatsApp button of phase 6b. The owner added
+  this requirement on 2026-10-11 ([prd.md](../prd.md)); FR-10 keeps its original wording. This phase adds the flag and
+  returns it; the button is 6b.
 - **FR-11:** fees are estimates. The API sends the fees and the date collected as stored; the label is the page's.
 - **FR-13:** the directory disclaimer, in the answer of every listing.
 - **US-06** and **US-07:** services, hours and fees as a dated range; the last-verified date.
@@ -70,7 +71,7 @@ exactly 9 tables. The one change to the data model is a new column, `phone_numbe
 9. **Layers.** Route (HTTP only) calls `listing_service`, which calls `listing_repository`. The report rule is the query
    `flagged_listing_ids` of `search_repository`, used by one new listing function (a small coupling between two repositories;
    phase 9 moves it to a report repository). The window (7 days) and the count (2) are the constants of `search_service`.
-10. **`is_whatsapp` on each phone (owner, 2026-10-11).** A new boolean column on `phone_numbers`, `NOT NULL`, default `false`.
+10. **`is_whatsapp` on each phone (owner, 2026-10-11; FR-47).** A new boolean column on `phone_numbers`, `NOT NULL`, default `false`.
     - **Migration:** a new Alembic revision adds the column with a server default of `false`, so the rows that already exist
       (production has demo listings) become `false` and the migration can run on a filled table. The downgrade drops the
       column. The model declares the same default, so `alembic revision --autogenerate` finds no difference afterwards.
@@ -96,7 +97,7 @@ exactly 9 tables. The one change to the data model is a new column, `phone_numbe
    Call before you go."
 7. **Primary phone first** with the big Call button; the other numbers each have their own Call button.
 8. **404 page:** "This listing isn't available. It may be under re-verification." with a link to search (UI spec 2.4).
-9. **WhatsApp button (owner, 2026-10-11).**
+9. **WhatsApp button (owner, 2026-10-11; FR-47, a Should).**
    - Beside **Call**, for the numbers with `is_whatsapp: true` only. Call stays the primary (filled) button; WhatsApp is a
      secondary button. A number that is not marked gets Call alone. The listing page only: a card or a map popup has just
      `primary_phone`, with no flag, and does not change.

@@ -1,4 +1,4 @@
-"""The "phone is_whatsapp" migration, run on the test database. Requirement: FR-10.
+"""The "phone is_whatsapp" migration, run on the test database. Requirement: FR-47.
 
 Decision 10 in specs/2026-10-11-listing-detail-api/requirements.md. The test database is built with
 create_all, so the column is already there: each test takes it away first (inside the test's

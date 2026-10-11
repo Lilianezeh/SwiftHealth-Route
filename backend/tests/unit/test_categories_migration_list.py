@@ -43,7 +43,7 @@ def test_emergency_categories_have_14_days_and_the_others_45() -> None:  # FR-33
 
 
 def test_migration_follows_the_last_revision_and_the_history_has_one_head() -> None:
-    # It was the only head when it was written. The next revision (phone is_whatsapp, FR-10) follows it,
+    # It was the only head when it was written. The next revision (phone is_whatsapp, FR-47) follows it,
     # so the check is now "one head" and "this revision is in the chain", not "this revision is the head".
     module = load_revision()
     config = Config(str(BACKEND_FOLDER / "alembic.ini"))

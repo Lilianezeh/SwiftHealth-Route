@@ -1,4 +1,4 @@
-"""The is_whatsapp flag of a phone number. Requirement: FR-10 (the WhatsApp button comes in phase 6b).
+"""The is_whatsapp flag of a phone number. Requirement: FR-47 (the WhatsApp button comes in phase 6b).
 
 Decision 10 in specs/2026-10-11-listing-detail-api/requirements.md: the column is NOT NULL and false by
 default, and nothing that is seeded or demoed is ever marked as a WhatsApp number (a fictional number can

@@ -3,7 +3,7 @@
 The test database is built with create_all, not Alembic (conftest.py), so a revision's upgrade() is run
 by hand through Alembic's Operations on a connection: the same SQL that `alembic upgrade head` executes.
 A revision is found by the pattern of its file name; with no pattern it is the "all spec categories" revision.
-Requirements: FR-05, FR-15, FR-33 (categories), FR-10 (is_whatsapp).
+Requirements: FR-05, FR-15, FR-33 (categories), FR-47 (is_whatsapp).
 Features: specs/2026-10-10-reference-categories/, specs/2026-10-11-listing-detail-api/.
 """
 import importlib.util

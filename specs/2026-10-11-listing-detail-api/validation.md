@@ -1,7 +1,7 @@
 # Listing detail API (Phase 6a): validation
 
 How we know the feature is really done. What we build is in [requirements.md](requirements.md); the tasks are in
-[plan.md](plan.md). Every test below proves FR-09, FR-10, FR-11, FR-13, US-06, US-07, FR-08, FR-22, NFR-07 or NFR-08. Tick a
+[plan.md](plan.md). Every test below proves FR-09, FR-10, FR-11, FR-13, FR-47, US-06, US-07, FR-08, FR-22, NFR-07 or NFR-08. Tick a
 box only after the test exists and passes.
 
 ## How to run
@@ -111,6 +111,6 @@ The commands run in the backend container:
 - [ ] On the draft pull request `Backend CI` runs and is green, and `Frontend CI` does not run. Write what `gh pr checks` shows:
   _(fill in)_.
 - [ ] `git diff --stat origin/main -- frontend` is empty.
-- [ ] The api-spec, the PRD (FR-10), the [roadmap](../roadmap.md) and `LOG.md` are up to date.
+- [ ] The api-spec, the PRD (the new FR-47; FR-10 unchanged), the [roadmap](../roadmap.md) and `LOG.md` are up to date.
 - [ ] The production check above is done after the deploy.
 - [ ] The pull request stays a draft until every box above is ticked.

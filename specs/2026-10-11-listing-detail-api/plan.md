@@ -3,7 +3,7 @@
 How we build it, in small tasks. Requirements and decisions are in [requirements.md](requirements.md); the tests and checks
 that prove each task are in [validation.md](validation.md).
 
-Rules: tests first, one commit per task, requirement IDs (FR-09, FR-10, FR-11, FR-13, US-06, US-07, FR-08, FR-22, NFR-07, NFR-08)
+Rules: tests first, one commit per task, requirement IDs (FR-09, FR-10, FR-11, FR-13, FR-47, US-06, US-07, FR-08, FR-22, NFR-07, NFR-08)
 in every commit and test. Tick a box with its commit hash only when the step is really done. Check
 `git branch --show-current` before every commit and push, and never push to `main` (CLAUDE.md). The pull request stays a draft
 until the merge checklist in [validation.md](validation.md) is ticked.
@@ -12,7 +12,7 @@ until the merge checklist in [validation.md](validation.md) is ticked.
 
 | File | Change |
 | --- | --- |
-| `specs/backend/api-spec.md`, `specs/prd.md` | `ListingDetail` rules, `recently_reported_not_working`, `is_whatsapp`, `GET /listings/{slug}`; FR-10 gains the WhatsApp button (Task 0) |
+| `specs/backend/api-spec.md`, `specs/prd.md` | `ListingDetail` rules, `recently_reported_not_working`, `is_whatsapp`, `GET /listings/{slug}`; `prd.md` gains FR-47, the WhatsApp button (Task 0) |
 | `specs/2026-10-11-listing-detail-api/` | This folder (Task 0) |
 | `specs/roadmap.md`, `LOG.md` | Status; the owner's decisions for 6b; the SEO reminder (Task 0) |
 | `backend/app/models/phone_number.py` | Task 1: `is_whatsapp` (default `False`, server default `false`) |
@@ -37,7 +37,9 @@ runs `alembic upgrade head` before the demo step (`backend/Dockerfile`), so the 
 
 ### Task 0: Spec
 - [ ] Write this folder, the api-spec and PRD text, the roadmap lines and the `LOG.md` notes (the SEO reminder). Commit:
-  `docs(specs): listing detail API and the WhatsApp flag, spec (FR-09, FR-10, FR-13, US-06, US-07, FR-22)`.
+  `docs(specs): listing detail API and the WhatsApp flag, spec (FR-09, FR-10, FR-13, US-06, US-07, FR-22)` (`a5883e4`; it
+  first wrote the WhatsApp button into FR-10, and `docs(specs): WhatsApp is its own requirement, FR-47 (Should)` moved it to
+  the new FR-47 and put FR-10 back to its original wording).
 
 ### Task 1: `is_whatsapp`: model and migration (tests first)
 - [ ] Write the tests (names in [validation.md](validation.md)): the default is `false` (model and database), a `true` value is
@@ -50,7 +52,8 @@ runs `alembic upgrade head` before the demo step (`backend/Dockerfile`), so the 
   `alembic upgrade head`, `alembic downgrade -1`, `alembic upgrade head` on the local database, then
   `alembic revision --autogenerate` again to see that it finds no difference (delete that empty file).
 - [ ] Run `pytest -q -W error` and `ruff check .`, then commit:
-  `feat(db): phone_numbers.is_whatsapp, default false (FR-10)`.
+  `feat(db): phone_numbers.is_whatsapp, default false (FR-10)`. (The commit message says FR-10 and was left as it was; the
+  requirement is FR-47.)
 
 ### Task 2: The repository (tests first)
 - [ ] Write the tests: a published listing comes back with its category, phones, hours and services; draft, pending, hidden,
@@ -68,7 +71,7 @@ runs `alembic upgrade head` before the demo step (`backend/Dockerfile`), so the 
   with a fixed moment, and `ListingNotFoundError` for nothing. They fail.
 - [ ] Add the schemas and `listing_service.get_published_listing`. The service takes the moment as an argument (never reads the
   clock), reuses `is_open_at` and `hours_note` of `services/hours.py`, and raises `ListingNotFoundError` (no HTTP).
-- [ ] Run the checks, then commit: `feat(listings): the listing detail answer (FR-09, FR-10, FR-11, FR-13, US-06, US-07, FR-08)`.
+- [ ] Run the checks, then commit: `feat(listings): the listing detail answer (FR-09, FR-10, FR-11, FR-13, FR-47, US-06, US-07, FR-08)`.
 
 ### Task 4: The route (tests first)
 - [ ] Write the integration tests through HTTP: 200 and the exact set of fields, the 404 body for every unpublished status and
@@ -78,7 +81,7 @@ runs `alembic upgrade head` before the demo step (`backend/Dockerfile`), so the 
 - [ ] Add `GET /listings/{slug}` (`response_model=ListingDetail`, `tags=["Listings"]` already on the router). The route reads
   the request, calls the service and turns `ListingNotFoundError` into a 404 `{"detail": "Listing not found"}`. Check that
   the OpenAPI page `/docs` shows the endpoint and its fields.
-- [ ] Run the checks, then commit: `feat(listings): GET /listings/{slug} (FR-09, FR-10, FR-13, US-06, US-07, FR-22)`.
+- [ ] Run the checks, then commit: `feat(listings): GET /listings/{slug} (FR-09, FR-10, FR-13, FR-47, US-06, US-07, FR-22)`.
 
 ### Task 5: Wrap-up
 - [ ] Run the whole backend suite and ruff, push the branch and open the draft pull request. Check that `Backend CI` ran and
