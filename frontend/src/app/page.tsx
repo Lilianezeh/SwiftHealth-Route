@@ -1,17 +1,25 @@
-import { getHealth } from "@/lib/api/client";
+/** The home page: parts 2 to 8 of the nine (the header and the footer come from the root layout).
+ * Requirements: US-13, NFR-01, NFR-10, NFR-12. UI spec 2.1; specs/2026-10-11-home-redesign/.
+ * It is a static page: it shows no data from the API and makes no request, so a sleeping API cannot slow it down.
+ */
+import { AboutSwiftHealth } from "@/components/home/AboutSwiftHealth";
+import { BrowseByType } from "@/components/home/BrowseByType";
+import { FacilityOwners } from "@/components/home/FacilityOwners";
+import { HomeHero } from "@/components/home/HomeHero";
+import { HowItWorks } from "@/components/home/HowItWorks";
+import { RescueBand } from "@/components/home/RescueBand";
+import { WhySwiftHealth } from "@/components/home/WhySwiftHealth";
 
-// Landing page placeholder. Day 9: problem, who it's for, pricing.
-export default async function Home() {
-  const health = await getHealth();
+export default function Home() {
   return (
-    <section className="mx-auto max-w-2xl px-4 py-16">
-      <h1 className="text-4xl font-bold text-forest">SwiftHealth: find open care, fast.</h1>
-      <p className="mt-4 text-lg">
-        Emergency, hospital and pharmacy finder. Verified listings, one-tap calling and directions, with SwiftRescue for emergencies. Now in Enugu.
-      </p>
-      <p className="mt-8 text-base">
-        API status: <strong>{health ? "connected" : "not reachable"}</strong>
-      </p>
-    </section>
+    <>
+      <HomeHero />
+      <HowItWorks />
+      <BrowseByType />
+      <WhySwiftHealth />
+      <RescueBand />
+      <FacilityOwners />
+      <AboutSwiftHealth />
+    </>
   );
 }

@@ -114,6 +114,16 @@ export const HOME_WORDS = {
     steps: ["Search or share your location", "See who's open now", "Call, WhatsApp or get directions"],
   },
   browse: { heading: "Browse by type" },
+  rescue: { heading: "In an emergency, every second counts.", button: "Open SwiftRescue" },
+  owners: {
+    heading: "Run a hospital, clinic or pharmacy?",
+    text: "List your facility for free and help people find you when they need you. We verify every listing before it goes live.",
+    button: "List your facility",
+  },
+  about: {
+    heading: `Starting in ${siteConfig.launchCity}. Growing across Nigeria.`,
+    text: `SwiftHealth makes it easier to find care that's actually open. We're starting in ${siteConfig.launchCity}, checking every listing ourselves, and adding new cities one at a time so every listing stays trustworthy.`,
+  },
   why: {
     heading: "Why SwiftHealth",
     items: [
