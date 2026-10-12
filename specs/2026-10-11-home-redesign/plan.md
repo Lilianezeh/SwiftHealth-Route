@@ -191,3 +191,9 @@ The changes are R25 to R29 of the "Fifth revision, 2026-10-12" in [requirements.
 - [x] (2f86c17) Run lint, typecheck, the whole suite (637 tests) and the build, one at a time, then commit: `feat(web): owners photo
   and text, footer in the page container, softer veil, tablets use the phone hero (US-13, NFR-10)`.
 - [x] (2f86c17) Push, wait for the checks, and tell the owner the preview is ready.
+
+### Task 12: no forced tall hero below 1024 px (tests first)
+R30 in [requirements.md](requirements.md). One class in `HomeHero.tsx` (`min-h-[85svh]` becomes `lg:min-h-[85svh]`) and its test.
+- [x] (f3cada1) Change the hero test first (the minimum height is `lg:` only, no plain or `md:` minimum height); it fails.
+- [x] (f3cada1) Change the class; run lint, typecheck, the whole suite (637 tests) and the build, then commit and push; tell the owner
+  the preview is ready.

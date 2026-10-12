@@ -126,7 +126,7 @@ heading); each following part has an `h2`.
 1. **Header** — see "Layout" above. On this page it is transparent and sits on top of the hero.
 2. **Hero** — a **sky blue gradient** background (owner, 2026-10-12, to be like the reference site): from the `sky` token
    (`#1A7CAD`, the lighter side, top right) to `pine-dark` (`#134F6A`, the deeper side, bottom left); no flat colour. The hero is
-   tall: at least 85% of the screen height (`min-h-[85svh]`). `h1` **"Find open care near you, fast."** (large: 36 px on a phone,
+   tall **from 1024 px, in the side-by-side layout only**: at least 85% of the screen height (`lg:min-h-[85svh]`); below 1024 px it has no forced height (the photo band, then the text with normal spacing: no large empty gap on a tablet; owner, 2026-10-12). `h1` **"Find open care near you, fast."** (large: 36 px on a phone,
    48 px from 768 px, 60 px from 1024 px, with balanced line breaks so no word is left alone on a line) Line: **"Hospitals, pharmacies and emergency help, open near you."** One button: **"Find care near me"**
    (the on-dark button: white, `pine-dark` text, to `/find`). Small line (18 px): **"Free to use · No sign-up needed"**. All
    the text is **white**, in the **lower left** of the hero (on a phone, below the photo band). No red button and no second button

@@ -219,6 +219,12 @@ Tests: `HomePage.test.tsx`, `SiteFooter.test.tsx`, `HomeSections.test.tsx`, `des
 - [ ] **For the owner, in a browser:** the heading on a tablet (768 to 1023 px) and at 1024 px has no single word left alone on a
   line; the band on a tablet does not cut the stethoscope or the gauge; the veil looks gentle. Not seen by me (no browser here).
 
+### Task 12: no forced tall hero below 1024 px (2026-10-12)
+- [x] `the hero's minimum height of 85% of the screen is lg: only`: no `min-h-[85svh]` without `lg:`, none with `md:`
+- [x] The whole suite still passes (637); the built page has `lg:min-h-[85svh]`; CI (f3cada1): Frontend CI passes, the preview `/` is
+  200 and has `lg:min-h-[85svh]` and no plain `min-h-[85svh]`.
+- [ ] **For the owner, in a browser:** on a tablet there is no large empty blue gap between the photo band and the heading.
+
 ## Review-focus edge cases
 
 Checked by the tests and by the build (2026-10-11; the hero details changed on 2026-10-12, see Tasks 7, 8 and 9):

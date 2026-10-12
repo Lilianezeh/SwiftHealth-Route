@@ -192,6 +192,10 @@ Where this section and R18 to R24 disagree, this section wins. The `hero3` crop 
   balanced line breaks (`text-balance`), so a tablet never shows one long line and a single word on the next ("fast." alone). At
   1024 px the left column is about 464 px wide: the heading is two lines, "Find open care" and "near you, fast.". The owners' photo
   and the Benefits and Browse parts keep their 768 px breakpoint.
+- **R30. The tall hero is only for the side-by-side layout (owner, 2026-10-12, after the review of the fifth revision).** In the
+  stacked layout (below 1024 px) the hero has no forced minimum height: it is the photo band, then the text with normal spacing, so
+  there is no large empty blue gap on a tablet. The minimum height of 85% of the screen (R19) applies from 1024 px only. The owners
+  pair stays left-aligned as it is (the owner confirmed).
 
 ## Decisions
 
