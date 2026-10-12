@@ -177,4 +177,4 @@ white text and icons), `HowItWorks.tsx` (deleted), `config/home.ts` (no `howItWo
 - [x] (d831db6) Add the token, the button variant, the components and the new order; delete `HowItWorks.tsx` and its config text.
 - [x] (d831db6) Run lint, typecheck, the whole suite (632 tests) and the build, one at a time, then commit: `feat(web): a hero like
   the reference site (US-13, NFR-10)`.
-- [ ] Push, wait for the checks, and tell the owner the preview is ready.
+- [x] (163833e) Push, wait for the checks, and tell the owner the preview is ready.

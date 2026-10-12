@@ -194,6 +194,8 @@ replace the tests about the dark-text sky hero, the overlapping photo, the Overv
 - [x] The existing tests still pass (the whole suite, 632 tests; lint and typecheck clean).
 - [x] Build (2026-10-12): `/` is static, 113 kB first load JS; the built page names only the three photos, has no "How it works", the
   header is `on-dark absolute inset-x-0 top-0 z-20 text-white`, and the CSS has the gradient, the veil and both `clip-path` rules.
+- [x] CI and preview (2026-10-12, 163833e): Frontend CI passes (Backend CI did not run); the preview `/` is 200, its header is
+  `on-dark absolute inset-x-0 top-0 z-20 text-white`, it has the gradient class and no "How it works".
 - [ ] **For the owner, in a browser:** the look of the slanted edges and the veil at 320 px, 768 px and desktop width; the white
   header links over the photo; the gradient's deep and light sides. Not seen by me: the tests check classes and computed contrast,
   not pixels.
