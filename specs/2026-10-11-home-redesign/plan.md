@@ -94,7 +94,7 @@ No backend change, no new package (`sharp` is already in `node_modules` through 
 
 ### Task 6: Wrap-up
 - [x] Run `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` once each, one at a time; write the weight of `/`
-  (it is static) in [validation.md](validation.md): 582 tests, `/` static, 6.5 kB, 113 kB first load JS.
+  (it is static) in [validation.md](validation.md): 584 tests, `/` static, 6.5 kB, 113 kB first load JS.
 - [x] Push the branch and open the draft pull request (#21, `83db4c4`). `Frontend CI` ran and passed, `Backend CI` did not run;
   `gh pr checks` and the Netlify preview link are in [validation.md](validation.md). (The photo script had saved each file by
   encoding it a second time, so a file was a little different from the one measured against its budget; it now writes the

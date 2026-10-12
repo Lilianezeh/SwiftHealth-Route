@@ -17,7 +17,7 @@ The commands run in the frontend container, one at a time:
 
 ## Tests per task
 
-Each test failed first (the files or the code did not exist) and passes now. The frontend suite went from 507 to 582 tests.
+Each test failed first (the files or the code did not exist) and passes now. The frontend suite went from 507 to 584 tests.
 
 ### Task 1: `tests/unit/homeImages.test.ts` (done, `797ab10`)
 - [x] `are the eleven files of the spec: ten photos and the small hero for phones`
@@ -82,13 +82,16 @@ Each test failed first (the files or the code did not exist) and passes now. The
 - [x] `uses the red emergency colour on exactly three buttons: the header's, the hero's and the band's`
 - [x] `points every button of the page to the right place`
 
-### Task 5: `tests/unit/EmergencyPage.test.tsx` (done, `7da9ee2`)
+### Task 5: `tests/unit/EmergencyPage.test.tsx` (done, `7da9ee2`; the FR-26 sentence `c949891`)
 - [x] `the emergency page has one h1, SwiftRescue`
 - [x] `has a Call 112 link to exactly tel:112`
 - [x] `makes Call 112 red with white text, and large: at least 64 px high with 24 px text` (and the full width on a phone)
 - [x] `gives the button a decorative icon beside the words, hidden from screen readers`
 - [x] `has the exact line about the full list coming soon`
-- [x] `has nothing else: one link, one line, no list, no image, no advice, no old placeholder text`
+- [x] `has the sentence of FR-26: SwiftRescue connects you to contacts, does not dispatch or guarantee a response, and says to
+  call 112` (exact words, 16 px or more, visible) and `puts the sentence of FR-26 after the button and the line about the list,
+  in the page's text, not behind a click` (added at the owner's request, `c949891`)
+- [x] `has nothing else: one link, two lines, no list, no image, no advice, no old placeholder text`
 - [x] `is a server page with no data: not a client component, no request`, and `calls only 112: no other phone number is on the page`
 
 ## Review-focus edge cases
@@ -112,8 +115,8 @@ For the owner, in a browser (see the smoke test):
 - [ ] **Keyboard.** Tab goes through the header, the menu panel, the hero buttons, the cards and the footer in reading order; the
   focus ring is visible on the dark header, the photo overlay and the white background.
 - [ ] **Screen reader.** One `h1`, then `h2`s; each card is one link with its label; icons are hidden; the photos have alt text.
-- [ ] **The 112 source.** The sources of decision 18 are real NCC pages (checked on 2026-10-11, quoted there); the page makes no
-  promise about the answer. The owner decides whether the FR-26 sentence is added.
+- [x] **The 112 source.** The sources of decision 18 are real NCC pages (checked on 2026-10-11, quoted there); the page makes no
+  promise about the answer, and it now carries the sentence of FR-26 (the owner asked for it).
 - [ ] **A call from a phone.** On a real phone, "Call 112" opens the dialler with 112 filled in. The owner does NOT place the
   call to test it.
 - [ ] **Links that lead to "Coming soon".** `/list-your-facility` and `/about` still say "Coming soon" (decision 4);
@@ -139,13 +142,13 @@ For the owner, in a browser (see the smoke test):
   `hero-phone.webp` is requested for the hero (no `hero.webp`, no `hero2`), and the other photos load while scrolling.
 - [ ] The words match the brief; the alt texts are right for each photo (the owner reviews them); the Magnific credit is in the footer.
 - [ ] The photos look right: the crops (especially the hospital card), and none is blurry or over-compressed.
-- [ ] `/emergency`: the red Call 112 button and the one line; the button opens the dialler on a phone.
+- [ ] `/emergency`: the red Call 112 button, the line about the list and the FR-26 sentence; the button opens the dialler on a phone.
 - [ ] Other pages (`/find`, `/search`) still look right with the new header and footer.
 
 ## Merge checklist
 
 - [x] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean (2026-10-11, on `7da9ee2`): lint and
-  typecheck clean, 582 tests passing, the build passes. `/` is static: 6.5 kB, 113 kB first load JS (it was dynamic, 103 kB);
+  typecheck clean, 584 tests passing, the build passes. `/` is static: 6.5 kB, 113 kB first load JS (it was dynamic, 103 kB);
   `/emergency` is 105 kB.
 - [x] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. What `gh pr checks 21` showed
   (2026-10-11, after `83db4c4`): `frontend` **pass** (1m37s, run 38181298116); the only workflow run on the branch is Frontend

@@ -225,9 +225,11 @@ FR-09 to FR-13, US-02, US-03, US-06, US-07. **API:** `GET /listings/{slug}`.
 
 ### 2.5 SwiftRescue — `/emergency`
 **Interim version, until phase 7** (owner's addition with the home page redesign, 2026-10-11; FR-14, FR-02): a static page with
-the `h1` "SwiftRescue", a large red **Call 112** button (a `tel:112` link, at least 48 px high, the `emergency` colour with white
-text) and the line **"Our full list of verified ambulance, fire and hospital emergency numbers is coming soon."** Nothing else:
-no list, no map, no advice. 112 is the NCC's national emergency number (sources in
+the `h1` "SwiftRescue", a large red **Call 112** button (a `tel:112` link, at least 64 px high with 24 px text, the `emergency`
+colour with white text), the line **"Our full list of verified ambulance, fire and hospital emergency numbers is coming soon."**,
+and the sentence of FR-26, always visible under it: **"SwiftRescue connects you to emergency contacts; it does not dispatch or
+guarantee an emergency response. In danger, call 112."** (added at the owner's request, 2026-10-11). Nothing else: no list, no map,
+no advice. 112 is the NCC's national emergency number (sources in
 `specs/2026-10-11-home-redesign/requirements.md`, decision 18). Phase 7 replaces the whole page with the version below.
 
 FR-14 to FR-19, FR-24 to FR-26, US-04, US-09, US-14. **API:** `GET /emergency`.

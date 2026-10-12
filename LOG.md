@@ -63,6 +63,14 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   gives up on a server page after about 30 seconds. So Google cannot read the listing text yet (NFR-12, a Should). Once the API
   answers at once, render `/listing/[slug]` on the server, with a title and description per listing, and keep the browser
   load as the fallback. Needs its own spec, tests first.
+- **Watch: a frontend test that failed once in a full run (seen 2026-10-11, home redesign branch).**
+  `tests/unit/NearbySuggestions.test.tsx`, "asks for one open pharmacy and one 24-hour place, both with the position", failed
+  (the output showed about 3.3 s for it) in one run of the whole frontend suite. It passed when run alone, and in every full run
+  after it (574, 582 and 584 tests). The error text was not captured, so the cause is not known; the guess is timing under load
+  (Docker on a laptop; the test limit is already 20 s). Nothing was changed in that test or in `NearbySuggestions`. If it fails
+  again: copy the full error text and which other tests were running, run the file alone and then the full suite twice, and
+  look for a timer or a shared state between tests (`vi.useFakeTimers`, `sessionStorage`, the `fetch` stub) before raising a
+  limit. Remove this note after about 10 full runs with no failure.
 - **Reminder: `hours_note` is English only (owner's decision, 2026-10-10).** "Closes", "Opens", "tomorrow", the day names and
   "midnight" are written in the backend code (`services/hours.py`). If SwiftHealth ever adds another language, this text needs
   translating, and at that point reconsider sending the time as data and formatting it on the frontend. Revisit before any
@@ -251,7 +259,7 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 
 - **In progress (2026-10-11): the home page redesign with photos**, branch `feature/home-redesign`, folder `specs/2026-10-11-home-redesign/`: the hero, the category cards, the SwiftRescue band with the ambulance and fire photos, the new header and footer. Still to do, in phase 7: pictures on `/emergency` itself. They must not slow `/emergency`, which has to work offline (NFR-03).
 - **Before launch: keep proof of the Magnific licence (owner, 2026-10-11).** All ten home page photos come from Magnific's free collection, and the footer says "Images designed by Magnific" with a link to https://www.magnific.com. Keep the download records (the page, the date, the licence shown) in one place, and have the attribution wording checked against Magnific's own licence terms with the rest of the legal review (NFR-13). We do not state here what the licence allows.
-- **Home page buttons and "Coming soon" pages (2026-10-11).** "Emergency help", "Open SwiftRescue" and the red header button go to `/emergency`. The owner added a minimal page there in the home redesign (a red "Call 112" button and one line), until the full phase 7 page; 112 was checked against NCC pages (see `specs/2026-10-11-home-redesign/requirements.md`, decision 18). "List your facility" goes to `/list-your-facility` (phase 10) and "About" is phase 13b: both still say "Coming soon". Open question for the owner: the PRD (FR-26) asks the SwiftRescue page to say that SwiftRescue does not dispatch or guarantee a response; the minimal page does not have that sentence yet.
+- **Home page buttons and "Coming soon" pages (2026-10-11).** "Emergency help", "Open SwiftRescue" and the red header button go to `/emergency`. The owner added a minimal page there in the home redesign (a red "Call 112" button and one line), until the full phase 7 page; 112 was checked against NCC pages (see `specs/2026-10-11-home-redesign/requirements.md`, decision 18). "List your facility" goes to `/list-your-facility` (phase 10) and "About" is phase 13b: both still say "Coming soon". The minimal page also carries the sentence of FR-26 ("SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112."), added at the owner's request (2026-10-12).
 
 ## Day 7 — 2026-10-10
 - **Built:** Phase 5B-1, the Find page (`/find`) and the results page (`/search`), frontend only (branch

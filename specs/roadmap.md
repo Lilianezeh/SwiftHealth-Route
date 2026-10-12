@@ -190,7 +190,7 @@ branch after this one.
 - Task 3, hero, how it works, browse by type, why SwiftHealth: **done**
 - Task 4, the band, the facility part, About, the page: **done**
 - Task 5, the minimal `/emergency` page (a red "Call 112" button; the owner's addition, 112 checked against NCC pages): **done**
-- Task 6, wrap-up: checks and build **done** (582 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
+- Task 6, wrap-up: checks and build **done** (584 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
   review on the preview
 
 ### Phase 6: Listing page. In progress

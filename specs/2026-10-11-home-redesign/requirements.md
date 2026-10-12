@@ -112,8 +112,8 @@ Decisions 8 onward follow the owner's brief (2026-10-11).
 17. **Reminder for launch:** keep proof of the Magnific free downloads, and check the attribution wording against Magnific's own
     licence terms (`LOG.md`, a legal check with NFR-13). This spec does not state what the licence allows.
 18. **A minimal `/emergency` page (owner's addition, 2026-10-11).** A page with the heading "SwiftRescue", a large red **Call
-    112** button (`tel:112`) and the line **"Our full list of verified ambulance, fire and hospital emergency numbers is coming
-    soon."** Nothing else: no advice, no list, no map. It replaces the "Coming soon" page of phase 0 and is replaced by the full
+    112** button (`tel:112`), the line **"Our full list of verified ambulance, fire and hospital emergency numbers is coming
+    soon."** and the sentence of FR-26 (below). Nothing else: no advice, no list, no map. It replaces the "Coming soon" page of phase 0 and is replaced by the full
     page in phase 7.
     - **Source for 112 (checked on 2026-10-11):** the NCC (the Nigerian Communications Commission) says it on its own pages: "a
       dedicated toll-free Emergency Number, 112"
@@ -123,9 +123,10 @@ Decisions 8 onward follow the owner's brief (2026-10-11).
       ([press release](https://ncc.gov.ng/media-centre/press-releases/covid-19-nccs-112-national-emergency-number-offers-succour-nigerians)).
       The PRD already says it (FR-14). The NCC pages say the centres are being built state by state and cover all 36 states and
       the FCT as a goal, so the page promises nothing about the answer, and the button says only "Call 112".
-    - **A question for the owner:** the PRD (FR-26) asks the SwiftRescue page to say "SwiftRescue connects you to emergency
-      contacts; it does not dispatch or guarantee an emergency response. In danger, call 112." The owner chose the two elements
-      above, so this minimal page does not have that sentence (default). Adding it is one line and one test.
+    - **The sentence of FR-26 (added at the owner's request, 2026-10-11):** the PRD asks the SwiftRescue page to say
+      "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call
+      112." The minimal page first had only the button and the line about the list; the owner then asked for this sentence too,
+      so the page has the heading, the button, the line about the list and this sentence, in that order, always visible.
 19. **A smaller hero for phones (owner's addition, 2026-10-11).** The hero is one `<picture>`. Its `<source>` for screens up to
     767 px wide has `srcset="hero-phone.webp 640w"` and `sizes="100vw"` (about 50 kB); the `<img>` inside it is `hero.webp`
     (1280 px) for wider screens. The `<source>` has only one candidate and a `media` rule, so every phone-width screen takes the
