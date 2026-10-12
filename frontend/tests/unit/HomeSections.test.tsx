@@ -70,10 +70,13 @@ describe("the hero", () => {
     expect(section?.className).not.toMatch(/\bbg-(sky|pine-100|pine|white)\b/);
   });
 
-  it("is tall: at least 85% of the screen height, so it fills most of the first screen", () => {
+  it("is tall only in the side-by-side layout: at least 85% of the screen height from 1024 px, no forced height below (R30)", () => {
     const { container } = render(<HomeHero />);
 
-    expect(container.querySelector("section")?.className).toMatch(/\bmin-h-\[85svh\]/);
+    const classes = container.querySelector("section")?.className ?? "";
+    expect(classes).toMatch(/\blg:min-h-\[85svh\]/);
+    expect(classes).not.toMatch(/(^|\s)min-h-/); // no minimum height without a breakpoint ...
+    expect(classes).not.toMatch(/\bmd:min-h-/); // ... and none on a tablet: it left a large empty blue gap
   });
 
   it("writes all its text in white, large, which is at least 4.5:1 on both ends of the gradient", () => {

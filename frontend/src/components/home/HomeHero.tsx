@@ -2,7 +2,8 @@
  * R18 to R21 (2026-10-12) in specs/2026-10-11-home-redesign/requirements.md. Like the reference site the owner pointed to.
  *
  * A sky blue gradient (from `pine-dark` at the bottom left to `sky` at the top right; white text passes on every point: 8.92:1
- * to 4.64:1), tall (85% of the screen), with the white text in the lower left, one white button, and one photo.
+ * to 4.64:1), with the white text in the lower left, one white button, and one photo. It is tall (85% of the screen) only from
+ * 1024 px, in the side-by-side layout; the stacked layout has no forced height, so there is no empty gap on a tablet (R30).
  * Phone and tablet (up to 1023 px, R28): the photo is a band at the top, the full width (18 rem high, 24 rem from 768 px), with a
  * slanted bottom edge, and the text is below it at the full width of the page.
  * From 1024 px: the photo box is absolute, so it fills the whole right half from top to bottom and to the right edge of the
@@ -43,7 +44,7 @@ export function HomeHero() {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="on-dark relative flex min-h-[85svh] flex-col bg-linear-to-tr from-pine-dark to-sky text-white"
+      className="on-dark relative flex flex-col bg-linear-to-tr from-pine-dark to-sky text-white lg:min-h-[85svh]"
     >
       <div className="relative h-72 shrink-0 [clip-path:polygon(0_0,100%_0,100%_85%,0_100%)] md:h-96 lg:absolute lg:inset-y-0 lg:right-0 lg:h-auto lg:w-1/2 lg:[clip-path:polygon(15%_0,100%_0,100%_100%,0_100%)]">
         <picture className="block h-full">
