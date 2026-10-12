@@ -190,6 +190,9 @@ branch after this one.
 - Task 3, hero, how it works, browse by type, why SwiftHealth: **done**
 - Task 4, the band, the facility part, About, the page: **done**
 - Task 5, the minimal `/emergency` page (a red "Call 112" button; the owner's addition, 112 checked against NCC pages): **done**
+- Task 7, a simpler home page after the owner's review of the preview (2026-10-12: two photos, icon tiles, a lighter hero with one
+  photo that overlaps into the next section, no band, no About, no red hero button, no city): **done** (589 tests); the owner's review
+  of the new preview is next
 - Task 6, wrap-up: checks and build **done** (584 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
   review on the preview
 

@@ -49,6 +49,35 @@ a resident, a partner or a facility owner sees. [tech-stack.md](../tech-stack.md
 - Server-side health check of the API on the home page: removed (decision 6).
 - Dark mode, animation, a slideshow, a carousel, testimonials, statistics: none, on purpose.
 
+## Revision, 2026-10-12: simpler, after the owner's review of the preview
+
+The owner looked at the preview of pull request #21 and asked for a simpler page. Where this section and a decision below
+disagree, **this section wins**. The decisions below keep their text, with a note where they are replaced.
+
+- **R1. Two photos only:** `hero.jpg` (the hero) and `owner.jpg` (the facility owners part). The other eight photos are deleted
+  from `public/images/home/`: `hero2`, `hospital`, `clinic`, `maternity`, `pharmacy`, `laboratory`, `ambulance`, `fire`. The
+  small phone version of the hero (`hero-phone.webp`, decision 19, the owner's earlier addition) stays, so three files remain.
+  Images table (replaces the table of decision 8): `hero.webp` 1280 × 853 under 150 kB, `hero-phone.webp` 640 × 427 under 50 kB,
+  `owner.webp` 800 × 533 under 80 kB.
+- **R2. Browse by type is icon tiles,** not photo cards: a `lucide` icon (`Hospital`, `Stethoscope`, `Baby`, `Pill`,
+  `FlaskConical`) in a light blue circle over the label, the whole tile one link to the search for its category (replaces
+  decision 16).
+- **R3. The SwiftRescue photo band and the About part are removed completely.** The page has seven parts: header, hero, how it
+  works, browse by type, why SwiftHealth, for facility owners, footer. The way to SwiftRescue on the home page is the red
+  button of the header, which is on every page (FR-02).
+- **R4. The hero:** a lighter blue background (`pine-100`), one large photo, no second photo and no overlay. On a desktop (768 px
+  and up) the text is on the left and the photo on the right; on a phone the photo is below the text. In both the photo
+  **overlaps the bottom edge of the hero into the next section** (replaces the layout of decision 9). The text is dark blue
+  (`pine-dark`, 7.4:1 on `pine-100`; `ink-soft` 5.8:1 for the small line), because white would be 1.2:1 on this blue (computed
+  on 2026-10-12). The hero button is the primary blue one (white text on `forest` is 5.6:1).
+- **R5. The hero has one button, "Find care near me",** and the small line "Free to use · No sign-up needed". The red "Emergency
+  help" button is removed. Red now appears on the home page only in the header's SwiftRescue button (replaces decision 10 for
+  this page; the "Call 112" button of `/emergency` stays red).
+- **R6. No city is named on the home page or in its page description** (replaces decision 13). The hero line is "Hospitals,
+  pharmacies and emergency help, open near you." `siteConfig.launchCity` stays in `config/site.ts`, because other parts of the
+  app may use it (owner, 2026-10-12); the home page does not.
+- **R7. Footer unchanged:** "Images designed by Magnific" is still true for the two photos (decision 14).
+
 ## Decisions
 
 Decisions 1 to 4 and 7 are my defaults for questions the owner's brief left open; the owner can change any of them on review.
@@ -72,7 +101,7 @@ Decisions 8 onward follow the owner's brief (2026-10-11).
    are from the CDN, with no image service in between and no second compression. Every image has `width`, `height` and alt text
    (a small `HomePhoto` component makes the alt text required by its types). Every image is lazy except the hero, which is
    loaded at once (see decision 19: it does not use `priority`, so a phone does not preload the big file).
-8. **The images are made by a script** (`frontend/scripts/optimize-home-images.mjs`) that uses `sharp`, the image library that
+8. *(The table below is replaced by R1 on 2026-10-12: three files remain.)* **The images are made by a script** (`frontend/scripts/optimize-home-images.mjs`) that uses `sharp`, the image library that
    Next.js already installs; it is not added to `package.json`. The full-size originals (60 MB) are not committed: they go in
    `frontend/image-sources/`, which is git-ignored. The script lowers the quality step by step until each file is under its
    budget.
@@ -87,18 +116,19 @@ Decisions 8 onward follow the owner's brief (2026-10-11).
    | `owner.webp` | 800 × 533 | 80 kB (my choice) |
 
    `hospital.jpg` is a portrait photo, so its card is cropped to 4:3; the crop is checked by eye on the converted file.
-9. **Phones get one hero photo, behind the text,** under a dark blue overlay (`pine-dark` at 80% or more, so white text is at
+9. *(Replaced by R4 on 2026-10-12: the phone photo is now below the text, with no overlay, and there is no second photo.)*
+   **Phones get one hero photo, behind the text,** under a dark blue overlay (`pine-dark` at 80% or more, so white text is at
    least 4.5:1 on any photo). From tablet width up the text is on the left and the two photos on the right, as an overlapping
    pair: `hero.webp` large and `hero2.webp` smaller, in front, with rounded corners. `hero2` is a lazy image inside a box that
    is `hidden` on phones: a browser does not fetch a lazy image that is not shown. This is checked in the Network panel at phone
    width, and on a phone. If a browser ever fetched it anyway, the fallback is to draw that one image from a small client
    component only when the screen is wide.
-10. **Red only for emergency:** the header's SwiftRescue button, the hero's "Emergency help", the band's "Open SwiftRescue" and
+10. *(Narrowed by R5 on 2026-10-12: on the home page red is only the header's button.)* **Red only for emergency:** the header's SwiftRescue button, the hero's "Emergency help", the band's "Open SwiftRescue" and
     the "Call 112" button of the emergency page. Nowhere else. A test scans for the `emergency` colour.
 11. **Blue palette and the current font stack** (the system font; no web font), tokens only: no hex or rgb colour in code.
 12. **No invented numbers or quotes.** The page says only what the product does. A test fails if the page text has a percent sign
     or a number other than the step numbers and the year.
-13. **The city is named once, in one place** (`siteConfig`), and used in the hero line and the About text, written as "Now live
+13. *(Replaced by R6 on 2026-10-12: the home page names no city.)* **The city is named once, in one place** (`siteConfig`), and used in the hero line and the About text, written as "Now live
     in Enugu, with more cities coming" and "Starting in Enugu. Growing across Nigeria." No text says "Enugu only" or "only in
     Enugu"; a test checks it. The site description in the page head says the same.
 14. **Footer:** the existing six links, then "Images designed by Magnific" (a link to https://www.magnific.com that opens in a
@@ -107,7 +137,7 @@ Decisions 8 onward follow the owner's brief (2026-10-11).
     in `siteConfig`, not read from the clock.
 15. **Alt text is written after looking at each converted photo:** short, factual, no medical claim. The owner reviews it on the
     preview. Every photo is informative, so none has an empty alt.
-16. **The category cards link to the search** filtered by the category slug the seed already uses: `/search?category=hospital`,
+16. *(The cards are icon tiles since R2, 2026-10-12; the links are unchanged.)* **The category cards link to the search** filtered by the category slug the seed already uses: `/search?category=hospital`,
     `clinic`, `maternity`, `pharmacy`, `laboratory`. The whole card is one link.
 17. **Reminder for launch:** keep proof of the Magnific free downloads, and check the attribution wording against Magnific's own
     licence terms (`LOG.md`, a legal check with NFR-13). This spec does not state what the licence allows.

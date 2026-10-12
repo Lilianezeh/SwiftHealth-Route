@@ -100,4 +100,24 @@ No backend change, no new package (`sharp` is already in `node_modules` through 
   encoding it a second time, so a file was a little different from the one measured against its budget; it now writes the
   measured bytes. Found while checking the preview.)
 - [ ] The owner reviews the preview (phone and desktop; Network panel at phone width), see [validation.md](validation.md). Then
-  update the roadmap and `LOG.md` once, and tick the boxes with their commit hashes.
+  update the roadmap and `LOG.md` once, and tick the boxes with their commit hashes. (The owner's first review led to Task 7;
+  review again after it.)
+
+### Task 7: A simpler home page, after the owner's review of the preview (tests first)
+The changes are R1 to R7 of the "Revision, 2026-10-12" in [requirements.md](requirements.md). Files: `config/home.ts` (three photos,
+the five categories with no photo, the words of the removed parts gone), `HomeHero.tsx` (rewritten), `BrowseByType.tsx` (icon
+tiles), `HowItWorks.tsx` (extra top space for the photo that overlaps into it), `app/page.tsx` and `layout.tsx` (seven parts;
+a description with no city), `scripts/optimize-home-images.mjs` (three jobs), and deleted: `RescueBand.tsx`, `AboutSwiftHealth.tsx`
+and the eight photo files. `siteConfig.launchCity` stays.
+- [x] Write the tests first. `homeImages.test.ts`: three files (hero, hero-phone, owner) and their budgets. `HomeSections.test.tsx`:
+  the hero has a `pine-100` background and dark blue text with the contrast checked from the tokens (at least 4.5:1, white would
+  fail), the new line, one button "Find care near me" (primary blue) and no "Emergency help", no second photo and no overlay,
+  the photo has a negative bottom margin and is above the next section, the hero has no `overflow-hidden`, the next section has
+  room at its top; browse by type has five icon tiles (no images). `HomePage.test.tsx`: seven parts in order, two images, only
+  the hero eager, red only in the header, no city anywhere in the page text, the source and the page description, no band and no
+  About, `siteConfig.launchCity` still exists. Delete the tests of the removed parts. They fail.
+- [x] Change the code and delete the files (`RescueBand`, `AboutSwiftHealth`, eight photos). The two components went with `git
+  rm`; the photos are in a folder that the container made (owned by root), so they were deleted from inside the container.
+- [x] Run lint, typecheck, the whole test suite (589) and the build, one at a time, then commit (`f5f58cc`): `feat(web): a simpler
+  home page: two photos, icon tiles, a lighter hero (US-13, NFR-01, NFR-10)`. The build: `/` is static, 6.5 kB, 113 kB first load.
+- [ ] Push, wait for the checks, and tell the owner the preview is ready.

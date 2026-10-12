@@ -94,9 +94,40 @@ Each test failed first (the files or the code did not exist) and passes now. The
 - [x] `has nothing else: one link, two lines, no list, no image, no advice, no old placeholder text`
 - [x] `is a server page with no data: not a client component, no request`, and `calls only 112: no other phone number is on the page`
 
+### Task 7: a simpler home page (2026-10-12): `homeImages.test.ts`, `HomeSections.test.tsx`, `HomePage.test.tsx` (done, `f5f58cc`)
+Replaces the tests of Tasks 1, 3 and 4 that were about the removed parts (the eight photos, the two-photo hero with its overlay,
+the photo cards, the band, About, the red hero button, the city in the text). 22 tests failed first (the old code), then passed.
+The frontend suite is 589 tests.
+- [x] `homeImages`: `are the three files of the spec: the hero, the small hero for phones, and the owner photo`; `are the only
+  files of the folder: the eight photos the owner dropped are gone`; the budgets (hero 150 kB, phone hero 50 kB, owner 80 kB); the
+  real pixel sizes (read from the files); alt text on each; `are made by a script that makes only these three files`
+- [x] `the hero has a lighter blue background (pine-100) and no photo behind the text`; `writes the text in dark blue, which is at
+  least 4.5:1 on the lighter blue` (from the tokens: `pine-dark` 7.37:1, `ink-soft` 5.83:1); `does not write white text on the
+  lighter blue, which would be unreadable there (1.2:1)`
+- [x] `the hero has the exact line, which names no city`, the exact heading and the exact small line
+- [x] `has one button, Find care near me to /find, in the primary blue: no Emergency help, nothing red`, and `keeps the button at 48 px
+  or more`
+- [x] `has one photo only: no second photo, no hero2 anywhere`; `is one picture: phones up to 767 px take the small hero (640w, sizes
+  100vw), everyone else the big one`; `loads the hero at once and with high priority`; `does not use the priority prop`
+- [x] `lets the photo overlap the bottom edge of the hero into the next section`: the hero is `relative` with no `overflow-hidden`
+  and no `isolate`; the photo box is `relative z-10`, with `-mb-12` on a phone and `md:mb-0 md:self-end md:translate-y-1/3` from 768
+  px; `puts the photo after the text (below it on a phone) and in the right column from 768 px`; `makes the photo large and rounded`
+- [x] `how it works leaves room at its top for the hero photo that overlaps into it, more on a tablet and a desktop` (`pt-20`, `md:pt-40`)
+- [x] `browse by type has an h2 and five tiles in the owner's order, each one link to the search for its category`; `gives each tile
+  a decorative icon over its label, and no photo`; `keeps each tile at 48 px or more, with the label at 16 px or more, and uses no red`
+- [x] `the whole page has the seven parts in the owner's order`, and `has one h1 and four h2 (…), and no heading deeper than h3`
+- [x] `has two images only, the hero and the owner photo, each with alt text, a width and a height`, and `loads only the hero at once`
+- [x] `has no SwiftRescue band and no About part` (the components are deleted too)
+- [x] `names no city anywhere on the page: not in the text, not in the page description, not in the components` (no "Enugu" at all,
+  in the page text, in `metadata.description` and in ten source files), and `keeps siteConfig.launchCity` (the home page does not use it)
+- [x] `uses the red emergency colour once: the SwiftRescue button of the header`, and `has no Emergency help and no Open SwiftRescue
+  button`
+- [x] `points every button of the page to the right place` (Find care near me, List your facility)
+- [x] The existing tests still pass (the whole suite, 589).
+
 ## Review-focus edge cases
 
-Checked by the tests and by the build (2026-10-11):
+Checked by the tests and by the build (2026-10-11; the hero details changed on 2026-10-12, see Task 7):
 - [x] **The hero tag in the built page.** `.next/server/app/index.html` has `<picture><source media="(max-width: 767px)"
   srcSet="/images/home/hero-phone.webp 640w" sizes="100vw"/><img … loading="eager" fetchPriority="high" width="1280"
   height="853" src="/images/home/hero.webp" …/></picture>`, and no `<link rel="preload">` for any image (only one for the webpack script).
@@ -135,21 +166,27 @@ For the owner, in a browser (see the smoke test):
 
 ## Smoke test (owner, on the Netlify preview)
 
-- [ ] Phone (a real phone): the hero is one photo behind the text, readable; no second hero photo; the menu opens and closes;
-  SwiftRescue is always visible; every button and card goes to the right place; nothing scrolls sideways.
-- [ ] Laptop at 1280 px: the two hero photos overlap as a pair; the cards in one row; the header shows all four links.
+Updated on 2026-10-12 for the simpler page (Task 7).
+- [ ] Phone (a real phone): the hero is dark blue text on the lighter blue, readable, with one "Find care near me" button; the photo
+  is below the text and its bottom overlaps the edge into the next section without covering any text; the menu opens and closes;
+  SwiftRescue is always visible; every button and tile goes to the right place; nothing scrolls sideways.
+- [ ] Laptop at 1280 px: the text on the left and the photo on the right, overlapping the bottom edge of the hero into "How it
+  works" without covering its text; the five tiles in one row; the header shows all four links.
+- [ ] Laptop at about 768 px (the smallest tablet layout): the overlap is still clear of the text of the next part.
 - [ ] Laptop with DevTools at 360 px, Network, cache off, throttled to 3G: the first load is under 500 KB, only
-  `hero-phone.webp` is requested for the hero (no `hero.webp`, no `hero2`), and the other photos load while scrolling.
-- [ ] The words match the brief; the alt texts are right for each photo (the owner reviews them); the Magnific credit is in the footer.
-- [ ] The photos look right: the crops (especially the hospital card), and none is blurry or over-compressed.
+  `hero-phone.webp` is requested for the hero (no `hero.webp`), and `owner.webp` loads while scrolling.
+- [ ] The words match the brief (and the page says no city anywhere); the alt texts are right for the two photos; the Magnific
+  credit is in the footer.
+- [ ] The two photos look right, and neither is blurry or over-compressed.
 - [ ] `/emergency`: the red Call 112 button, the line about the list and the FR-26 sentence; the button opens the dialler on a phone.
 - [ ] Other pages (`/find`, `/search`) still look right with the new header and footer.
 
 ## Merge checklist
 
-- [x] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean (2026-10-11, on `7da9ee2`): lint and
-  typecheck clean, 584 tests passing, the build passes. `/` is static: 6.5 kB, 113 kB first load JS (it was dynamic, 103 kB);
-  `/emergency` is 105 kB.
+- [x] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean (2026-10-12, on `f5f58cc`): lint and
+  typecheck clean, 589 tests passing, the build passes. `/` is static: 6.5 kB, 113 kB first load JS (it was dynamic, 103 kB);
+  `/emergency` is 105 kB. The built page names three image files only (`hero`, `hero-phone`, `owner`), has no image preload, and
+  no city word.
 - [x] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. What `gh pr checks 21` showed
   (2026-10-11, after `83db4c4`): `frontend` **pass** (1m37s, run 38181298116); the only workflow run on the branch is Frontend
   CI (no Backend CI run); Netlify `Header rules` and `Redirect rules` pass, `Pages changed` skipping, `deploy-preview` pass:
