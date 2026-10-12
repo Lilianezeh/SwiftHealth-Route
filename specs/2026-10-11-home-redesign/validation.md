@@ -193,7 +193,11 @@ Updated on 2026-10-12 for the simpler page (Task 7).
   <https://deploy-preview-21--swifthealth-ng.netlify.app>. The preview answers 200 on `/` and `/emergency`, and serves
   `hero-phone.webp`, `hero.webp` and `hero2.webp` as `image/webp`; its `<picture>` has the phone-only `<source>`.
 - [x] `git diff --stat origin/main -- backend` is empty (2026-10-11).
-- [ ] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
+- [x] After the simplified page (2026-10-12, after `d57c5ed`): `gh pr checks 21` again showed `frontend` **pass** (1m40s, run
+  38188077214) and a `deploy-preview` pass. The preview answers 200 on `/` and `/emergency`, serves `hero-phone.webp`,
+  `hero.webp` and `owner.webp` as `image/webp`, answers 404 for `hero2.webp`, and its home page has no "Enugu", no "Open
+  SwiftRescue" and no "every second counts" (the only "emergency help" is the words of the hero line).
+- [x] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
 - [ ] The smoke test above is done on the preview.
 - [ ] The pull request stays a draft until every box above is ticked.
 
