@@ -1,6 +1,7 @@
 /** The photos of the home page. Requirements: US-13, NFR-01 (light for 3G), NFR-10 (alt text on every image).
- * Decisions 7, 8 and 19 in specs/2026-10-11-home-redesign/requirements.md: ten photos and a smaller hero for phones, all
- * WebP, each under its budget, at the fixed pixel size written in the code. The originals (60 MB) are never in the repository.
+ * Decisions 7, 8 and 19 and revision R1 (2026-10-12) in specs/2026-10-11-home-redesign/requirements.md: two photos, the hero and
+ * the owner photo, plus a smaller hero for phones, all WebP, each under its budget, at the fixed pixel size written in the
+ * code. The originals (60 MB) are never in the repository, and the photos the owner dropped are deleted.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -14,20 +15,8 @@ const FRONTEND = process.cwd();
 const PHOTO_FOLDER = join(FRONTEND, "public", "images", "home");
 const KILOBYTE = 1000;
 
-// The budgets of the spec (decision 8, and decision 19 for the phone hero), in kilobytes.
-const BUDGET_KB: Record<string, number> = {
-  hero: 150,
-  heroPhone: 50,
-  hero2: 150,
-  hospital: 60,
-  clinic: 60,
-  maternity: 60,
-  pharmacy: 60,
-  laboratory: 60,
-  ambulance: 60,
-  fire: 60,
-  owner: 80,
-};
+// The budgets of the spec (decision 8 and R1; decision 19 for the phone hero), in kilobytes.
+const BUDGET_KB: Record<string, number> = { hero: 150, heroPhone: 50, owner: 80 };
 
 const photos = Object.entries(HOME_PHOTOS) as [string, HomePhoto][];
 
@@ -36,7 +25,8 @@ function fileOf(photo: HomePhoto): string {
 }
 
 describe("the home page photos", () => {
-  it("are the eleven files of the spec: ten photos and the small hero for phones", () => {
+  it("are the three files of the spec: the hero, the small hero for phones, and the owner photo", () => {
+    expect(Object.keys(HOME_PHOTOS).sort()).toEqual(["hero", "heroPhone", "owner"]);
     expect(Object.keys(HOME_PHOTOS).sort()).toEqual(Object.keys(BUDGET_KB).sort());
   });
 
@@ -47,13 +37,16 @@ describe("the home page photos", () => {
     }
   });
 
-  it("are the only files of the folder", () => {
+  it("are the only files of the folder: the eight photos the owner dropped are gone", () => {
     const listed = photos.map(([, photo]) => photo.src.replace("/images/home/", "")).sort();
 
     expect(readdirSync(PHOTO_FOLDER).sort()).toEqual(listed);
+    for (const dropped of ["hero2", "hospital", "clinic", "maternity", "pharmacy", "laboratory", "ambulance", "fire"]) {
+      expect(existsSync(join(PHOTO_FOLDER, `${dropped}.webp`)), dropped).toBe(false);
+    }
   });
 
-  it("are each under their budget: heroes 150 kB, the phone hero 50 kB, the cards and the band 60 kB, the owner photo 80 kB", () => {
+  it("are each under their budget: the hero 150 kB, the phone hero 50 kB, the owner photo 80 kB", () => {
     for (const [name, photo] of photos) {
       const sizeInKilobytes = statSync(fileOf(photo)).size / KILOBYTE;
 
@@ -67,14 +60,11 @@ describe("the home page photos", () => {
     }
   });
 
-  it("have the sizes of the spec: the heroes, the cards (4:3), the band and the owner photo", () => {
-    const sizeOf = (name: string) => `${HOME_PHOTOS[name as keyof typeof HOME_PHOTOS].width}x${HOME_PHOTOS[name as keyof typeof HOME_PHOTOS].height}`;
+  it("have the sizes of the spec: the hero 1280x853, the phone hero 640x427, the owner photo 800x533", () => {
+    const sizeOf = (name: keyof typeof HOME_PHOTOS) => `${HOME_PHOTOS[name].width}x${HOME_PHOTOS[name].height}`;
 
     expect(sizeOf("hero")).toBe("1280x853");
     expect(sizeOf("heroPhone")).toBe("640x427");
-    expect(sizeOf("hero2")).toBe("960x640");
-    for (const card of ["hospital", "clinic", "maternity", "pharmacy", "laboratory"]) expect(sizeOf(card)).toBe("640x480");
-    for (const band of ["ambulance", "fire"]) expect(sizeOf(band)).toBe("640x427");
     expect(sizeOf("owner")).toBe("800x533");
   });
 
@@ -114,5 +104,12 @@ describe("the photo files in the repository", () => {
     const ignore = readFileSync(join(FRONTEND, ".gitignore"), "utf8");
 
     expect(ignore).toMatch(/^image-sources\/$/m);
+  });
+
+  it("are made by a script that makes only these three files", () => {
+    const script = readFileSync(join(FRONTEND, "scripts", "optimize-home-images.mjs"), "utf8");
+    const targets = [...script.matchAll(/target: "([a-z0-9-]+\.webp)"/g)].map((match) => match[1]).sort();
+
+    expect(targets).toEqual(["hero-phone.webp", "hero.webp", "owner.webp"]);
   });
 });

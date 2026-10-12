@@ -1,5 +1,5 @@
 /** Makes the WebP photos of the home page from the full-size originals. Requirements: US-13, NFR-01.
- * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8 and 19).
+ * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8 and 19, and revision R1 of 2026-10-12: three files).
  *
  * Run it in the frontend container:  node scripts/optimize-home-images.mjs
  * It reads the JPG originals from frontend/image-sources/ (not committed, about 60 MB) and writes the WebP files to
@@ -19,27 +19,12 @@ const FIRST_QUALITY = 80;
 const LOWEST_QUALITY = 30;
 const QUALITY_STEP = 3;
 
-// One line per file: the original, the WebP to make, its fixed pixel size and its budget in kB. `crop` (optional) is the part
-// of the original to keep, in the original's pixels, before it is resized: the automatic crop cut a face off the portrait
-// photo of the hospital card, so that one is cut by hand (a 4:3 band holding both faces).
+// One line per file: the original, the WebP to make, its fixed pixel size and its budget in kB. The page has two photos (the
+// owner's review, 2026-10-12): the hero, which also has a smaller version for phones, and the owner photo. `crop` (optional) is
+// the part of the original to keep, in the original's pixels, before it is resized; no photo needs it now.
 const JOBS = [
   { source: "hero.jpg", target: "hero.webp", width: 1280, height: 853, budgetKb: 150 },
   { source: "hero.jpg", target: "hero-phone.webp", width: 640, height: 427, budgetKb: 50 }, // the same photo, for phones
-  { source: "hero2.jpg", target: "hero2.webp", width: 960, height: 640, budgetKb: 150 },
-  {
-    source: "hospital.jpg",
-    target: "hospital.webp",
-    width: 640,
-    height: 480,
-    budgetKb: 60,
-    crop: { left: 0, top: 225, width: 2160, height: 1620 },
-  },
-  { source: "clinic.jpg", target: "clinic.webp", width: 640, height: 480, budgetKb: 60 },
-  { source: "maternity.jpg", target: "maternity.webp", width: 640, height: 480, budgetKb: 60 },
-  { source: "pharmacy.jpg", target: "pharmacy.webp", width: 640, height: 480, budgetKb: 60 },
-  { source: "laboratory.jpg", target: "laboratory.webp", width: 640, height: 480, budgetKb: 60 },
-  { source: "ambulance.jpg", target: "ambulance.webp", width: 640, height: 427, budgetKb: 60 },
-  { source: "fire.jpg", target: "fire.webp", width: 640, height: 427, budgetKb: 60 },
   { source: "owner.jpg", target: "owner.webp", width: 800, height: 533, budgetKb: 80 },
 ];
 

@@ -5,8 +5,8 @@ export const siteConfig = {
   name: "SwiftHealth",
   emergencyName: "SwiftRescue",
   tagline: "Emergency, Hospital & Pharmacy Finder",
-  // The first city. SwiftHealth is for all of Nigeria and starts here: the words that name it ("Now live in Enugu", "Starting
-  // in Enugu") take it from here, and no text says "Enugu only".
+  // The first city. SwiftHealth is for all of Nigeria and starts here. The home page and its page description name no city
+  // (owner, 2026-10-12), but the constant stays for other parts of the app; no text may say "Enugu only".
   launchCity: "Enugu",
   copyrightYear: 2026, // a constant, not the clock: the footer is static and says the year of the site's launch
   // The header bar from tablet width: Find care, then the red SwiftRescue, then For facilities.

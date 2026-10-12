@@ -7,7 +7,7 @@ import "@/styles/globals.css";
 
 export const metadata: Metadata = {
   title: siteConfig.name,
-  description: `${siteConfig.name}: ${siteConfig.tagline}. Verified listings, one-tap calling. Now live in ${siteConfig.launchCity}, with more cities coming.`,
+  description: `${siteConfig.name}: ${siteConfig.tagline}. Verified listings and one-tap calling.`,
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1b6f93" };

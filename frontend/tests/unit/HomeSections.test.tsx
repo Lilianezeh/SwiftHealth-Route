@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-/** The first four parts of the home page: hero, how it works, browse by type, why SwiftHealth.
- * Requirements: US-13, NFR-01, NFR-10, NFR-07, FR-02. UI spec 2.1 (the exact words are the owner's, 2026-10-11).
- * The whole page (all nine parts, in order) is tested in HomePage.test.tsx.
+/** The four middle parts of the home page: hero, how it works, browse by type, why SwiftHealth.
+ * Requirements: US-13, NFR-01, NFR-10, NFR-07, FR-02. UI spec 2.1 (the exact words are the owner's, 2026-10-11; the hero and the
+ * browse tiles were simplified on 2026-10-12, revision R1 to R6 in specs/2026-10-11-home-redesign/requirements.md).
+ * The whole page (all seven parts, in order) is tested in HomePage.test.tsx.
  */
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
@@ -12,7 +13,7 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { WhySwiftHealth } from "@/components/home/WhySwiftHealth";
 import { HOME_PHOTOS } from "@/config/home";
 
-import { contrast, laidOver, tokenColour } from "../helpers/contrast";
+import { contrast, tokenColour } from "../helpers/contrast";
 import { readSource } from "../helpers/source";
 
 describe("the hero", () => {
@@ -24,14 +25,10 @@ describe("the hero", () => {
     expect(headings[0]).toHaveTextContent(/^Find open care near you, fast\.$/);
   });
 
-  it("has the exact line, with the first city taken from the site settings and more cities coming", () => {
+  it("has the exact line, which names no city", () => {
     render(<HomeHero />);
 
-    expect(
-      screen.getByText(
-        "Hospitals, pharmacies and emergency help, open near you. Now live in Enugu, with more cities coming.",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Hospitals, pharmacies and emergency help, open near you.")).toBeInTheDocument();
   });
 
   it("has the exact small line, at 16 px or more", () => {
@@ -41,24 +38,59 @@ describe("the hero", () => {
     expect(note.className).not.toMatch(/\btext-(xs|sm)\b/);
   });
 
-  it("has a white Find care near me button to /find, and a red Emergency help button to /emergency", () => {
-    render(<HomeHero />);
+  it("has one button, Find care near me to /find, in the primary blue: no Emergency help, nothing red", () => {
+    const { container } = render(<HomeHero />);
 
-    const findCare = screen.getByRole("link", { name: "Find care near me" });
-    expect(findCare).toHaveAttribute("href", "/find");
-    expect(findCare.className).toMatch(/\bbg-white\b/);
-    expect(findCare.className).toMatch(/\btext-forest\b/);
-    const emergency = screen.getByRole("link", { name: "Emergency help" });
-    expect(emergency).toHaveAttribute("href", "/emergency");
-    expect(emergency.className).toMatch(/\bbg-emergency\b/);
-    expect(emergency.className).toMatch(/\btext-white\b/);
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveTextContent("Find care near me");
+    expect(links[0]).toHaveAttribute("href", "/find");
+    expect(links[0].className).toMatch(/\bbg-pine\b/);
+    expect(links[0].className).toMatch(/\btext-white\b/);
+    expect(screen.queryByRole("link", { name: "Emergency help" })).not.toBeInTheDocument();
+    // The hero line says "emergency help" in words (the owner's text); what must not be there is the red colour.
+    expect(container.querySelectorAll('[class*="emergency"]')).toHaveLength(0);
+    expect(readSource("components/home/HomeHero.tsx")).not.toMatch(/bg-emergency|text-emergency|buttonClasses\("emergency"\)/);
   });
 
-  it("keeps both buttons at 48 px or more", () => {
+  it("keeps the button at 48 px or more", () => {
     render(<HomeHero />);
 
-    for (const name of ["Find care near me", "Emergency help"]) {
-      expect(screen.getByRole("link", { name }).className, name).toMatch(/min-h-(12|\[50px\])(\s|$)/);
+    expect(screen.getByRole("link", { name: "Find care near me" }).className).toMatch(/min-h-(12|\[50px\])(\s|$)/);
+  });
+
+  it("has a lighter blue background (pine-100) and no photo behind the text", () => {
+    const { container } = render(<HomeHero />);
+
+    const section = container.querySelector("section");
+    expect(section?.className).toMatch(/\bbg-pine-100\b/);
+    expect(container.querySelector('[class*="bg-pine-dark/"]')).toBeNull(); // the dark overlay is gone
+  });
+
+  it("writes the text in dark blue, which is at least 4.5:1 on the lighter blue", () => {
+    render(<HomeHero />);
+    const lightBlue = tokenColour("pine-100");
+
+    const heading = screen.getByRole("heading", { level: 1 });
+    const line = screen.getByText("Hospitals, pharmacies and emergency help, open near you.");
+    const note = screen.getByText("Free to use · No sign-up needed");
+    expect(heading.className).toMatch(/\btext-pine-dark\b/);
+    expect(line.className).toMatch(/\btext-pine-dark\b/);
+    expect(note.className).toMatch(/\btext-ink-soft\b/);
+    expect(contrast(tokenColour("pine-dark"), lightBlue)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(tokenColour("ink-soft"), lightBlue)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("does not write white text on the lighter blue, which would be unreadable there (1.2:1)", () => {
+    render(<HomeHero />);
+
+    expect(contrast("#ffffff", tokenColour("pine-100"))).toBeLessThan(3);
+    for (const element of [
+      screen.getByRole("heading", { level: 1 }),
+      screen.getByText("Hospitals, pharmacies and emergency help, open near you."),
+      screen.getByText("Free to use · No sign-up needed"),
+    ]) {
+      expect(element.className).not.toMatch(/\btext-white\b/);
     }
   });
 
@@ -89,50 +121,57 @@ describe("the hero", () => {
   });
 
   it("does not use the priority prop, which would also preload the big file on a phone", () => {
-    const source = readSource("components/home/HomeHero.tsx");
-
-    expect(source).not.toMatch(/(^|[^A-Za-z])priority\b/);
+    expect(readSource("components/home/HomeHero.tsx")).not.toMatch(/(^|[^A-Za-z])priority\b/);
   });
 
-  it("has a second photo only from tablet width: lazy, inside a box that is hidden below 768 px, never in a source", () => {
+  it("has one photo only: no second photo, no hero2 anywhere", () => {
     const { container } = render(<HomeHero />);
 
-    const second = screen.getByAltText(HOME_PHOTOS.hero2.alt);
-    expect(second).toHaveAttribute("src", HOME_PHOTOS.hero2.src);
-    expect(second).toHaveAttribute("width", "960");
-    expect(second).toHaveAttribute("height", "640");
-    expect(second).toHaveAttribute("loading", "lazy");
-    expect(second).not.toHaveAttribute("fetchpriority", "high");
-    const box = second.closest("div");
-    expect(box?.className).toMatch(/\bhidden\b/);
-    expect(box?.className).toMatch(/\bmd:block\b/);
-    expect(container.querySelector("picture")?.innerHTML).not.toContain("hero2");
+    expect(container.querySelectorAll("img")).toHaveLength(1);
+    expect(container.innerHTML).not.toContain("hero2");
+    expect(readSource("components/home/HomeHero.tsx")).not.toContain("hero2");
   });
 
-  it("covers the phone photo with a dark blue overlay of 80% or more that is gone from tablet width", () => {
+  it("lets the photo overlap the bottom edge of the hero into the next section", () => {
     const { container } = render(<HomeHero />);
 
-    const overlay = container.querySelector('[class*="bg-pine-dark/"]');
-    expect(overlay).not.toBeNull();
-    expect(overlay?.className).toMatch(/\bmd:hidden\b/);
-    const opacity = Number(overlay?.className.match(/bg-pine-dark\/(\d+)/)?.[1]) / 100;
-    expect(opacity).toBeGreaterThanOrEqual(0.8);
+    const section = container.querySelector("section");
+    const photoBox = container.querySelector("picture")?.parentElement;
+    // The hero is positioned (so the photo can sit above the next section) and does not cut anything off.
+    expect(section?.className).toMatch(/\brelative\b/);
+    expect(section?.className).not.toMatch(/\boverflow-hidden\b|\bisolate\b/);
+    // The photo is above the next section. On a phone it is the last thing of the hero and a negative bottom margin pulls the
+    // hero's edge up over it. From tablet width it sits at the bottom of its column and is moved down by a third of its own
+    // height: a negative margin would do nothing there when the text column is the taller one.
+    expect(photoBox?.className).toMatch(/\brelative\b/);
+    expect(photoBox?.className).toMatch(/\bz-10\b/);
+    expect(photoBox?.className).toMatch(/(^|\s)-mb-\d+\b/);
+    expect(photoBox?.className).toMatch(/\bmd:mb-0\b/);
+    expect(photoBox?.className).toMatch(/\bmd:self-end\b/);
+    expect(photoBox?.className).toMatch(/\bmd:translate-y-1\/3\b/);
   });
 
-  it("keeps white text at least 4.5:1 on the overlay even over a pure white photo", () => {
+  it("puts the photo after the text (below it on a phone) and in the right column from 768 px", () => {
     const { container } = render(<HomeHero />);
-    const overlay = container.querySelector('[class*="bg-pine-dark/"]');
-    const opacity = Number(overlay?.className.match(/bg-pine-dark\/(\d+)/)?.[1]) / 100;
 
-    const worstCase = laidOver(tokenColour("pine-dark"), "#ffffff", opacity);
-
-    expect(contrast("#ffffff", worstCase)).toBeGreaterThanOrEqual(4.5);
+    const heading = screen.getByRole("heading", { level: 1 });
+    const picture = container.querySelector("picture") as Element;
+    expect(heading.compareDocumentPosition(picture) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container.querySelector('[class*="md:grid-cols-2"]')).not.toBeNull();
   });
 
-  it("says nothing about Enugu being the only place", () => {
+  it("makes the photo large and rounded", () => {
     const { container } = render(<HomeHero />);
 
-    expect(container.textContent?.toLowerCase()).not.toMatch(/enugu only|only in enugu|only enugu/);
+    const image = container.querySelector("picture img");
+    expect(image?.className).toMatch(/\bw-full\b/);
+    expect(image?.className).toMatch(/\brounded-2xl\b/);
+  });
+
+  it("says nothing about a city: no Enugu, no cities coming", () => {
+    const { container } = render(<HomeHero />);
+
+    expect(container.textContent?.toLowerCase()).not.toMatch(/enugu|more cities|now live/);
   });
 });
 
@@ -156,10 +195,18 @@ describe("how it works", () => {
     expect(steps.map((step) => step.textContent?.charAt(0))).toEqual(["1", "2", "3"]);
     for (const step of steps) expect(step.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
+
+  it("leaves room at its top for the hero photo that overlaps into it, more on a tablet and a desktop", () => {
+    const { container } = render(<HowItWorks />);
+
+    const room = container.querySelector("section > div");
+    expect(room?.className).toMatch(/\bpt-20\b/);
+    expect(room?.className).toMatch(/\bmd:pt-40\b/);
+  });
 });
 
 describe("browse by type", () => {
-  const CARDS = [
+  const TILES = [
     ["Hospital", "hospital"],
     ["Clinic", "clinic"],
     ["Maternity", "maternity"],
@@ -167,35 +214,33 @@ describe("browse by type", () => {
     ["Laboratory", "laboratory"],
   ] as const;
 
-  it("has an h2 and five cards in the owner's order, each one link to the search for its category", () => {
+  it("has an h2 and five tiles in the owner's order, each one link to the search for its category", () => {
     render(<BrowseByType />);
 
     expect(screen.getByRole("heading", { level: 2, name: "Browse by type" })).toBeInTheDocument();
     const links = within(screen.getByRole("list")).getAllByRole("link");
     expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual(
-      CARDS.map(([label, slug]) => [label, `/search?category=${slug}`]),
+      TILES.map(([label, slug]) => [label, `/search?category=${slug}`]),
     );
   });
 
-  it("gives each card its photo, with the fixed size and the alt text of the config, loaded lazily", () => {
-    render(<BrowseByType />);
+  it("gives each tile a decorative icon over its label, and no photo", () => {
+    const { container } = render(<BrowseByType />);
 
-    for (const [label, slug] of CARDS) {
-      const photo = HOME_PHOTOS[slug];
-      const card = screen.getByRole("link", { name: label });
-      const image = card.querySelector("img");
-      expect(image, label).toHaveAttribute("src", photo.src);
-      expect(image, label).toHaveAttribute("alt", photo.alt);
-      expect(image, label).toHaveAttribute("width", String(photo.width));
-      expect(image, label).toHaveAttribute("height", String(photo.height));
-      expect(image, label).toHaveAttribute("loading", "lazy");
+    expect(container.querySelectorAll("img")).toHaveLength(0);
+    for (const [label] of TILES) {
+      const tile = screen.getByRole("link", { name: label });
+      expect(tile.querySelector("svg"), label).toHaveAttribute("aria-hidden", "true");
     }
   });
 
-  it("shows the label as visible text of 16 px or more, and uses no red", () => {
+  it("keeps each tile at 48 px or more, with the label at 16 px or more, and uses no red", () => {
     const { container } = render(<BrowseByType />);
 
-    for (const [label] of CARDS) expect(screen.getByText(label).className).not.toMatch(/\btext-(xs|sm)\b/);
+    for (const [label] of TILES) {
+      expect(screen.getByRole("link", { name: label }).className, label).toMatch(/min-h-(12|14|16|20|24)\b/);
+      expect(screen.getByText(label).className).not.toMatch(/\btext-(xs|sm)\b/);
+    }
     expect(container.innerHTML).not.toMatch(/emergency/);
   });
 });
@@ -233,10 +278,11 @@ describe("why SwiftHealth", () => {
 });
 
 describe("the four parts together", () => {
-  it("use the red emergency colour only in the hero's Emergency help button", () => {
-    for (const file of ["HowItWorks", "BrowseByType", "WhySwiftHealth"]) {
-      expect(readSource(`components/home/${file}.tsx`), file).not.toMatch(/emergency/);
+  it("use no red at all: the page's only red is the header's SwiftRescue button", () => {
+    for (const file of ["HomeHero", "HowItWorks", "BrowseByType", "WhySwiftHealth"]) {
+      expect(readSource(`components/home/${file}.tsx`), file).not.toMatch(
+        /bg-emergency|text-emergency|border-emergency|buttonClasses\("emergency"\)/,
+      );
     }
-    expect(readSource("components/home/HomeHero.tsx").match(/bg-emergency|buttonClasses\("emergency"\)/g)).toHaveLength(1);
   });
 });

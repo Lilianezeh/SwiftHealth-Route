@@ -13,7 +13,8 @@ export function HowItWorks() {
 
   return (
     <section aria-labelledby="how-it-works-heading" className="bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-12">
+      {/* The top space (pt-20, then md:pt-40) leaves room for the hero photo, which overlaps down into this part. */}
+      <div className="mx-auto max-w-6xl px-4 pb-12 pt-20 md:pt-40">
         <h2 id="how-it-works-heading" className="text-2xl font-bold text-forest">
           {heading}
         </h2>

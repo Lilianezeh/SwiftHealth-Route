@@ -1,17 +1,17 @@
 // @vitest-environment jsdom
-/** The whole home page: all nine parts, in the owner's order. Requirements: US-13, NFR-01, NFR-10, NFR-12, FR-02.
- * UI spec 2.1 (the exact words are the owner's, 2026-10-11); decisions 6, 10, 12, 13 in
- * specs/2026-10-11-home-redesign/requirements.md. Parts 1 and 9 (header and footer) come from the root layout, so the test
- * renders them around the page the same way the layout does.
+/** The whole home page: seven parts, in the owner's order. Requirements: US-13, NFR-01, NFR-10, NFR-12, FR-02.
+ * UI spec 2.1 (the exact words are the owner's, 2026-10-11; simplified on 2026-10-12 after the owner's review of the preview);
+ * decisions 6, 12 and revision R1 to R7 in specs/2026-10-11-home-redesign/requirements.md. Parts 1 and 7 (header and footer)
+ * come from the root layout, so the test renders them around the page the same way the layout does.
  */
 import { render, screen, within } from "@testing-library/react";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import Home from "@/app/page";
 import { metadata } from "@/app/layout";
-import { AboutSwiftHealth } from "@/components/home/AboutSwiftHealth";
+import Home from "@/app/page";
 import { FacilityOwners } from "@/components/home/FacilityOwners";
-import { RescueBand } from "@/components/home/RescueBand";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { HOME_PHOTOS } from "@/config/home";
@@ -30,40 +30,6 @@ function renderWholePage() {
     </>,
   );
 }
-
-describe("the rescue band", () => {
-  it("has the exact heading and a red Open SwiftRescue button to /emergency", () => {
-    render(<RescueBand />);
-
-    expect(
-      screen.getByRole("heading", { level: 2, name: "In an emergency, every second counts." }),
-    ).toBeInTheDocument();
-    const button = screen.getByRole("link", { name: "Open SwiftRescue" });
-    expect(button).toHaveAttribute("href", "/emergency");
-    expect(button.className).toMatch(/\bbg-emergency\b/);
-    expect(button.className).toMatch(/\btext-white\b/);
-    expect(button.className).toMatch(/min-h-(12|\[50px\])(\s|$)/);
-  });
-
-  it("shows the ambulance and the fire photos, with their size and alt text, loaded lazily", () => {
-    render(<RescueBand />);
-
-    for (const photo of [HOME_PHOTOS.ambulance, HOME_PHOTOS.fire]) {
-      const image = screen.getByAltText(photo.alt);
-      expect(image).toHaveAttribute("src", photo.src);
-      expect(image).toHaveAttribute("width", String(photo.width));
-      expect(image).toHaveAttribute("height", String(photo.height));
-      expect(image).toHaveAttribute("loading", "lazy");
-    }
-  });
-
-  it("gives no medical advice and no instructions: only the heading and the button", () => {
-    const { container } = render(<RescueBand />);
-
-    expect(container.querySelectorAll("p")).toHaveLength(0);
-    expect(container.querySelectorAll("a")).toHaveLength(1);
-  });
-});
 
 describe("the facility owners part", () => {
   it("has the owner photo, the exact heading, the exact text and a List your facility button", () => {
@@ -84,24 +50,8 @@ describe("the facility owners part", () => {
   });
 });
 
-describe("the about part", () => {
-  it("has the exact heading and text, with the first city from the site settings", () => {
-    render(<AboutSwiftHealth />);
-
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Starting in Enugu. Growing across Nigeria." }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "SwiftHealth makes it easier to find care that's actually open. We're starting in Enugu, checking every listing ourselves, and adding new cities one at a time so every listing stays trustworthy.",
-      ),
-    ).toBeInTheDocument();
-    expect(siteConfig.launchCity).toBe("Enugu");
-  });
-});
-
 describe("the whole page", () => {
-  it("has the nine parts in the owner's order", () => {
+  it("has the seven parts in the owner's order", () => {
     renderWholePage();
 
     const landmarks = [
@@ -110,9 +60,7 @@ describe("the whole page", () => {
       ...["How it works", "Browse by type", "Why SwiftHealth"].map((name) =>
         screen.getByRole("heading", { level: 2, name }),
       ),
-      screen.getByRole("heading", { level: 2, name: "In an emergency, every second counts." }),
       screen.getByRole("heading", { level: 2, name: "Run a hospital, clinic or pharmacy?" }),
-      screen.getByRole("heading", { level: 2, name: "Starting in Enugu. Growing across Nigeria." }),
       screen.getByRole("contentinfo"),
     ];
 
@@ -126,13 +74,25 @@ describe("the whole page", () => {
     }
   });
 
-  it("has one h1 and only h2 and h3 headings after it", () => {
+  it("has one h1 and four h2 (how it works, browse, why, facility owners), and no heading deeper than h3", () => {
     renderWholePage();
 
     const levels = screen.getAllByRole("heading").map((heading) => Number(heading.tagName.slice(1)));
 
     expect(levels.filter((level) => level === 1)).toHaveLength(1);
+    expect(levels.filter((level) => level === 2)).toHaveLength(4); // how it works, browse, why, facility owners
     expect(Math.max(...levels)).toBeLessThanOrEqual(3);
+  });
+
+  it("has no SwiftRescue band and no About part: they were removed on 2026-10-12", () => {
+    const { container } = renderWholePage();
+
+    expect(screen.queryByRole("heading", { name: "In an emergency, every second counts." })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Starting in|Growing across/ })).not.toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/Growing across Nigeria|every second counts/);
+    for (const file of ["RescueBand", "AboutSwiftHealth"]) {
+      expect(existsSync(join(process.cwd(), "src", "components", "home", `${file}.tsx`)), file).toBe(false);
+    }
   });
 
   it("makes no request and reads no API: the page is not async and does not call getHealth or fetch", () => {
@@ -142,30 +102,38 @@ describe("the whole page", () => {
     expect(source).not.toMatch(/lib\/api/);
   });
 
-  it("never says Enugu is the only place, in the page, the header, the footer or the page description", () => {
+  it("names no city anywhere on the page: not in the text, not in the page description, not in the components", () => {
     const { container } = renderWholePage();
     const description = String(metadata.description);
 
-    for (const text of [container.textContent ?? "", description]) {
-      expect(text.toLowerCase()).not.toMatch(/enugu only|only in enugu|only enugu|just enugu/);
-    }
-    expect(description).toContain(siteConfig.launchCity);
-    expect(description).toMatch(/more cities/);
-  });
-
-  it("names the first city only through siteConfig: no component writes Enugu itself", () => {
+    expect(container.textContent?.toLowerCase()).not.toContain("enugu");
+    expect(description.toLowerCase()).not.toContain("enugu");
+    expect(`${container.textContent} ${description}`.toLowerCase()).not.toMatch(/more cities|now live|only in/);
     for (const file of [
       "app/page.tsx",
+      "app/layout.tsx",
+      "config/home.ts",
       "components/home/HomeHero.tsx",
-      "components/home/RescueBand.tsx",
+      "components/home/HowItWorks.tsx",
+      "components/home/BrowseByType.tsx",
+      "components/home/WhySwiftHealth.tsx",
       "components/home/FacilityOwners.tsx",
-      "components/home/AboutSwiftHealth.tsx",
       "components/layout/SiteHeader.tsx",
       "components/layout/SiteFooter.tsx",
-      "app/layout.tsx",
     ]) {
-      expect(readSource(file), file).not.toMatch(/Enugu/);
+      expect(readSource(file), file).not.toMatch(/enugu/i);
     }
+  });
+
+  it("keeps siteConfig.launchCity, because other parts of the app may use it (the home page does not)", () => {
+    expect(siteConfig.launchCity).toBe("Enugu");
+  });
+
+  it("has a page description that is the name, the tagline and what the site does", () => {
+    const description = String(metadata.description);
+
+    expect(description).toContain(siteConfig.name);
+    expect(description).toContain(siteConfig.tagline);
   });
 
   it("has no percent sign and no number but the year: no invented statistics", () => {
@@ -184,12 +152,12 @@ describe("the whole page", () => {
     expect(container.querySelectorAll("blockquote, q")).toHaveLength(0);
   });
 
-  it("has an alt text, a width and a height on every image", () => {
+  it("has two images only, the hero and the owner photo, each with alt text, a width and a height", () => {
     const { container } = renderWholePage();
 
     const images = [...container.querySelectorAll("img")];
 
-    expect(images).toHaveLength(10); // the hero, the second hero photo, 5 cards, 2 band photos, the owner photo
+    expect(images.map((image) => image.getAttribute("src"))).toEqual([HOME_PHOTOS.hero.src, HOME_PHOTOS.owner.src]);
     for (const image of images) {
       expect(image.getAttribute("alt")?.length, image.getAttribute("src") ?? "").toBeGreaterThan(10);
       expect(Number(image.getAttribute("width"))).toBeGreaterThan(0);
@@ -197,7 +165,7 @@ describe("the whole page", () => {
     }
   });
 
-  it("loads only the hero at once: every other image is lazy", () => {
+  it("loads only the hero at once: the owner photo is lazy", () => {
     const { container } = renderWholePage();
 
     const eager = [...container.querySelectorAll("img")].filter((image) => image.getAttribute("loading") !== "lazy");
@@ -205,14 +173,22 @@ describe("the whole page", () => {
     expect(eager.map((image) => image.getAttribute("src"))).toEqual([HOME_PHOTOS.hero.src]);
   });
 
-  it("uses the red emergency colour on exactly three buttons: the header's, the hero's and the band's", () => {
+  it("uses the red emergency colour once: the SwiftRescue button of the header", () => {
     const { container } = renderWholePage();
 
     const red = [...container.querySelectorAll("a, button, div, section, span")].filter((element) =>
       /\b(bg|text|border)-emergency\b/.test(element.className),
     );
 
-    expect(red.map((element) => element.textContent)).toEqual(["SwiftRescue", "Emergency help", "Open SwiftRescue"]);
+    expect(red.map((element) => element.textContent)).toEqual(["SwiftRescue"]);
+  });
+
+  it("has no Emergency help and no Open SwiftRescue button: the way to SwiftRescue is the header's red button", () => {
+    renderWholePage();
+
+    expect(screen.queryByRole("link", { name: "Emergency help" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open SwiftRescue" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "SwiftRescue" })).toHaveAttribute("href", "/emergency");
   });
 
   it("points every button of the page to the right place", () => {
@@ -222,8 +198,6 @@ describe("the whole page", () => {
     const targets = (name: string) => within(main).getByRole("link", { name }).getAttribute("href");
 
     expect(targets("Find care near me")).toBe("/find");
-    expect(targets("Emergency help")).toBe("/emergency");
-    expect(targets("Open SwiftRescue")).toBe("/emergency");
     expect(targets("List your facility")).toBe("/list-your-facility");
   });
 });
