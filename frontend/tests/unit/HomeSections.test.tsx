@@ -84,8 +84,10 @@ describe("the hero", () => {
       expect(element.className, element.textContent ?? "").toMatch(/\btext-white\b/);
       expect(element.className).not.toMatch(/\btext-(xs|sm|base)\b/);
     }
-    expect(heading.className).toMatch(/\btext-4xl\b/); // large on a phone ...
-    expect(heading.className).toMatch(/\bmd:text-6xl\b/); // ... larger from 768 px
+    expect(heading.className).toMatch(/\btext-4xl\b/); // large on a phone (36 px) ...
+    expect(heading.className).toMatch(/\bmd:text-5xl\b/); // ... 48 px from 768 px ...
+    expect(heading.className).toMatch(/\blg:text-6xl\b/); // ... 60 px from 1024 px (R29)
+    expect(heading.className).toMatch(/\btext-balance\b/); // no single word left alone on the last line of a tablet
     expect(contrast("#ffffff", tokenColour("sky"))).toBeGreaterThanOrEqual(4.5);
     expect(contrast("#ffffff", tokenColour("pine-dark"))).toBeGreaterThanOrEqual(4.5);
   });
@@ -103,7 +105,8 @@ describe("the hero", () => {
     const textRow = textColumn.parentElement as HTMLElement;
     expect(textRow.className).toMatch(/\bflex-1\b/);
     expect(textRow.className).toMatch(/\bitems-end\b/); // at the bottom
-    expect(textColumn.className).toMatch(/\bmd:w-1\/2\b/); // the left half
+    expect(textColumn.className).toMatch(/\blg:w-1\/2\b/); // the left half from 1024 px; the full width below
+    expect(textColumn.className).not.toMatch(/\bmd:w-1\/2\b/);
     expect(container.querySelector('[class*="max-w-6xl"]')).toContainElement(textColumn);
   });
 
@@ -156,11 +159,12 @@ describe("the hero", () => {
     const { container } = render(<HomeHero />);
 
     const photoBox = photoBoxOf(container);
-    expect(photoBox.className).toMatch(/\bmd:absolute\b/);
-    expect(photoBox.className).toMatch(/\bmd:inset-y-0\b/); // from the top to the bottom of the hero
-    expect(photoBox.className).toMatch(/\bmd:right-0\b/); // to the right edge of the screen
-    expect(photoBox.className).toMatch(/\bmd:w-1\/2\b/); // the whole right half
-    expect(photoBox.className).not.toMatch(/-bottom-|-mb-|translate-y|\bmd:-?bottom-[1-9]/); // no overlap below the hero (R20)
+    expect(photoBox.className).toMatch(/\blg:absolute\b/); // from 1024 px (R28), not 768 px
+    expect(photoBox.className).toMatch(/\blg:inset-y-0\b/); // from the top to the bottom of the hero
+    expect(photoBox.className).toMatch(/\blg:right-0\b/); // to the right edge of the screen
+    expect(photoBox.className).toMatch(/\blg:w-1\/2\b/); // the whole right half
+    expect(photoBox.className).not.toMatch(/\bmd:(absolute|inset-y-0|right-0|w-1\/2)\b/);
+    expect(photoBox.className).not.toMatch(/-bottom-|-mb-|translate-y|\b(md|lg):-?bottom-[1-9]/); // no overlap below the hero (R20)
     const image = photoBox.querySelector("img");
     expect(image?.className).toMatch(/\bh-full\b/);
     expect(image?.className).toMatch(/\bw-full\b/);
@@ -171,38 +175,59 @@ describe("the hero", () => {
     const { container } = render(<HomeHero />);
 
     const photoBox = photoBoxOf(container);
-    expect(photoBox.className).toMatch(/md:\[clip-path:polygon\(15%_0,100%_0,100%_100%,0_100%\)\]/);
+    expect(photoBox.className).toMatch(/lg:\[clip-path:polygon\(15%_0,100%_0,100%_100%,0_100%\)\]/);
+    expect(photoBox.className).not.toMatch(/md:\[clip-path/); // a tablet keeps the band with the slanted bottom edge
     expect(photoBox.className).not.toMatch(/\brounded/);
     expect(photoBox.querySelector("img")?.className).not.toMatch(/\brounded/);
   });
 
-  it("is a band at the top of the hero on a phone, the full width, with a slanted bottom edge, above the text", () => {
+  it("is a band at the top of the hero on a phone and a tablet (up to 1023 px), the full width, with a slanted bottom edge, above the text", () => {
     const { container } = render(<HomeHero />);
 
     const photoBox = photoBoxOf(container);
     const heading = screen.getByRole("heading", { level: 1 });
     expect(photoBox.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // the text is below
     expect(photoBox.className).toMatch(/(^|\s)relative\b/);
-    expect(photoBox.className).toMatch(/(^|\s)h-72\b/); // 18 rem: a band, not the whole screen
+    expect(photoBox.className).toMatch(/(^|\s)h-72\b/); // 18 rem on a phone: a band, not the whole screen
+    expect(photoBox.className).toMatch(/\bmd:h-96\b/); // 24 rem from 768 px, so the band is not a thin strip on a tablet (R28)
+    expect(photoBox.className).toMatch(/\blg:h-auto\b/); // from 1024 px the box follows the height of the hero
     expect(photoBox.className).toMatch(/(^|\s)\[clip-path:polygon\(0_0,100%_0,100%_85%,0_100%\)\]/); // the slanted bottom edge
     expect(photoBox.className).not.toMatch(/(^|\s)(px|mx)-/); // the full width: no side margin
     expect(photoBox.querySelector("img")?.className).not.toMatch(/(^|\s)(px|mx)-/);
   });
 
-  it("has a dark veil over the top of the photo, so the white header links stay readable (R21)", () => {
+  it("has a short, soft dark veil over the top of the photo: 6 rem, 80%, solid for 3 rem, then a fade (R21, R27)", () => {
     const { container } = render(<HomeHero />);
 
     const veil = photoBoxOf(container).querySelector('[aria-hidden="true"]') as HTMLElement;
     expect(veil).not.toBeNull();
     expect(veil.className).toMatch(/\babsolute\b/);
     expect(veil.className).toMatch(/\btop-0\b/);
-    expect(veil.className).toMatch(/\bh-32\b/); // 8 rem
-    expect(veil.className).toMatch(/\bfrom-pine-dark\/85\b/);
-    expect(veil.className).toMatch(/\bvia-pine-dark\/85\b/);
-    expect(veil.className).toMatch(/\bvia-60%/);
+    expect(veil.className).toMatch(/\bh-24\b/); // 6 rem (it was 8 rem)
+    expect(veil.className).toMatch(/\bfrom-pine-dark\/80\b/);
+    expect(veil.className).toMatch(/\bvia-pine-dark\/80\b/);
+    expect(veil.className).toMatch(/\bvia-50%/); // solid to 3 rem, then 3 rem of fade
     expect(veil.className).toMatch(/\bto-transparent\b/);
+    expect(veil.className).not.toMatch(/\b(from|via)-pine-dark\/85\b|\bh-32\b|\bvia-60%/); // the old, heavier veil
     expect(veil.className).toMatch(/\bpointer-events-none\b/);
     expect(veil.textContent).toBe(""); // decoration only
+  });
+
+  it("keeps the header's text inside the solid part of the veil (the first 3 rem), so the white links stay readable", () => {
+    const { container } = render(<HomeHero />);
+
+    const veilClasses = (photoBoxOf(container).querySelector('[aria-hidden="true"]') as HTMLElement).className;
+    const heightRem = Number(/\bh-(\d+)\b/.exec(veilClasses)?.[1]) / 4; // Tailwind: h-24 = 6 rem
+    const solidRem = (Number(/\bvia-(\d+)%/.exec(veilClasses)?.[1]) / 100) * heightRem;
+    // The header: 0.5 rem of padding, then a 3 rem (48 px) link box with one 1.5 rem line of text, centred: it ends at 2.75 rem.
+    const headerTextEndsRem = 0.5 + 3 / 2 + 1.5 / 2;
+
+    expect(solidRem).toBeGreaterThanOrEqual(headerTextEndsRem);
+    // The veil is darker than 4.5:1 for white over a pure white photo (pine-dark at 80%): 5.26:1.
+    const [red, green, blue] = [1, 3, 5].map((start) => parseInt(tokenColour("pine-dark").slice(start, start + 2), 16));
+    const overWhite = [red, green, blue].map((channel) => Math.round(0.8 * channel + 0.2 * 255));
+    const blended = `#${overWhite.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
+    expect(contrast("#ffffff", blended)).toBeGreaterThanOrEqual(4.5);
   });
 
   it("does not overlap the next part: no negative margin, no z-index above the header, nothing cut off by overflow", () => {

@@ -130,13 +130,13 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     expect(green).toBeGreaterThan(red);
   });
 
-  it("the veil behind the header links (pine-dark at 85%) keeps white readable even over a pure white photo", () => {
+  it("the veil behind the header links (pine-dark at 80%) keeps white readable even over a pure white photo", () => {
     const veil = tokens["pine-dark"];
     const channels = [1, 3, 5].map((start) => parseInt(veil.slice(start, start + 2), 16));
-    const overWhite = channels.map((channel) => Math.round(0.85 * channel + 0.15 * 255));
+    const overWhite = channels.map((channel) => Math.round(0.8 * channel + 0.2 * 255));
     const blended = `#${overWhite.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
 
-    expect(contrast(WHITE, blended)).toBeGreaterThanOrEqual(4.5); // 6.02
+    expect(contrast(WHITE, blended)).toBeGreaterThanOrEqual(4.5); // 5.26 (the owner found the 85% veil, 6.02, heavy and grey)
   });
 
   it("the bright blue accent is not readable as text (3:1), so it is decoration only", () => {

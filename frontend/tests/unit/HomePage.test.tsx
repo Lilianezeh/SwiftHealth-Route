@@ -55,16 +55,32 @@ describe("the facility owners part", () => {
     expect(image).toHaveAttribute("loading", "lazy");
   });
 
-  it("shows the portrait photo whole: never cropped or stretched, full width on a phone, 32 rem high at most from 768 px", () => {
+  it("shows the portrait photo whole: never cropped or stretched, full width on a phone, 26 rem high from 768 px (R25)", () => {
     render(<FacilityOwners />);
 
     const image = screen.getByAltText(HOME_PHOTOS.owner.alt);
-    expect(image.className).not.toMatch(/\bobject-cover\b|\bh-full\b|\baspect-/); // nothing that cuts it or makes it taller
+    expect(image.className).not.toMatch(/\bobject-cover\b|(^|\s)h-full\b|\baspect-/); // nothing that cuts it
     expect(image.className).toMatch(/(^|\s)h-auto\b/);
     expect(image.className).toMatch(/(^|\s)w-full\b/); // the full width of the content on a phone
-    expect(image.className).toMatch(/\bmd:max-h-\[32rem\]/); // a sensible height beside the text
-    expect(image.className).toMatch(/\bmd:w-auto\b/); // narrower to keep the shape
-    expect(image.className).toMatch(/\bmd:max-w-full\b/);
+    expect(image.className).toMatch(/\bmd:h-\[26rem\]/); // smaller than the 32 rem of before
+    expect(image.className).toMatch(/\bmd:w-auto\b/); // the width follows from the 2:3 shape (about 17.3 rem)
+    expect(image.className).toMatch(/\bmd:shrink-0\b/);
+    expect(image.className).not.toMatch(/32rem/);
+  });
+
+  it("has the text right beside the photo from 768 px: a normal gap, both vertically centred, no big empty space", () => {
+    const { container } = render(<FacilityOwners />);
+
+    const row = container.querySelector("section > div") as HTMLElement;
+    expect(row.className).toMatch(/\bmax-w-6xl\b/); // the same container as the headings
+    expect(row.className).toMatch(/\bmd:flex\b/);
+    expect(row.className).toMatch(/\bmd:items-center\b/); // both vertically centred
+    expect(row.className).toMatch(/\bmd:gap-10\b/); // 2.5 rem between the photo and the text
+    expect(row.className).not.toMatch(/\bmd:grid-cols-2\b|\bmd:justify-between\b/); // two half-width columns left a big gap
+    const text = screen.getByRole("heading", { level: 2 }).parentElement as HTMLElement;
+    expect(text.className).toMatch(/\bmd:max-w-xl\b/); // 36 rem at most
+    expect(row.contains(screen.getByAltText(HOME_PHOTOS.owner.alt))).toBe(true);
+    expect(row.contains(text)).toBe(true);
   });
 });
 
