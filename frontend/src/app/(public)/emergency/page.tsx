@@ -1,7 +1,8 @@
-/** SwiftRescue, the minimal version. Requirements: FR-14 (112 first and always), FR-02, NFR-10.
- * UI spec 2.5, "Interim version"; decision 18 in specs/2026-10-11-home-redesign/requirements.md (the owner's addition, with the
- * sources that show 112 is the NCC's national emergency number). A large red button and one line, nothing else, until phase 7
- * replaces the page with the full list, share my location, offline use and the rest. A static page: no data, no request.
+/** SwiftRescue, the minimal version. Requirements: FR-14 (112 first and always), FR-26 (what SwiftRescue is and is not), FR-02,
+ * NFR-10. UI spec 2.5, "Interim version"; decision 18 in specs/2026-10-11-home-redesign/requirements.md (the owner's addition,
+ * with the sources that show 112 is the NCC's national emergency number). A large red button, one line about the full list and
+ * the sentence of FR-26, nothing else, until phase 7 replaces the page with the full list, share my location, offline use and
+ * the rest. A static page: no data, no request.
  */
 import { Phone } from "lucide-react";
 
@@ -20,6 +21,11 @@ export default function EmergencyPage() {
       </a>
       <p className="mt-6 text-lg text-ink">
         Our full list of verified ambulance, fire and hospital emergency numbers is coming soon.
+      </p>
+      {/* FR-26: what SwiftRescue is and is not, always in the text of the page. */}
+      <p className="mt-6 text-base text-ink-soft">
+        SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In
+        danger, call 112.
       </p>
     </section>
   );

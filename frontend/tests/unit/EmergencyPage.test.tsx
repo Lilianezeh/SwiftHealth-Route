@@ -55,11 +55,31 @@ describe("the emergency page", () => {
     ).toBeInTheDocument();
   });
 
-  it("has nothing else: one link, one line, no list, no image, no advice, no old placeholder text", () => {
+  it("has the sentence of FR-26: SwiftRescue connects you to contacts, does not dispatch or guarantee a response, and says to call 112", () => {
+    render(<EmergencyPage />);
+
+    const sentence = screen.getByText(
+      "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112.",
+    );
+    expect(sentence.className).not.toMatch(/\btext-(xs|sm)\b/); // 16 px or more, always visible
+    expect(sentence).toBeVisible();
+  });
+
+  it("puts the sentence of FR-26 after the button and the line about the list, in the page's text, not behind a click", () => {
+    const { container } = render(<EmergencyPage />);
+
+    const text = container.textContent ?? "";
+
+    expect(text.indexOf("Call 112")).toBeLessThan(text.indexOf("is coming soon."));
+    expect(text.indexOf("is coming soon.")).toBeLessThan(text.indexOf("SwiftRescue connects you"));
+    expect(container.querySelectorAll("details, summary, [hidden], [aria-hidden='true']:not(svg)")).toHaveLength(0);
+  });
+
+  it("has nothing else: one link, two lines, no list, no image, no advice, no old placeholder text", () => {
     const { container } = render(<EmergencyPage />);
 
     expect(screen.getAllByRole("link")).toHaveLength(1);
-    expect(container.querySelectorAll("p")).toHaveLength(1);
+    expect(container.querySelectorAll("p")).toHaveLength(2); // the list line and the FR-26 sentence
     expect(container.querySelectorAll("ul, ol, img, button, form, input")).toHaveLength(0);
     expect(container.textContent).not.toMatch(/Coming soon\.?$/); // only the sentence about the list, not a bare placeholder
     expect(container.textContent).not.toMatch(/offline|112 first|sponsored|featured/i);
