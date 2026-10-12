@@ -25,6 +25,7 @@ const SPEC_TOKENS: Record<string, string> = {
   line: "#d7e1df",
   "pine-100": "#dcecf4",
   "pine-50": "#eef6fa",
+  sky: "#a9ddf3", // the home page hero: a real light sky blue (owner, 2026-10-12)
   open: "#147a48",
   "open-bg": "#e7f6ed",
   closed: "#465451",
@@ -105,6 +106,8 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     ["ink", "pine-50", "text on a light panel"],
     ["forest", "pine-100", "Verified label"],
     ["forest", "pine-50", "light panel"],
+    ["pine-dark", "sky", "the hero heading, line and small line"],
+    ["ink", "sky", "dark text on the hero"],
     ["open", "open-bg", "Open now label"],
     ["closed", "closed-bg", "Closed label"],
     ["amber-ink", "amber-wash", "Verification due label"],
@@ -115,6 +118,11 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
 
   it("the main blue is readable as small text on paper (the old green pine was 4.4:1)", () => {
     expect(contrast(tokens.pine, tokens.paper)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("the sky blue of the hero is light: white text on it would not be readable, so the hero text is dark blue", () => {
+    expect(contrast(WHITE, tokens.sky)).toBeLessThan(3);
+    expect(contrast(tokens["pine-dark"], tokens.sky)).toBeGreaterThanOrEqual(4.5);
   });
 
   it("the bright blue accent is not readable as text (3:1), so it is decoration only", () => {
@@ -135,7 +143,7 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
 describe("the focus ring (owner's decision, 2026-10-09; WCAG 2.2 asks for 3:1)", () => {
   const tokens = readTokens();
 
-  it.each(["white", "paper", "pine-50", "pine-100", "closed-bg", "open-bg"])(
+  it.each(["white", "paper", "pine-50", "pine-100", "sky", "closed-bg", "open-bg"])(
     "forest ring is at least 3:1 on %s",
     (background) => {
       const colour = background === "white" ? WHITE : tokens[background];

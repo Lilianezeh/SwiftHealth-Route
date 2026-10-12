@@ -1,6 +1,6 @@
 /** The photos and the words of the home page. Requirements: US-13, NFR-01, NFR-10. UI spec 2.1 (the words are the owner's).
- * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8, 15 and 19, and revisions R1 to R10 of 2026-10-12). The page has two
- * photos, the hero and the owner photo (Unsplash photos, from hero4.jpg and owner2.jpg), and a smaller version of the hero for
+ * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8, 15 and 19, and revisions R1 to R17 of 2026-10-12). The page has two
+ * photos, the hero (hero3.jpg) and the owner photo (hero4.jpg), both Unsplash photos, and a smaller version of the hero for
  * phones. The files are made by
  * scripts/optimize-home-images.mjs and tested by tests/unit/homeImages.test.ts, which checks that `width` and `height` are the
  * real pixel size of each file.
@@ -20,23 +20,23 @@ const FOLDER = "/images/home";
 export const HOME_PHOTOS = {
   // The hero: one photo, in two sizes. A phone gets the small one (specs, decision 19), so both say the same thing.
   hero: {
-    src: `${FOLDER}/hero4.webp`,
-    width: 1280,
-    height: 960,
-    alt: "A smiling health worker in glasses and a white coat, with a stethoscope around the neck, holds up a blister pack of pills.",
+    src: `${FOLDER}/hero3.webp`,
+    width: 1200,
+    height: 1200,
+    alt: "A stethoscope and a blood pressure gauge lying on white sheets.",
   },
   heroPhone: {
-    src: `${FOLDER}/hero4-phone.webp`,
+    src: `${FOLDER}/hero3-phone.webp`,
     width: 640,
-    height: 480,
-    alt: "A smiling health worker in glasses and a white coat, with a stethoscope around the neck, holds up a blister pack of pills.",
+    height: 640,
+    alt: "A stethoscope and a blood pressure gauge lying on white sheets.",
   },
-  // For facility owners.
+  // For facility owners: a portrait photo, shown whole.
   owner: {
-    src: `${FOLDER}/owner2.webp`,
+    src: `${FOLDER}/hero4-portrait.webp`,
     width: 800,
-    height: 600,
-    alt: "A smiling person in a black T-shirt sits at a pharmacy counter, with shelves of medicine boxes behind.",
+    height: 1200,
+    alt: "A smiling health worker in glasses and a white coat, with a stethoscope around the neck, holds up a blister pack of pills.",
   },
 } as const satisfies Record<string, HomePhoto>;
 
@@ -58,13 +58,17 @@ export const HOME_WORDS = {
     findCare: "Find care near me",
     note: "Free to use · No sign-up needed",
   },
+  overview: {
+    heading: "Overview",
+    text: "SwiftHealth helps you find hospitals, clinics, pharmacies, labs and emergency contacts that are open right now. Every listing is checked by our team, so the number you call and the hours you see are ones you can trust.",
+  },
   howItWorks: {
     heading: "How it works",
     steps: ["Search or share your location", "See who's open now", "Call, WhatsApp or get directions"],
   },
   browse: { heading: "Browse by type" },
   why: {
-    heading: "Why SwiftHealth",
+    heading: "Benefits",
     items: [
       { title: "Verified listings", text: "We check every listing before it goes live." },
       { title: "Open now means open now", text: "Hours follow local time, including late-night places." },

@@ -1,7 +1,8 @@
 /** The photos of the home page. Requirements: US-13, NFR-01 (light for 3G), NFR-10 (alt text on every image).
- * Decisions 7, 8 and 19 and revision R1 (2026-10-12) in specs/2026-10-11-home-redesign/requirements.md: two photos, the hero and
- * the owner photo, plus a smaller hero for phones, all WebP, each under its budget, at the fixed pixel size written in the
- * code. The originals (60 MB) are never in the repository, and the photos the owner dropped are deleted.
+ * Decisions 7, 8 and 19 and revisions R1, R8, R9 and R11 (2026-10-12) in specs/2026-10-11-home-redesign/requirements.md: two photos,
+ * the hero (hero3, with a smaller version for phones) and the whole portrait photo of the owners part (hero4), all WebP, each under
+ * its budget, at the fixed pixel size written in the code. The originals are never in the repository, and the photos that were
+ * dropped or replaced are deleted.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -15,8 +16,8 @@ const FRONTEND = process.cwd();
 const PHOTO_FOLDER = join(FRONTEND, "public", "images", "home");
 const KILOBYTE = 1000;
 
-// The budgets of the spec (decision 8 and R1; decision 19 for the phone hero), in kilobytes.
-const BUDGET_KB: Record<string, number> = { hero: 150, heroPhone: 50, owner: 80 };
+// The budgets of the spec (R11), in kilobytes. The portrait photo is whole, so it has more pixels: 100 kB, and it is lazy.
+const BUDGET_KB: Record<string, number> = { hero: 150, heroPhone: 50, owner: 100 };
 
 const photos = Object.entries(HOME_PHOTOS) as [string, HomePhoto][];
 
@@ -24,10 +25,20 @@ function fileOf(photo: HomePhoto): string {
   return join(FRONTEND, "public", photo.src);
 }
 
+function withoutComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+}
+
 describe("the home page photos", () => {
-  it("are the three files of the spec: the hero, the small hero for phones, and the owner photo", () => {
+  it("are three files: the hero, the small hero for phones, and the portrait photo of the owners part", () => {
     expect(Object.keys(HOME_PHOTOS).sort()).toEqual(["hero", "heroPhone", "owner"]);
     expect(Object.keys(HOME_PHOTOS).sort()).toEqual(Object.keys(BUDGET_KB).sort());
+  });
+
+  it("are hero3 (the hero), hero3-phone and hero4-portrait (the Unsplash photos of 2026-10-12)", () => {
+    expect(HOME_PHOTOS.hero.src).toBe("/images/home/hero3.webp");
+    expect(HOME_PHOTOS.heroPhone.src).toBe("/images/home/hero3-phone.webp");
+    expect(HOME_PHOTOS.owner.src).toBe("/images/home/hero4-portrait.webp");
   });
 
   it("exist as .webp files in public/images/home", () => {
@@ -37,24 +48,19 @@ describe("the home page photos", () => {
     }
   });
 
-  it("are the new files, hero4, hero4-phone and owner2 (the Unsplash photos of 2026-10-12)", () => {
-    expect(HOME_PHOTOS.hero.src).toBe("/images/home/hero4.webp");
-    expect(HOME_PHOTOS.heroPhone.src).toBe("/images/home/hero4-phone.webp");
-    expect(HOME_PHOTOS.owner.src).toBe("/images/home/owner2.webp");
-  });
-
-  it("are the only files of the folder: every photo the owner dropped or replaced is gone", () => {
+  it("are the only files of the folder: every photo that was dropped or replaced is gone", () => {
     const listed = photos.map(([, photo]) => photo.src.replace("/images/home/", "")).sort();
 
     expect(readdirSync(PHOTO_FOLDER).sort()).toEqual(listed);
     const dropped = [
-      "hero", "hero-phone", "owner", // the Magnific photos that the new ones replace
-      "hero2", "hospital", "clinic", "maternity", "pharmacy", "laboratory", "ambulance", "fire", // dropped on 2026-10-12
+      "hero", "hero-phone", "owner", // the first photos
+      "hero4", "hero4-phone", "owner2", // the second set, replaced on 2026-10-12
+      "hero2", "hospital", "clinic", "maternity", "pharmacy", "laboratory", "ambulance", "fire", // dropped earlier
     ];
     for (const name of dropped) expect(existsSync(join(PHOTO_FOLDER, `${name}.webp`)), name).toBe(false);
   });
 
-  it("are each under their budget: the hero 150 kB, the phone hero 50 kB, the owner photo 80 kB", () => {
+  it("are each under their budget: the hero 150 kB, the phone hero 50 kB, the portrait photo 100 kB", () => {
     for (const [name, photo] of photos) {
       const sizeInKilobytes = statSync(fileOf(photo)).size / KILOBYTE;
 
@@ -68,12 +74,12 @@ describe("the home page photos", () => {
     }
   });
 
-  it("have the sizes of the spec (R9): the hero 1280x960, the phone hero 640x480, the owner photo 800x600, all 4:3", () => {
+  it("have the sizes of the spec (R11): the hero 1200x1200, the phone hero 640x640, the portrait photo 800x1200 (2:3)", () => {
     const sizeOf = (name: keyof typeof HOME_PHOTOS) => `${HOME_PHOTOS[name].width}x${HOME_PHOTOS[name].height}`;
 
-    expect(sizeOf("hero")).toBe("1280x960");
-    expect(sizeOf("heroPhone")).toBe("640x480");
-    expect(sizeOf("owner")).toBe("800x600");
+    expect(sizeOf("hero")).toBe("1200x1200");
+    expect(sizeOf("heroPhone")).toBe("640x640");
+    expect(sizeOf("owner")).toBe("800x1200");
   });
 
   it("each have alt text: short, not empty, and not starting with 'image of' or 'photo of'", () => {
@@ -82,6 +88,12 @@ describe("the home page photos", () => {
       expect(photo.alt.length, name).toBeLessThanOrEqual(125);
       expect(photo.alt.toLowerCase(), name).not.toMatch(/^(an? )?(image|photo|picture) of/);
     }
+  });
+
+  it("describe what is in them: a stethoscope and a gauge in the hero, a health worker with a blister pack in the owners part", () => {
+    expect(HOME_PHOTOS.hero.alt.toLowerCase()).toMatch(/stethoscope/);
+    expect(HOME_PHOTOS.hero.alt.toLowerCase()).toMatch(/gauge|blood pressure/);
+    expect(HOME_PHOTOS.owner.alt.toLowerCase()).toMatch(/blister pack|pills/);
   });
 
   it("make the phone hero a smaller version of the same photo (same shape as the big one)", () => {
@@ -114,18 +126,22 @@ describe("the photo files in the repository", () => {
     expect(ignore).toMatch(/^image-sources\/$/m);
   });
 
-  it("are made by a script that makes only these three files", () => {
+  it("are made by a script that makes only these three files, from hero3.jpg and hero4.jpg", () => {
     const script = readFileSync(join(FRONTEND, "scripts", "optimize-home-images.mjs"), "utf8");
-    const targets = [...script.matchAll(/target: "([a-z0-9-]+\.webp)"/g)].map((match) => match[1]).sort();
+    const code = withoutComments(script);
+    const targets = [...code.matchAll(/target: "([a-z0-9-]+\.webp)"/g)].map((match) => match[1]).sort();
+    const sources = [...code.matchAll(/source: "([a-z0-9-]+\.jpg)"/g)].map((match) => match[1]).sort();
 
-    expect(targets).toEqual(["hero4-phone.webp", "hero4.webp", "owner2.webp"]);
-    // The owner does not use hero3 for now: no job reads it (a comment may say so).
-    expect(script.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "")).not.toContain("hero3");
+    expect(targets).toEqual(["hero3-phone.webp", "hero3.webp", "hero4-portrait.webp"]);
+    expect(sources).toEqual(["hero3.jpg", "hero3.jpg", "hero4.jpg"]);
+    expect(code).not.toContain("owner2"); // no longer used
   });
 
-  it("describe the photos by what is in them: a health worker and a pharmacy counter, with no old Magnific wording", () => {
-    expect(HOME_PHOTOS.hero.alt.toLowerCase()).toMatch(/blister pack|pills/);
-    expect(HOME_PHOTOS.owner.alt.toLowerCase()).toMatch(/pharmacy|counter|shelves/);
-    expect(HOME_PHOTOS.hero.alt).not.toMatch(/stethoscope and a blister pack of blue and white capsules on a clipboard/);
+  it("do not crop the portrait photo of the owners part: its job has no crop and keeps the 2:3 shape", () => {
+    const code = withoutComments(readFileSync(join(FRONTEND, "scripts", "optimize-home-images.mjs"), "utf8"));
+    const ownerJob = code.match(/\{[^{}]*target: "hero4-portrait\.webp"[^{}]*\}/)?.[0] ?? "";
+
+    expect(ownerJob).not.toContain("crop");
+    expect(HOME_PHOTOS.owner.width / HOME_PHOTOS.owner.height).toBeCloseTo(2 / 3, 2);
   });
 });

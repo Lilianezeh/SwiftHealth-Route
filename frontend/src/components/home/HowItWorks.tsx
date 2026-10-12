@@ -1,4 +1,4 @@
-/** Part 3 of the home page: how it works, three steps. Requirements: US-13, NFR-10. UI spec 2.1.
+/** Part 4 of the home page: how it works, three steps. Requirements: US-13, NFR-10. UI spec 2.1.
  * Each step has its number (hidden from screen readers: the list already numbers them), a decorative icon and a line.
  */
 import { Clock, Phone, Search } from "lucide-react";
@@ -13,8 +13,7 @@ export function HowItWorks() {
 
   return (
     <section aria-labelledby="how-it-works-heading" className="bg-white">
-      {/* The top space (pt-20, then md:pt-40) leaves room for the hero photo, which overlaps down into this part. */}
-      <div className="mx-auto max-w-6xl px-4 pb-12 pt-20 md:pt-40">
+      <div className="mx-auto max-w-6xl px-4 py-12">
         <h2 id="how-it-works-heading" className="text-2xl font-bold text-forest">
           {heading}
         </h2>

@@ -7,7 +7,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { metadata } from "@/app/layout";
 import Home from "@/app/page";
@@ -18,6 +18,9 @@ import { HOME_PHOTOS } from "@/config/home";
 import { siteConfig } from "@/config/site";
 
 import { readSource } from "../helpers/source";
+
+// The page is the home page: the header reads the address, and here it is "/".
+vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
 
 function renderWholePage() {
   return render(
@@ -45,19 +48,33 @@ describe("the facility owners part", () => {
     expect(button).toHaveAttribute("href", "/list-your-facility");
     expect(button.className).not.toMatch(/emergency/);
     const image = screen.getByAltText(HOME_PHOTOS.owner.alt);
-    expect(image).toHaveAttribute("src", HOME_PHOTOS.owner.src);
+    expect(image).toHaveAttribute("src", "/images/home/hero4-portrait.webp");
+    expect(image).toHaveAttribute("width", "800");
+    expect(image).toHaveAttribute("height", "1200");
     expect(image).toHaveAttribute("loading", "lazy");
+  });
+
+  it("shows the portrait photo whole: never cropped or stretched, full width on a phone, 32 rem high at most from 768 px", () => {
+    render(<FacilityOwners />);
+
+    const image = screen.getByAltText(HOME_PHOTOS.owner.alt);
+    expect(image.className).not.toMatch(/\bobject-cover\b|\bh-full\b|\baspect-/); // nothing that cuts it or makes it taller
+    expect(image.className).toMatch(/(^|\s)h-auto\b/);
+    expect(image.className).toMatch(/(^|\s)w-full\b/); // the full width of the content on a phone
+    expect(image.className).toMatch(/\bmd:max-h-\[32rem\]/); // a sensible height beside the text
+    expect(image.className).toMatch(/\bmd:w-auto\b/); // narrower to keep the shape
+    expect(image.className).toMatch(/\bmd:max-w-full\b/);
   });
 });
 
 describe("the whole page", () => {
-  it("has the seven parts in the owner's order", () => {
+  it("has the eight parts in the owner's order", () => {
     renderWholePage();
 
     const landmarks = [
       screen.getByRole("banner"),
       screen.getByRole("heading", { level: 1 }),
-      ...["How it works", "Browse by type", "Why SwiftHealth"].map((name) =>
+      ...["Overview", "How it works", "Browse by type", "Benefits"].map((name) =>
         screen.getByRole("heading", { level: 2, name }),
       ),
       screen.getByRole("heading", { level: 2, name: "Run a hospital, clinic or pharmacy?" }),
@@ -74,13 +91,13 @@ describe("the whole page", () => {
     }
   });
 
-  it("has one h1 and four h2 (how it works, browse, why, facility owners), and no heading deeper than h3", () => {
+  it("has one h1 and five h2 (overview, how it works, browse, benefits, facility owners), and no heading deeper than h3", () => {
     renderWholePage();
 
     const levels = screen.getAllByRole("heading").map((heading) => Number(heading.tagName.slice(1)));
 
     expect(levels.filter((level) => level === 1)).toHaveLength(1);
-    expect(levels.filter((level) => level === 2)).toHaveLength(4); // how it works, browse, why, facility owners
+    expect(levels.filter((level) => level === 2)).toHaveLength(5);
     expect(Math.max(...levels)).toBeLessThanOrEqual(3);
   });
 
@@ -114,11 +131,14 @@ describe("the whole page", () => {
       "app/layout.tsx",
       "config/home.ts",
       "components/home/HomeHero.tsx",
+      "components/home/Overview.tsx",
       "components/home/HowItWorks.tsx",
       "components/home/BrowseByType.tsx",
       "components/home/WhySwiftHealth.tsx",
       "components/home/FacilityOwners.tsx",
       "components/layout/SiteHeader.tsx",
+      "components/layout/HeaderNavigation.tsx",
+      "components/layout/Logo.tsx",
       "components/layout/SiteFooter.tsx",
     ]) {
       expect(readSource(file), file).not.toMatch(/enugu/i);
@@ -165,8 +185,8 @@ describe("the whole page", () => {
     const images = [...container.querySelectorAll("img")];
 
     expect(images.map((image) => image.getAttribute("src"))).toEqual([
-      "/images/home/hero4.webp",
-      "/images/home/owner2.webp",
+      "/images/home/hero3.webp",
+      "/images/home/hero4-portrait.webp",
     ]);
     expect(images.map((image) => image.getAttribute("src"))).toEqual([HOME_PHOTOS.hero.src, HOME_PHOTOS.owner.src]);
     for (const image of images) {
@@ -192,6 +212,25 @@ describe("the whole page", () => {
     );
 
     expect(red.map((element) => element.textContent)).toEqual(["SwiftRescue"]);
+  });
+
+  it("has no Find care link in the header on the home page, because the hero button does the same", () => {
+    renderWholePage();
+
+    expect(within(screen.getByRole("banner")).queryByRole("link", { name: "Find care" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Find care near me" })).toHaveAttribute("href", "/find"); // the hero button
+    expect(within(screen.getByRole("banner")).getByRole("link", { name: "For facilities" })).toBeInTheDocument();
+  });
+
+  it("has the Overview right after the hero, and the Benefits part named Benefits", () => {
+    renderWholePage();
+
+    const hero = screen.getByRole("heading", { level: 1 });
+    const overview = screen.getByRole("heading", { level: 2, name: "Overview" });
+    const howItWorks = screen.getByRole("heading", { level: 2, name: "How it works" });
+    expect(hero.compareDocumentPosition(overview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(overview.compareDocumentPosition(howItWorks) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByText("Why SwiftHealth")).not.toBeInTheDocument();
   });
 
   it("has no Emergency help and no Open SwiftRescue button: the way to SwiftRescue is the header's red button", () => {

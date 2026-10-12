@@ -20,17 +20,16 @@ const LOWEST_QUALITY = 30;
 const QUALITY_STEP = 3;
 
 // One line per file: the original, the WebP to make, its fixed pixel size and its budget in kB. The page has two photos: the
-// hero, which also has a smaller version for phones, and the owner photo (the Unsplash photos hero4.jpg and owner2.jpg, which
-// replaced the first ones on 2026-10-12; hero3.jpg is not used). `crop` is the part of the original to keep, in the original's
-// pixels, before it is resized. Both originals are portrait, so each is cut by hand to a 4:3 band: hero4 (4160 x 6240) keeps
-// the head and the blister pack, owner2 (2700 x 3779) keeps the head and the hands on the counter.
-const HERO_CROP = { left: 0, top: 140, width: 4160, height: 3120 };
-const OWNER_CROP = { left: 0, top: 40, width: 2700, height: 2025 };
+// hero (the Unsplash photo hero3.jpg since the third revision, 2026-10-12), which also has a smaller version for phones, and the
+// owner photo (hero4.jpg). `crop` is the part of the original to keep, in the original's pixels, before it is resized.
+// - hero3 (4000 x 6016, portrait) is cut by hand to a square that keeps the head of the stethoscope and the whole gauge.
+// - hero4 (4160 x 6240, portrait) is not cut at all: the owner wants the whole portrait photo, so only its size is reduced.
+const HERO_CROP = { left: 0, top: 400, width: 4000, height: 4000 };
 const JOBS = [
-  { source: "hero4.jpg", target: "hero4.webp", width: 1280, height: 960, budgetKb: 150, crop: HERO_CROP },
+  { source: "hero3.jpg", target: "hero3.webp", width: 1200, height: 1200, budgetKb: 150, crop: HERO_CROP },
   // The same photo, smaller, for phones.
-  { source: "hero4.jpg", target: "hero4-phone.webp", width: 640, height: 480, budgetKb: 50, crop: HERO_CROP },
-  { source: "owner2.jpg", target: "owner2.webp", width: 800, height: 600, budgetKb: 80, crop: OWNER_CROP },
+  { source: "hero3.jpg", target: "hero3-phone.webp", width: 640, height: 640, budgetKb: 50, crop: HERO_CROP },
+  { source: "hero4.jpg", target: "hero4-portrait.webp", width: 800, height: 1200, budgetKb: 100 },
 ];
 
 async function makeOne({ source, target, width, height, budgetKb, crop }) {

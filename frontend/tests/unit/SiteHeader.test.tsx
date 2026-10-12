@@ -5,9 +5,17 @@
  */
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SiteHeader } from "@/components/layout/SiteHeader";
+
+// The header reads the address to hide "Find care" on the home page (R14): each test chooses the page it is on.
+const address = vi.hoisted(() => ({ pathname: "/find" }));
+vi.mock("next/navigation", () => ({ usePathname: () => address.pathname }));
+
+beforeEach(() => {
+  address.pathname = "/find";
+});
 
 describe("SiteHeader", () => {
   it("has the SwiftHealth wordmark, a link to the home page", () => {
@@ -80,6 +88,58 @@ describe("SiteHeader", () => {
     expect(header.className).toMatch(/\bborder-b-4\b/);
     expect(header.className).toMatch(/\bborder-accent\b/);
     expect(header.className).not.toMatch(/\bbg-accent\b/);
+  });
+
+  it("hides Find care on the home page, in the bar: the hero button does the same", () => {
+    address.pathname = "/";
+    render(<SiteHeader />);
+
+    expect(screen.queryByRole("link", { name: "Find care" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "SwiftHealth",
+      "SwiftRescue",
+      "For facilities",
+    ]);
+  });
+
+  it("hides Find care on the home page in the phone menu too, and keeps For facilities there", async () => {
+    address.pathname = "/";
+    render(<SiteHeader />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+    const menu = screen.getByRole("navigation", { name: "Menu links" });
+
+    expect(within(menu).queryByRole("link", { name: "Find care" })).not.toBeInTheDocument();
+    expect(within(menu).getByRole("link", { name: "For facilities" })).toBeInTheDocument();
+  });
+
+  it.each(["/find", "/search", "/emergency", "/listing/night-pharmacy-a", "/privacy", "/list-your-facility"])(
+    "shows Find care on %s, in the bar and in the menu",
+    async (pathname) => {
+      address.pathname = pathname;
+      render(<SiteHeader />);
+
+      expect(screen.getByRole("link", { name: "Find care" })).toHaveAttribute("href", "/find");
+      await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+      const menu = screen.getByRole("navigation", { name: "Menu links" });
+      expect(within(menu).getByRole("link", { name: "Find care" })).toHaveAttribute("href", "/find");
+    },
+  );
+
+  it("keeps SwiftRescue and the logo on the home page too (FR-02)", () => {
+    address.pathname = "/";
+    render(<SiteHeader />);
+
+    expect(screen.getByRole("link", { name: "SwiftRescue" })).toHaveAttribute("href", "/emergency");
+    expect(screen.getByRole("link", { name: "SwiftHealth" })).toHaveAttribute("href", "/");
+  });
+
+  it("has the logo in the wordmark link: a pin that screen readers do not read, then the word", () => {
+    render(<SiteHeader />);
+
+    const wordmark = screen.getByRole("link", { name: "SwiftHealth" });
+    expect(wordmark.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(wordmark).toHaveTextContent("SwiftHealth");
   });
 
   it("keeps every tap target at 48 px or more, the Menu button too", () => {

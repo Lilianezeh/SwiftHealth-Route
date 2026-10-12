@@ -1,4 +1,4 @@
-/** Part 5 of the home page: why SwiftHealth, four items. Requirements: US-13, NFR-10, NFR-07. UI spec 2.1.
+/** Part 6 of the home page: the Benefits (it was called "Why SwiftHealth" until 2026-10-12), four items. Requirements: US-13, NFR-10, NFR-07. UI spec 2.1.
  * The words say only what the product does: no numbers, no quotes. "Your location stays private" is true (NFR-07): the
  * position is kept in the browser tab and sent only to the search.
  */

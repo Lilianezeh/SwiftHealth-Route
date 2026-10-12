@@ -19,6 +19,7 @@
   --color-line: #d7e1df;
   --color-pine-100: #dcecf4;
   --color-pine-50: #eef6fa;
+  --color-sky: #a9ddf3; /* the hero background; dark blue (pine-dark) text on it is 6.1:1 */
   --color-open: #147a48;
   --color-open-bg: #e7f6ed;
   --color-closed: #465451;
