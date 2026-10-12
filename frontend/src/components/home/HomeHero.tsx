@@ -8,7 +8,7 @@
  * column is the taller one). The section has no overflow-hidden and is not isolated, so the photo can sit above the next section.
  *
  * The hero is one <picture>: its <source> for screens up to 767 px has one file, so every phone takes the small one
- * (hero-phone.webp) whatever its pixel density, and never downloads hero.webp. The hero is loaded at once but is not asked to
+ * (hero4-phone.webp) whatever its pixel density, and never downloads hero4.webp. The hero is loaded at once but is not asked to
  * be preloaded (that would make a phone preload the big file too).
  */
 import { getImageProps } from "next/image";

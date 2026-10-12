@@ -26,6 +26,4 @@ export const siteConfig = {
     { label: "Contact", href: "/contact" },
     { label: "List your facility", href: "/list-your-facility" },
   ],
-  // All the photos of the home page come from Magnific's free collection (owner, 2026-10-11).
-  photoCredit: { text: "Images designed by Magnific", href: "https://www.magnific.com" },
 };

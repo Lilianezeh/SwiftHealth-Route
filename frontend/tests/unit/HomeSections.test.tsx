@@ -105,10 +105,11 @@ describe("the hero", () => {
     expect(sources[0]).toHaveAttribute("srcset", `${HOME_PHOTOS.heroPhone.src} 640w`);
     expect(sources[0]).toHaveAttribute("sizes", "100vw");
     const image = picture?.querySelector("img");
-    expect(image).toHaveAttribute("src", HOME_PHOTOS.hero.src);
+    expect(image).toHaveAttribute("src", "/images/home/hero4.webp");
     expect(image).toHaveAttribute("width", "1280");
-    expect(image).toHaveAttribute("height", "853");
+    expect(image).toHaveAttribute("height", "960");
     expect(image).toHaveAttribute("alt", HOME_PHOTOS.hero.alt);
+    expect(sources[0]).toHaveAttribute("srcset", "/images/home/hero4-phone.webp 640w");
   });
 
   it("loads the hero at once and with high priority, with no srcset of its own that could pick another file", () => {

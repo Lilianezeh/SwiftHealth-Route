@@ -152,11 +152,22 @@ describe("the whole page", () => {
     expect(container.querySelectorAll("blockquote, q")).toHaveLength(0);
   });
 
+  it("has no outside link anywhere on the page, and no photo credit", () => {
+    const { container } = renderWholePage();
+
+    expect(container.querySelectorAll('a[href^="http"], a[target="_blank"]')).toHaveLength(0);
+    expect(container.textContent?.toLowerCase()).not.toMatch(/magnific|unsplash/);
+  });
+
   it("has two images only, the hero and the owner photo, each with alt text, a width and a height", () => {
     const { container } = renderWholePage();
 
     const images = [...container.querySelectorAll("img")];
 
+    expect(images.map((image) => image.getAttribute("src"))).toEqual([
+      "/images/home/hero4.webp",
+      "/images/home/owner2.webp",
+    ]);
     expect(images.map((image) => image.getAttribute("src"))).toEqual([HOME_PHOTOS.hero.src, HOME_PHOTOS.owner.src]);
     for (const image of images) {
       expect(image.getAttribute("alt")?.length, image.getAttribute("src") ?? "").toBeGreaterThan(10);

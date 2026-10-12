@@ -2,8 +2,9 @@ import Link from "next/link";
 
 import { siteConfig } from "@/config/site";
 
-/** Footer on every page: information links, the photo credit and the copyright line.
- * Requirements: US-13, NFR-10. UI spec, "Layout" (redesigned on 2026-10-11). The year is a constant of siteConfig.
+/** Footer on every page: information links and the copyright line.
+ * Requirements: US-13, NFR-10. UI spec, "Layout". The year is a constant of siteConfig. There is no photo credit and no outside
+ * link: the Magnific credit was removed on 2026-10-12, when the photos were replaced by two that need none (the owner's statement).
  */
 export function SiteFooter() {
   return (
@@ -19,18 +20,7 @@ export function SiteFooter() {
           </Link>
         ))}
       </nav>
-      <p className="mt-4">
-        <a
-          href={siteConfig.photoCredit.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-12 items-center underline underline-offset-4"
-        >
-          {siteConfig.photoCredit.text}
-          <span className="sr-only"> (opens in a new tab)</span>
-        </a>
-      </p>
-      <p className="mt-2 text-ink-soft">
+      <p className="mt-4 text-ink-soft">
         © {siteConfig.copyrightYear} {siteConfig.name}
       </p>
     </footer>

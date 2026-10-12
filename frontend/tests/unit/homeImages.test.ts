@@ -37,13 +37,21 @@ describe("the home page photos", () => {
     }
   });
 
-  it("are the only files of the folder: the eight photos the owner dropped are gone", () => {
+  it("are the new files, hero4, hero4-phone and owner2 (the Unsplash photos of 2026-10-12)", () => {
+    expect(HOME_PHOTOS.hero.src).toBe("/images/home/hero4.webp");
+    expect(HOME_PHOTOS.heroPhone.src).toBe("/images/home/hero4-phone.webp");
+    expect(HOME_PHOTOS.owner.src).toBe("/images/home/owner2.webp");
+  });
+
+  it("are the only files of the folder: every photo the owner dropped or replaced is gone", () => {
     const listed = photos.map(([, photo]) => photo.src.replace("/images/home/", "")).sort();
 
     expect(readdirSync(PHOTO_FOLDER).sort()).toEqual(listed);
-    for (const dropped of ["hero2", "hospital", "clinic", "maternity", "pharmacy", "laboratory", "ambulance", "fire"]) {
-      expect(existsSync(join(PHOTO_FOLDER, `${dropped}.webp`)), dropped).toBe(false);
-    }
+    const dropped = [
+      "hero", "hero-phone", "owner", // the Magnific photos that the new ones replace
+      "hero2", "hospital", "clinic", "maternity", "pharmacy", "laboratory", "ambulance", "fire", // dropped on 2026-10-12
+    ];
+    for (const name of dropped) expect(existsSync(join(PHOTO_FOLDER, `${name}.webp`)), name).toBe(false);
   });
 
   it("are each under their budget: the hero 150 kB, the phone hero 50 kB, the owner photo 80 kB", () => {
@@ -60,12 +68,12 @@ describe("the home page photos", () => {
     }
   });
 
-  it("have the sizes of the spec: the hero 1280x853, the phone hero 640x427, the owner photo 800x533", () => {
+  it("have the sizes of the spec (R9): the hero 1280x960, the phone hero 640x480, the owner photo 800x600, all 4:3", () => {
     const sizeOf = (name: keyof typeof HOME_PHOTOS) => `${HOME_PHOTOS[name].width}x${HOME_PHOTOS[name].height}`;
 
-    expect(sizeOf("hero")).toBe("1280x853");
-    expect(sizeOf("heroPhone")).toBe("640x427");
-    expect(sizeOf("owner")).toBe("800x533");
+    expect(sizeOf("hero")).toBe("1280x960");
+    expect(sizeOf("heroPhone")).toBe("640x480");
+    expect(sizeOf("owner")).toBe("800x600");
   });
 
   it("each have alt text: short, not empty, and not starting with 'image of' or 'photo of'", () => {
@@ -110,6 +118,14 @@ describe("the photo files in the repository", () => {
     const script = readFileSync(join(FRONTEND, "scripts", "optimize-home-images.mjs"), "utf8");
     const targets = [...script.matchAll(/target: "([a-z0-9-]+\.webp)"/g)].map((match) => match[1]).sort();
 
-    expect(targets).toEqual(["hero-phone.webp", "hero.webp", "owner.webp"]);
+    expect(targets).toEqual(["hero4-phone.webp", "hero4.webp", "owner2.webp"]);
+    // The owner does not use hero3 for now: no job reads it (a comment may say so).
+    expect(script.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "")).not.toContain("hero3");
+  });
+
+  it("describe the photos by what is in them: a health worker and a pharmacy counter, with no old Magnific wording", () => {
+    expect(HOME_PHOTOS.hero.alt.toLowerCase()).toMatch(/blister pack|pills/);
+    expect(HOME_PHOTOS.owner.alt.toLowerCase()).toMatch(/pharmacy|counter|shelves/);
+    expect(HOME_PHOTOS.hero.alt).not.toMatch(/stethoscope and a blister pack of blue and white capsules on a clipboard/);
   });
 });

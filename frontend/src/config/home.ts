@@ -1,6 +1,7 @@
 /** The photos and the words of the home page. Requirements: US-13, NFR-01, NFR-10. UI spec 2.1 (the words are the owner's).
- * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8, 15 and 19, and revision R1 to R7 of 2026-10-12). The page has two
- * photos, the hero and the owner photo, and a smaller version of the hero for phones. The files are made by
+ * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8, 15 and 19, and revisions R1 to R10 of 2026-10-12). The page has two
+ * photos, the hero and the owner photo (Unsplash photos, from hero4.jpg and owner2.jpg), and a smaller version of the hero for
+ * phones. The files are made by
  * scripts/optimize-home-images.mjs and tested by tests/unit/homeImages.test.ts, which checks that `width` and `height` are the
  * real pixel size of each file.
  *
@@ -19,23 +20,23 @@ const FOLDER = "/images/home";
 export const HOME_PHOTOS = {
   // The hero: one photo, in two sizes. A phone gets the small one (specs, decision 19), so both say the same thing.
   hero: {
-    src: `${FOLDER}/hero.webp`,
+    src: `${FOLDER}/hero4.webp`,
     width: 1280,
-    height: 853,
-    alt: "A blue stethoscope and a blister pack of blue and white capsules on a clipboard.",
+    height: 960,
+    alt: "A smiling health worker in glasses and a white coat, with a stethoscope around the neck, holds up a blister pack of pills.",
   },
   heroPhone: {
-    src: `${FOLDER}/hero-phone.webp`,
+    src: `${FOLDER}/hero4-phone.webp`,
     width: 640,
-    height: 427,
-    alt: "A blue stethoscope and a blister pack of blue and white capsules on a clipboard.",
+    height: 480,
+    alt: "A smiling health worker in glasses and a white coat, with a stethoscope around the neck, holds up a blister pack of pills.",
   },
   // For facility owners.
   owner: {
-    src: `${FOLDER}/owner.webp`,
+    src: `${FOLDER}/owner2.webp`,
     width: 800,
-    height: 533,
-    alt: "A smiling health worker in a white coat and a stethoscope works at a computer in a pharmacy.",
+    height: 600,
+    alt: "A smiling person in a black T-shirt sits at a pharmacy counter, with shelves of medicine boxes behind.",
   },
 } as const satisfies Record<string, HomePhoto>;
 

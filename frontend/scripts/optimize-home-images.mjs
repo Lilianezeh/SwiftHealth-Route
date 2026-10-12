@@ -1,5 +1,5 @@
 /** Makes the WebP photos of the home page from the full-size originals. Requirements: US-13, NFR-01.
- * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8 and 19, and revision R1 of 2026-10-12: three files).
+ * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8 and 19, and revisions R1, R8 and R9 of 2026-10-12: three files).
  *
  * Run it in the frontend container:  node scripts/optimize-home-images.mjs
  * It reads the JPG originals from frontend/image-sources/ (not committed, about 60 MB) and writes the WebP files to
@@ -19,13 +19,18 @@ const FIRST_QUALITY = 80;
 const LOWEST_QUALITY = 30;
 const QUALITY_STEP = 3;
 
-// One line per file: the original, the WebP to make, its fixed pixel size and its budget in kB. The page has two photos (the
-// owner's review, 2026-10-12): the hero, which also has a smaller version for phones, and the owner photo. `crop` (optional) is
-// the part of the original to keep, in the original's pixels, before it is resized; no photo needs it now.
+// One line per file: the original, the WebP to make, its fixed pixel size and its budget in kB. The page has two photos: the
+// hero, which also has a smaller version for phones, and the owner photo (the Unsplash photos hero4.jpg and owner2.jpg, which
+// replaced the first ones on 2026-10-12; hero3.jpg is not used). `crop` is the part of the original to keep, in the original's
+// pixels, before it is resized. Both originals are portrait, so each is cut by hand to a 4:3 band: hero4 (4160 x 6240) keeps
+// the head and the blister pack, owner2 (2700 x 3779) keeps the head and the hands on the counter.
+const HERO_CROP = { left: 0, top: 140, width: 4160, height: 3120 };
+const OWNER_CROP = { left: 0, top: 40, width: 2700, height: 2025 };
 const JOBS = [
-  { source: "hero.jpg", target: "hero.webp", width: 1280, height: 853, budgetKb: 150 },
-  { source: "hero.jpg", target: "hero-phone.webp", width: 640, height: 427, budgetKb: 50 }, // the same photo, for phones
-  { source: "owner.jpg", target: "owner.webp", width: 800, height: 533, budgetKb: 80 },
+  { source: "hero4.jpg", target: "hero4.webp", width: 1280, height: 960, budgetKb: 150, crop: HERO_CROP },
+  // The same photo, smaller, for phones.
+  { source: "hero4.jpg", target: "hero4-phone.webp", width: 640, height: 480, budgetKb: 50, crop: HERO_CROP },
+  { source: "owner2.jpg", target: "owner2.webp", width: 800, height: 600, budgetKb: 80, crop: OWNER_CROP },
 ];
 
 async function makeOne({ source, target, width, height, budgetKb, crop }) {
