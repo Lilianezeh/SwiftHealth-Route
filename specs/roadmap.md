@@ -193,6 +193,8 @@ branch after this one.
 - Task 7, a simpler home page after the owner's review of the preview (2026-10-12: two photos, icon tiles, a lighter hero with one
   photo that overlaps into the next section, no band, no About, no red hero button, no city): **done** (589 tests); the owner's review
   of the new preview is next
+- Task 8, new hero and owner photos (Unsplash, from `hero4.jpg` and `owner2.jpg`; `hero3.jpg` unused) and no photo credit in the
+  footer: **done** (591 tests); the owner's review of the new preview is next
 - Task 6, wrap-up: checks and build **done** (584 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
   review on the preview
 

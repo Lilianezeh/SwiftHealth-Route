@@ -14,7 +14,7 @@ Sketches go in `docs/screens/`.
 
 ### Layout (every page, from `src/app/layout.tsx`)
 - **Header** (new design, 2026-10-11, see 2.1): the **SwiftHealth** wordmark on the left (links to `/`); then **Find care** (`/find`), red **SwiftRescue** (`/emergency`) and **For facilities** (`/list-your-facility`). `forest` background with a 4 px `accent` line under it. On a phone the bar shows the wordmark, the red SwiftRescue button (always visible, FR-02) and a **Menu** button; the menu opens a panel with Find care and For facilities. From tablet width (768 px) all links are in the bar. The menu button is at least 48 px, has the word "Menu" beside its icon, and says whether it is open (`aria-expanded`); Esc closes the panel.
-- **Footer:** About · How we verify · Privacy · Terms · Contact · List your facility; then the photo credit "Images designed by Magnific" (a link to `https://www.magnific.com`, opens in a new tab); then "© 2026 SwiftHealth".
+- **Footer:** About · How we verify · Privacy · Terms · Contact · List your facility; then "© 2026 SwiftHealth". No photo credit and no outside link: no photo of the site needs one (owner, 2026-10-12; the Magnific credit was removed when the photos were replaced).
 - Mobile-first; content max width 720 px on public pages, 1200 px in admin.
 
 ### Design tokens (in `src/styles/globals.css`)
@@ -126,13 +126,14 @@ heading); each following part has an `h2`.
    `/find`). Small line (16 px, secondary): **"Free to use · No sign-up needed"**. No red button and no second button in the hero:
    the red SwiftRescue button is in the header, on every page. **Text colour:** dark blue (`pine-dark`, 7.4:1 on `pine-100`) for the
    heading and the line, and `ink-soft` (5.8:1) for the small line. White text would be 1.2:1 on this blue, so it is not used.
-   - *One large photo,* `hero.webp`, with rounded corners, that **overlaps the bottom edge of the hero into the next section**
+   - *One large photo,* `hero4.webp` (4:3, 1280 × 960, cut from a portrait photo of a smiling health worker holding a blister
+     pack), with rounded corners, that **overlaps the bottom edge of the hero into the next section**
      (the hero has no `overflow-hidden`; the photo has a negative bottom margin and sits above the next section; the next
      section has extra space at its top so the photo never covers its text). *Phone:* the photo is below the text, full width.
      *Tablet and desktop (768 px and up):* text on the left, the photo on the right.
-   - *The file:* the hero is one `<picture>` whose `<source media="(max-width: 767px)">` has `srcset="hero-phone.webp 640w"` and
-     `sizes="100vw"` (the small version, 640 px, about 28 kB), and whose `<img>` is `hero.webp` (1280 px) for wider screens. So a
-     phone downloads only the small file. The hero is loaded at once (`loading="eager"`, `fetchPriority="high"`), without
+   - *The file:* the hero is one `<picture>` whose `<source media="(max-width: 767px)">` has `srcset="hero4-phone.webp 640w"` and
+     `sizes="100vw"` (the small version, 640 × 480, under 50 kB), and whose `<img>` is `hero4.webp` (1280 px) for wider screens, on
+     tablets and desktops. So a phone downloads only the small file. The hero is loaded at once (`loading="eager"`, `fetchPriority="high"`), without
      `priority`, so no big file is preloaded on a phone.
 3. **How it works** — `h2` "How it works". Three steps, each with an icon, a step number and a line: **"Search or share your
    location"**, **"See who's open now"**, **"Call, WhatsApp or get directions"**.
@@ -144,7 +145,7 @@ heading); each following part has an `h2`.
    goes live."), **Open now means open now** ("Hours follow local time, including late-night places."), **Works on slow data**
    ("Light pages that load on a weak connection."), **Your location stays private** ("Your position stays in your browser and is
    used only to find places near you.").
-6. **For facility owners** — `owner.webp` and `h2` **"Run a hospital, clinic or pharmacy?"**; text **"List your facility for free
+6. **For facility owners** — `owner2.webp` (4:3, 800 × 600, cut from a portrait photo of a smiling person at a pharmacy counter) and `h2` **"Run a hospital, clinic or pharmacy?"**; text **"List your facility for free
    and help people find you when they need you. We verify every listing before it goes live."**; button **"List your facility"**
    (to `/list-your-facility`).
 7. **Footer** — see "Layout" above.
@@ -153,10 +154,11 @@ heading); each following part has an `h2`.
 with the ambulance and fire photos), the About part, the red "Emergency help" button of the hero, the second hero photo, the
 photo cards of "Browse by type", and every mention of a city.
 
-**Images** (in `frontend/public/images/home/`, made by `scripts/optimize-home-images.mjs`): `hero` under 150 kB, `hero-phone`
-under 50 kB (the same photo, smaller, for phones), `owner` under 80 kB. First-load weight of the page stays under 500 KB (NFR-01):
-only the hero photo counts (the small one on a phone), because the owner photo is lazy. Alt text is short and factual and was
-written after the converted photos were looked at.
+**Images** (in `frontend/public/images/home/`, made by `scripts/optimize-home-images.mjs`; replaced on 2026-10-12 by two Unsplash
+photos): `hero4` under 150 kB, `hero4-phone` under 50 kB (the same photo, smaller, for phones), `owner2` under 80 kB. First-load
+weight of the page stays under 500 KB (NFR-01): only the hero photo counts (the small one on a phone), because the owner photo is
+lazy. Alt text is short and factual and was written after the converted photos were looked at. There is no photo credit in the
+footer: the owner states that these photos need none.
 **Known gap:** `/list-your-facility` and `/about` are still "Coming soon" pages (phases 10 and 13b). `/emergency` has the minimal
 page of 2.5 until phase 7.
 

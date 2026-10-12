@@ -125,9 +125,24 @@ The frontend suite is 589 tests.
 - [x] `points every button of the page to the right place` (Find care near me, List your facility)
 - [x] The existing tests still pass (the whole suite, 589).
 
+### Task 8: new photos, no photo credit (2026-10-12): `homeImages.test.ts`, `HomeSections.test.tsx`, `SiteFooter.test.tsx`, `HomePage.test.tsx` (done, `1f1cdcc`)
+Replaces the tests about the Magnific credit (Task 2) and the old file names and sizes (Tasks 1 and 7). 10 tests failed first, then
+passed. The frontend suite is 591 tests.
+- [x] `homeImages`: `are the new files, hero4, hero4-phone and owner2`; `are the only files of the folder: every photo the owner
+  dropped or replaced is gone` (the old `hero`, `hero-phone` and `owner` too); `have the sizes of the spec (R9)`: 1280 × 960, 640 ×
+  480 and 800 × 600, the real pixel size of each file; the budgets (150, 50 and 80 kB; the files are 32.8, 11.7 and 38.6 kB); the
+  alt texts; `are made by a script that makes only these three files` and does not read `hero3`
+- [x] `HomeSections`: the hero is still one picture with the phone-only source (`hero4-phone.webp 640w`, sizes 100vw) and an `<img>` of
+  `hero4.webp` at 1280 × 960, loaded at once, no priority; the overlap rules are unchanged
+- [x] `SiteFooter`: `has no photo credit and no outside link`; `says nothing of Magnific or Unsplash, in the page or in the source`
+  (the code without its comments); `keeps its six links in the same order`; `puts the copyright line after the links, and it is
+  the last thing in the footer`
+- [x] `HomePage`: `has no outside link anywhere on the page, and no photo credit`; the two images are `hero4.webp` and `owner2.webp`
+- [x] The existing tests still pass (the whole suite, 591).
+
 ## Review-focus edge cases
 
-Checked by the tests and by the build (2026-10-11; the hero details changed on 2026-10-12, see Task 7):
+Checked by the tests and by the build (2026-10-11; the hero details changed on 2026-10-12, see Tasks 7 and 8):
 - [x] **The hero tag in the built page.** `.next/server/app/index.html` has `<picture><source media="(max-width: 767px)"
   srcSet="/images/home/hero-phone.webp 640w" sizes="100vw"/><img … loading="eager" fetchPriority="high" width="1280"
   height="853" src="/images/home/hero.webp" …/></picture>`, and no `<link rel="preload">` for any image (only one for the webpack script).
@@ -158,7 +173,8 @@ For the owner, in a browser (see the smoke test):
 - [x] No new package: `git diff origin/main -- frontend/package.json frontend/package-lock.json` is empty (2026-10-11). The
   script uses `sharp`, which Next.js installs for itself.
 - [x] No `dangerouslySetInnerHTML` and no `innerHTML` in `frontend/src` (`git grep`, 2026-10-11); all text is rendered as text.
-- [x] The only outside link of the new page is the Magnific credit: `target="_blank"` with `rel="noopener noreferrer"` (a test).
+- [x] The home page has no outside link at all since 2026-10-12 (the Magnific credit was removed with the Magnific photos): the
+  built page has no `href="http…"`, and a test checks the page and the footer.
 - [x] All photos are local files (`/images/home/...`), so no outside request leaves the page.
 - [x] No original photo, no secret and no `.env` change is committed: `public/images/home` is 348 kB of WebP and
   `frontend/image-sources/` is ignored (`git check-ignore` and a test).
@@ -175,16 +191,17 @@ Updated on 2026-10-12 for the simpler page (Task 7).
 - [ ] Laptop at about 768 px (the smallest tablet layout): the overlap is still clear of the text of the next part.
 - [ ] Laptop with DevTools at 360 px, Network, cache off, throttled to 3G: the first load is under 500 KB, only
   `hero-phone.webp` is requested for the hero (no `hero.webp`), and `owner.webp` loads while scrolling.
-- [ ] The words match the brief (and the page says no city anywhere); the alt texts are right for the two photos; the Magnific
-  credit is in the footer.
-- [ ] The two photos look right, and neither is blurry or over-compressed.
+- [ ] The words match the brief (and the page says no city anywhere); the alt texts are right for the two new photos; the footer
+  has the six links and the copyright line only (no photo credit).
+- [ ] The two new photos look right, cut to 4:3 (the hero shows the face and the blister pack, the owner photo the person and the
+  hands on the counter), and neither is blurry or over-compressed. `hero4-phone.webp` is the only hero file a phone requests.
 - [ ] `/emergency`: the red Call 112 button, the line about the list and the FR-26 sentence; the button opens the dialler on a phone.
 - [ ] Other pages (`/find`, `/search`) still look right with the new header and footer.
 
 ## Merge checklist
 
-- [x] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean (2026-10-12, on `f5f58cc`): lint and
-  typecheck clean, 589 tests passing, the build passes. `/` is static: 6.5 kB, 113 kB first load JS (it was dynamic, 103 kB);
+- [x] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean (2026-10-12, on `1f1cdcc`): lint and
+  typecheck clean, 591 tests passing, the build passes. `/` is static: 6.5 kB, 113 kB first load JS (it was dynamic, 103 kB);
   `/emergency` is 105 kB. The built page names three image files only (`hero`, `hero-phone`, `owner`), has no image preload, and
   no city word.
 - [x] On the draft pull request `Frontend CI` runs and is green, and `Backend CI` does not run. What `gh pr checks 21` showed

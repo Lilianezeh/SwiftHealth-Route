@@ -54,7 +54,8 @@ a resident, a partner or a facility owner sees. [tech-stack.md](../tech-stack.md
 The owner looked at the preview of pull request #21 and asked for a simpler page. Where this section and a decision below
 disagree, **this section wins**. The decisions below keep their text, with a note where they are replaced.
 
-- **R1. Two photos only:** `hero.jpg` (the hero) and `owner.jpg` (the facility owners part). The other eight photos are deleted
+- **R1. Two photos only** *(the photos and file names were replaced by R8 on 2026-10-12)*: `hero.jpg` (the hero) and `owner.jpg`
+  (the facility owners part). The other eight photos are deleted
   from `public/images/home/`: `hero2`, `hospital`, `clinic`, `maternity`, `pharmacy`, `laboratory`, `ambulance`, `fire`. The
   small phone version of the hero (`hero-phone.webp`, decision 19, the owner's earlier addition) stays, so three files remain.
   Images table (replaces the table of decision 8): `hero.webp` 1280 × 853 under 150 kB, `hero-phone.webp` 640 × 427 under 50 kB,
@@ -77,6 +78,27 @@ disagree, **this section wins**. The decisions below keep their text, with a not
   pharmacies and emergency help, open near you." `siteConfig.launchCity` stays in `config/site.ts`, because other parts of the
   app may use it (owner, 2026-10-12); the home page does not.
 - **R7. Footer unchanged:** "Images designed by Magnific" is still true for the two photos (decision 14).
+  *(Replaced by R10 on 2026-10-12: the Magnific photos are gone, so the credit is removed.)*
+
+### Second revision, 2026-10-12: new photos
+
+The owner added two Unsplash photos to the `IMAGES` folder (`hero4.jpg`, `owner2.jpg`; `hero3.jpg` is not used for now) and asked
+to replace the two photos of the page. Where this section and R1 to R7 disagree, this section wins.
+
+- **R8. The photos are replaced.** `hero4.jpg` is the hero on every screen size: a big version for tablets and desktops and a
+  smaller one of 640 px for phones, so a phone downloads only the small one (decision 19 stays: one `<picture>` with a phone-only
+  `<source>`). `owner2.jpg` replaces the owner photo. The old files `hero.webp`, `hero-phone.webp` and `owner.webp` are deleted.
+  The new files are `hero4.webp`, `hero4-phone.webp` and `owner2.webp` (new names, so nothing can serve an old photo from a cache).
+- **R9. The shape and the sizes.** Both new photos are portrait (hero4 is 4160 × 6240, owner2 is 2700 × 3779), and the layout is the
+  same as before, with the same overlap. A portrait photo in the right-hand column would make the hero very tall, so each is cut
+  to a 4:3 band by hand (the head, and for the hero the blister pack too, stay in the picture; the crop is checked by eye on the
+  converted files). Sizes and budgets (replace the table of R1): `hero4.webp` 1280 × 960 under 150 kB, `hero4-phone.webp` 640 ×
+  480 under 50 kB, `owner2.webp` 800 × 600 under 80 kB. They are converted the same way as before (WebP, quality lowered until
+  the budget is met). The alt text is written after looking at each converted photo.
+- **R10. The photo credit is removed from the footer.** No Magnific photo remains, and the owner states that Unsplash photos need
+  no attribution, so the footer has the six links and "© 2026 SwiftHealth" only, with no outside link. (This record repeats the
+  owner's statement; it does not state what the Unsplash licence says. `LOG.md` has a reminder to keep the photo pages and to
+  check the licence terms with the legal review, NFR-13.) This replaces R7 and decisions 14 and 17.
 
 ## Decisions
 
@@ -131,7 +153,7 @@ Decisions 8 onward follow the owner's brief (2026-10-11).
 13. *(Replaced by R6 on 2026-10-12: the home page names no city.)* **The city is named once, in one place** (`siteConfig`), and used in the hero line and the About text, written as "Now live
     in Enugu, with more cities coming" and "Starting in Enugu. Growing across Nigeria." No text says "Enugu only" or "only in
     Enugu"; a test checks it. The site description in the page head says the same.
-14. **Footer:** the existing six links, then "Images designed by Magnific" (a link to https://www.magnific.com that opens in a
+14. *(Replaced by R10 on 2026-10-12: no photo credit.)* **Footer:** the existing six links, then "Images designed by Magnific" (a link to https://www.magnific.com that opens in a
     new tab with `rel="noopener noreferrer"`), then "© 2026 SwiftHealth". The owner confirmed on 2026-10-11 that all ten photos,
     including the laboratory one, are from Magnific's free collection, so the Unsplash line is dropped. The year is a constant
     in `siteConfig`, not read from the clock.
@@ -139,7 +161,7 @@ Decisions 8 onward follow the owner's brief (2026-10-11).
     preview. Every photo is informative, so none has an empty alt.
 16. *(The cards are icon tiles since R2, 2026-10-12; the links are unchanged.)* **The category cards link to the search** filtered by the category slug the seed already uses: `/search?category=hospital`,
     `clinic`, `maternity`, `pharmacy`, `laboratory`. The whole card is one link.
-17. **Reminder for launch:** keep proof of the Magnific free downloads, and check the attribution wording against Magnific's own
+17. *(Replaced by R10 on 2026-10-12: the reminder is now about the Unsplash photos.)* **Reminder for launch:** keep proof of the Magnific free downloads, and check the attribution wording against Magnific's own
     licence terms (`LOG.md`, a legal check with NFR-13). This spec does not state what the licence allows.
 18. **A minimal `/emergency` page (owner's addition, 2026-10-11).** A page with the heading "SwiftRescue", a large red **Call
     112** button (`tel:112`), the line **"Our full list of verified ambulance, fire and hospital emergency numbers is coming

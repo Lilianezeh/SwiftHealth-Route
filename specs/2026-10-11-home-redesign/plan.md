@@ -120,4 +120,22 @@ and the eight photo files. `siteConfig.launchCity` stays.
   rm`; the photos are in a folder that the container made (owned by root), so they were deleted from inside the container.
 - [x] Run lint, typecheck, the whole test suite (589) and the build, one at a time, then commit (`f5f58cc`): `feat(web): a simpler
   home page: two photos, icon tiles, a lighter hero (US-13, NFR-01, NFR-10)`. The build: `/` is static, 6.5 kB, 113 kB first load.
+- [x] Push, wait for the checks, and tell the owner the preview is ready (`d57c5ed`, `17086ce`; pull request #21 `frontend` pass).
+
+### Task 8: New photos and no photo credit (tests first)
+The changes are R8 to R10 of the "Second revision, 2026-10-12" in [requirements.md](requirements.md). Files: `scripts/optimize-home-images.mjs`
+(three jobs from `hero4.jpg` and `owner2.jpg`, each with a hand-made 4:3 crop), `public/images/home/` (new: `hero4.webp`,
+`hero4-phone.webp`, `owner2.webp`; deleted: `hero.webp`, `hero-phone.webp`, `owner.webp`), `config/home.ts` (new files, sizes and alt
+text), `config/site.ts` and `SiteFooter.tsx` (no photo credit), and the tests of the photos and the footer.
+- [x] Write the tests first: `homeImages.test.ts` (the new names and sizes 1280 × 960, 640 × 480 and 800 × 600, the old files gone,
+  the script's three targets), `HomeSections.test.tsx` (the hero's width and height), `SiteFooter.test.tsx` (no credit, no outside
+  link, no Magnific and no Unsplash text anywhere, the six links and the copyright line stay), `HomePage.test.tsx` (the page has no
+  outside link). They fail.
+- [x] Copy `hero4.jpg` and `owner2.jpg` (not `hero3.jpg`) into `frontend/image-sources/`, change the script, run it, look at both
+  converted photos, write the alt text, change the config and the footer, delete the three old files and the credit. (Both originals
+  are portrait; each is cut by hand to 4:3, and the converted photos were looked at: the hero shows the face and the blister pack,
+  the owner photo the person, the hands and the shelves.)
+- [x] Run lint, typecheck, the whole suite (591) and the build, one at a time, then commit (`1f1cdcc`): `feat(web): new hero and
+  owner photos, and no photo credit in the footer (US-13, NFR-01, NFR-10)`. The built page names three image files, has no
+  outside link and no image preload.
 - [ ] Push, wait for the checks, and tell the owner the preview is ready.
