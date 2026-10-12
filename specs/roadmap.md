@@ -195,6 +195,9 @@ branch after this one.
   of the new preview is next
 - Task 8, new hero and owner photos (Unsplash, from `hero4.jpg` and `owner2.jpg`; `hero3.jpg` unused) and no photo credit in the
   footer: **done** (591 tests); the owner's review of the new preview is next
+- Task 9, other photos (`hero3` hero, `hero4` whole in the owners part), a sky blue hero (new `sky` token), an Overview part,
+  "Why SwiftHealth" renamed "Benefits", "Find care" hidden in the header on the home page, and a logo and favicon: **done**
+  (622 tests; `/` is static, 113 kB first load JS); the owner's review of the new preview is next
 - Task 6, wrap-up: checks and build **done** (584 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
   review on the preview
 

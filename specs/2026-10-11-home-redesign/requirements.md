@@ -100,6 +100,43 @@ to replace the two photos of the page. Where this section and R1 to R7 disagree,
   owner's statement; it does not state what the Unsplash licence says. `LOG.md` has a reminder to keep the photo pages and to
   check the licence terms with the legal review, NFR-13.) This replaces R7 and decisions 14 and 17.
 
+### Third revision, 2026-10-12: other photos, a sky blue hero, an Overview, a logo
+
+The owner asked again (all photos are from Unsplash and, the owner states, need no attribution). Where this section and R1 to R10
+disagree, this section wins.
+
+- **R11. The photos change again.** The hero is `hero3.jpg` (a stethoscope and a blood pressure gauge, portrait 4000 × 6016) on every
+  screen size, with a small phone version of 640 px. The facility owners part uses `hero4.jpg` (a smiling health worker holding a
+  blister pack, portrait 4160 × 6240), shown whole. `owner2` is no longer used. New files: `hero3.webp`, `hero3-phone.webp` and
+  `hero4-portrait.webp` (a new name, because `hero4.webp` already existed with other content). Deleted: `hero4.webp`,
+  `hero4-phone.webp`, `owner2.webp`. Sizes and budgets (replace R9): `hero3.webp` 1200 × 1200 under 150 kB, `hero3-phone.webp`
+  640 × 640 under 50 kB (a square, cut by hand from the portrait so that both the stethoscope head and the whole gauge stay in the
+  picture), `hero4-portrait.webp` 800 × 1200 under 100 kB (the whole photo, 2:3, no crop; the budget is 100 kB, not 80, because a
+  whole portrait has more pixels; it is lazy, so it does not count in the first load).
+- **R12. The hero layout.** *Tablet and desktop (768 px and up):* the text is on the left, inside the page width; the photo covers
+  the right half of the hero, from the top of the hero to the right edge of the screen, rounded on its left side, and goes about
+  6 rem below the hero's bottom edge, over the next section. *Phone:* the photo is below the text, the full width of the screen, and
+  the hero's edge is pulled up over it. The Overview part, which comes next, has the room at its top.
+- **R13. A new colour token, `sky` (`#A9DDF3`),** is the hero background (the owner wanted a real sky blue, not `pine-100`, and
+  suggested this value). Computed on 2026-10-12: `pine-dark` text on it is 6.08:1 (needs 4.5), `ink-soft` 4.82:1, `ink` 10.80:1,
+  the forest focus ring and the forest button edge 3.83:1 (need 3), white 1.47:1. It passes as suggested, so it is not adjusted.
+  All hero text is `pine-dark`. The token is added to `globals.css`, the UI spec table and the token tests.
+- **R14. "Find care" is hidden in the header on the home page only,** in the bar and in the phone menu (the hero button does the
+  same). It stays on every other page. The header reads the address in a small client part (`HeaderNavigation`), so the layout
+  itself stays a server component.
+- **R15. An Overview part right after the hero** with the owner's words ("SwiftHealth helps you find hospitals, clinics, pharmacies,
+  labs and emergency contacts that are open right now. Every listing is checked by our team, so the number you call and the hours
+  you see are ones you can trust."), and "Why SwiftHealth" is renamed **"Benefits"**. The page has eight parts. The sentence about
+  the team checking every listing is a promise about verification (US-07, FR-32): it is the owner's wording and matches how the
+  product is meant to work.
+- **R16. A simple logo.** A map pin with a white plus inside, an inline SVG, next to the word SwiftHealth, in the header; the pin
+  alone is the favicon. No red cross. The pin has the shape of the pins of the results map. In the header it is the bright blue
+  `accent` with a white plus and a thin white edge (a `forest` pin would vanish on the `forest` header); the favicon (`src/app/
+  icon.svg`, which Next.js serves as the tab icon) is `forest` blue with a white plus, with the colour written in the file because
+  a favicon cannot read a CSS variable (a test checks that it equals the `forest` token).
+- **R17. The owners photo is whole.** `hero4-portrait.webp` is never cropped or stretched: full width on a phone; beside the text on
+  a tablet and desktop with a maximum height of 32 rem (it gets narrower to keep its shape).
+
 ## Decisions
 
 Decisions 1 to 4 and 7 are my defaults for questions the owner's brief left open; the owner can change any of them on review.

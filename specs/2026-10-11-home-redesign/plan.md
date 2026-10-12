@@ -138,4 +138,26 @@ text), `config/site.ts` and `SiteFooter.tsx` (no photo credit), and the tests of
 - [x] Run lint, typecheck, the whole suite (591) and the build, one at a time, then commit (`1f1cdcc`): `feat(web): new hero and
   owner photos, and no photo credit in the footer (US-13, NFR-01, NFR-10)`. The built page names three image files, has no
   outside link and no image preload.
+- [x] Push, wait for the checks, and tell the owner the preview is ready (`ef7da5e`, `5e75476`; pull request #21 `frontend` pass).
+
+### Task 9: other photos, a sky blue hero, an Overview, "Benefits", a logo (tests first)
+The changes are R11 to R17 of the "Third revision, 2026-10-12" in [requirements.md](requirements.md). Files: `scripts/optimize-home-images.mjs`
+(three jobs: `hero3` square, `hero3` phone, `hero4` whole), `public/images/home/` (new: `hero3.webp`, `hero3-phone.webp`,
+`hero4-portrait.webp`; deleted: `hero4.webp`, `hero4-phone.webp`, `owner2.webp`), `config/home.ts`, `styles/globals.css` (the `sky`
+token), `HomeHero.tsx` (the new layout), new `Overview.tsx`, `WhySwiftHealth.tsx` (heading "Benefits"), `FacilityOwners.tsx` (the
+whole portrait photo), `HowItWorks.tsx` (no more extra top room: it moved to the Overview), `app/page.tsx`, new
+`components/layout/Logo.tsx`, new `HeaderNavigation.tsx` (client: hides "Find care" on `/`), `SiteHeader.tsx`, `MobileMenu.tsx`
+(unchanged), new `src/app/icon.svg`, and the tests.
+- [x] (0d91045) Write the tests first: `homeImages.test.ts` (the new files, sizes 1200 × 1200, 640 × 640 and 800 × 1200, budgets 150, 50 and 100
+  kB, the old files gone, the script's targets); `design-tokens.test.ts` (the `sky` token, its pairs and its focus ring);
+  `HomeSections.test.tsx` (the hero: sky background, dark navy text with the contrast computed from the tokens, the right-half photo
+  that runs to the right edge on a tablet and desktop and is full width on a phone, the overlap rules, the Overview part, the
+  "Benefits" heading, the Overview's room at the top); `HomePage.test.tsx` (eight parts in order, the owners photo whole with a
+  maximum height, the images, no outside link); `SiteHeader.test.tsx` (Find care hidden on `/` in the bar and in the menu, shown
+  elsewhere; the logo); `Logo.test.tsx`; `icon.test.ts` (the favicon file: a pin and a plus, no red, colour equals the `forest`
+  token). They fail.
+- [x] (0d91045) Copy `hero3.jpg` (and the existing `hero4.jpg`) into `frontend/image-sources/`, change the script, run it, look at both photos,
+  write the alt text, add the token, the components, the logo and the favicon, and delete the three old files.
+- [x] (0d91045) Run lint, typecheck, the whole suite (622 tests) and the build, one at a time, then commit: `feat(web): hero3 and hero4
+  photos, a sky blue hero, an Overview, Benefits, and a logo (US-13, NFR-01, NFR-10)`.
 - [ ] Push, wait for the checks, and tell the owner the preview is ready.

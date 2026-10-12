@@ -140,9 +140,39 @@ passed. The frontend suite is 591 tests.
 - [x] `HomePage`: `has no outside link anywhere on the page, and no photo credit`; the two images are `hero4.webp` and `owner2.webp`
 - [x] The existing tests still pass (the whole suite, 591).
 
+### Task 9: other photos, a sky blue hero, an Overview, "Benefits", a logo (2026-10-12)
+Tests: `homeImages.test.ts`, `design-tokens.test.ts`, `HomeSections.test.tsx`, `HomePage.test.tsx`, `SiteHeader.test.tsx`,
+`Logo.test.tsx`, `icon.test.ts`. They replace the tests about the 4:3 `hero4`/`owner2` photos and the Task 7 hero layout.
+- [x] `homeImages`: the files are `hero3.webp`, `hero3-phone.webp` and `hero4-portrait.webp`; `hero4.webp`, `hero4-phone.webp` and
+  `owner2.webp` are gone; the real sizes 1200 × 1200, 640 × 640 and 800 × 1200; budgets 150, 50 and 100 kB; alt texts;
+  the script makes only these three, reads `hero3.jpg` and `hero4.jpg`, and crops only the hero (the owners photo is not cropped)
+- [x] `design-tokens`: `sky` is `#a9ddf3`; `pine-dark` on `sky` and `ink` on `sky` are at least 4.5:1; the forest focus ring on `sky`
+  is at least 3:1; white on `sky` is not enough (so no white text on it)
+- [x] `the hero has the sky background (bg-sky) and no pine-100`; `all its text is dark blue (pine-dark), at least 4.5:1 on sky`
+- [x] `on a tablet and desktop the photo covers the right half of the hero, from the top, to the right edge, and goes below the hero's
+  bottom edge`; `on a phone it is below the text and the full width of the screen`; `the hero has no overflow-hidden and is not
+  isolated`; `the text column stops at the middle`
+- [x] `the hero is still one picture with the phone-only source (hero3-phone.webp 640w, sizes 100vw)`, loaded at once, no priority
+- [x] `the Overview part comes right after the hero, has an h2 "Overview" and the owner's exact text, and has the room at its top`
+- [x] `how it works no longer has the extra top room`; `the Benefits part has the h2 "Benefits" and no "Why SwiftHealth" anywhere`
+- [x] `the page has the eight parts in order` (header, hero, Overview, How it works, Browse by type, Benefits, For facility owners, footer)
+- [x] `the owners photo is the whole portrait: not cropped (no object-cover), full width on a phone, a maximum height of 32 rem from
+  768 px with its shape kept`; `the page has two images: hero3 and hero4-portrait`; `only the hero is eager`; `no outside link`
+- [x] `SiteHeader`: `hides Find care on the home page, in the bar and in the phone menu`; `shows it on /find, /search, /emergency and
+  every other page`; `SwiftRescue and For facilities stay on every page`
+- [x] `Logo`: `is an inline SVG pin with a plus, hidden from screen readers, next to the word SwiftHealth`; `the pin is accent blue with
+  a white plus and a white edge, and nothing is red`; `the wordmark link still has the name SwiftHealth and goes to /`
+- [x] `icon.svg`: `is a pin with a plus in forest blue and white`, `has no red`, and `the blue equals the forest token`
+- [x] The existing tests still pass (the whole suite, 622 tests; lint and typecheck clean).
+- [x] Build (2026-10-12): `/` is static (`○`), 6.5 kB, 113 kB first load JS; the built page names only `hero3.webp`,
+  `hero3-phone.webp` (`640w`, the phone-only `<source>`) and `hero4-portrait.webp`, has no image preload, links `/icon.svg`, has no
+  "Find care" link and no Enugu, Unsplash or Magnific.
+- [x] Sky blue contrast, computed from the tokens: `pine-dark` on `#a9ddf3` 6.08:1, `ink` 10.80:1, `ink-soft` 4.82:1, the forest focus
+  ring 3.83:1, white 1.47:1 (not used for text). No change to the shade was needed.
+
 ## Review-focus edge cases
 
-Checked by the tests and by the build (2026-10-11; the hero details changed on 2026-10-12, see Tasks 7 and 8):
+Checked by the tests and by the build (2026-10-11; the hero details changed on 2026-10-12, see Tasks 7, 8 and 9):
 - [x] **The hero tag in the built page.** `.next/server/app/index.html` has `<picture><source media="(max-width: 767px)"
   srcSet="/images/home/hero-phone.webp 640w" sizes="100vw"/><img … loading="eager" fetchPriority="high" width="1280"
   height="853" src="/images/home/hero.webp" …/></picture>`, and no `<link rel="preload">` for any image (only one for the webpack script).
