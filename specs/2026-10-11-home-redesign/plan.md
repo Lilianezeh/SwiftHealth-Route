@@ -160,4 +160,4 @@ whole portrait photo), `HowItWorks.tsx` (no more extra top room: it moved to the
   write the alt text, add the token, the components, the logo and the favicon, and delete the three old files.
 - [x] (0d91045) Run lint, typecheck, the whole suite (622 tests) and the build, one at a time, then commit: `feat(web): hero3 and hero4
   photos, a sky blue hero, an Overview, Benefits, and a logo (US-13, NFR-01, NFR-10)`.
-- [ ] Push, wait for the checks, and tell the owner the preview is ready.
+- [x] (c2b1863) Push, wait for the checks, and tell the owner the preview is ready.

@@ -170,6 +170,10 @@ Tests: `homeImages.test.ts`, `design-tokens.test.ts`, `HomeSections.test.tsx`, `
 - [x] Sky blue contrast, computed from the tokens: `pine-dark` on `#a9ddf3` 6.08:1, `ink` 10.80:1, `ink-soft` 4.82:1, the forest focus
   ring 3.83:1, white 1.47:1 (not used for text). No change to the shade was needed.
 
+- [x] CI and preview (2026-10-12, c2b1863): Frontend CI passes (Backend CI did not run); the preview `/` is 200, `hero3.webp`,
+  `hero3-phone.webp` and `hero4-portrait.webp` are served as `image/webp`, `hero4.webp`, `hero4-phone.webp` and `owner2.webp` are
+  404, `/icon.svg` is 200, the page has one `<picture>` with `hero3-phone.webp 640w`, and no Magnific, Unsplash or Enugu text.
+
 ## Review-focus edge cases
 
 Checked by the tests and by the build (2026-10-11; the hero details changed on 2026-10-12, see Tasks 7, 8 and 9):
