@@ -24,7 +24,8 @@ export function Logo() {
         />
         <path className="logo-pin__plus fill-white" d="M16 9h4v6h6v4h-6v6h-4v-6h-6v-4h6z" />
       </svg>
-      <span>{siteConfig.name}</span>
+      {/* Below 400 px only the pin is drawn, so the header fits 320 px; sr-only keeps the word for screen readers. */}
+      <span className="max-[399px]:sr-only">{siteConfig.name}</span>
     </span>
   );
 }

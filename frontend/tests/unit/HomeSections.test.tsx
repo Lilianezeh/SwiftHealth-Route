@@ -101,16 +101,32 @@ describe("the hero", () => {
     expect(container.querySelector("section")?.className).toMatch(/\bon-dark\b/);
   });
 
-  it("puts the text in the lower left: at the bottom of the hero, in the left half from 768 px", () => {
+  it("puts the text in the lower left from 1024 px: at the bottom of the hero, in the left half", () => {
     const { container } = render(<HomeHero />);
 
     const textColumn = screen.getByRole("heading", { level: 1 }).parentElement as HTMLElement;
     const textRow = textColumn.parentElement as HTMLElement;
     expect(textRow.className).toMatch(/\bflex-1\b/);
-    expect(textRow.className).toMatch(/\bitems-end\b/); // at the bottom
-    expect(textColumn.className).toMatch(/\blg:w-1\/2\b/); // the left half from 1024 px; the full width below
+    expect(textRow.className).toMatch(/\blg:flex\b/);
+    expect(textRow.className).toMatch(/\blg:items-end\b/); // at the bottom
+    expect(textColumn.className).toMatch(/\blg:w-1\/2\b/); // the left half from 1024 px
     expect(textColumn.className).not.toMatch(/\bmd:w-1\/2\b/);
     expect(container.querySelector('[class*="max-w-6xl"]')).toContainElement(textColumn);
+  });
+
+  it("gives the text column the full width below 1024 px and lets the heading break, so nothing is cut off at 320 to 1023 px (R31)", () => {
+    render(<HomeHero />);
+
+    const heading = screen.getByRole("heading", { level: 1 });
+    const textColumn = heading.parentElement as HTMLElement;
+    const textRow = textColumn.parentElement as HTMLElement;
+    // Below 1024 px the row is a plain block and the column is as wide as the row, so the width of the single-line text cannot
+    // size the column (a flex item sized by its content is what could push the heading past the edge of the screen).
+    expect(textRow.className).not.toMatch(/(^|\s)(flex|inline-flex|grid)(\s|$)/);
+    expect(textColumn.className).toMatch(/(^|\s)w-full\b/);
+    expect(textColumn.className).toMatch(/\bmin-w-0\b/);
+    expect(heading.className).toMatch(/\bbreak-words\b/);
+    expect(heading.className).not.toMatch(/\bwhitespace-nowrap\b|\btruncate\b|\boverflow-hidden\b/);
   });
 
   it("is one picture: phones up to 767 px take the small hero (640w, sizes 100vw), everyone else the big one", () => {
@@ -191,8 +207,9 @@ describe("the hero", () => {
     const heading = screen.getByRole("heading", { level: 1 });
     expect(photoBox.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // the text is below
     expect(photoBox.className).toMatch(/(^|\s)relative\b/);
-    expect(photoBox.className).toMatch(/(^|\s)h-72\b/); // 18 rem on a phone: a band, not the whole screen
-    expect(photoBox.className).toMatch(/\bmd:h-96\b/); // 24 rem from 768 px, so the band is not a thin strip on a tablet (R28)
+    expect(photoBox.className).toMatch(/(^|\s)h-64\b/); // 16 rem on a phone: a band, not the whole screen (R33)
+    expect(photoBox.className).toMatch(/\bmd:h-72\b/); // 18 rem from 768 px: the heading and the button stay on the first screen
+    expect(photoBox.className).not.toMatch(/\bh-96\b|(^|\s)h-72\b/); // the old 18 rem phone band and 24 rem tablet band
     expect(photoBox.className).toMatch(/\blg:h-auto\b/); // from 1024 px the box follows the height of the hero
     expect(photoBox.className).toMatch(/(^|\s)\[clip-path:polygon\(0_0,100%_0,100%_85%,0_100%\)\]/); // the slanted bottom edge
     expect(photoBox.className).not.toMatch(/(^|\s)(px|mx)-/); // the full width: no side margin

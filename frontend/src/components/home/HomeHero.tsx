@@ -4,8 +4,10 @@
  * A sky blue gradient (from `pine-dark` at the bottom left to `sky` at the top right; white text passes on every point: 8.92:1
  * to 4.64:1), with the white text in the lower left, one white button, and one photo. It is tall (85% of the screen) only from
  * 1024 px, in the side-by-side layout; the stacked layout has no forced height, so there is no empty gap on a tablet (R30).
- * Phone and tablet (up to 1023 px, R28): the photo is a band at the top, the full width (18 rem high, 24 rem from 768 px), with a
- * slanted bottom edge, and the text is below it at the full width of the page.
+ * Phone and tablet (up to 1023 px, R28): the photo is a band at the top, the full width (16 rem high, 18 rem from 768 px: R33),
+ * with a slanted bottom edge, and the text is below it at the full width of the page. There the text row is a plain block and the
+ * column is `w-full min-w-0`, and the heading may break anywhere (`break-words`), so no engine can size the column by the width of
+ * the heading on one line and push it past the screen edge (R31); the row is a flex row only from 1024 px.
  * From 1024 px: the photo box is absolute, so it fills the whole right half from top to bottom and to the right edge of the
  * screen, with a slanted left edge. It is a child of the section itself, not of the page-width container, so it can reach the
  * edge; the text stays inside the page width on the left half. Nothing goes below the hero, so there is no overlap.
@@ -46,7 +48,7 @@ export function HomeHero() {
       aria-labelledby="hero-heading"
       className="on-dark relative flex flex-col bg-linear-to-tr from-pine-dark to-sky text-white lg:min-h-[85svh]"
     >
-      <div className="relative h-72 shrink-0 [clip-path:polygon(0_0,100%_0,100%_85%,0_100%)] md:h-96 lg:absolute lg:inset-y-0 lg:right-0 lg:h-auto lg:w-1/2 lg:[clip-path:polygon(15%_0,100%_0,100%_100%,0_100%)]">
+      <div className="relative h-64 shrink-0 [clip-path:polygon(0_0,100%_0,100%_85%,0_100%)] md:h-72 lg:absolute lg:inset-y-0 lg:right-0 lg:h-auto lg:w-1/2 lg:[clip-path:polygon(15%_0,100%_0,100%_100%,0_100%)]">
         <picture className="block h-full">
           <source media={PHONE_SCREENS} srcSet={`${heroPhone.src} ${heroPhone.width}w`} sizes="100vw" />
           {/* A plain <img> on purpose: it is the fallback of the <picture> above, with the attributes of next/image. */}
@@ -61,11 +63,11 @@ export function HomeHero() {
         />
       </div>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 items-end px-4 pb-10 pt-6 lg:pb-16 lg:pt-28">
-        <div className="lg:w-1/2 lg:pr-8">
+      <div className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 pt-6 lg:flex lg:items-end lg:pb-16 lg:pt-28">
+        <div className="w-full min-w-0 lg:w-1/2 lg:pr-8">
           <h1
             id="hero-heading"
-            className="text-balance text-4xl font-bold leading-tight text-white md:text-5xl lg:text-6xl"
+            className="text-balance break-words text-4xl font-bold leading-tight text-white md:text-5xl lg:text-6xl"
           >
             {words.heading}
           </h1>

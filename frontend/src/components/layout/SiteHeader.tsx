@@ -26,7 +26,7 @@ export function SiteHeader() {
   return (
     <header className={isHomePage ? HOME_HEADER : BAR_HEADER}>
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-2">
-        <Link href="/" className="inline-flex min-h-12 items-center text-lg font-semibold">
+        <Link href="/" className="inline-flex min-h-12 items-center text-base font-semibold sm:text-lg">
           <Logo />
         </Link>
         <HeaderNavigation isHomePage={isHomePage} />

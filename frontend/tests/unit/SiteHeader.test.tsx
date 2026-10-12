@@ -180,6 +180,24 @@ describe("SiteHeader", () => {
     expect(wordmark).toHaveTextContent("SwiftHealth");
   });
 
+  it("is compact on a phone so it fits 320 px, and roomier from 640 px (R32): small wordmark and side space", () => {
+    render(<SiteHeader />);
+
+    expect(screen.getByRole("link", { name: "SwiftHealth" }).className).toMatch(/\btext-base\b.*\bsm:text-lg\b/);
+    expect(screen.getByRole("link", { name: "SwiftRescue" }).className).toMatch(/\bpx-3\b.*\bsm:px-4\b/);
+    expect(screen.getByRole("button", { name: "Menu" }).className).toMatch(/\bpx-3\b.*\bsm:px-4\b/);
+  });
+
+  it("draws only the pin below 400 px and keeps the word for screen readers, so the link is still named SwiftHealth (R32)", () => {
+    render(<SiteHeader />);
+
+    const link = screen.getByRole("link", { name: "SwiftHealth" });
+    const word = within(link).getByText("SwiftHealth");
+    expect(word.className).toMatch(/\bmax-\[399px\]:sr-only\b/); // hidden to the eye only below 400 px
+    expect(word.className).not.toMatch(/(^|\s)(hidden|invisible)\b/); // never display:none, which would take away the name
+    expect(link.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("keeps every tap target at 48 px or more, the Menu button too", () => {
     render(<SiteHeader />);
 

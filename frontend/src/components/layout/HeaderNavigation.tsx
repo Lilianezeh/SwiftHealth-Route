@@ -26,7 +26,7 @@ export function HeaderNavigation({ isHomePage }: HeaderNavigationProps) {
         )}
         <Link
           href={siteConfig.emergencyLink.href}
-          className="inline-flex min-h-12 items-center rounded-md bg-emergency px-4 text-base font-semibold text-white"
+          className="inline-flex min-h-12 items-center rounded-md bg-emergency px-3 text-base font-semibold text-white sm:px-4"
         >
           {siteConfig.emergencyLink.label}
         </Link>

@@ -38,7 +38,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
         aria-expanded={isOpen}
         aria-controls={isOpen ? panelId : undefined}
         onClick={() => setIsOpen((current) => !current)}
-        className="inline-flex min-h-12 items-center gap-2 rounded-md border border-paper/60 px-4 text-base font-semibold"
+        className="inline-flex min-h-12 items-center gap-2 rounded-md border border-paper/60 px-3 text-base font-semibold sm:px-4"
       >
         <DecorativeIcon icon={isOpen ? X : Menu} />
         Menu
