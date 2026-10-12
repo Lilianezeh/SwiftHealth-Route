@@ -1,12 +1,9 @@
-"use client";
-
 /** The links of the header: the bar and the phone menu. Requirements: FR-02, NFR-10, US-13. UI spec, "Layout"; revision R14
  * (2026-10-12) in specs/2026-10-11-home-redesign/requirements.md.
- * It is a client component only to read the address (usePathname): on the home page "Find care" is left out, because the hero
- * button does the same; on every other page it is there. SwiftRescue is never left out (FR-02). SiteHeader stays a server component.
+ * On the home page "Find care" is left out, because the hero button does the same; on every other page it is there.
+ * SwiftRescue is never left out (FR-02). The header (a client component) tells it which page this is.
  */
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { siteConfig } from "@/config/site";
@@ -14,8 +11,9 @@ import { siteConfig } from "@/config/site";
 const BAR_LINK =
   "hidden min-h-12 items-center rounded-md px-3 text-base font-semibold hover:underline md:inline-flex";
 
-export function HeaderNavigation() {
-  const isHomePage = usePathname() === "/";
+type HeaderNavigationProps = { isHomePage: boolean };
+
+export function HeaderNavigation({ isHomePage }: HeaderNavigationProps) {
   const menuLinks = siteConfig.menuLinks.filter((link) => !(isHomePage && link.href === siteConfig.findCareLink.href));
 
   return (

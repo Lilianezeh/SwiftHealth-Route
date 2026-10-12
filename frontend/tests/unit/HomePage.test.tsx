@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 /** The whole home page: seven parts, in the owner's order. Requirements: US-13, NFR-01, NFR-10, NFR-12, FR-02.
- * UI spec 2.1 (the exact words are the owner's, 2026-10-11; simplified on 2026-10-12 after the owner's review of the preview);
- * decisions 6, 12 and revision R1 to R7 in specs/2026-10-11-home-redesign/requirements.md. Parts 1 and 7 (header and footer)
+ * UI spec 2.1 (the exact words are the owner's, 2026-10-11; simplified on 2026-10-12 after the owner's review of the preview;
+ * a hero like the reference site and no How it works since the fourth revision, R18 to R24);
+ * decisions 6, 12 and revisions R1 to R24 in specs/2026-10-11-home-redesign/requirements.md. Parts 1 and 7 (header and footer)
  * come from the root layout, so the test renders them around the page the same way the layout does.
  */
 import { render, screen, within } from "@testing-library/react";
@@ -68,13 +69,13 @@ describe("the facility owners part", () => {
 });
 
 describe("the whole page", () => {
-  it("has the eight parts in the owner's order", () => {
+  it("has the seven parts in the owner's order: header, hero, Overview, Benefits, Browse by type, For facility owners, footer", () => {
     renderWholePage();
 
     const landmarks = [
       screen.getByRole("banner"),
       screen.getByRole("heading", { level: 1 }),
-      ...["Overview", "How it works", "Browse by type", "Benefits"].map((name) =>
+      ...["Overview", "Benefits", "Browse by type"].map((name) =>
         screen.getByRole("heading", { level: 2, name }),
       ),
       screen.getByRole("heading", { level: 2, name: "Run a hospital, clinic or pharmacy?" }),
@@ -91,13 +92,14 @@ describe("the whole page", () => {
     }
   });
 
-  it("has one h1 and five h2 (overview, how it works, browse, benefits, facility owners), and no heading deeper than h3", () => {
+  it("has one h1 and four h2 (overview, benefits, browse, facility owners), and no heading deeper than h3", () => {
     renderWholePage();
 
     const levels = screen.getAllByRole("heading").map((heading) => Number(heading.tagName.slice(1)));
 
     expect(levels.filter((level) => level === 1)).toHaveLength(1);
-    expect(levels.filter((level) => level === 2)).toHaveLength(5);
+    expect(levels.filter((level) => level === 2)).toHaveLength(4);
+    expect(screen.queryByRole("heading", { name: "How it works" })).not.toBeInTheDocument();
     expect(Math.max(...levels)).toBeLessThanOrEqual(3);
   });
 
@@ -132,7 +134,6 @@ describe("the whole page", () => {
       "config/home.ts",
       "components/home/HomeHero.tsx",
       "components/home/Overview.tsx",
-      "components/home/HowItWorks.tsx",
       "components/home/BrowseByType.tsx",
       "components/home/WhySwiftHealth.tsx",
       "components/home/FacilityOwners.tsx",
@@ -227,9 +228,9 @@ describe("the whole page", () => {
 
     const hero = screen.getByRole("heading", { level: 1 });
     const overview = screen.getByRole("heading", { level: 2, name: "Overview" });
-    const howItWorks = screen.getByRole("heading", { level: 2, name: "How it works" });
+    const benefits = screen.getByRole("heading", { level: 2, name: "Benefits" });
     expect(hero.compareDocumentPosition(overview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(overview.compareDocumentPosition(howItWorks) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(overview.compareDocumentPosition(benefits) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.queryByText("Why SwiftHealth")).not.toBeInTheDocument();
   });
 

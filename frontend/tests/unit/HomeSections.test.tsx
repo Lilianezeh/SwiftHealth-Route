@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
-/** The middle parts of the home page: hero, Overview, how it works, browse by type, Benefits.
+/** The middle parts of the home page: hero, Overview, Benefits, browse by type.
  * Requirements: US-13, NFR-01, NFR-10, NFR-07, FR-02. UI spec 2.1 (the exact words are the owner's, 2026-10-11; the hero, the
- * Overview and the name "Benefits" were changed on 2026-10-12, revisions R4 to R6 and R11 to R15 in
- * specs/2026-10-11-home-redesign/requirements.md). The whole page (all eight parts, in order) is tested in HomePage.test.tsx.
+ * Overview, Benefits and the removal of How it works were changed on 2026-10-12, revisions R4 to R6 and R11 to R24 in
+ * specs/2026-10-11-home-redesign/requirements.md). The whole page (all seven parts, in order) is tested in HomePage.test.tsx.
  */
 import { render, screen, within } from "@testing-library/react";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { BrowseByType } from "@/components/home/BrowseByType";
 import { HomeHero } from "@/components/home/HomeHero";
-import { HowItWorks } from "@/components/home/HowItWorks";
 import { Overview } from "@/components/home/Overview";
 import { WhySwiftHealth } from "@/components/home/WhySwiftHealth";
 import { HOME_PHOTOS } from "@/config/home";
@@ -36,15 +37,17 @@ describe("the hero", () => {
     expect(screen.getByText(HERO_NOTE).className).not.toMatch(/\btext-(xs|sm)\b/);
   });
 
-  it("has one button, Find care near me to /find, in the primary blue: no Emergency help, nothing red", () => {
+  it("has one button, Find care near me to /find, white with dark blue text (the on-dark button): no Emergency help, nothing red", () => {
     const { container } = render(<HomeHero />);
 
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(1);
     expect(links[0]).toHaveTextContent("Find care near me");
     expect(links[0]).toHaveAttribute("href", "/find");
-    expect(links[0].className).toMatch(/\bbg-pine\b/);
-    expect(links[0].className).toMatch(/\btext-white\b/);
+    expect(links[0].className).toMatch(/\bbg-white\b/); // the pine button would vanish on the dark gradient
+    expect(links[0].className).toMatch(/\btext-pine-dark\b/);
+    expect(links[0].className).not.toMatch(/(^|\s)bg-pine(\s|$)/); // the plain pine background (hover tints are fine)
+    expect(contrast(tokenColour("pine-dark"), "#ffffff")).toBeGreaterThanOrEqual(4.5);
     expect(screen.queryByRole("link", { name: "Emergency help" })).not.toBeInTheDocument();
     // The hero line says "emergency help" in words (the owner's text); what must not be there is the red colour.
     expect(container.querySelectorAll('[class*="emergency"]')).toHaveLength(0);
@@ -57,31 +60,51 @@ describe("the hero", () => {
     expect(screen.getByRole("link", { name: "Find care near me" }).className).toMatch(/min-h-(12|\[50px\])(\s|$)/);
   });
 
-  it("has the light sky blue background (the sky token), not pine-100, and no photo behind the text", () => {
+  it("has a sky blue gradient, lighter at the top right (sky) and deeper at the bottom left (pine-dark), not a flat colour", () => {
     const { container } = render(<HomeHero />);
 
     const section = container.querySelector("section");
-    expect(section?.className).toMatch(/\bbg-sky\b/);
-    expect(section?.className).not.toMatch(/\bbg-pine-100\b/);
-    expect(container.querySelector('[class*="bg-pine-dark/"]')).toBeNull();
+    expect(section?.className).toMatch(/\bbg-linear-to-tr\b|\bbg-gradient-to-tr\b/);
+    expect(section?.className).toMatch(/\bfrom-pine-dark\b/); // bottom left, where the text is
+    expect(section?.className).toMatch(/\bto-sky\b/); // top right
+    expect(section?.className).not.toMatch(/\bbg-(sky|pine-100|pine|white)\b/);
   });
 
-  it("writes all its text in dark blue (pine-dark), which is at least 4.5:1 on the sky blue", () => {
-    render(<HomeHero />);
+  it("is tall: at least 85% of the screen height, so it fills most of the first screen", () => {
+    const { container } = render(<HomeHero />);
 
-    for (const element of [screen.getByRole("heading", { level: 1 }), screen.getByText(HERO_LINE), screen.getByText(HERO_NOTE)]) {
-      expect(element.className, element.textContent ?? "").toMatch(/\btext-pine-dark\b/);
-    }
-    expect(contrast(tokenColour("pine-dark"), tokenColour("sky"))).toBeGreaterThanOrEqual(4.5);
+    expect(container.querySelector("section")?.className).toMatch(/\bmin-h-\[85svh\]/);
   });
 
-  it("does not write white text on the sky blue, where it would be 1.5:1", () => {
+  it("writes all its text in white, large, which is at least 4.5:1 on both ends of the gradient", () => {
     render(<HomeHero />);
 
-    expect(contrast("#ffffff", tokenColour("sky"))).toBeLessThan(3);
-    for (const element of [screen.getByRole("heading", { level: 1 }), screen.getByText(HERO_LINE), screen.getByText(HERO_NOTE)]) {
-      expect(element.className).not.toMatch(/\btext-white\b/);
+    const heading = screen.getByRole("heading", { level: 1 });
+    for (const element of [heading, screen.getByText(HERO_LINE), screen.getByText(HERO_NOTE)]) {
+      expect(element.className, element.textContent ?? "").toMatch(/\btext-white\b/);
+      expect(element.className).not.toMatch(/\btext-(xs|sm|base)\b/);
     }
+    expect(heading.className).toMatch(/\btext-4xl\b/); // large on a phone ...
+    expect(heading.className).toMatch(/\bmd:text-6xl\b/); // ... larger from 768 px
+    expect(contrast("#ffffff", tokenColour("sky"))).toBeGreaterThanOrEqual(4.5);
+    expect(contrast("#ffffff", tokenColour("pine-dark"))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("has the light focus ring on its dark background (on-dark), because the forest ring is under 3:1 on sky", () => {
+    const { container } = render(<HomeHero />);
+
+    expect(container.querySelector("section")?.className).toMatch(/\bon-dark\b/);
+  });
+
+  it("puts the text in the lower left: at the bottom of the hero, in the left half from 768 px", () => {
+    const { container } = render(<HomeHero />);
+
+    const textColumn = screen.getByRole("heading", { level: 1 }).parentElement as HTMLElement;
+    const textRow = textColumn.parentElement as HTMLElement;
+    expect(textRow.className).toMatch(/\bflex-1\b/);
+    expect(textRow.className).toMatch(/\bitems-end\b/); // at the bottom
+    expect(textColumn.className).toMatch(/\bmd:w-1\/2\b/); // the left half
+    expect(container.querySelector('[class*="max-w-6xl"]')).toContainElement(textColumn);
   });
 
   it("is one picture: phones up to 767 px take the small hero (640w, sizes 100vw), everyone else the big one", () => {
@@ -122,53 +145,73 @@ describe("the hero", () => {
     expect(source).not.toMatch(/hero2|hero4|owner2/);
   });
 
-  it("covers the right half of the hero on a tablet and desktop: from the top, to the right edge, below the bottom edge", () => {
-    const { container } = render(<HomeHero />);
-
-    const section = container.querySelector("section") as HTMLElement;
+  function photoBoxOf(container: HTMLElement) {
     const photoBox = container.querySelector("picture")?.parentElement as HTMLElement;
     // The box is a child of the section itself, not of the page-width container, so it can reach the edge of the screen.
-    expect(photoBox.parentElement).toBe(section);
+    expect(photoBox.parentElement).toBe(container.querySelector("section"));
+    return photoBox;
+  }
+
+  it("fills the whole right half of the hero on a tablet and desktop: top to bottom, to the right edge, nothing below it", () => {
+    const { container } = render(<HomeHero />);
+
+    const photoBox = photoBoxOf(container);
     expect(photoBox.className).toMatch(/\bmd:absolute\b/);
-    expect(photoBox.className).toMatch(/\bmd:right-0\b/);
-    expect(photoBox.className).toMatch(/\bmd:top-0\b/);
-    expect(photoBox.className).toMatch(/\bmd:w-1\/2\b/);
-    expect(photoBox.className).toMatch(/\bmd:-bottom-24\b/); // 6 rem below the hero's bottom edge
-    expect(photoBox.className).toMatch(/\bz-10\b/); // above the next section
+    expect(photoBox.className).toMatch(/\bmd:inset-y-0\b/); // from the top to the bottom of the hero
+    expect(photoBox.className).toMatch(/\bmd:right-0\b/); // to the right edge of the screen
+    expect(photoBox.className).toMatch(/\bmd:w-1\/2\b/); // the whole right half
+    expect(photoBox.className).not.toMatch(/-bottom-|-mb-|translate-y|\bmd:-?bottom-[1-9]/); // no overlap below the hero (R20)
     const image = photoBox.querySelector("img");
-    expect(image?.className).toMatch(/\bmd:h-full\b/);
-    expect(image?.className).toMatch(/\bmd:object-cover\b/);
-    expect(image?.className).toMatch(/\bmd:rounded-l-3xl\b/);
+    expect(image?.className).toMatch(/\bh-full\b/);
+    expect(image?.className).toMatch(/\bw-full\b/);
+    expect(image?.className).toMatch(/\bobject-cover\b/);
   });
 
-  it("puts the photo below the text on a phone, the full width of the screen, pulled over by the hero's edge", () => {
+  it("has a slanted left edge on a tablet and desktop (clip-path) and no rounded corners", () => {
     const { container } = render(<HomeHero />);
 
+    const photoBox = photoBoxOf(container);
+    expect(photoBox.className).toMatch(/md:\[clip-path:polygon\(15%_0,100%_0,100%_100%,0_100%\)\]/);
+    expect(photoBox.className).not.toMatch(/\brounded/);
+    expect(photoBox.querySelector("img")?.className).not.toMatch(/\brounded/);
+  });
+
+  it("is a band at the top of the hero on a phone, the full width, with a slanted bottom edge, above the text", () => {
+    const { container } = render(<HomeHero />);
+
+    const photoBox = photoBoxOf(container);
     const heading = screen.getByRole("heading", { level: 1 });
-    const photoBox = container.querySelector("picture")?.parentElement as HTMLElement;
-    expect(heading.compareDocumentPosition(photoBox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(photoBox.className).toMatch(/\brelative\b/);
-    expect(photoBox.className).toMatch(/(^|\s)-mb-\d+\b/);
-    const image = photoBox.querySelector("img");
-    expect(image?.className).toMatch(/(^|\s)w-full\b/);
-    expect(image?.className).toMatch(/(^|\s)h-auto\b/);
-    expect(image?.className).not.toMatch(/(^|\s)(px|mx)-/); // no side margin
+    expect(photoBox.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // the text is below
+    expect(photoBox.className).toMatch(/(^|\s)relative\b/);
+    expect(photoBox.className).toMatch(/(^|\s)h-72\b/); // 18 rem: a band, not the whole screen
+    expect(photoBox.className).toMatch(/(^|\s)\[clip-path:polygon\(0_0,100%_0,100%_85%,0_100%\)\]/); // the slanted bottom edge
+    expect(photoBox.className).not.toMatch(/(^|\s)(px|mx)-/); // the full width: no side margin
+    expect(photoBox.querySelector("img")?.className).not.toMatch(/(^|\s)(px|mx)-/);
   });
 
-  it("keeps the text on the left half from a tablet up, so the photo is never under it", () => {
+  it("has a dark veil over the top of the photo, so the white header links stay readable (R21)", () => {
     const { container } = render(<HomeHero />);
 
-    const textColumn = screen.getByRole("heading", { level: 1 }).parentElement as HTMLElement;
-    expect(textColumn.className).toMatch(/\bmd:w-1\/2\b/);
-    expect(container.querySelector('[class*="max-w-6xl"]')).toContainElement(textColumn);
+    const veil = photoBoxOf(container).querySelector('[aria-hidden="true"]') as HTMLElement;
+    expect(veil).not.toBeNull();
+    expect(veil.className).toMatch(/\babsolute\b/);
+    expect(veil.className).toMatch(/\btop-0\b/);
+    expect(veil.className).toMatch(/\bh-32\b/); // 8 rem
+    expect(veil.className).toMatch(/\bfrom-pine-dark\/85\b/);
+    expect(veil.className).toMatch(/\bvia-pine-dark\/85\b/);
+    expect(veil.className).toMatch(/\bvia-60%/);
+    expect(veil.className).toMatch(/\bto-transparent\b/);
+    expect(veil.className).toMatch(/\bpointer-events-none\b/);
+    expect(veil.textContent).toBe(""); // decoration only
   });
 
-  it("does not cut anything off or isolate the hero, so the photo can sit above the next section", () => {
+  it("does not overlap the next part: no negative margin, no z-index above the header, nothing cut off by overflow", () => {
     const { container } = render(<HomeHero />);
 
     const section = container.querySelector("section");
     expect(section?.className).toMatch(/\brelative\b/);
-    expect(section?.className).not.toMatch(/\boverflow-hidden\b|\bisolate\b|\boverflow-x-/);
+    expect(section?.className).not.toMatch(/-mb-|\bz-/);
+    expect(photoBoxOf(container).className).not.toMatch(/\bz-/); // the header (z-20) is above the photo
   });
 
   it("says nothing about a city: no Enugu, no cities coming", () => {
@@ -190,12 +233,12 @@ describe("the Overview", () => {
     ).toBeInTheDocument();
   });
 
-  it("leaves room at its top for the hero photo that overlaps into it, more on a tablet and a desktop", () => {
+  it("has the normal space, not extra room at its top: the hero photo no longer overlaps into it (R22)", () => {
     const { container } = render(<Overview />);
 
     const room = container.querySelector("section > div");
-    expect(room?.className).toMatch(/\bpt-20\b/);
-    expect(room?.className).toMatch(/\bmd:pt-32\b/); // 8 rem: more than the 6 rem that the photo goes below the hero
+    expect(room?.className).toMatch(/\bpy-12\b/);
+    expect(room?.className).not.toMatch(/\bpt-20\b|\bmd:pt-(32|40)\b/);
   });
 
   it("is plain text: no red, no link, no image, a text size of 16 px or more", () => {
@@ -208,33 +251,12 @@ describe("the Overview", () => {
   });
 });
 
-describe("how it works", () => {
-  it("has an h2 and three steps in order, with the exact words", () => {
-    render(<HowItWorks />);
-
-    expect(screen.getByRole("heading", { level: 2, name: "How it works" })).toBeInTheDocument();
-    const steps = within(screen.getByRole("list")).getAllByRole("listitem");
-    expect(steps.map((step) => step.textContent?.replace(/^\d/, ""))).toEqual([
-      "Search or share your location",
-      "See who's open now",
-      "Call, WhatsApp or get directions",
-    ]);
-  });
-
-  it("numbers the steps and gives each a decorative icon", () => {
-    render(<HowItWorks />);
-
-    const steps = within(screen.getByRole("list")).getAllByRole("listitem");
-    expect(steps.map((step) => step.textContent?.charAt(0))).toEqual(["1", "2", "3"]);
-    for (const step of steps) expect(step.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
-  });
-
-  it("no longer holds the room for the hero photo: that moved to the Overview", () => {
-    const { container } = render(<HowItWorks />);
-
-    const room = container.querySelector("section > div");
-    expect(room?.className).not.toMatch(/\bpt-20\b|\bmd:pt-(32|40)\b/);
-    expect(room?.className).toMatch(/\bpy-12\b/);
+describe("how it works (removed on 2026-10-12, R22)", () => {
+  it("is gone: no component, no words in the config, nothing in the sources of the page", () => {
+    expect(existsSync(join(process.cwd(), "src", "components", "home", "HowItWorks.tsx"))).toBe(false);
+    for (const file of ["config/home.ts", "app/page.tsx", "components/home/Overview.tsx"]) {
+      expect(readSource(file), file).not.toMatch(/HowItWorks|howItWorks|How it works|Search or share your location/);
+    }
   });
 });
 
@@ -310,6 +332,35 @@ describe("Benefits (was Why SwiftHealth)", () => {
     }
   });
 
+  it("is a full-width band in the header blue (forest) with the light focus ring", () => {
+    const { container } = render(<WhySwiftHealth />);
+
+    const section = container.querySelector("section");
+    expect(section?.className).toMatch(/\bbg-forest\b/); // the section itself is full width: no max-w on it
+    expect(section?.className).toMatch(/\bon-dark\b/);
+    expect(section?.className).not.toMatch(/\bmax-w-/);
+    expect(container.querySelector("section > div")?.className).toMatch(/\bmax-w-6xl\b/); // the content keeps the page width
+  });
+
+  it("writes everything in white and draws every icon in white, which is at least 4.5:1 on forest and on pine-dark", () => {
+    const { container } = render(<WhySwiftHealth />);
+
+    const texts = [
+      screen.getByRole("heading", { level: 2 }),
+      ...screen.getAllByRole("heading", { level: 3 }),
+      ...container.querySelectorAll("li p"),
+    ];
+    for (const text of texts) expect(text.className, text.textContent ?? "").toMatch(/\btext-white\b/);
+    for (const icon of container.querySelectorAll("li svg")) {
+      expect(icon.parentElement?.className).toMatch(/\btext-white\b/);
+      expect(icon.parentElement?.className).toMatch(/\bbg-pine-dark\b/); // the circle behind the icon
+    }
+    expect(container.querySelectorAll("li")).toHaveLength(4);
+    expect(contrast("#ffffff", tokenColour("forest"))).toBeGreaterThanOrEqual(4.5);
+    expect(contrast("#ffffff", tokenColour("pine-dark"))).toBeGreaterThanOrEqual(4.5);
+    expect(container.innerHTML).not.toMatch(/text-forest|text-ink|bg-white\b/); // no dark text left on the blue
+  });
+
   it("says hours follow local time, including late-night places", () => {
     render(<WhySwiftHealth />);
 
@@ -319,7 +370,7 @@ describe("Benefits (was Why SwiftHealth)", () => {
 
 describe("the parts together", () => {
   it("use no red at all: the page's only red is the header's SwiftRescue button", () => {
-    for (const file of ["HomeHero", "Overview", "HowItWorks", "BrowseByType", "WhySwiftHealth"]) {
+    for (const file of ["HomeHero", "Overview", "BrowseByType", "WhySwiftHealth"]) {
       expect(readSource(`components/home/${file}.tsx`), file).not.toMatch(
         /bg-emergency|text-emergency|border-emergency|buttonClasses\("emergency"\)/,
       );

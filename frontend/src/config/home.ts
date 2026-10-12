@@ -62,10 +62,6 @@ export const HOME_WORDS = {
     heading: "Overview",
     text: "SwiftHealth helps you find hospitals, clinics, pharmacies, labs and emergency contacts that are open right now. Every listing is checked by our team, so the number you call and the hours you see are ones you can trust.",
   },
-  howItWorks: {
-    heading: "How it works",
-    steps: ["Search or share your location", "See who's open now", "Call, WhatsApp or get directions"],
-  },
   browse: { heading: "Browse by type" },
   why: {
     heading: "Benefits",

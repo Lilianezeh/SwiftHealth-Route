@@ -90,6 +90,44 @@ describe("SiteHeader", () => {
     expect(header.className).not.toMatch(/\bbg-accent\b/);
   });
 
+  it("is transparent on the home page, on top of the hero: no background, no line under it, above the photo (R18)", () => {
+    address.pathname = "/";
+    render(<SiteHeader />);
+
+    const header = screen.getByRole("banner");
+    expect(header.className).toMatch(/\babsolute\b/);
+    expect(header.className).toMatch(/\binset-x-0\b/);
+    expect(header.className).toMatch(/\btop-0\b/);
+    expect(header.className).toMatch(/\bz-20\b/); // above the hero photo
+    expect(header.className).toMatch(/\bon-dark\b/); // the light focus ring
+    expect(header.className).not.toMatch(/\bbg-|\bborder-b|\bborder-accent\b/);
+  });
+
+  it("writes its logo word and its links in white on the home page", () => {
+    address.pathname = "/";
+    render(<SiteHeader />);
+
+    expect(screen.getByRole("banner").className).toMatch(/\btext-white\b/);
+    expect(screen.getByRole("banner").className).not.toMatch(/\btext-paper\b/);
+    expect(screen.getByRole("link", { name: "SwiftRescue" }).className).toMatch(/\bbg-emergency\b/); // the red button is unchanged
+    expect(screen.getByRole("link", { name: "SwiftRescue" }).className).toMatch(/\btext-white\b/);
+  });
+
+  it("keeps the blue bar with its accent line on every other page, in the normal flow", () => {
+    for (const pathname of ["/find", "/search", "/emergency", "/privacy", "/listing/night-pharmacy-a"]) {
+      address.pathname = pathname;
+      const { unmount } = render(<SiteHeader />);
+
+      const header = screen.getByRole("banner");
+      expect(header.className, pathname).toMatch(/\bbg-forest\b/);
+      expect(header.className, pathname).toMatch(/\bborder-b-4\b/);
+      expect(header.className, pathname).toMatch(/\bborder-accent\b/);
+      expect(header.className, pathname).toMatch(/\brelative\b/);
+      expect(header.className, pathname).not.toMatch(/\babsolute\b/);
+      unmount();
+    }
+  });
+
   it("hides Find care on the home page, in the bar: the hero button does the same", () => {
     address.pathname = "/";
     render(<SiteHeader />);

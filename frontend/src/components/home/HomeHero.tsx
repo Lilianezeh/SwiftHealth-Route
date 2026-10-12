@@ -1,17 +1,19 @@
 /** Part 2 of the home page: the hero. Requirements: US-13, NFR-01, NFR-10. UI spec 2.1; decision 19 and revisions R4, R5 and
- * R11 to R13 (2026-10-12) in specs/2026-10-11-home-redesign/requirements.md.
+ * R18 to R21 (2026-10-12) in specs/2026-10-11-home-redesign/requirements.md. Like the reference site the owner pointed to.
  *
- * A light sky blue background (the sky token) with dark blue text (white would be 1.5:1 there, dark blue is 6.1:1), one button,
- * and one photo (a stethoscope and a blood pressure gauge). On a phone the photo is below the text, the full width of the
- * screen, and the hero's edge is pulled up over it (a negative bottom margin) so it overlaps the next part. From 768 px the photo
- * box covers the right half of the hero: from the top to the right edge of the screen, and 6 rem below the hero's bottom edge.
- * The box is a child of the section itself, not of the page-width container, so it can reach the edge of the screen while the
- * text stays inside the page width, on the left half. The section has no overflow-hidden and is not isolated, so the photo can
- * sit above the next part (z-10).
+ * A sky blue gradient (from `pine-dark` at the bottom left to `sky` at the top right; white text passes on every point: 8.92:1
+ * to 4.64:1), tall (85% of the screen), with the white text in the lower left, one white button, and one photo.
+ * Phone: the photo is a band at the top, the full width, with a slanted bottom edge, and the text is below it.
+ * From 768 px: the photo box is absolute, so it fills the whole right half from top to bottom and to the right edge of the
+ * screen, with a slanted left edge. It is a child of the section itself, not of the page-width container, so it can reach the
+ * edge; the text stays inside the page width on the left half. Nothing goes below the hero, so there is no overlap.
+ * The header is transparent on this page and sits over the photo (z-20), so the photo has a dark veil at its top: the white
+ * header links stay readable even over the white sheets of the photo (6.02:1 in the worst case).
  *
  * The hero is one <picture>: its <source> for screens up to 767 px has one file, so every phone takes the small one
  * (hero3-phone.webp) whatever its pixel density, and never downloads hero3.webp. The hero is loaded at once but is not asked to
- * be preloaded (that would make a phone preload the big file too).
+ * be preloaded (that would make a phone preload the big file too). The section carries `on-dark`: the focus ring inside it is
+ * the light one, because the forest ring would be almost invisible on the blue.
  */
 import { getImageProps } from "next/image";
 import Link from "next/link";
@@ -36,29 +38,37 @@ export function HomeHero() {
   });
 
   return (
-    <section aria-labelledby="hero-heading" className="relative bg-sky text-pine-dark">
-      <div className="mx-auto max-w-6xl px-4 pt-12 md:flex md:min-h-[30rem] md:items-center md:py-12">
-        <div className="md:w-1/2 md:pr-8">
-          <h1 id="hero-heading" className="text-3xl font-bold leading-tight text-pine-dark md:text-5xl">
-            {words.heading}
-          </h1>
-          <p className="mt-4 text-lg text-pine-dark">{words.line}</p>
-          <div className="mt-6">
-            <Link href="/find" className={`${buttonClasses("primary")} sm:w-auto sm:px-8`}>
-              {words.findCare}
-            </Link>
-          </div>
-          <p className="mt-4 text-base text-pine-dark">{words.note}</p>
-        </div>
-      </div>
-
-      <div className="relative z-10 -mb-12 mt-8 md:absolute md:-bottom-24 md:right-0 md:top-0 md:mb-0 md:mt-0 md:w-1/2">
-        <picture>
+    <section
+      aria-labelledby="hero-heading"
+      className="on-dark relative flex min-h-[85svh] flex-col bg-linear-to-tr from-pine-dark to-sky text-white"
+    >
+      <div className="relative h-72 shrink-0 [clip-path:polygon(0_0,100%_0,100%_85%,0_100%)] md:absolute md:inset-y-0 md:right-0 md:h-auto md:w-1/2 md:[clip-path:polygon(15%_0,100%_0,100%_100%,0_100%)]">
+        <picture className="block h-full">
           <source media={PHONE_SCREENS} srcSet={`${heroPhone.src} ${heroPhone.width}w`} sizes="100vw" />
           {/* A plain <img> on purpose: it is the fallback of the <picture> above, with the attributes of next/image. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img {...heroImage} alt={hero.alt} className="h-auto w-full shadow-card md:h-full md:rounded-l-3xl md:object-cover" />
+          <img {...heroImage} alt={hero.alt} className="h-full w-full object-cover" />
         </picture>
+        {/* The veil: decoration only, behind the header's white links (solid for the first 60% of its 8 rem, then fading out). */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-pine-dark/85 via-pine-dark/85 via-60% to-transparent"
+        />
+      </div>
+
+      <div className="mx-auto flex w-full max-w-6xl flex-1 items-end px-4 pb-10 pt-6 md:pb-16 md:pt-28">
+        <div className="md:w-1/2 md:pr-8">
+          <h1 id="hero-heading" className="text-4xl font-bold leading-tight text-white md:text-6xl">
+            {words.heading}
+          </h1>
+          <p className="mt-4 text-xl text-white md:text-2xl">{words.line}</p>
+          <div className="mt-6">
+            <Link href="/find" className={`${buttonClasses("onDark")} sm:w-auto sm:px-8`}>
+              {words.findCare}
+            </Link>
+          </div>
+          <p className="mt-4 text-lg text-white">{words.note}</p>
+        </div>
       </div>
     </section>
   );

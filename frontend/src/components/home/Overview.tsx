@@ -1,6 +1,6 @@
-/** Part 3 of the home page: the overview, one short paragraph. Requirements: US-13, NFR-10. UI spec 2.1; revision R15
+/** Part 3 of the home page: the overview, one short paragraph. Requirements: US-13, NFR-10. UI spec 2.1; revisions R15 and R22
  * (2026-10-12) in specs/2026-10-11-home-redesign/requirements.md. The words are the owner's.
- * It comes right after the hero, so it also holds the room for the hero photo, which overlaps down into it.
+ * It comes right after the hero. The hero photo no longer overlaps into it, so it has the normal space.
  */
 import { HOME_WORDS } from "@/config/home";
 
@@ -9,8 +9,7 @@ export function Overview() {
 
   return (
     <section aria-labelledby="overview-heading" className="bg-white">
-      {/* The top space (pt-20, then md:pt-32 = 8 rem) is more than the 6 rem that the hero photo goes below the hero. */}
-      <div className="mx-auto max-w-6xl px-4 pb-12 pt-20 md:pt-32">
+      <div className="mx-auto max-w-6xl px-4 py-12">
         <h2 id="overview-heading" className="text-2xl font-bold text-forest">
           {heading}
         </h2>

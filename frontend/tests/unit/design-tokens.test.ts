@@ -25,7 +25,7 @@ const SPEC_TOKENS: Record<string, string> = {
   line: "#d7e1df",
   "pine-100": "#dcecf4",
   "pine-50": "#eef6fa",
-  sky: "#a9ddf3", // the home page hero: a real light sky blue (owner, 2026-10-12)
+  sky: "#1a7cad", // the light end of the home page hero gradient: the lightest sky blue with 4.5:1 for white text (owner, 2026-10-12)
   open: "#147a48",
   "open-bg": "#e7f6ed",
   closed: "#465451",
@@ -106,8 +106,9 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     ["ink", "pine-50", "text on a light panel"],
     ["forest", "pine-100", "Verified label"],
     ["forest", "pine-50", "light panel"],
-    ["pine-dark", "sky", "the hero heading, line and small line"],
-    ["ink", "sky", "dark text on the hero"],
+    ["white", "sky", "the hero text on the lightest point of the gradient"],
+    ["white", "forest", "the Benefits band: white text and white icons"],
+    ["pine-dark", "white", "the text of the white hero button"],
     ["open", "open-bg", "Open now label"],
     ["closed", "closed-bg", "Closed label"],
     ["amber-ink", "amber-wash", "Verification due label"],
@@ -120,9 +121,22 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     expect(contrast(tokens.pine, tokens.paper)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("the sky blue of the hero is light: white text on it would not be readable, so the hero text is dark blue", () => {
-    expect(contrast(WHITE, tokens.sky)).toBeLessThan(3);
-    expect(contrast(tokens["pine-dark"], tokens.sky)).toBeGreaterThanOrEqual(4.5);
+  it("the hero gradient goes from sky to pine-dark: white text passes at both ends, so everywhere between them", () => {
+    expect(contrast(WHITE, tokens.sky)).toBeGreaterThanOrEqual(4.5); // 4.64: the lightest point
+    expect(contrast(WHITE, tokens["pine-dark"])).toBeGreaterThanOrEqual(4.5); // 8.92: the deepest point
+    // It is a sky blue, not a grey or a green: the blue channel is the strongest by far.
+    const [red, green, blue] = [1, 3, 5].map((start) => parseInt(tokens.sky.slice(start, start + 2), 16));
+    expect(blue).toBeGreaterThan(green);
+    expect(green).toBeGreaterThan(red);
+  });
+
+  it("the veil behind the header links (pine-dark at 85%) keeps white readable even over a pure white photo", () => {
+    const veil = tokens["pine-dark"];
+    const channels = [1, 3, 5].map((start) => parseInt(veil.slice(start, start + 2), 16));
+    const overWhite = channels.map((channel) => Math.round(0.85 * channel + 0.15 * 255));
+    const blended = `#${overWhite.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
+
+    expect(contrast(WHITE, blended)).toBeGreaterThanOrEqual(4.5); // 6.02
   });
 
   it("the bright blue accent is not readable as text (3:1), so it is decoration only", () => {
@@ -143,7 +157,7 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
 describe("the focus ring (owner's decision, 2026-10-09; WCAG 2.2 asks for 3:1)", () => {
   const tokens = readTokens();
 
-  it.each(["white", "paper", "pine-50", "pine-100", "sky", "closed-bg", "open-bg"])(
+  it.each(["white", "paper", "pine-50", "pine-100", "closed-bg", "open-bg"])(
     "forest ring is at least 3:1 on %s",
     (background) => {
       const colour = background === "white" ? WHITE : tokens[background];
@@ -153,6 +167,12 @@ describe("the focus ring (owner's decision, 2026-10-09; WCAG 2.2 asks for 3:1)",
 
   it("a paper ring is at least 3:1 on a forest background", () => {
     expect(contrast(tokens.paper, tokens.forest)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("a paper ring is at least 3:1 on both ends of the hero gradient, which carries on-dark (the forest ring is not on sky)", () => {
+    expect(contrast(tokens.paper, tokens.sky)).toBeGreaterThanOrEqual(3);
+    expect(contrast(tokens.paper, tokens["pine-dark"])).toBeGreaterThanOrEqual(3);
+    expect(contrast(tokens.forest, tokens.sky)).toBeLessThan(3);
   });
 
   it("globals.css draws a 3 px forest ring, and a paper ring inside .on-dark", () => {
