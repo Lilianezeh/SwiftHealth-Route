@@ -13,7 +13,7 @@ Sketches go in `docs/screens/`.
 - Tagline: *Emergency, Hospital & Pharmacy Finder*.
 
 ### Layout (every page, from `src/app/layout.tsx`)
-- **Header** (new design, 2026-10-11, see 2.1): the **SwiftHealth logo** on the left (links to `/`): a map pin with a plus inside, drawn as an inline SVG, then the word SwiftHealth; then **Find care** (`/find`), red **SwiftRescue** (`/emergency`) and **For facilities** (`/list-your-facility`). **On the home page only, "Find care" is not shown** (in the bar and in the phone menu), because the hero's button does the same; it is on every other page (owner, 2026-10-12). **The logo:** the pin is the same shape as the pins of the results map, in the bright blue `accent` with a white plus and a thin white edge, so it is visible on the `forest` header (a `forest` pin would vanish on it); the SVG is hidden from screen readers, the word names the link. The pin alone is the favicon (`src/app/icon.svg`, `forest` blue with a white plus, which Next.js serves as the tab icon). No red cross, and no other symbol. `forest` background with a 4 px `accent` line under it. On a phone the bar shows the wordmark, the red SwiftRescue button (always visible, FR-02) and a **Menu** button; the menu opens a panel with Find care and For facilities. From tablet width (768 px) all links are in the bar. The menu button is at least 48 px, has the word "Menu" beside its icon, and says whether it is open (`aria-expanded`); Esc closes the panel.
+- **Header** (new design, 2026-10-11, see 2.1): the **SwiftHealth logo** on the left (links to `/`): a map pin with a plus inside, drawn as an inline SVG, then the word SwiftHealth; then **Find care** (`/find`), red **SwiftRescue** (`/emergency`) and **For facilities** (`/list-your-facility`). **On the home page only, "Find care" is not shown** (in the bar and in the phone menu), because the hero's button does the same; it is on every other page (owner, 2026-10-12). **The logo:** the pin is the same shape as the pins of the results map, in the bright blue `accent` with a white plus and a thin white edge, so it is visible on the `forest` header (a `forest` pin would vanish on it); the SVG is hidden from screen readers, the word names the link. The pin alone is the favicon (`src/app/icon.svg`, `forest` blue with a white plus, which Next.js serves as the tab icon). No red cross, and no other symbol. `forest` background with a 4 px `accent` line under it. **On the home page only, the header is transparent** (owner, 2026-10-12): no background and no line, white logo word and white links, positioned on top of the hero (above its photo; a dark veil over the top of the photo keeps the white links readable, see 2.1). The red SwiftRescue button is the same. The header reads the address, so it is a client component. On a phone the bar shows the wordmark, the red SwiftRescue button (always visible, FR-02) and a **Menu** button; the menu opens a panel with Find care and For facilities. From tablet width (768 px) all links are in the bar. The menu button is at least 48 px, has the word "Menu" beside its icon, and says whether it is open (`aria-expanded`); Esc closes the panel.
 - **Footer:** About · How we verify · Privacy · Terms · Contact · List your facility; then "© 2026 SwiftHealth". No photo credit and no outside link: no photo of the site needs one (owner, 2026-10-12; the Magnific credit was removed when the photos were replaced).
 - Mobile-first; content max width 720 px on public pages, 1200 px in admin.
 
@@ -32,7 +32,7 @@ Sketches go in `docs/screens/`.
 | line | `#d7e1df` | Card borders and dividers |
 | pine-100 | `#DCECF4` | Background of the "Verified" label (light blue tint of the main blue) |
 | pine-50 | `#EEF6FA` | Light panels (the empty "near you" box, empty-state icon circle) (lighter blue tint) |
-| sky | `#A9DDF3` | The home page hero background: a real light sky blue (owner, 2026-10-12; the value is the owner's suggestion and passes without a change). Text on it: `pine-dark` 6.1:1, `ink` 10.8:1; the forest focus ring and the forest primary button are 3.8:1 against it (3:1 is needed for a ring or a button edge). White is 1.5:1, so no white text on it |
+| sky | `#1A7CAD` | The light end of the home page hero gradient (the other end is `pine-dark`). Owner, 2026-10-12: it was `#A9DDF3` with dark text; the owner then asked for white text, which needs 4.5:1, and white on `#A9DDF3` is only 1.47:1, so the value was deepened to the lightest sky blue that passes: white on it is 4.64:1 (on `pine-dark` 8.92:1, so everything between them passes) |
 | open | `#147a48` on open-bg `#e7f6ed` | "Open now" and "Open 24 hours" label (4.8:1) |
 | closed | `#465451` on closed-bg `#edf1f0` | "Closed" label (7.0:1) |
 | amber-ink | `#8b5c00` on amber-wash `#fff4d6` | "Verification due" label and the error icon (5.3:1); the plain `amber` is too light for small text |
@@ -53,7 +53,8 @@ for small text on both (the old `pine` did not on `paper`).
 ### Buttons and text
 - **Primary** (Call, Retry): `pine` background, white text; `pine-dark` on hover and press. **Secondary** (Directions,
   See all, Clear filters): white background, `pine` border, `forest` text; `pine-50` background and `pine-dark` border on
-  hover, `pine-100` on press. **Emergency** (SwiftRescue only): `emergency` background, white text. 16 px text,
+  hover, `pine-100` on press. **On dark** (the home page hero button, 2026-10-12): white background, `pine-dark` text (8.9:1),
+  `pine-50` on hover and `pine-100` on press; the `pine` button would vanish on the dark hero. **Emergency** (SwiftRescue only): `emergency` background, white text. 16 px text,
   semi-bold, at least 50 px high (never under 48 px), radius 12 px.
 - Every piece of text is 16 px or larger, including badges, the area line and "Verified 3 days ago" (NFR-10). Card titles
   are 18 px. The system font stack is used; no web font is downloaded.
@@ -109,7 +110,7 @@ for small text on both (the old `pine` did not on `paper`).
 ### 2.1 Landing page — `/`
 **Redesigned 2026-10-11, simplified 2026-10-12** (owner's brief and then the owner's review of the preview; feature
 `specs/2026-10-11-home-redesign/`). **Purpose:** show a resident, a partner or a facility owner what SwiftHealth is, in one
-phone-sized scroll. Eight parts, two photos (changed again on 2026-10-12: new photos, a sky blue hero, an Overview part, "Benefits").
+phone-sized scroll. Seven parts, two photos (changed again on 2026-10-12: new photos, an Overview part, "Benefits"; then a hero like the reference site: a gradient, a transparent header, a side photo; "How it works" removed).
 **API:** none; the page is static. (The old API-status line and
 the old outline with "the problem", "how we verify" and "pricing" are gone: the featured-listing price belongs on the facility page.)
 
@@ -122,46 +123,50 @@ page description, names a city**: the home page does not say where SwiftHealth i
 heading); each following part has an `h2`.
 
 **Parts, top to bottom** (the words below are the exact text):
-1. **Header** — see "Layout" above.
-2. **Hero** — a light sky blue background (the `sky` token, `#A9DDF3`, no photo behind the text). `h1` **"Find open care near you,
-   fast."** Line: **"Hospitals, pharmacies and emergency help, open near you."** One button: **"Find care near me"** (primary
-   blue, white text, to `/find`). Small line (16 px): **"Free to use · No sign-up needed"**. No red button and no second button in
-   the hero: the red SwiftRescue button is in the header, on every page. **Text colour:** dark blue (`pine-dark`) for the heading,
-   the line and the small line: 6.1:1 on `sky` (computed 2026-10-12; `ink-soft` would be 4.8:1). White text would be 1.5:1, so it is
-   not used.
+1. **Header** — see "Layout" above. On this page it is transparent and sits on top of the hero.
+2. **Hero** — a **sky blue gradient** background (owner, 2026-10-12, to be like the reference site): from the `sky` token
+   (`#1A7CAD`, the lighter side, top right) to `pine-dark` (`#134F6A`, the deeper side, bottom left); no flat colour. The hero is
+   tall: at least 85% of the screen height (`min-h-[85svh]`). `h1` **"Find open care near you, fast."** (large, 36 px on a phone,
+   60 px from 768 px) Line: **"Hospitals, pharmacies and emergency help, open near you."** One button: **"Find care near me"**
+   (the on-dark button: white, `pine-dark` text, to `/find`). Small line (18 px): **"Free to use · No sign-up needed"**. All
+   the text is **white**, in the **lower left** of the hero (on a phone, below the photo band). No red button and no second button
+   in the hero: the red SwiftRescue button is in the header, on every page. **Text contrast (computed 2026-10-12):** white on
+   `sky` 4.64:1 (the lightest point of the gradient), on `pine-dark` 8.92:1, so every point passes 4.5:1.
    - *One large photo,* `hero3.webp` (a stethoscope and a blood pressure gauge on white sheets; 1:1, 1200 × 1200, cut from a portrait
-     photo with both objects kept), that **overlaps the bottom edge of the hero into the next section** (the hero has no
-     `overflow-hidden` and is not isolated; the photo is above the next section; the next section has extra space at its top so the
-     photo never covers its text). *Phone:* the photo is below the text, **the full width of the screen** (no side margin), and the
-     hero's edge is pulled up over it with a negative bottom margin. *Tablet and desktop (768 px and up):* the text is on the
-     left, inside the page width; the photo **covers the right half of the hero, from the top of the hero to the right edge of the
-     screen**, fills that box (`object-cover`), has rounded corners on its left side, and goes about 6 rem below the bottom of the
-     hero. The text column stops at the middle of the page, so the photo is never under the text.
+     photo with both objects kept). *Tablet and desktop (768 px and up):* it **fills the whole right half of the hero, from top to
+     bottom and to the right edge of the screen** (`object-cover`), with a **slanted left edge** (a `clip-path` polygon: the top edge
+     starts 15% in, the bottom edge at 0), **no rounded corners**, and **no part below the hero**: nothing overlaps the next part, so
+     there is no white gap. The text stays on the left half, inside the page width, so the photo is never under it. *Phone:* the photo
+     is a **band at the top of the hero**, the full width of the screen, 18 rem high, with a **slanted bottom edge** (a `clip-path`
+     polygon: the right side ends at 85% of the height, the left at 100%); the white text is below it on the gradient.
+   - *The veil:* the header's white links sit on top of the photo (white sheets), so the top 8 rem of the photo has a veil:
+     `pine-dark` at 85% opacity down to 60% of its height, then fading to nothing. It is decoration (`aria-hidden`). Worst case, with
+     a pure white photo under it, white on it is **6.02:1** (computed), so the links pass 4.5:1.
    - *The file:* the hero is one `<picture>` whose `<source media="(max-width: 767px)">` has `srcset="hero3-phone.webp 640w"` and
      `sizes="100vw"` (the small version, 640 × 640, under 50 kB), and whose `<img>` is `hero3.webp` (1200 px) for wider screens, on
      tablets and desktops. So a phone downloads only the small file. The hero is loaded at once (`loading="eager"`,
      `fetchPriority="high"`), without `priority`, so no big file is preloaded on a phone.
 3. **Overview** — `h2` **"Overview"**; text **"SwiftHealth helps you find hospitals, clinics, pharmacies, labs and emergency contacts
    that are open right now. Every listing is checked by our team, so the number you call and the hours you see are ones you can
-   trust."** (the owner's words). It is the part right after the hero, so it has the room at its top for the photo that overlaps
-   into it (more on a tablet and a desktop, where the photo goes further down).
-4. **How it works** — `h2` "How it works". Three steps, each with an icon, a step number and a line: **"Search or share your
-   location"**, **"See who's open now"**, **"Call, WhatsApp or get directions"**.
+   trust."** (the owner's words). A white part right after the hero with the normal `py-12` space (the photo no longer overlaps it).
+   *"How it works" (three step cards) was removed on 2026-10-12 at the owner's request.*
+4. **Benefits** (was "Why SwiftHealth"; renamed on 2026-10-12) — a **full-width band in the header blue** (`forest`), with **white**
+   text and **white icons** (each icon in a `pine-dark` circle; white on `forest` is 5.61:1, on `pine-dark` 8.92:1). `h2` "Benefits".
+   Four items with icons: **Verified listings** ("We check every listing before it goes live."), **Open now means open now**
+   ("Hours follow local time, including late-night places."), **Works on slow data** ("Light pages that load on a weak
+   connection."), **Your location stays private** ("Your position stays in your browser and is used only to find places near
+   you."). Each item has a thin white line (30% white) around it.
 5. **Browse by type** — `h2` "Browse by type". Simple icon tiles, no photos: **Hospital, Clinic, Maternity, Pharmacy,
    Laboratory**, each a decorative `lucide` icon (`Hospital`, `Stethoscope`, `Baby`, `Pill`, `FlaskConical`) in a light blue circle
    over the label, the whole tile one link to `/search?category=<slug>` (`hospital`, `clinic`, `maternity`, `pharmacy`,
    `laboratory`), at least 48 px high. Two columns on a phone, five from desktop width.
-6. **Benefits** (was "Why SwiftHealth"; renamed by the owner on 2026-10-12) — `h2` "Benefits". Four items with icons: **Verified listings** ("We check every listing before it
-   goes live."), **Open now means open now** ("Hours follow local time, including late-night places."), **Works on slow data**
-   ("Light pages that load on a weak connection."), **Your location stays private** ("Your position stays in your browser and is
-   used only to find places near you.").
-7. **For facility owners** — `hero4-portrait.webp` (2:3, 800 × 1200, the whole photo of a smiling health worker holding a blister
+6. **For facility owners** — `hero4-portrait.webp` (2:3, 800 × 1200, the whole photo of a smiling health worker holding a blister
    pack, **uncropped**, keeping its portrait shape) and `h2` **"Run a hospital, clinic or pharmacy?"**; text **"List your
    facility for free and help people find you when they need you. We verify every listing before it goes live."**; button **"List
    your facility"** (to `/list-your-facility`). *Phone:* the photo is the full width of the content. *Tablet and desktop:* it sits
    beside the text with a **maximum height of 32 rem**: it gets narrower to keep its shape, it is never stretched and never cut,
    so the section stays a sensible size.
-8. **Footer** — see "Layout" above.
+7. **Footer** — see "Layout" above.
 
 **Removed on 2026-10-12** (owner's review of the preview): the SwiftRescue photo band ("In an emergency, every second counts."
 with the ambulance and fire photos), the About part, the red "Emergency help" button of the hero, the second hero photo, the

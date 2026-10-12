@@ -174,6 +174,30 @@ Tests: `homeImages.test.ts`, `design-tokens.test.ts`, `HomeSections.test.tsx`, `
   `hero3-phone.webp` and `hero4-portrait.webp` are served as `image/webp`, `hero4.webp`, `hero4-phone.webp` and `owner2.webp` are
   404, `/icon.svg` is 200, the page has one `<picture>` with `hero3-phone.webp 640w`, and no Magnific, Unsplash or Enugu text.
 
+### Task 10: a hero like the reference site (2026-10-12)
+Tests: `design-tokens.test.ts`, `HomeSections.test.tsx`, `HomePage.test.tsx`, `SiteHeader.test.tsx`, a button styles test. They
+replace the tests about the dark-text sky hero, the overlapping photo, the Overview's extra room and How it works.
+- [x] `design-tokens`: `sky` is `#1a7cad`; white on `sky` at least 4.5:1 (4.64), white on `pine-dark` (8.92) and on `forest` (5.61);
+  the veil's worst case (`pine-dark` at 85% over white) with white at least 4.5:1 (6.02); `pine-dark` on white at least 4.5:1
+- [x] `the hero has a gradient from sky to pine-dark (no flat colour)`, `is at least 85% of the screen high`, `all its text is white`,
+  `the text is in the lower left`
+- [x] `on a tablet and desktop the photo fills the right half, from top to bottom and to the edge, with a slanted clip-path, no
+  rounded corners, and nothing below the hero`; `on a phone it is a band at the top with a slanted bottom edge, and the text is
+  below it`; `the veil is behind the header links, decoration only`
+- [x] `the hero button is the on-dark button: white with pine-dark text, still one button to /find`
+- [x] `the Overview has the normal space and no extra room at the top`
+- [x] `Benefits is a full-width forest band with white text and white icons`; `How it works is gone: no component, no config, no
+  text`
+- [x] `the page has the seven parts in order` (header, hero, Overview, Benefits, Browse by type, For facility owners, footer), four `h2`
+- [x] `SiteHeader`: `on the home page it is transparent, over the hero (absolute, no background, no line) with white links`;
+  `on every other page it is the forest bar with the accent line`; `SwiftRescue is red in both`; `Find care is still hidden on /`
+- [x] The existing tests still pass (the whole suite, 632 tests; lint and typecheck clean).
+- [x] Build (2026-10-12): `/` is static, 113 kB first load JS; the built page names only the three photos, has no "How it works", the
+  header is `on-dark absolute inset-x-0 top-0 z-20 text-white`, and the CSS has the gradient, the veil and both `clip-path` rules.
+- [ ] **For the owner, in a browser:** the look of the slanted edges and the veil at 320 px, 768 px and desktop width; the white
+  header links over the photo; the gradient's deep and light sides. Not seen by me: the tests check classes and computed contrast,
+  not pixels.
+
 ## Review-focus edge cases
 
 Checked by the tests and by the build (2026-10-11; the hero details changed on 2026-10-12, see Tasks 7, 8 and 9):

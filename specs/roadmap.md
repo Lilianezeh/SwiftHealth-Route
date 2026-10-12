@@ -198,6 +198,9 @@ branch after this one.
 - Task 9, other photos (`hero3` hero, `hero4` whole in the owners part), a sky blue hero (new `sky` token), an Overview part,
   "Why SwiftHealth" renamed "Benefits", "Find care" hidden in the header on the home page, and a logo and favicon: **done**
   (622 tests; `/` is static, 113 kB first load JS); the owner's review of the new preview is next
+- Task 10, a hero like the reference site (owner, 2026-10-12): transparent header on the home page, a sky blue gradient with white
+  text, the photo filling the right side with a slanted edge, no How it works, Benefits as a blue band, and the new order: **done**
+  (632 tests; `/` is static, 113 kB first load JS); the owner's review of the new preview is next
 - Task 6, wrap-up: checks and build **done** (584 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
   review on the preview
 

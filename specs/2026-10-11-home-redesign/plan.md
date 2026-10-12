@@ -161,3 +161,20 @@ whole portrait photo), `HowItWorks.tsx` (no more extra top room: it moved to the
 - [x] (0d91045) Run lint, typecheck, the whole suite (622 tests) and the build, one at a time, then commit: `feat(web): hero3 and hero4
   photos, a sky blue hero, an Overview, Benefits, and a logo (US-13, NFR-01, NFR-10)`.
 - [x] (c2b1863) Push, wait for the checks, and tell the owner the preview is ready.
+
+### Task 10: a hero like the reference site (tests first)
+The changes are R18 to R24 of the "Fourth revision, 2026-10-12" in [requirements.md](requirements.md). Files: `styles/globals.css`
+(the `sky` token `#1A7CAD`), `components/ui/buttonStyles.ts` (the new `onDark` variant), `HomeHero.tsx` (gradient, white text,
+tall, side photo with a `clip-path`, the veil), `Overview.tsx` (normal space), `WhySwiftHealth.tsx` (a full-width `forest` band,
+white text and icons), `HowItWorks.tsx` (deleted), `config/home.ts` (no `howItWorks`), `app/page.tsx` (the new order),
+`SiteHeader.tsx` (client: transparent on `/`), `HeaderNavigation.tsx` (gets `isHomePage` from the header), and the tests.
+- [x] (d831db6) Write the tests first: `design-tokens.test.ts` (`sky` is `#1A7CAD`; white on `sky`, on `pine-dark` and on `forest` at least
+  4.5:1; the veil's worst case at least 4.5:1; `pine-dark` on white for the button); `HomeSections.test.tsx` (the hero: gradient
+  from `sky` to `pine-dark`, white text, tall, lower left, the side photo with a slanted `clip-path`, no rounded corners and no
+  overlap, the phone band, the veil, the on-dark button; the Overview's normal space; Benefits as a `forest` band with white text
+  and icons; no How it works); `HomePage.test.tsx` (seven parts in the new order, four `h2`); `SiteHeader.test.tsx` (transparent
+  and absolute on `/`, white links; the blue bar elsewhere); `buttonStyles` test. They fail.
+- [x] (d831db6) Add the token, the button variant, the components and the new order; delete `HowItWorks.tsx` and its config text.
+- [x] (d831db6) Run lint, typecheck, the whole suite (632 tests) and the build, one at a time, then commit: `feat(web): a hero like
+  the reference site (US-13, NFR-10)`.
+- [ ] Push, wait for the checks, and tell the owner the preview is ready.

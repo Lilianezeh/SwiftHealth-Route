@@ -137,6 +137,36 @@ disagree, this section wins.
 - **R17. The owners photo is whole.** `hero4-portrait.webp` is never cropped or stretched: full width on a phone; beside the text on
   a tablet and desktop with a maximum height of 32 rem (it gets narrower to keep its shape).
 
+### Fourth revision, 2026-10-12: a hero closer to the reference site
+
+The owner compared the preview with the reference site (https://www.swifthealth.co) and asked for a hero like it. The reference was
+not opened for this work: everything below follows the owner's written description. Where this section and R11 to R17 disagree,
+this section wins (R12 and R13 are replaced; R11, R14, R16 and R17 stand).
+
+- **R18. The header on the home page is transparent.** On `/` only, the header has no bar of its own: no background, no line under
+  it. It sits on top of the hero (position absolute, above the photo), with the logo and the links in white. The red SwiftRescue
+  button is unchanged. Every other page keeps the blue `forest` bar with its `accent` line. The header becomes a small client
+  component that reads the address (it was a server component with a client navigation, R14); "Find care" is still hidden on `/`.
+- **R19. The hero has a gradient, white text, and is tall.** The flat `sky` background is replaced by a sky blue gradient, lighter on
+  one side (top right) and deeper on the other (bottom left), from the `sky` token to `pine-dark`. The heading (large), the line
+  and the small line are white, in the lower left. White text needs 4.5:1 everywhere on the gradient, so the **`sky` token changes
+  from `#A9DDF3` to `#1A7CAD`** (computed 2026-10-12: white on `#1A7CAD` is 4.64:1; on `pine-dark` `#134F6A` it is 8.92:1, so every
+  point between them passes; the old `#A9DDF3` was only 1.47:1 with white). The hero is at least 85% of the screen height
+  (`min-h-[85svh]`), so it fills most of the first screen.
+- **R20. The hero photo fills one side, with a slanted edge and no overlap.** *Tablet and desktop (768 px and up):* `hero3` fills the
+  whole right half of the hero from top to bottom and to the right edge of the screen, with a slanted left edge (`clip-path`), no
+  rounded corners, and no part below the hero (so no white gap). *Phone:* the photo is a band at the top of the hero, the full width,
+  with a slanted bottom edge, and the white text is below it on the gradient. The hero button is white with dark blue text
+  (a new `onDark` button variant), because the `pine` button would vanish on the dark gradient.
+- **R21. A dark veil behind the header, over the photo only.** The header's white links would be on a white photo (sheets), so the
+  top 8 rem of the photo box has a veil: `pine-dark` at 85% opacity down to 60% of its height, then fading to nothing. Worst case
+  (the photo is pure white there) white on it is 6.02:1, computed.
+- **R22. "How it works" is removed** (the three cards, their config text and their tests). The Overview no longer needs the extra room
+  at its top, because the photo no longer overlaps: it has the normal `py-12`.
+- **R23. Benefits is a full-width band in the header blue** (`forest`), with white text and white icons (each icon in a `pine-dark`
+  circle). White on `forest` is 5.61:1, white on `pine-dark` 8.92:1.
+- **R24. The new order:** header, hero, Overview, Benefits, Browse by type, For facility owners, footer. Seven parts, four `h2`.
+
 ## Decisions
 
 Decisions 1 to 4 and 7 are my defaults for questions the owner's brief left open; the owner can change any of them on review.
