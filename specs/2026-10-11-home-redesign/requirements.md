@@ -167,6 +167,32 @@ this section wins (R12 and R13 are replaced; R11, R14, R16 and R17 stand).
   circle). White on `forest` is 5.61:1, white on `pine-dark` 8.92:1.
 - **R24. The new order:** header, hero, Overview, Benefits, Browse by type, For facility owners, footer. Seven parts, four `h2`.
 
+### Fifth revision, 2026-10-12: fixes after the owner's review of the fourth
+
+Where this section and R18 to R24 disagree, this section wins. The `hero3` crop does not change.
+
+- **R25. Facility owners: a smaller photo, the text right beside it.** From 768 px the portrait photo is 26 rem high (it was at most
+  32 rem; the width follows from its 2:3 shape, about 17.3 rem) and the text sits right beside it with a normal gap (2.5 rem), both
+  vertically centred, so there is no big empty space between them. The photo stays whole and the text column is at most 36 rem wide.
+  On a phone nothing changes (the photo is the full width of the content, the text below it).
+- **R26. The footer: no beige band, in line with the content.** On the home page the footer comes straight after the last part: no
+  top margin (that margin showed the beige page colour between the white part and the footer) and no line above the links. On every
+  other page the gap and the line stay. On every page the footer's links and the © line are inside the same container as the section
+  headings (`max-w-6xl`, 16 px at the sides), not at the far left edge. The footer reads the address, so it is a client component like
+  the header.
+- **R27. A shorter, softer veil.** The dark veil over the top of the hero photo is 6 rem high (it was 8 rem) and `pine-dark` at
+  80% (it was 85%) down to 50% of its height (3 rem, which covers the header's text, about 1.4 to 2.6 rem from the top), then fades
+  out gently over the other 3 rem (it solid-held for 4.8 rem before). White on `pine-dark` at 80% over a pure white photo is
+  **5.26:1** (computed 2026-10-12), so the header links still pass 4.5:1.
+- **R28. Tablets use the phone hero layout.** Up to 1023 px the hero is the phone layout: the photo is a band at the top (18 rem high
+  on a phone, 24 rem from 768 px so the band is not a thin strip) with the slanted bottom edge, the header over it, and the white
+  text below at the full width of the page. The side-by-side layout with the slanted left edge starts at **1024 px** (`lg:`), where
+  it was 768 px. The `<picture>` is unchanged: the small file only up to 767 px, the big one from 768 px.
+- **R29. The heading does not break into short lines.** The `h1` is 36 px on a phone, 48 px from 768 px, 60 px from 1024 px, and uses
+  balanced line breaks (`text-balance`), so a tablet never shows one long line and a single word on the next ("fast." alone). At
+  1024 px the left column is about 464 px wide: the heading is two lines, "Find open care" and "near you, fast.". The owners' photo
+  and the Benefits and Browse parts keep their 768 px breakpoint.
+
 ## Decisions
 
 Decisions 1 to 4 and 7 are my defaults for questions the owner's brief left open; the owner can change any of them on review.

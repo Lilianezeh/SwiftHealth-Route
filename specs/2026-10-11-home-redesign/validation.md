@@ -200,6 +200,25 @@ replace the tests about the dark-text sky hero, the overlapping photo, the Overv
   header links over the photo; the gradient's deep and light sides. Not seen by me: the tests check classes and computed contrast,
   not pixels.
 
+### Task 11: fixes after the review of the fourth revision (2026-10-12)
+Tests: `HomePage.test.tsx`, `SiteFooter.test.tsx`, `HomeSections.test.tsx`, `design-tokens.test.ts`.
+- [x] `the owners photo is 26 rem high from 768 px, whole (not cropped), with the text right beside it, both vertically centred, a
+  2.5 rem gap, the text at most 36 rem wide`; `on a phone the photo is still the full width`
+- [x] `SiteFooter`: `its links and its © line are inside the max-w-6xl px-4 container`; `on / it has no top margin and no line`;
+  `on every other page it keeps the 4 rem gap and the line`
+- [x] `the veil is 6 rem high, pine-dark at 80% down to 50%, then fades out; white on it over a pure white photo is at least 4.5:1
+  (5.26)`; `the header's text zone (the first 3 rem) is inside the solid part`
+- [x] `the hero's side-by-side layout starts at lg (1024 px): the photo box, the text column and the veil use lg: classes, not md:`;
+  `up to 1023 px the photo is a band, 18 rem then 24 rem from 768 px, with the slanted bottom edge, and the text is full width`
+- [x] `the heading has text-balance, 36 px, 48 px from 768 px and 60 px from 1024 px`
+- [x] The existing tests still pass (the whole suite, 637 tests; lint and typecheck clean). The build: `/` is static, 113 kB first
+  load JS; the built home footer is `text-base` (no margin, no line) and `/find`'s is `mt-16 border-t …`; the CSS has the new
+  `lg:` and `md:h-96` and `md:h-[26rem]` rules.
+- [x] CI and preview (2026-10-12, 2f86c17): Frontend CI passes (Backend CI did not run); the preview `/` is 200, its footer is
+  `text-base` (no margin, no line), the heading has `text-balance`, the owners photo has `md:h-[26rem]`.
+- [ ] **For the owner, in a browser:** the heading on a tablet (768 to 1023 px) and at 1024 px has no single word left alone on a
+  line; the band on a tablet does not cut the stethoscope or the gauge; the veil looks gentle. Not seen by me (no browser here).
+
 ## Review-focus edge cases
 
 Checked by the tests and by the build (2026-10-11; the hero details changed on 2026-10-12, see Tasks 7, 8 and 9):

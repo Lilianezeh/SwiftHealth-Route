@@ -14,7 +14,7 @@ Sketches go in `docs/screens/`.
 
 ### Layout (every page, from `src/app/layout.tsx`)
 - **Header** (new design, 2026-10-11, see 2.1): the **SwiftHealth logo** on the left (links to `/`): a map pin with a plus inside, drawn as an inline SVG, then the word SwiftHealth; then **Find care** (`/find`), red **SwiftRescue** (`/emergency`) and **For facilities** (`/list-your-facility`). **On the home page only, "Find care" is not shown** (in the bar and in the phone menu), because the hero's button does the same; it is on every other page (owner, 2026-10-12). **The logo:** the pin is the same shape as the pins of the results map, in the bright blue `accent` with a white plus and a thin white edge, so it is visible on the `forest` header (a `forest` pin would vanish on it); the SVG is hidden from screen readers, the word names the link. The pin alone is the favicon (`src/app/icon.svg`, `forest` blue with a white plus, which Next.js serves as the tab icon). No red cross, and no other symbol. `forest` background with a 4 px `accent` line under it. **On the home page only, the header is transparent** (owner, 2026-10-12): no background and no line, white logo word and white links, positioned on top of the hero (above its photo; a dark veil over the top of the photo keeps the white links readable, see 2.1). The red SwiftRescue button is the same. The header reads the address, so it is a client component. On a phone the bar shows the wordmark, the red SwiftRescue button (always visible, FR-02) and a **Menu** button; the menu opens a panel with Find care and For facilities. From tablet width (768 px) all links are in the bar. The menu button is at least 48 px, has the word "Menu" beside its icon, and says whether it is open (`aria-expanded`); Esc closes the panel.
-- **Footer:** About · How we verify · Privacy · Terms · Contact · List your facility; then "© 2026 SwiftHealth". No photo credit and no outside link: no photo of the site needs one (owner, 2026-10-12; the Magnific credit was removed when the photos were replaced).
+- **Footer:** About · How we verify · Privacy · Terms · Contact · List your facility; then "© 2026 SwiftHealth". The links and the © line are inside the same container as the section headings (`max-w-6xl`, 16 px at the sides), not at the far left edge (owner, 2026-10-12). On the home page the footer comes straight after the last part: no top margin (it showed an empty beige band) and no line above the links; on every other page it keeps the 4 rem gap and the thin line. It reads the address, so it is a client component. No photo credit and no outside link: no photo of the site needs one (owner, 2026-10-12; the Magnific credit was removed when the photos were replaced).
 - Mobile-first; content max width 720 px on public pages, 1200 px in admin.
 
 ### Design tokens (in `src/styles/globals.css`)
@@ -126,22 +126,24 @@ heading); each following part has an `h2`.
 1. **Header** — see "Layout" above. On this page it is transparent and sits on top of the hero.
 2. **Hero** — a **sky blue gradient** background (owner, 2026-10-12, to be like the reference site): from the `sky` token
    (`#1A7CAD`, the lighter side, top right) to `pine-dark` (`#134F6A`, the deeper side, bottom left); no flat colour. The hero is
-   tall: at least 85% of the screen height (`min-h-[85svh]`). `h1` **"Find open care near you, fast."** (large, 36 px on a phone,
-   60 px from 768 px) Line: **"Hospitals, pharmacies and emergency help, open near you."** One button: **"Find care near me"**
+   tall: at least 85% of the screen height (`min-h-[85svh]`). `h1` **"Find open care near you, fast."** (large: 36 px on a phone,
+   48 px from 768 px, 60 px from 1024 px, with balanced line breaks so no word is left alone on a line) Line: **"Hospitals, pharmacies and emergency help, open near you."** One button: **"Find care near me"**
    (the on-dark button: white, `pine-dark` text, to `/find`). Small line (18 px): **"Free to use · No sign-up needed"**. All
    the text is **white**, in the **lower left** of the hero (on a phone, below the photo band). No red button and no second button
    in the hero: the red SwiftRescue button is in the header, on every page. **Text contrast (computed 2026-10-12):** white on
    `sky` 4.64:1 (the lightest point of the gradient), on `pine-dark` 8.92:1, so every point passes 4.5:1.
    - *One large photo,* `hero3.webp` (a stethoscope and a blood pressure gauge on white sheets; 1:1, 1200 × 1200, cut from a portrait
-     photo with both objects kept). *Tablet and desktop (768 px and up):* it **fills the whole right half of the hero, from top to
-     bottom and to the right edge of the screen** (`object-cover`), with a **slanted left edge** (a `clip-path` polygon: the top edge
-     starts 15% in, the bottom edge at 0), **no rounded corners**, and **no part below the hero**: nothing overlaps the next part, so
-     there is no white gap. The text stays on the left half, inside the page width, so the photo is never under it. *Phone:* the photo
-     is a **band at the top of the hero**, the full width of the screen, 18 rem high, with a **slanted bottom edge** (a `clip-path`
-     polygon: the right side ends at 85% of the height, the left at 100%); the white text is below it on the gradient.
-   - *The veil:* the header's white links sit on top of the photo (white sheets), so the top 8 rem of the photo has a veil:
-     `pine-dark` at 85% opacity down to 60% of its height, then fading to nothing. It is decoration (`aria-hidden`). Worst case, with
-     a pure white photo under it, white on it is **6.02:1** (computed), so the links pass 4.5:1.
+     photo with both objects kept). *Desktop (1024 px and up; it was 768 px until the fifth revision, R28):* it **fills the whole right half of
+     the hero, from top to bottom and to the right edge of the screen** (`object-cover`), with a **slanted left edge** (a `clip-path`
+     polygon: the top edge starts 15% in, the bottom edge at 0), **no rounded corners**, and **no part below the hero**: nothing
+     overlaps the next part, so there is no white gap. The text stays on the left half, inside the page width, so the photo is never
+     under it. *Phone and tablet (up to 1023 px):* the photo is a **band at the top of the hero**, the full width of the screen, 18 rem
+     high on a phone and 24 rem from 768 px, with a **slanted bottom edge** (a `clip-path` polygon: the right side ends at 85% of the
+     height, the left at 100%); the white text is below it, at the full width of the page, on the gradient.
+   - *The veil:* the header's white links sit on top of the photo (white sheets), so the top 6 rem of the photo has a veil:
+     `pine-dark` at 80% opacity down to 50% of its height (3 rem, which covers the header's text), then a gentle fade to nothing over the
+     other 3 rem. It is decoration (`aria-hidden`). Worst case, with a pure white photo under it, white on it is **5.26:1** (computed
+     2026-10-12), so the links pass 4.5:1. (Before: 8 rem, 85%, solid to 4.8 rem, 6.02:1; the owner found it grey and smudgy.)
    - *The file:* the hero is one `<picture>` whose `<source media="(max-width: 767px)">` has `srcset="hero3-phone.webp 640w"` and
      `sizes="100vw"` (the small version, 640 × 640, under 50 kB), and whose `<img>` is `hero3.webp` (1200 px) for wider screens, on
      tablets and desktops. So a phone downloads only the small file. The hero is loaded at once (`loading="eager"`,
@@ -163,9 +165,9 @@ heading); each following part has an `h2`.
 6. **For facility owners** — `hero4-portrait.webp` (2:3, 800 × 1200, the whole photo of a smiling health worker holding a blister
    pack, **uncropped**, keeping its portrait shape) and `h2` **"Run a hospital, clinic or pharmacy?"**; text **"List your
    facility for free and help people find you when they need you. We verify every listing before it goes live."**; button **"List
-   your facility"** (to `/list-your-facility`). *Phone:* the photo is the full width of the content. *Tablet and desktop:* it sits
-   beside the text with a **maximum height of 32 rem**: it gets narrower to keep its shape, it is never stretched and never cut,
-   so the section stays a sensible size.
+   your facility"** (to `/list-your-facility`). *Phone:* the photo is the full width of the content. *Tablet and desktop (768 px and up):* it is
+   **26 rem high** (about 17.3 rem wide: it keeps its 2:3 shape, never stretched and never cut) and the text is **right beside it**
+   with a 2.5 rem gap, both **vertically centred**, the text at most 36 rem wide, so there is no big empty space between them.
 7. **Footer** — see "Layout" above.
 
 **Removed on 2026-10-12** (owner's review of the preview): the SwiftRescue photo band ("In an emergency, every second counts."

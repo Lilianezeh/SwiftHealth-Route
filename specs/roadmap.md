@@ -201,6 +201,9 @@ branch after this one.
 - Task 10, a hero like the reference site (owner, 2026-10-12): transparent header on the home page, a sky blue gradient with white
   text, the photo filling the right side with a slanted edge, no How it works, Benefits as a blue band, and the new order: **done**
   (632 tests; `/` is static, 113 kB first load JS); the owner's review of the new preview is next
+- Task 11, fixes after the owner's review (2026-10-12): owners photo smaller with the text beside it, the footer in the page
+  container and no beige band, a shorter softer veil, tablets use the phone hero up to 1024 px: **done** (637 tests); the
+  owner's review of the new preview is next
 - Task 6, wrap-up: checks and build **done** (584 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
   review on the preview
 

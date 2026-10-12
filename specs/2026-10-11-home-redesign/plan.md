@@ -178,3 +178,16 @@ white text and icons), `HowItWorks.tsx` (deleted), `config/home.ts` (no `howItWo
 - [x] (d831db6) Run lint, typecheck, the whole suite (632 tests) and the build, one at a time, then commit: `feat(web): a hero like
   the reference site (US-13, NFR-10)`.
 - [x] (163833e) Push, wait for the checks, and tell the owner the preview is ready.
+
+### Task 11: fixes after the review of the fourth revision (tests first)
+The changes are R25 to R29 of the "Fifth revision, 2026-10-12" in [requirements.md](requirements.md). Files: `FacilityOwners.tsx`
+(26 rem photo, the text beside it, centred), `SiteFooter.tsx` (client: the page container, no band and no line on `/`),
+`HomeHero.tsx` (veil 6 rem at 80%; the side-by-side layout from `lg:`; band 24 rem from `md:`; balanced heading), and the tests.
+- [x] (2f86c17) Write the tests first: `HomePage.test.tsx` (the owners photo is 26 rem high, beside the text, both centred, the gap);
+  `SiteFooter.test.tsx` (inside `max-w-6xl px-4`; no top margin and no line on `/`, the gap and line elsewhere; a pathname
+  mock); `HomeSections.test.tsx` (the veil's numbers; `lg:` for the side-by-side layout and the text column; the band 18 rem, then
+  24 rem from 768 px; a heading with `text-balance` and the three sizes); `design-tokens.test.ts` (the veil at 80%, 5.26:1). They fail.
+- [x] (2f86c17) Change the components.
+- [x] (2f86c17) Run lint, typecheck, the whole suite (637 tests) and the build, one at a time, then commit: `feat(web): owners photo
+  and text, footer in the page container, softer veil, tablets use the phone hero (US-13, NFR-10)`.
+- [x] (2f86c17) Push, wait for the checks, and tell the owner the preview is ready.
