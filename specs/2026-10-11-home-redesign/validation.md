@@ -214,6 +214,10 @@ Updated on 2026-10-12 for the simpler page (Task 7).
   38188077214) and a `deploy-preview` pass. The preview answers 200 on `/` and `/emergency`, serves `hero-phone.webp`,
   `hero.webp` and `owner.webp` as `image/webp`, answers 404 for `hero2.webp`, and its home page has no "Enugu", no "Open
   SwiftRescue" and no "every second counts" (the only "emergency help" is the words of the hero line).
+- [x] After the new photos (2026-10-12, after `ef7da5e`): `gh pr checks 21` showed `frontend` **pass** (1m39s, run 38191153187)
+  and a `deploy-preview` pass. The preview serves `hero4-phone.webp` (11.7 kB), `hero4.webp` (32.8 kB) and `owner2.webp` (38.6 kB)
+  as `image/webp`, answers 404 for the old `hero.webp`, `hero-phone.webp` and `owner.webp`, and its home page has no `href="http…"`
+  link, no "Magnific", no "Unsplash" and no "Enugu"; its `<picture>` has the phone-only source `hero4-phone.webp 640w`.
 - [x] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
 - [ ] The smoke test above is done on the preview.
 - [ ] The pull request stays a draft until every box above is ticked.
