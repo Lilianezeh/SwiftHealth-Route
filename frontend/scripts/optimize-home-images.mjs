@@ -2,6 +2,8 @@
  * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8 and 19, and revisions R1, R8 and R9 of 2026-10-12: three files).
  *
  * Run it in the frontend container:  node scripts/optimize-home-images.mjs
+ * A NEW photo needs a NEW file name (change `target` here and `src` in src/config/home.ts): netlify.toml caches /images/* for a year
+ * ("immutable"), so a file that is replaced under the same name would stay in visitors' caches (R42).
  * It reads the JPG originals from frontend/image-sources/ (not committed, about 60 MB) and writes the WebP files to
  * frontend/public/images/home/. Each photo is cut to its fixed size ("cover": the whole frame is filled, the rest is cropped),
  * then saved at the highest quality that keeps the file under its budget. `sharp` is the image library that Next.js installs

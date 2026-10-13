@@ -206,6 +206,8 @@ branch after this one.
   owner's review of the new preview is next
 - Task 13, widths 320 to 1023 px (owner, 2026-10-12): the heading never clips, the header fits at every width, a lower photo band,
   and a real-browser check (Playwright): **done** (640 tests); the owner's review of the new preview is next
+- Task 15, a faster home page (owner, 2026-10-13, Lighthouse mobile 37): cache headers for the photos, no prefetch of other pages, the
+  header and the footer as server components through route groups, no `next/image` client code: in progress
 - Task 6, wrap-up: checks and build **done** (584 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
   review on the preview
 

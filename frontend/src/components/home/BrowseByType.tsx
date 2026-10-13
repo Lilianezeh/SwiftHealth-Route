@@ -26,8 +26,10 @@ export function BrowseByType() {
         <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
           {HOME_CATEGORIES.map((category) => (
             <li key={category.slug}>
+              {/* prefetch={false}: the search page's code (with the map) is not downloaded before a tile is chosen (R43). */}
               <Link
                 href={`/search?${filtersToQuery({ category: category.slug })}`}
+                prefetch={false}
                 className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-white p-4 text-center shadow-card hover:border-pine"
               >
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-pine-100 text-forest">

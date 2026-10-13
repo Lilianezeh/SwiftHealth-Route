@@ -23,7 +23,7 @@ export function FacilityOwners() {
           </h2>
           <p className="mt-3 text-lg text-ink">{words.text}</p>
           <div className="mt-6 md:max-w-xs">
-            <Link href="/list-your-facility" className={buttonClasses("primary")}>
+            <Link href="/list-your-facility" prefetch={false} className={buttonClasses("primary")}>
               {words.button}
             </Link>
           </div>

@@ -266,6 +266,44 @@ and before the pull request leaves draft.
   "Route" are visible and inside the screen at 360 and 375 px (and at every width from 360 px in the sweep), and that Menu, an
   icon-only button, is fully inside the screen at every width below 768 px.
 
+### Eighth revision, 2026-10-13: a faster home page
+
+The owner measured the preview with Lighthouse (mobile, Incognito): Performance 37, CLS fine, FCP, LCP and TBT red. A baseline was
+measured in headless Chromium against a production build (before the change): each width downloads one hero photo (375 px: the
+44.7 kB phone file; 768 and 1024 px: the 149.3 kB file), the portrait (29.7 kB) is fetched at load although `loading="lazy"`, the
+heading, line, button and Overview text are in the first HTML (34.7 kB, 7.4 kB compressed), and the page downloads **131.9 kB** of
+JavaScript in 12 files (101 kB is the shared Next.js and React runtime), among them the chunks of the `/find` and `/emergency`
+pages, prefetched because links to them are on the screen. No Leaflet, chart or search-map code loads. The photos on the CDN were
+sent with `max-age=0, must-revalidate`, so every visit revalidated them. This section changes what can be changed; it states what
+cannot.
+
+- **R42. Long caching for the photos.** `netlify.toml` sends `Cache-Control: public, max-age=31536000, immutable` for `/images/*`
+  (`/_next/static/*` already has it from the Netlify Next.js runtime: checked on the preview). Because the photos are cached for a
+  year, **a new photo gets a new file name** (as `hero3`, `hero4-portrait` did); `scripts/optimize-home-images.mjs` says so and
+  LOG.md has the rule.
+- **R43. No prefetch of other pages from the home page.** Every link of the home page (the header, the hero button, the browse
+  tiles, the owners button and the footer) has `prefetch={false}`, so the home page does not download the JavaScript and data of
+  `/find`, `/emergency`, `/search` and the others before the visitor asks for them. A click still opens the page (a little later).
+- **R44. The header and the footer are server components.** They are chosen by the route group, not by reading the address in the
+  browser: `app/(home)/` (the home page: the transparent header, no gap above the footer), `app/(public)/` (the public pages: the blue
+  bar, the gap and the line), `app/(dashboards)/` (`/admin` and `/provider`, the blue bar), and `app/not-found.tsx` (the blue bar). The
+  root layout keeps only `<html>`, `<body>` and the metadata. **Every URL stays exactly the same** (a route group is not part of the
+  URL). `SiteHeader` and `SiteFooter` take an `isHomePage` prop. The only client component left in the header is the Menu button
+  (`MobileMenu`).
+- **R45. No `next/image` client code on the home page.** The owners' photo is drawn with the plain `<img>` attributes that
+  `getImageProps` gives (as the hero already is), so the `next/image` component's JavaScript is not sent. Nothing else changes: the
+  same file, size, alt text and `loading="lazy"`.
+- **R46. Checked in a real browser.** `tests/end-to-end/home-layout.spec.ts` also checks, at 375 and 768 px: exactly one hero
+  photo is requested (`hero3-phone.webp` on a phone, `hero3.webp` from 768 px, never both); the owners' photo has `loading="lazy"`;
+  no script of another page (`/find`, `/emergency`, `/search`) and no map code is downloaded on the home page; the heading and
+  the button are in the first HTML (the server's answer, before any script runs). The cache headers are checked by a unit test of
+  `netlify.toml` and, after deploy, on the preview.
+- **R47. What does not change, and why.** (a) About 101 kB of the JavaScript is the Next.js and React runtime that every App Router
+  page ships; it cannot be removed without leaving the framework. (b) The portrait stays natively lazy (`loading="lazy"`): the owner
+  decided that no scroll watcher is needed for 29 kB; Chrome starts a lazy image early on a short page, so it can still appear in the
+  Network panel at load. (c) The site uses the system font stack: no web font is downloaded, so there is nothing to block the text.
+  (d) The photos are already under their budgets (149.0, 44.4 and 29.4 kB; 150, 50 and 100 kB), so they are not compressed again.
+
 ## Decisions
 
 Decisions 1 to 4 and 7 are my defaults for questions the owner's brief left open; the owner can change any of them on review.

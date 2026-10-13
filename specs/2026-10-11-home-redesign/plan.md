@@ -192,6 +192,17 @@ The changes are R25 to R29 of the "Fifth revision, 2026-10-12" in [requirements.
   and text, footer in the page container, softer veil, tablets use the phone hero (US-13, NFR-10)`.
 - [x] (2f86c17) Push, wait for the checks, and tell the owner the preview is ready.
 
+### Task 15: a faster home page (tests first)
+R42 to R47 in [requirements.md](requirements.md). Files: `netlify.toml` (cache headers), the route groups (`app/layout.tsx`,
+`app/(home)/`, `app/(public)/layout.tsx`, `app/(dashboards)/`, `app/not-found.tsx`; files moved with `git mv`, no URL changes),
+`PageFrame.tsx`, `SiteHeader.tsx`, `HeaderNavigation.tsx`, `SiteFooter.tsx` (server components), `HomeImage.tsx`, `prefetch={false}` on
+the home page's links, `scripts/optimize-home-images.mjs` (the file-name rule), and the tests. Done on the host (Docker Desktop's WSL
+integration was off). The owner checks the preview before any box is ticked.
+- [ ] Write the tests first (unit: netlify.toml headers, server components, prefetch off, route-group files and the layouts; real
+  browser: one hero photo per width, lazy portrait, no other page's code, the first HTML). They fail.
+- [ ] Make the changes; measure again (the same script as the baseline) and fill the before and after table in the validation.
+- [ ] Run lint, typecheck, the whole suite, the build and the real-browser spec, one at a time; commit; push; wait for the owner.
+
 ### Task 14: the name SwiftHealth Route, a new logo, a phone header with the full wordmark (tests first)
 R35 to R41 in [requirements.md](requirements.md). Part 1 (rename, siren, LOG, CLAUDE.md) is committed (67e6271). Part 2: `styles/globals.css`
 (`sky-pale`), `Logo.tsx` (the pin with the heartbeat line, the wordmark, two tones), `SiteHeader.tsx`, `MobileMenu.tsx` (icon-only),

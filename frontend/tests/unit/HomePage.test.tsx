@@ -8,30 +8,24 @@
 import { render, screen, within } from "@testing-library/react";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { metadata } from "@/app/layout";
-import Home from "@/app/page";
+import Home from "@/app/(home)/page";
 import { FacilityOwners } from "@/components/home/FacilityOwners";
-import { SiteFooter } from "@/components/layout/SiteFooter";
-import { SiteHeader } from "@/components/layout/SiteHeader";
+import { PageFrame } from "@/components/layout/PageFrame";
 import { HOME_PHOTOS } from "@/config/home";
 import { siteConfig } from "@/config/site";
 
 import { readSource } from "../helpers/source";
 
-// The page is the home page: the header reads the address, and here it is "/".
-vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
-
+// The header, the main part and the footer come from the layout of the route group `app/(home)/` (R44): PageFrame with
+// isHomePage, which this test renders around the page the same way that layout does.
 function renderWholePage() {
   return render(
-    <>
-      <SiteHeader />
-      <main>
-        <Home />
-      </main>
-      <SiteFooter />
-    </>,
+    <PageFrame isHomePage>
+      <Home />
+    </PageFrame>,
   );
 }
 
@@ -131,7 +125,7 @@ describe("the whole page", () => {
   });
 
   it("makes no request and reads no API: the page is not async and does not call getHealth or fetch", () => {
-    const source = readSource("app/page.tsx");
+    const source = readSource("app/(home)/page.tsx");
 
     expect(source).not.toMatch(/getHealth|fetch\(|\basync\b|\bawait\b/);
     expect(source).not.toMatch(/lib\/api/);
@@ -145,7 +139,8 @@ describe("the whole page", () => {
     expect(description.toLowerCase()).not.toContain("enugu");
     expect(`${container.textContent} ${description}`.toLowerCase()).not.toMatch(/more cities|now live|only in/);
     for (const file of [
-      "app/page.tsx",
+      "app/(home)/page.tsx",
+      "app/(home)/layout.tsx",
       "app/layout.tsx",
       "config/home.ts",
       "components/home/HomeHero.tsx",

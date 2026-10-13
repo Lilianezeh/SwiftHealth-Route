@@ -176,6 +176,15 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   measures the home page in a real browser at 320 to 1100 px. It is not in the pull request check on purpose (owner, 2026-10-13):
   the check has no browser, and adding one means an install step and a built site to open (slower). Revisit when more screens
   have a layout worth guarding; the Alpine container needs `apk add chromium` and `CHROMIUM_PATH=/usr/bin/chromium`.
+- **A new home page photo needs a new file name (owner's performance fix, 2026-10-13).** `netlify.toml` now caches `/images/*` for a
+  year (`immutable`), because the photos were revalidated on every visit and Lighthouse scored 37 on mobile. A photo replaced under
+  the same name would stay in visitors' caches, so change the `target` in `scripts/optimize-home-images.mjs` and the `src` in
+  `src/config/home.ts` together. Check the header on the next deploy preview (`curl -I`).
+- **The layout checks depend on the browser's fallback font (seen 2026-10-13).** `tests/end-to-end/home-layout.spec.ts` passes in the
+  Alpine container's Chromium, but with Ubuntu's Chromium and DejaVu Sans (a wide font) the header is up to 27 px too wide between
+  344 and 370 px and the 320 x 568 first screen needs 21 px more. The old build fails the same way, so it is the font, not a change.
+  Real phones use their own system font (narrower). Decide later whether to design for the wider font (for example show the word
+  "SwiftHealth" only from 372 px) or to pin a font in the check.
 - **Phase 10 idea: photos on the facility owner sign-up and the login page (owner, 2026-10-13).** On the owner sign-up page, show a
   photo that matches the facility type the owner picks: Hospital = `hospital.jpg`, Clinic = `clinic.jpg`, Maternity =
   `maternity.jpg`, Pharmacy = `pharmacy.jpg`, Laboratory = `laboratory.jpg` (originals in

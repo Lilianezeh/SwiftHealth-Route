@@ -299,7 +299,7 @@ describe("the Overview", () => {
 describe("how it works (removed on 2026-10-12, R22)", () => {
   it("is gone: no component, no words in the config, nothing in the sources of the page", () => {
     expect(existsSync(join(process.cwd(), "src", "components", "home", "HowItWorks.tsx"))).toBe(false);
-    for (const file of ["config/home.ts", "app/page.tsx", "components/home/Overview.tsx"]) {
+    for (const file of ["config/home.ts", "app/(home)/page.tsx", "components/home/Overview.tsx"]) {
       expect(readSource(file), file).not.toMatch(/HowItWorks|howItWorks|How it works|Search or share your location/);
     }
   });

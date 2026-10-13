@@ -225,6 +225,37 @@ Tests: `HomePage.test.tsx`, `SiteFooter.test.tsx`, `HomeSections.test.tsx`, `des
   200 and has `lg:min-h-[85svh]` and no plain `min-h-[85svh]`.
 - [ ] **For the owner, in a browser:** on a tablet there is no large empty blue gap between the photo band and the heading.
 
+### Task 15: a faster home page (2026-10-13)
+Measured in headless Chromium (Playwright) on a production build, sizes as sent (compressed). Not ticked until the owner has checked the preview.
+
+| | Before | After |
+| --- | --- | --- |
+| JavaScript downloaded by `/` (files, kB sent, compressed) | 12 files, 131.9 kB | **7 files, 111.9 kB** (-20.0 kB); 101 kB of it is the Next.js and React runtime |
+| Requests at 375 px (all kinds) | 18 requests, 225.1 kB | **11 requests, 200.2 kB** |
+| Requests at 768 px (all kinds) | 19 requests, 331.9 kB | **11 requests, 304.8 kB** |
+| First Load JS shown by `next build` | 112 kB (page 6.49 kB, shared 103 kB) | 112 kB (page 6.49 kB, shared 103 kB): the figure does not count the prefetched chunks that were removed |
+| Client code of the header and footer | one layout chunk of 4.5 kB with the header, footer, logo | only the Menu button (5.7 kB raw, 2.9 kB sent, with its two icons) |
+| Hero photo, 320 and 375 px | `hero3-phone.webp` 44.7 kB only | unchanged: `hero3-phone.webp` 44.7 kB only (checked in the browser) |
+| Hero photo, 768 and 1024 px | `hero3.webp` 149.3 kB only | unchanged: `hero3.webp` 149.3 kB only (checked in the browser) |
+| Owners' photo, every width | `hero4-portrait.webp` 29.7 kB, fetched at load | unchanged: native `loading="lazy"` (the owner's decision); Chrome still starts it early on a short page |
+| Other pages' code downloaded | `/find` and `/emergency` page chunks (prefetched) | none (checked in the browser; the same check fails on the old build) |
+| Photos' cache header (preview) | `max-age=0, must-revalidate` | `public, max-age=31536000, immutable` in `netlify.toml` (to be checked on the preview) |
+| `/_next/static` cache header (preview) | `max-age=31536000, immutable` | unchanged |
+| Heading, line and button in the first HTML | yes | yes (checked on the server's answer) |
+| First HTML | 34.7 kB raw, 7.4 kB sent | 44.1 kB raw, 8.0 kB sent: the page's own markup is the same (15.9 kB); the data embedded for hydration grew (18.8 to 28.2 kB) because server components' output is in it |
+| Map, chart or search-map code on `/` | none | none |
+| Fonts | system font stack, no web font | unchanged: nothing to block the text |
+| Photo budgets | 149.0, 44.4 and 29.4 kB | unchanged: under 150, 50 and 100 kB, so not compressed again |
+
+- [ ] `netlify.toml` sends the one-year `immutable` cache header for `/images/*` (unit test; then checked on the preview)
+- [ ] Every link of the home page has `prefetch={false}`; the home page's scripts are only its own, the framework's and the Menu button's
+- [ ] The header and the footer are server components; the route groups choose them; every URL is unchanged (the build's route list is
+  the same as before); `/admin`, `/provider` and the not-found page still have the header and the footer
+- [ ] The owners' photo is drawn without `next/image`; same file, size, alt text and `loading="lazy"`
+- [ ] Real browser: one hero photo per width; lazy portrait; no other page's code; the first HTML has the heading and the button
+- [ ] The whole suite, lint, typecheck, build and the real-browser spec pass
+- [ ] **The owner checks the preview** (and runs Lighthouse again)
+
 ### Task 14: SwiftHealth Route, the new logo, the phone header (2026-10-13)
 Tests: `brand.test.ts`, `Logo.test.tsx`, `icon.test.ts`, `SiteHeader.test.tsx`, `MobileMenu.test.tsx`, `design-tokens.test.ts`,
 `SiteFooter.test.tsx`, `HomeSections.test.tsx`, and the real-browser `tests/end-to-end/home-layout.spec.ts`. Not ticked until the owner

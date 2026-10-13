@@ -73,7 +73,8 @@ export function HomeHero() {
           </h1>
           <p className="mt-4 text-xl text-white lg:text-2xl">{words.line}</p>
           <div className="mt-6">
-            <Link href="/find" className={`${buttonClasses("onDark")} sm:w-auto sm:px-8`}>
+            {/* prefetch={false}: the home page does not download the Find page's code before it is asked for (R43). */}
+            <Link href="/find" prefetch={false} className={`${buttonClasses("onDark")} sm:w-auto sm:px-8`}>
               {words.findCare}
             </Link>
           </div>

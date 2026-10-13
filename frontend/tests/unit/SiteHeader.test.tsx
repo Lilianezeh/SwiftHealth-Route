@@ -5,13 +5,17 @@
  */
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { SiteHeader } from "@/components/layout/SiteHeader";
 
-// The header reads the address to hide "Find care" on the home page (R14): each test chooses the page it is on.
-const address = vi.hoisted(() => ({ pathname: "/find" }));
-vi.mock("next/navigation", () => ({ usePathname: () => address.pathname }));
+// The header is a server component: the route group of the page tells it whether this is the home page (R44), and on the home page
+// it is transparent and hides "Find care" (R14, R18). Each test chooses the page it is on.
+const address = { pathname: "/find" };
+
+function HeaderOnPage() {
+  return <SiteHeader isHomePage={address.pathname === "/"} />;
+}
 
 beforeEach(() => {
   address.pathname = "/find";
@@ -22,13 +26,13 @@ const nameOf = (link: HTMLElement) => link.querySelector('[role="img"]')?.getAtt
 
 describe("SiteHeader", () => {
   it("has the SwiftHealth wordmark, a link to the home page", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     expect(screen.getByRole("link", { name: "SwiftHealth Route" })).toHaveAttribute("href", "/");
   });
 
   it("has Find care to /find, red SwiftRescue to /emergency, and For facilities to /list-your-facility", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     expect(screen.getByRole("link", { name: "Find care" })).toHaveAttribute("href", "/find");
     expect(screen.getByRole("link", { name: "SwiftRescue" })).toHaveAttribute("href", "/emergency");
@@ -36,7 +40,7 @@ describe("SiteHeader", () => {
   });
 
   it("puts the links in the order Find care, SwiftRescue, For facilities", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     const names = screen.getAllByRole("link").map(nameOf);
 
@@ -44,7 +48,7 @@ describe("SiteHeader", () => {
   });
 
   it("makes SwiftRescue red (the emergency colour, white text), and no other link is red (FR-02)", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     const rescue = screen.getByRole("link", { name: "SwiftRescue" });
     expect(rescue.className).toMatch(/\bbg-emergency\b/);
@@ -55,7 +59,7 @@ describe("SiteHeader", () => {
   });
 
   it("keeps SwiftRescue in the bar on a phone: it is not hidden and not inside the menu (FR-02)", async () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
     const rescue = screen.getByRole("link", { name: "SwiftRescue" });
 
     expect(rescue.className).not.toMatch(/\bhidden\b/);
@@ -68,7 +72,7 @@ describe("SiteHeader", () => {
   });
 
   it("shows Find care and For facilities in the bar from tablet width, and leaves them to the menu on a phone", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     for (const name of ["Find care", "For facilities"]) {
       expect(screen.getByRole("link", { name }).className, name).toMatch(/\bhidden\b.*\bmd:inline-flex\b/);
@@ -77,7 +81,7 @@ describe("SiteHeader", () => {
   });
 
   it("has a forest background and the on-dark class, so the focus ring inside it is the light one", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     const header = screen.getByRole("banner");
     expect(header.className).toMatch(/\bbg-forest\b/);
@@ -85,7 +89,7 @@ describe("SiteHeader", () => {
   });
 
   it("has a bright blue accent line under it (decoration: a border, never a background behind text)", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     const header = screen.getByRole("banner");
     expect(header.className).toMatch(/\bborder-b-4\b/);
@@ -95,7 +99,7 @@ describe("SiteHeader", () => {
 
   it("is transparent on the home page, on top of the hero: no background, no line under it, above the photo (R18)", () => {
     address.pathname = "/";
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     const header = screen.getByRole("banner");
     expect(header.className).toMatch(/\babsolute\b/);
@@ -108,7 +112,7 @@ describe("SiteHeader", () => {
 
   it("writes its logo word and its links in white on the home page", () => {
     address.pathname = "/";
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     expect(screen.getByRole("banner").className).toMatch(/\btext-white\b/);
     expect(screen.getByRole("banner").className).not.toMatch(/\btext-paper\b/);
@@ -119,7 +123,7 @@ describe("SiteHeader", () => {
   it("keeps the blue bar with its accent line on every other page, in the normal flow", () => {
     for (const pathname of ["/find", "/search", "/emergency", "/privacy", "/listing/night-pharmacy-a"]) {
       address.pathname = pathname;
-      const { unmount } = render(<SiteHeader />);
+      const { unmount } = render(<HeaderOnPage />);
 
       const header = screen.getByRole("banner");
       expect(header.className, pathname).toMatch(/\bbg-forest\b/);
@@ -133,7 +137,7 @@ describe("SiteHeader", () => {
 
   it("hides Find care on the home page, in the bar: the hero button does the same", () => {
     address.pathname = "/";
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     expect(screen.queryByRole("link", { name: "Find care" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link").map(nameOf)).toEqual([
@@ -145,7 +149,7 @@ describe("SiteHeader", () => {
 
   it("hides Find care on the home page in the phone menu too, and keeps For facilities there", async () => {
     address.pathname = "/";
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     await userEvent.click(screen.getByRole("button", { name: "Menu" }));
     const menu = screen.getByRole("navigation", { name: "Menu links" });
@@ -158,7 +162,7 @@ describe("SiteHeader", () => {
     "shows Find care on %s, in the bar and in the menu",
     async (pathname) => {
       address.pathname = pathname;
-      render(<SiteHeader />);
+      render(<HeaderOnPage />);
 
       expect(screen.getByRole("link", { name: "Find care" })).toHaveAttribute("href", "/find");
       await userEvent.click(screen.getByRole("button", { name: "Menu" }));
@@ -169,14 +173,14 @@ describe("SiteHeader", () => {
 
   it("keeps SwiftRescue and the logo on the home page too (FR-02)", () => {
     address.pathname = "/";
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     expect(screen.getByRole("link", { name: "SwiftRescue" })).toHaveAttribute("href", "/emergency");
     expect(screen.getByRole("link", { name: "SwiftHealth Route" })).toHaveAttribute("href", "/");
   });
 
   it("has the new logo in the first link: one image named SwiftHealth Route, a pin and the words SwiftHealth and Route (R38)", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     const link = screen.getByRole("link", { name: "SwiftHealth Route" });
     expect(within(link).getAllByRole("img", { name: "SwiftHealth Route" })).toHaveLength(1); // heard once
@@ -188,7 +192,7 @@ describe("SiteHeader", () => {
   it("always uses the dark tone of the logo: a white pin and light words, on the blue bar and on the hero (the owner's decision)", () => {
     for (const pathname of ["/", "/find"]) {
       address.pathname = pathname;
-      const { container, unmount } = render(<SiteHeader />);
+      const { container, unmount } = render(<HeaderOnPage />);
 
       expect(container.querySelector(".logo-pin__body")?.getAttribute("class"), pathname).toMatch(/\bfill-white\b/);
       expect(container.querySelector(".logo-pin__pulse")?.getAttribute("class"), pathname).toMatch(/\bstroke-sky\b/);
@@ -199,7 +203,7 @@ describe("SiteHeader", () => {
   });
 
   it("is compact on a phone so the full wordmark fits from 360 px: a smaller SwiftRescue button and an icon-only Menu (R40)", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     expect(screen.getByRole("link", { name: "SwiftRescue" }).className).toMatch(/\bpx-2\.5\b.*\bsm:px-4\b/);
     const menu = screen.getByRole("button", { name: "Menu" });
@@ -210,7 +214,7 @@ describe("SiteHeader", () => {
   });
 
   it("has a small white siren icon (lucide) on the red SwiftRescue button, hidden from screen readers, and no cross (R36)", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     const rescue = screen.getByRole("link", { name: "SwiftRescue" }); // the siren adds nothing to the name
     const icon = rescue.querySelector("svg");
@@ -225,7 +229,7 @@ describe("SiteHeader", () => {
   });
 
   it("keeps every tap target at 48 px or more, the Menu button too", () => {
-    render(<SiteHeader />);
+    render(<HeaderOnPage />);
 
     for (const target of [...screen.getAllByRole("link"), screen.getByRole("button", { name: "Menu" })]) {
       expect(target.className, target.textContent ?? "").toMatch(/min-h-12(\s|$)/);

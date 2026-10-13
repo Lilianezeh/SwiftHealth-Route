@@ -147,3 +147,65 @@ test("is still fine with a heading much wider than usual (another font): it wrap
 
   expect(problemsAt(768, await measure(page))).toEqual([]);
 });
+
+// What the home page downloads (R46). The "no other page's code" check is only meaningful against a production build
+// (`npm run build && npm start`): the development server does not prefetch.
+test.describe("what the home page downloads", () => {
+  const HERO_FILES = [
+    { width: 375, height: 667, file: "hero3-phone.webp" }, // a phone: the small file
+    { width: 768, height: 1024, file: "hero3.webp" }, // from 768 px: the big file
+  ];
+
+  for (const { width, height, file } of HERO_FILES) {
+    test(`at ${width} px it requests one hero photo only: ${file}`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      const heroRequests: string[] = [];
+      page.on("request", (request) => {
+        const name = /\/images\/home\/(hero3[^/?]*\.webp)/.exec(request.url())?.[1];
+        if (name) heroRequests.push(name);
+      });
+      await page.goto("/", { waitUntil: "load" });
+      await page.waitForTimeout(1500); // a late second request would show up here
+
+      expect(heroRequests).toEqual([file]);
+    });
+  }
+
+  test("loads the hero photo first, at high priority, and the owners' photo natively lazy", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/", { waitUntil: "load" });
+
+    const hero = page.locator("picture img");
+    await expect(hero).toHaveAttribute("loading", "eager");
+    await expect(hero).toHaveAttribute("fetchpriority", "high");
+    const portrait = page.locator('img[src*="hero4-portrait"]');
+    await expect(portrait).toHaveAttribute("loading", "lazy");
+    await expect(portrait).not.toHaveAttribute("fetchpriority", "high");
+  });
+
+  test("downloads no code of another page and no map code, and every link has prefetch off", async ({ page }) => {
+    const scripts: { url: string; body: string }[] = [];
+    page.on("response", async (response) => {
+      if (response.url().endsWith(".js")) scripts.push({ url: response.url(), body: await response.text().catch(() => "") });
+    });
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/", { waitUntil: "load" });
+    await page.waitForTimeout(1500);
+
+    // The code of another page is named after it in a production build: app/(public)/find/page-….js and so on (the small
+    // app/(public)/layout-….js is an empty stub of the layout, not a page, so only "page-" files count).
+    const otherPages = scripts
+      .map((script) => decodeURIComponent(script.url))
+      .filter((url) => /\/app\/\((public|dashboards)\)\/.*\/page-[0-9a-f]+\.js/.test(url));
+    expect(otherPages).toEqual([]);
+    expect(scripts.filter((script) => /leaflet|recharts/i.test(script.body)).map((script) => script.url)).toEqual([]);
+  });
+
+  test("has the heading, the line and the button in the first HTML, before any script runs", async ({ request }) => {
+    const html = await (await request.get("/")).text();
+
+    expect(html).toMatch(/<h1[^>]*>[^<]*Find open care near you, fast\.[^<]*<\/h1>/);
+    expect(html).toContain("Hospitals, pharmacies and emergency help, open near you.");
+    expect(html).toMatch(/<a[^>]*href="\/find"[^>]*>[^<]*Find care near me[^<]*<\/a>/);
+  });
+});

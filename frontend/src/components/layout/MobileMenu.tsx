@@ -53,8 +53,10 @@ export function MobileMenu({ links }: MobileMenuProps) {
           <ul className="flex flex-col">
             {links.map((link) => (
               <li key={link.href}>
+                {/* No prefetch: the panel only exists once the visitor has opened it, and the home page must stay light (R43). */}
                 <Link
                   href={link.href}
+                  prefetch={false}
                   onClick={() => setIsOpen(false)}
                   className="inline-flex min-h-12 w-full items-center text-base font-semibold"
                 >
