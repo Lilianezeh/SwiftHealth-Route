@@ -329,9 +329,10 @@ named `hero-phone.webp`, `hero2` and "How it works", which are gone) and ticked 
   real screen reader.
 - [x] **The 112 source.** The sources of decision 18 are real NCC pages (checked on 2026-10-11, quoted there); the page makes no
   promise about the answer, and it now carries the sentence of FR-26 (the owner asked for it).
-- [ ] **A call from a phone.** On a real phone, "Call 112" opens the dialler with 112 filled in. The owner does NOT place the
-  call to test it. **Still open (2026-10-13): this needs a real phone and nobody has tried it.** What is checked: `/emergency` has the
-  red "Call 112" link to `tel:112`, the line about the list, and the FR-26 sentence (unit tests and a browser check).
+- [x] **A call from a phone.** On a real phone, "Call 112" opens the dialler with 112 filled in. The owner does NOT place the
+  call to test it. **Done (2026-10-13): the owner tried it on an Honor phone; the dialler opened with 112 filled in, and the call
+  was not placed.** Also checked: `/emergency` has the red "Call 112" link to `tel:112`, the line about the list, and the FR-26
+  sentence (unit tests and a browser check).
 - [x] **Links that lead to "Coming soon".** `/list-your-facility` and `/about` still say "Coming soon" (decision 4);
   `/emergency` has the minimal page. The owner knows; nothing here hides it.
 
@@ -392,8 +393,8 @@ changed since). Ticked after the owner approved the preview on 2026-10-13 and th
   link, no "Magnific", no "Unsplash" and no "Enugu"; its `<picture>` has the phone-only source `hero4-phone.webp 640w`.
 - [x] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
 - [x] The smoke test above is done on the preview (2026-10-13).
-- [ ] The pull request stays a draft until every box above is ticked. **One box is still open: "A call from a phone" (a real
-  phone). The owner asked on 2026-10-13 to mark the pull request ready anyway; tick this box after trying it, before merging.**
+- [x] The pull request stays a draft until every box above is ticked. Every box is ticked as of 2026-10-13 (the last one, "A call
+  from a phone", after the owner's test on an Honor phone). The owner had asked to mark the pull request ready before that test.
 
 Note: this branch also carries `dc8685c` (the 6a "done" docs, a docs-only commit that was not yet on `main`), so the pull request
 shows it too. One run of the full suite had a single failure in `NearbySuggestions.test.tsx` that passed when run alone and in

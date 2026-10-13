@@ -177,7 +177,7 @@ FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Merged a
 - Still to do before launch (`LOG.md`, "To do later"): "Search this area", the tile provider review, and map tiles on the
   Privacy page.
 
-### Home page redesign (phase 13a, pulled forward by the owner, 2026-10-11). Ready to merge (PR #21, branch `feature/home-redesign`; the owner approved the preview on 2026-10-13, one box left in the validation: "Call 112" on a real phone)
+### Home page redesign (phase 13a, pulled forward by the owner, 2026-10-11). Ready to merge (PR #21, branch `feature/home-redesign`; the owner approved the preview on 2026-10-13 and tried "Call 112" on a real phone; every validation box is ticked)
 US-13, NFR-01, FR-02, NFR-04, NFR-10, NFR-07, NFR-12. Frontend-only: `Backend CI` must not run on it. Feature folder:
 [requirements](2026-10-11-home-redesign/requirements.md), [plan](2026-10-11-home-redesign/plan.md),
 [validation](2026-10-11-home-redesign/validation.md). The new home page in 9 parts, the new header (with a phone menu) and
