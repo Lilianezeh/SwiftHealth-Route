@@ -247,6 +247,12 @@ Measured in headless Chromium (Playwright) on a production build, sizes as sent 
 | Fonts | system font stack, no web font | unchanged: nothing to block the text |
 | Photo budgets | 149.0, 44.4 and 29.4 kB | unchanged: under 150, 50 and 100 kB, so not compressed again |
 
+- Facts observed on the preview after the push (8c84429, 2026-10-13), for the owner's check: Frontend CI passes (Backend CI did not
+  run); the three photos answer `cache-control: public,max-age=31536000,immutable` (before: `public,max-age=0,must-revalidate`);
+  `/` is 200 with the heading in the HTML and `href="/find"`; an unknown address answers 404 (with the header and footer).
+- Browser spec against the production build, on this machine (Ubuntu Chromium, DejaVu Sans, wider than the Alpine container's font):
+  the new download checks pass (5 of 5), and all layout checks pass except three that **fail the same way on the old build**
+  (the header at 344 to 370 px and the 320 x 568 first screen): see LOG.md. In the Alpine container's font they passed before.
 - [ ] `netlify.toml` sends the one-year `immutable` cache header for `/images/*` (unit test; then checked on the preview)
 - [ ] Every link of the home page has `prefetch={false}`; the home page's scripts are only its own, the framework's and the Menu button's
 - [ ] The header and the footer are server components; the route groups choose them; every URL is unchanged (the build's route list is
