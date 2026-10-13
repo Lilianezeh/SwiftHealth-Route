@@ -38,18 +38,27 @@ for (const { width, height } of WIDTHS) {
       await expect(page.getByRole("heading", { level: 2, name: "Services and fees" })).toBeVisible();
     });
 
-    test("has Call as the biggest button, and WhatsApp only on the two marked numbers", async ({ page }) => {
+    test("has Call and WhatsApp at the same height, and WhatsApp only on the two marked numbers", async ({ page }) => {
       await openFixture(page);
 
       const call = page.getByRole("link", { name: `Call ${NAME}`, exact: true });
       const whatsapp = page.getByRole("link", { name: /^WhatsApp / });
       await expect(whatsapp).toHaveCount(2); // the primary number and the Emergency number, not Reception
       const callBox = await call.boundingBox();
+      const whatsappBox = await whatsapp.first().boundingBox(); // the main row's WhatsApp, beside Call
       expect(callBox?.height ?? 0).toBeGreaterThanOrEqual(56);
-      for (const other of await page.getByRole("link", { name: /^(WhatsApp|Directions to) / }).all()) {
-        expect((await other.boundingBox())?.height ?? 0).toBeLessThanOrEqual(callBox?.height ?? 0);
-      }
+      expect(whatsappBox?.height ?? 0).toBeCloseTo(callBox?.height ?? 0, 0);
       await expect(page.getByRole("link", { name: `WhatsApp ${NAME} (Reception) (opens in a new tab)` })).toHaveCount(0);
+    });
+
+    test("shows the main number as text in the reading format and lets the verified badge fit its content", async ({ page }) => {
+      await openFixture(page);
+
+      await expect(page.getByText(/^Front desk · 0000 000 0951$/)).toBeVisible();
+      await expect(page.getByText("+2340000000951")).toHaveCount(0); // no number is shown in the stored form
+      const badge = page.getByText(/^Verified /).first();
+      const badgeBox = await badge.boundingBox();
+      expect(badgeBox?.width ?? 0).toBeLessThan(width * 0.8);
     });
 
     test("has every button inside the screen", async ({ page }) => {
@@ -98,6 +107,7 @@ test.describe("what the listing page shows and sends", () => {
     await expect(page.getByText("₦1,500 – ₦3,000")).toBeVisible();
     await expect(page.getByText("₦500", { exact: true })).toBeVisible();
     await expect(page.getByText("From ₦1,000")).toBeVisible();
+    await expect(page.getByText("Ask for price")).toBeVisible(); // "Home visit" has no fee
     await expect(page.getByText("Estimate — confirm with the facility")).toHaveCount(1);
   });
 

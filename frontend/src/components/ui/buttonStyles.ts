@@ -5,7 +5,7 @@ export type ButtonVariant = "primary" | "secondary" | "onDark" | "whatsapp" | "e
 
 const BASE = "w-full items-center justify-center gap-2 rounded-xl px-4 text-base font-semibold";
 const HEIGHT = "min-h-[50px]";
-const LARGE_HEIGHT = "min-h-14"; // 56 px: the Call button of the listing page, so Call stays the biggest button (spec D1)
+const LARGE_HEIGHT = "min-h-14"; // 56 px: Call and WhatsApp in the main row of the listing page, level with each other (spec D1)
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: "bg-pine text-white hover:bg-pine-dark active:bg-pine-dark",

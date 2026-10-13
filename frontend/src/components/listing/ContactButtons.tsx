@@ -1,10 +1,12 @@
-/** The main buttons of the listing page: Call (the primary number, the biggest button), WhatsApp beside it (only when that number is marked
- * as a WhatsApp number), then Directions. Requirements: US-02, US-03, FR-10, FR-47, NFR-10. Spec: specs/2026-10-13-listing-page/requirements.md D1.
+/** The main buttons of the listing page: Call (the primary number, the filled button), WhatsApp beside it at the same 56 px height (only when
+ * that number is marked as a WhatsApp number), then Directions, then the main number as text. Requirements: US-02, US-03, FR-10, FR-47, NFR-10.
+ * Spec: specs/2026-10-13-listing-page/requirements.md D1 and D12.
  * The buttons wrap (each at least 8.5 rem wide), so on a 320 px screen WhatsApp drops under Call instead of being squeezed.
  */
 import { WhatsAppButton } from "@/components/listing/WhatsAppButton";
 import { CallButton } from "@/components/listings/CallButton";
 import { DirectionsButton } from "@/components/listings/DirectionsButton";
+import { formatPhoneForReading } from "@/lib/formatters/phone";
 import type { ListingDetail } from "@/types/api";
 
 type ContactButtonsProps = { listing: ListingDetail };
@@ -22,11 +24,17 @@ export function ContactButtons({ listing }: ContactButtonsProps) {
         )}
         {primary?.is_whatsapp && (
           <div className="min-w-[8.5rem] flex-1">
-            <WhatsAppButton phone={primary.number} facilityName={listing.name} />
+            <WhatsAppButton phone={primary.number} facilityName={listing.name} large />
           </div>
         )}
       </div>
       <DirectionsButton latitude={listing.latitude} longitude={listing.longitude} facilityName={listing.name} />
+      {primary && (
+        <p className="text-base text-ink-soft">
+          {primary.label ? `${primary.label} · ` : ""}
+          {formatPhoneForReading(primary.number)}
+        </p>
+      )}
     </div>
   );
 }

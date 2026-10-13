@@ -68,7 +68,8 @@ export function ListingDetailView({ slug }: ListingDetailViewProps) {
     <article className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
       {listing.recently_reported_not_working && <ReportedNotice />}
 
-      <header className="flex flex-col gap-2">
+      {/* items-start: each badge fits its content, as on the search cards, instead of stretching across the page */}
+      <header className="flex flex-col items-start gap-2">
         <h1 className="text-2xl font-bold text-forest">{listing.name}</h1>
         <p className="text-base text-ink-soft">
           {listing.category.name} · {listing.area}

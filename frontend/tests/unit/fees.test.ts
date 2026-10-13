@@ -64,7 +64,7 @@ describe("describeFee: the five cases of the owner's decision 5", () => {
     expect(describeFee(service(null, "3000.00"))).toEqual({ amount: "Up to ₦3,000", collected: null });
   });
 
-  it("no fee: nothing at all, not even the date", () => {
+  it("no fee: no amount and no date (the page then says 'Ask for price')", () => {
     expect(describeFee(service(null, null))).toEqual({ amount: null, collected: null });
     expect(describeFee(service(null, null, "2026-09-28"))).toEqual({ amount: null, collected: null });
   });

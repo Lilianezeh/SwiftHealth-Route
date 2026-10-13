@@ -34,7 +34,11 @@ describe("buttonClasses", () => {
     expect(contrast(tokenColour("whatsapp-dark"), "#ffffff")).toBeGreaterThanOrEqual(3);
   });
 
-  it("makes the Call button on the listing page larger on request: 56 px, not 50 px, and nothing else changes", () => {
+  it("makes the buttons of the listing page larger on request (Call and WhatsApp): 56 px, not 50 px, and nothing else changes", () => {
+    const whatsappLarge = buttonClasses("whatsapp", { large: true });
+    expect(whatsappLarge).toMatch(/\bmin-h-14\b/);
+    expect(whatsappLarge.replace("min-h-14", "min-h-[50px]")).toBe(buttonClasses("whatsapp"));
+
     const large = buttonClasses("primary", { large: true });
     const normal = buttonClasses("primary");
 

@@ -9,9 +9,10 @@
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { toWhatsAppNumber, whatsAppContactUrl } from "@/lib/formatters/whatsapp";
 
-type WhatsAppButtonProps = { phone: string; facilityName: string; label?: string | null };
+/** `large` makes it 56 px high like the large Call button beside it (the main row of the listing page). */
+type WhatsAppButtonProps = { phone: string; facilityName: string; label?: string | null; large?: boolean };
 
-export function WhatsAppButton({ phone, facilityName, label }: WhatsAppButtonProps) {
+export function WhatsAppButton({ phone, facilityName, label, large }: WhatsAppButtonProps) {
   const number = toWhatsAppNumber(phone);
   if (number === null) return null;
 
@@ -21,7 +22,7 @@ export function WhatsAppButton({ phone, facilityName, label }: WhatsAppButtonPro
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`WhatsApp ${facilityName}${label ? ` (${label})` : ""} (opens in a new tab)`}
-      className={buttonClasses("whatsapp")}
+      className={buttonClasses("whatsapp", { large })}
     >
       {/* A plain <img>: it is a small file of ours, with fixed size; next/image would add client code for nothing. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}

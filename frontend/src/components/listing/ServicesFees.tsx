@@ -1,6 +1,6 @@
 /** The services of a listing with their fee ranges. Requirements: FR-09, FR-11, US-06, NFR-10. Spec: specs/2026-10-13-listing-page/requirements.md D6.
- * The words "Estimate — confirm with the facility" always show once above the services (FR-11). A service with no fee has no fee line,
- * and a fee with no date has no date. Nothing at all when the listing has no services.
+ * The words "Estimate — confirm with the facility" always show once above the services (FR-11). A service with no fee says "Ask for price"
+ * (owner, 2026-10-13), and a fee with no date has no date. Nothing at all when the listing has no services.
  */
 import { describeFee } from "@/lib/formatters/fees";
 import type { ServiceRead } from "@/types/api";
@@ -22,11 +22,13 @@ export function ServicesFees({ services }: ServicesFeesProps) {
           return (
             <li key={service.name} className="border-b border-line py-3">
               <p className="text-base font-semibold text-ink">{service.name}</p>
-              {fee.amount && (
+              {fee.amount ? (
                 <p className="text-base text-ink">
                   {fee.amount}
                   {fee.collected && <span className="text-ink-soft"> · {fee.collected}</span>}
                 </p>
+              ) : (
+                <p className="text-base text-ink-soft">Ask for price</p>
               )}
             </li>
           );

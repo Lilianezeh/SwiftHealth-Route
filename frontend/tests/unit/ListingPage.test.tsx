@@ -164,14 +164,40 @@ describe("a listing that is there", () => {
     expect(screen.getAllByRole("link", { name: /^WhatsApp/ })).toHaveLength(2);
   });
 
-  it("makes Call the biggest button: 56 px, the filled one", async () => {
-    answerWith(200, makeListing());
+  it("makes Call and WhatsApp the same height in the main row (56 px), with Call the only filled button", async () => {
+    answerWith(200, makeListing({ phones: [{ ...PRIMARY_PHONE, number: "+2348030000000", is_whatsapp: true }, OTHER_PHONE] }));
     render(<ListingDetailView slug="night-pharmacy-a" />);
     await screen.findByRole("heading", { level: 1 });
 
     const buttons = [...screen.getAllByRole("link"), ...screen.getAllByRole("button")];
     const large = buttons.filter((button) => /\bmin-h-14\b/.test(button.className));
-    expect(large.map((button) => button.getAttribute("aria-label"))).toEqual(["Call Night Pharmacy A"]);
+    expect(large.map((button) => button.getAttribute("aria-label"))).toEqual([
+      "Call Night Pharmacy A",
+      "WhatsApp Night Pharmacy A (opens in a new tab)",
+    ]);
+    expect(large[0].className).toMatch(/\bbg-pine\b/);
+    expect(large[1].className).not.toMatch(/\bbg-pine\b/);
+  });
+
+  it("shows the main number as text under the buttons in the reading format, and keeps the links international", async () => {
+    answerWith(200, makeListing({ phones: [{ ...PRIMARY_PHONE, number: "+2348031234567", is_whatsapp: true }] }));
+    render(<ListingDetailView slug="night-pharmacy-a" />);
+    await screen.findByRole("heading", { level: 1 });
+
+    expect(screen.getByText("Front desk · 0803 123 4567")).toBeInTheDocument();
+    expect(screen.queryByText(/\+2348031234567/)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Call Night Pharmacy A" })).toHaveAttribute("href", "tel:+2348031234567");
+    expect(screen.getByRole("link", { name: /^WhatsApp/ }).getAttribute("href")).toContain("https://wa.me/2348031234567?");
+  });
+
+  it("lets the verified badge fit its content: the header column does not stretch its children", async () => {
+    answerWith(200, makeListing());
+    render(<ListingDetailView slug="night-pharmacy-a" />);
+    await screen.findByRole("heading", { level: 1 });
+
+    const badge = screen.getByText(/^Verified/).closest("span.rounded-full") as HTMLElement;
+    expect(badge.parentElement?.tagName).toBe("HEADER");
+    expect(badge.parentElement?.className).toMatch(/\bitems-start\b/);
   });
 
   it("sets the tab title to the name and the brand", async () => {

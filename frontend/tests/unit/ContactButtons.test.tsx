@@ -94,9 +94,35 @@ describe("ContactButtons", () => {
 
     const call = screen.getByRole("link", { name: "Call Night Pharmacy A" });
     expect(call).toHaveAttribute("href", `tel:${PRIMARY_PHONE.number}`);
-    expect(call.className).toMatch(/\bmin-h-14\b/); // 56 px: Call is the biggest button
-    expect(call.className).toMatch(/\bbg-pine\b/); // and the primary one
+    expect(call.className).toMatch(/\bmin-h-14\b/); // 56 px
+    expect(call.className).toMatch(/\bbg-pine\b/); // and the primary (filled) one
     expect(screen.getByRole("link", { name: /^Directions to Night Pharmacy A/ })).toBeInTheDocument();
+  });
+
+  it("makes WhatsApp the same height as Call (56 px) so the two sit level", () => {
+    const listing = makeListing({ phones: [{ ...PRIMARY_PHONE, number: "+2348030000000", is_whatsapp: true }] });
+    render(<ContactButtons listing={listing} />);
+
+    const call = screen.getByRole("link", { name: "Call Night Pharmacy A" });
+    const whatsapp = screen.getByRole("link", { name: /^WhatsApp/ });
+    expect(call.className).toMatch(/\bmin-h-14\b/);
+    expect(whatsapp.className).toMatch(/\bmin-h-14\b/);
+  });
+
+  it("shows the main number as text under the buttons in the reading format, with its label", () => {
+    const listing = makeListing({ phones: [{ ...PRIMARY_PHONE, number: "+2348031234567" }] });
+    render(<ContactButtons listing={listing} />);
+
+    expect(screen.getByText("Front desk · 0803 123 4567")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Call Night Pharmacy A" })).toHaveAttribute("href", "tel:+2348031234567");
+  });
+
+  it("shows just the number when the main number has no label, and no line when there is no phone", () => {
+    const { rerender } = render(<ContactButtons listing={makeListing({ phones: [{ ...PRIMARY_PHONE, number: "+2348031234567", label: null }] })} />);
+    expect(screen.getByText("0803 123 4567")).toBeInTheDocument();
+
+    rerender(<ContactButtons listing={makeListing({ phones: [], primary_phone: null })} />);
+    expect(screen.queryByText(/\d{4} \d{3} \d{4}/)).not.toBeInTheDocument();
   });
 
   it("shows no WhatsApp button when no number is marked as WhatsApp", () => {
@@ -160,7 +186,8 @@ describe("OtherPhones", () => {
 
     const item = screen.getByRole("listitem");
     expect(within(item).getByText("Emergency")).toBeInTheDocument();
-    expect(within(item).getByText("+2340000000013")).toBeInTheDocument();
+    expect(within(item).getByText("0000 000 0013")).toBeInTheDocument(); // the reading format (D12)
+    expect(within(item).queryByText("+2340000000013")).not.toBeInTheDocument();
     expect(within(item).getByRole("link", { name: "Call Night Pharmacy A (Emergency)" })).toHaveAttribute(
       "href",
       "tel:+2340000000013",

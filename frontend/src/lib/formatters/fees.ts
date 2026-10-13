@@ -27,7 +27,7 @@ export function formatCollected(date: string | null): string | null {
 
 export type FeeText = { amount: string | null; collected: string | null };
 
-/** The text of one fee: a range, one amount, "From ...", "Up to ...", or nothing (and then no date either). */
+/** The text of one fee: a range, one amount, "From ...", "Up to ...", or no amount (and then no date either; the page says "Ask for price"). */
 export function describeFee(service: ServiceRead): FeeText {
   const minimum = service.fee_min_naira === null ? null : formatNaira(service.fee_min_naira);
   const maximum = service.fee_max_naira === null ? null : formatNaira(service.fee_max_naira);

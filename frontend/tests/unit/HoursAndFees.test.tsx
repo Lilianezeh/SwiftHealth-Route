@@ -75,7 +75,7 @@ describe("ServicesFees", () => {
     expect(screen.getAllByText("Estimate — confirm with the facility")).toHaveLength(1);
   });
 
-  it("writes each fee the owner's way: a range, one amount, From..., and no line for no fee", () => {
+  it("writes each fee the owner's way: a range, one amount, From..., and 'Ask for price' for no fee", () => {
     render(<ServicesFees services={SERVICES} />);
 
     const items = screen.getAllByRole("listitem");
@@ -89,7 +89,10 @@ describe("ServicesFees", () => {
     expect(items[1]).not.toHaveTextContent("collected"); // no date: the date is hidden
     expect(items[2]).toHaveTextContent("From ₦1,000");
     expect(items[3]).toHaveTextContent("Home visit");
-    expect(items[3]).not.toHaveTextContent("₦"); // no fee: no fee line
+    expect(items[3]).toHaveTextContent("Ask for price"); // no fee: plain words, not a price
+    expect(items[3]).not.toHaveTextContent("₦");
+    expect(items[3]).not.toHaveTextContent("collected");
+    expect(items[0]).not.toHaveTextContent("Ask for price");
   });
 
   it("shows nothing at all when the listing has no services", () => {
