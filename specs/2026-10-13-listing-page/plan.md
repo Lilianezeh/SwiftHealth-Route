@@ -73,8 +73,13 @@ Files that will change or appear (frontend unless written otherwise):
   and the exact shared link; the 404 page; no script with "leaflet" and no request with a position in it (the network log is searched
   for the fixture's coordinates and for `lat=` and `lng=`).
 
+### Task 7b: polish after the owner's review (2026-10-13; D1, D6, D12)
+- [ ] Tests first, then code: `formatPhoneForReading` (`0803 123 4567`, D12); Call and WhatsApp both 56 px in the main row; the main number as
+  text under the buttons; the other numbers in the reading format; the verified badge fits its content; "Ask for price" for a service with no
+  fee. Update the older tests that said "Call is the biggest" and "no fee hides the line". Re-run the real-browser spec.
+
 ### Task 8: wrap-up
-- [ ] `npm run lint`, `typecheck`, the whole suite, the build (First Load JS for the route at or under 115 kB, own JS under 8 kB) and the
+- [ ] `npm run lint`, `typecheck`, the whole suite, the build (First Load JS for the route at or under 116 kB, own JS under 9 kB) and the
   backend tests and `ruff`, one at a time, in the containers.
 - [ ] Update the UI spec 2.4 (done in Task 0), the roadmap and `LOG.md` once; fill `validation.md`; open a **draft** pull request that stays a draft
   until the merge checklist is ticked; wait for the owner's check of the preview.

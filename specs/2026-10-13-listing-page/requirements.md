@@ -48,11 +48,14 @@ This file keeps them and **replaces decision 9** (the icon and the message of th
 
 ### D1. The buttons: Call stays the main button
 - **Call** is the big primary button (the existing `CallButton`, `bg-pine`, white text, 56 px high on this page) for the **primary phone**,
-  which the API returns first. It never moves, never changes colour, and nothing is more prominent than it.
-- **WhatsApp** (D2) sits **beside** Call, only for a phone whose `is_whatsapp` is `true`. **Directions** (D5) comes next (full width
+  which the API returns first. It never moves and never changes colour; it is the only filled button, so it is still the main one.
+- **WhatsApp** (D2) sits **beside** Call, only for a phone whose `is_whatsapp` is `true`, and is **the same 56 px high as Call** (revised
+  2026-10-13: it was 50 px, so the two did not sit level; the owner asked for the same height). **Directions** (D5) comes next (full width
   below Call and WhatsApp). A phone that is not marked gets Call alone.
-- **Other phones** (`phones[1..]`) each have a line with the label ("Front desk"), the number and **their own Call button** (and a WhatsApp
-  button if that number is marked). All buttons are at least 48 px high with 16 px text.
+- **The main number as text** (owner, 2026-10-13): right under the buttons, "Front desk · 0803 123 4567" (the label when there is one, then the
+  number in the reading format of D12), so a visitor can read it or save it. The links behind the buttons stay international.
+- **Other phones** (`phones[1..]`) each have a line with the label ("Front desk"), the number in the reading format (D12) and **their own Call
+  button** (and a WhatsApp button if that number is marked), side by side at the same height. All buttons are at least 48 px high with 16 px text.
 - Layout: the buttons wrap (`flex-wrap`, each at least 8.5 rem wide), so on a 320 px screen WhatsApp drops under Call instead of
   being squeezed. No sideways scroll (a real-browser check).
 
@@ -132,7 +135,9 @@ The cards and the map popups have only `primary_phone`, with no flag, and they d
   converts (tested: noon, midnight, 9:05, past-midnight, closed).
 - **`hours_note`** ("Closes 9:00 PM", "Opens Monday 7:30 AM") and the `OpenNowBadge` show at the top, as on the cards.
 - **Fees (FR-11, owner decision 5):** per service a line: both limits `₦1,500 – ₦3,000`; equal limits `₦1,500`; only a minimum
-  `From ₦1,500`; no fee hides the fee line; with `fee_collected_at` the line adds "collected 28 Sep 2026", without it the date is hidden.
+  `From ₦1,500`; only a maximum `Up to ₦3,000`; **no fee shows "Ask for price"** (owner, 2026-10-13: the first version, decision 5, hid the line,
+  which left a service name with nothing under it; "Ask for price" is plain text in `ink-soft`, not a price, and has no date); with
+  `fee_collected_at` the line adds "collected 28 Sep 2026", without it the date is hidden.
   The words **"Estimate — confirm with the facility"** always show once above the services. Money arrives as strings ("1500.00") and is
   formatted as text; it is never turned into a float for calculation.
 - **The notice (FR-22, decision 6):** when `recently_reported_not_working` is `true`, the top of the page shows
@@ -140,7 +145,8 @@ The cards and the map popups have only `primary_phone`, with no flag, and they d
   lucide `TriangleAlert` icon; never red, which belongs to emergencies). It is a `role="note"`; the listing, the Call button and the
   rest stay as they are.
 - **Last verified (US-07):** the existing `VerifiedDate` ("Verified 3 days ago") and, when `verification_due` is `true`, the "Verification
-  due" label of the cards.
+  due" label of the cards. Like the cards' badges it **fits its content** and does not stretch across the page (it did, because it sat straight
+  inside a column; the header column now keeps each badge at its own width).
 - **Disclaimer (FR-13):** the API's `disclaimer` text, at the bottom, 16 px. The API sentence now says "SwiftHealth Route is a directory and does
   not give medical advice. Fees are estimates; confirm with the facility." (it said SwiftHealth: the rename of 2026-10-13 applies to what is on
   screen; `backend/app/services/listing_service.py`, with its test and the api-spec example).
@@ -173,9 +179,10 @@ jump), `loading="lazy"`, `decoding="async"`, `referrerPolicy="no-referrer"`, a r
 - Tests: the request URL has no `?`; a test renders the page with a position in `sessionStorage` and checks it does not appear anywhere.
 
 ### D10. Small and fast (NFR-01), and no map
-- No Leaflet, no chart code, no `next/image` client code on this page. The page's own JavaScript stays under **8 kB** sent
-  (`/search` is 7.5 kB as built; this page has less to do), and `npm run build`'s First Load JS for the route stays at or under
-  **115 kB**. The WhatsApp glyph is an `<img>` file (no JavaScript). Every link on the page has `prefetch={false}` (the same rule as the
+- No Leaflet, no chart code, no `next/image` client code on this page. The page's own JavaScript stays under **9 kB** sent (the owner set
+  9 kB on 2026-10-13, after the first build measured 8.48 kB against an 8 kB target; `/search` is 7.5 kB as built), and `npm run build`'s
+  First Load JS for the route stays at or under **116 kB** (it was 115 kB; 9 kB of own code on the 103 kB runtime is up to 112 kB plus the
+  route's shared parts). The WhatsApp glyph is an `<img>` file (no JavaScript). Every link on the page has `prefetch={false}` (the same rule as the
   home page), so the page downloads no other page's code before it is asked for.
 - A real-browser check (Playwright, on a production build) loads the page and fails if any script contains "leaflet" or comes from the
   search page's chunk.
@@ -192,6 +199,15 @@ jump), `loading="lazy"`, `decoding="async"`, `referrerPolicy="no-referrer"`, a r
   other row, and it is **not** part of `seed.seed` or the production demo data. It adds no table.
 - Because the fixture numbers are impossible numbers, WhatsApp will say the number is not on WhatsApp when the owner taps the button locally:
   that is expected; the owner checks the link and the look, not a chat.
+
+### D12. Phone numbers are read in the local format (owner, 2026-10-13)
+- A number is stored as `+2348031234567` and **shown as text** as `0803 123 4567`: the leading 0, then groups of 4, 3 and 4 digits. One pure
+  function, `formatPhoneForReading`, in `lib/formatters/phone.ts`, used **everywhere a phone number is shown as text** (the main-number line
+  and the other numbers of this page, and any later screen); `CLAUDE.md`, the PRD note and the UI spec ("Buttons and text") say so.
+- The function accepts the stored `+234` form (and the local `0` form and the bare `234` form, like `toE164`). A value that is not a Nigerian
+  number of 234 and ten digits is returned **as it is**, never guessed at.
+- The links do **not** change: `tel:+2348031234567` and `wa.me/2348031234567`. A screen reader reads "0803 123 4567" digit by digit.
+- The fixture's impossible numbers (`+2340000000951`) read as `0000 000 0951`: odd, but they are meant to look fictional.
 
 ## Out of scope for 6b
 Server rendering for Google (after the Render upgrade); the report form's real page (phase 9a); a map on this page; editing; featured placement;

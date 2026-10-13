@@ -123,7 +123,8 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 - TypeScript: no `any`; server components by default, "use client" only when needed; API calls only via
   frontend/src/lib/api/. Component files in PascalCase (ListingCard.tsx).
 - UI: mobile-first, large tap targets (min 48px), text 16px+, works on slow 3G.
-- Phone numbers stored and shown as +234...
+- Phone numbers are stored as +234... and shown for reading in local format (0803 123 4567), everywhere a number is shown as
+  text (owner, 2026-10-13); the `tel:` and `wa.me` links stay international (+234..., and 234... without the plus for wa.me).
 - Money is always `Decimal` (Python) with 2 decimal places, never `float`. In JSON, send and return money as
   strings like "1500.00". Convert to kobo (integer) only when calling Paystack: `int(amount * 100)`.
 

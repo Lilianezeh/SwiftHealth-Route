@@ -11,10 +11,10 @@ of the feature, with the evidence, after the owner has checked the preview. Chec
   detail API tests pass after the change (the whole backend suite is run once more before the pull request is ready).
 - Real browser (Playwright, the local fixture, the dev site): **19 of 19 pass** at 320, 375, 768 and 1024 px (this machine's Chromium uses a wide
   fallback font, wider than a phone's).
-- Size: the route `/listing/[slug]` is **8.48 kB** of its own JavaScript and **115 kB First Load** (the shared runtime is 103 kB). The
-  First Load limit of D10 (115 kB) is met exactly; the own-JavaScript target of **8 kB is missed by 0.48 kB** (the page's parts all ship to
-  the browser because the page loads its data there). No map, chart or `next/image` code is on the page (a test and the browser check).
-  The owner decides whether 8.5 kB is fine or whether to trim further.
+- Size: the route `/listing/[slug]` is **8.48 kB** of its own JavaScript and **115 kB First Load** (the shared runtime is 103 kB). It missed
+  the first target of 8 kB by 0.48 kB (the page's parts all ship to the browser because the page loads its data there). **The owner said
+  8.5 kB is fine and set the target to 9 kB on 2026-10-13** (D10 now says 9 kB own and 116 kB First Load). No map, chart or `next/image`
+  code is on the page (a test and the browser check). The numbers after the polish changes are written under "Polish changes" below.
 - Backend, whole suite in the container after the last change: **790 passed** (769 before this feature, plus 21 for the fixture).
 - Pull request #22 (draft), on `ac1deb1`: `Frontend CI` **pass** (1m54s) and `Backend CI` **pass** (1m23s); Netlify `Header rules` and
   `Redirect rules` pass, `Pages changed` skipping, `deploy-preview` pass: <https://deploy-preview-22--swifthealth-ng.netlify.app>. The preview
@@ -26,9 +26,22 @@ of the feature, with the evidence, after the owner has checked the preview. Chec
   redeploys. The WhatsApp button, the notice and the other fixture cases are seen locally at
   `http://localhost:3000/listing/test-fixture-whatsapp-clinic` after `docker compose exec backend python -m seed.whatsapp_fixture`.
 
+## Polish changes (2026-10-14, after the owner's review; boxes still unticked until the owner checks the preview)
+
+- Frontend, in the container: `npm run lint` and `typecheck` clean, **833 unit tests pass** (67 files; 9 more than before).
+- Real browser (Playwright, the local fixture): **23 of 23 pass** at 320, 375, 768 and 1024 px (19 before, plus the main-number and badge
+  check at each of the four widths).
+- Size: `/listing/[slug]` is **8.58 kB** of its own JavaScript (target 9 kB, met) and **115 kB First Load** (limit 116 kB, met).
+- Not looked at: real phones.
+
 ## Requirements checked by tests
 
-- [ ] **US-02, FR-10, D1:** Call is the primary button; it is the largest; the primary phone is first; each other phone has its own Call button
+- [ ] **US-02, FR-10, D1:** Call is the primary (filled) button; Call and WhatsApp are the same height (56 px); the primary phone is first; each
+  other phone has its own Call button; the main number is also shown as text under the buttons
+- [ ] **D12:** `formatPhoneForReading` turns `+2348031234567`, `08031234567` and `2348031234567` into `0803 123 4567`; anything that is not a
+  Nigerian number is returned unchanged; the main number line and the other numbers use it; the `tel:` and `wa.me` links stay international
+- [ ] **D6, the badge:** the "Verified … ago" badge and the "Verification due" label fit their content (they do not stretch across the page)
+- [ ] **FR-11, D6:** a service with no fee shows "Ask for price" (no amount, no date)
 - [ ] **FR-47, D2:** the WhatsApp button appears only for a phone with `is_whatsapp: true`; none when false; the link is exactly
   `https://wa.me/2348030000000?text=Hello%2C%20I%20found%20you%20on%20SwiftHealth%20Route.` for `+2348030000000` and for `08030000000`
   (the conversion is tested on its own: plus, local, bare, spaces, dashes, wrong lengths give no button); it opens in a new tab with
@@ -54,7 +67,7 @@ of the feature, with the evidence, after the owner has checked the preview. Chec
   may be under re-verification." and a "Search for care" button; other failures show Retry; the tab title is "<name> | SwiftHealth Route"
 - [ ] **NFR-07, D9:** the API request has no query string; a position stored in `sessionStorage` appears in no link, no message and no request
 - [ ] **NFR-01, D10:** the page's source imports no Leaflet, no chart code and no `next/image`; every link has `prefetch={false}`; the built route is within
-  its budget (own JS under 8 kB, First Load JS at or under 115 kB)
+  its budget (own JS under 9 kB, First Load JS at or under 116 kB)
 - [ ] **NFR-10:** every button and link is at least 48 px high; text is 16 px or more; the focus ring is visible; one `h1`; the heading levels are in order;
   every icon is hidden from screen readers; the buttons wrap instead of overflowing at 320 px
 - [ ] **D11:** the fixture adds the one fictional listing and nothing else; running it twice changes nothing; it refuses when `APP_ENV=production`;
@@ -63,7 +76,7 @@ of the feature, with the evidence, after the owner has checked the preview. Chec
 ## Real browser (Playwright, on a production build with the fixture)
 
 - [ ] No sideways scrolling at 320, 375, 768 and 1024 px
-- [ ] The WhatsApp button is only on the marked number; Call is the biggest button
+- [ ] The WhatsApp button is only on the marked number; Call and WhatsApp are the same height; the verified badge is not full width
 - [ ] No script downloaded by the page contains "leaflet" or comes from the search page; the network log holds no `lat=`, no `lng=` and none of the fixture's coordinates
   except in the Google Maps link
 - [ ] The 404 page for an unknown slug
