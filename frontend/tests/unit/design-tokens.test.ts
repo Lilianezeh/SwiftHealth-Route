@@ -25,7 +25,8 @@ const SPEC_TOKENS: Record<string, string> = {
   line: "#d7e1df",
   "pine-100": "#dcecf4",
   "pine-50": "#eef6fa",
-  sky: "#1a7cad", // the light end of the home page hero gradient: the lightest sky blue with 4.5:1 for white text (owner, 2026-10-12)
+  "sky-pale": "#dcf2fc", // "Route" in the logo on a dark background: the lightest blue that passes 4.5:1 there (owner, 2026-10-13)
+  sky: "#1a7cad",// the light end of the home page hero gradient: the lightest sky blue with 4.5:1 for white text (owner, 2026-10-12)
   open: "#147a48",
   "open-bg": "#e7f6ed",
   closed: "#465451",
@@ -108,6 +109,9 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     ["forest", "pine-50", "light panel"],
     ["white", "sky", "the hero text on the lightest point of the gradient"],
     ["white", "forest", "the Benefits band: white text and white icons"],
+    ["sky-pale", "forest", "Route in the logo on the blue header bar"],
+    ["sky", "white", "Route in the logo on a light background, and the white pulse on the sky pin"],
+    ["pine-dark", "white", "SwiftHealth in the logo on a light background"],
     ["pine-dark", "white", "the text of the white hero button"],
     ["open", "open-bg", "Open now label"],
     ["closed", "closed-bg", "Closed label"],
@@ -128,6 +132,27 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     const [red, green, blue] = [1, 3, 5].map((start) => parseInt(tokens.sky.slice(start, start + 2), 16));
     expect(blue).toBeGreaterThan(green);
     expect(green).toBeGreaterThan(red);
+  });
+
+  it("Route in the logo (sky-pale) is readable on every dark background the logo can sit on, down to the worst case (R39)", () => {
+    const mix = (foreground: string, background: string, share: number) => {
+      const channels = (colour: string) => [1, 3, 5].map((start) => parseInt(colour.slice(start, start + 2), 16));
+      const mixed = channels(foreground).map((value, index) =>
+        Math.round(share * value + (1 - share) * channels(background)[index]),
+      );
+      return `#${mixed.map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+    };
+    const gradientMiddle = mix(tokens.sky, tokens["pine-dark"], 0.5); // where the logo sits on the hero: "to top right" has its middle at the top left corner
+    const veilOverWhite = mix(tokens["pine-dark"], WHITE, 0.8); // the veil over a pure white photo
+
+    expect(contrast(tokens["sky-pale"], tokens.forest)).toBeGreaterThanOrEqual(4.5); // 4.85
+    expect(contrast(tokens["sky-pale"], gradientMiddle)).toBeGreaterThanOrEqual(4.5); // 5.48
+    expect(contrast(tokens["sky-pale"], veilOverWhite)).toBeGreaterThanOrEqual(4.5); // 4.54
+    // The white pin on those backgrounds and its sky line on the white pin
+    expect(contrast(WHITE, tokens.forest)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(tokens.sky, WHITE)).toBeGreaterThanOrEqual(4.5); // the pulse line of the dark tone
+    // A sky pin on the forest bar would vanish: the reason the header always uses the dark tone
+    expect(contrast(tokens.sky, tokens.forest)).toBeLessThan(3);
   });
 
   it("the veil behind the header links (pine-dark at 80%) keeps white readable even over a pure white photo", () => {

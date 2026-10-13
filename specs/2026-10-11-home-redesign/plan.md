@@ -192,6 +192,16 @@ The changes are R25 to R29 of the "Fifth revision, 2026-10-12" in [requirements.
   and text, footer in the page container, softer veil, tablets use the phone hero (US-13, NFR-10)`.
 - [x] (2f86c17) Push, wait for the checks, and tell the owner the preview is ready.
 
+### Task 14: the name SwiftHealth Route, a new logo, a phone header with the full wordmark (tests first)
+R35 to R41 in [requirements.md](requirements.md). Part 1 (rename, siren, LOG, CLAUDE.md) is committed (67e6271). Part 2: `styles/globals.css`
+(`sky-pale`), `Logo.tsx` (the pin with the heartbeat line, the wordmark, two tones), `SiteHeader.tsx`, `MobileMenu.tsx` (icon-only),
+`HeaderNavigation.tsx` (a smaller SwiftRescue), `app/icon.svg`, the Playwright spec, and the tests. The owner checks the preview
+before any box below is ticked and before the pull request leaves draft.
+- [ ] Write the tests first (token, Logo, header, MobileMenu, icon, Playwright at 360 and 375 px). They fail.
+- [ ] Change the components; run the real-browser spec and a 1-pixel sweep until it passes, and decide from the 320 px measurement
+  whether "SwiftHealth" or only the pin is drawn below 360 px.
+- [ ] Run lint, typecheck, the whole suite and the build, one at a time, then commit and push; wait for the owner's preview check.
+
 ### Task 13: widths 320 to 1023 px, a lower band, a header that fits, and a real-browser check (tests first)
 R31 to R34 in [requirements.md](requirements.md). Files: `HomeHero.tsx` (the stacked text column, a lower band), `SiteHeader.tsx`,
 `Logo.tsx`, `HeaderNavigation.tsx` and `MobileMenu.tsx` (a header that fits at 320 px), `playwright.config.ts`,

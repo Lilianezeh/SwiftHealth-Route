@@ -26,8 +26,9 @@ export function SiteHeader() {
   return (
     <header className={isHomePage ? HOME_HEADER : BAR_HEADER}>
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-2">
-        <Link href="/" className="inline-flex min-h-12 items-center text-base font-semibold sm:text-lg">
-          <Logo />
+        {/* The header is always dark (the forest bar, or the dark hero), so the logo is in its dark tone: a sky pin would vanish. */}
+        <Link href="/" className="inline-flex min-h-12 items-center">
+          <Logo tone="dark" />
         </Link>
         <HeaderNavigation isHomePage={isHomePage} />
       </div>

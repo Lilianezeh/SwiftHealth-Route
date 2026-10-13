@@ -28,7 +28,7 @@ export function HeaderNavigation({ isHomePage }: HeaderNavigationProps) {
         )}
         <Link
           href={siteConfig.emergencyLink.href}
-          className="inline-flex min-h-12 items-center gap-1.5 rounded-md bg-emergency px-3 text-base font-semibold text-white sm:px-4"
+          className="inline-flex min-h-12 items-center gap-1.5 rounded-md bg-emergency px-2.5 text-base font-semibold text-white sm:px-4"
         >
           {/* A small siren, white like the text (currentColor), hidden from screen readers; never a cross (R36). */}
           <DecorativeIcon icon={Siren} className="h-4 w-4" />

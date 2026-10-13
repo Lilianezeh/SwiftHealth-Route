@@ -19,6 +19,7 @@
   --color-line: #d7e1df;
   --color-pine-100: #dcecf4;
   --color-pine-50: #eef6fa;
+  --color-sky-pale: #dcf2fc; /* "Route" in the logo on a dark background: 4.85:1 on forest, 4.54:1 in the worst case under the hero veil */
   --color-sky: #1a7cad; /* the light end of the hero gradient (the deep end is pine-dark); white text on it is 4.64:1 */
   --color-open: #147a48;
   --color-open-bg: #e7f6ed;

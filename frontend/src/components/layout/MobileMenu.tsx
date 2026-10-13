@@ -1,8 +1,8 @@
 "use client";
 
 /** The Menu button of the header on a phone, and the panel it opens. Requirements: FR-02, NFR-10, NFR-04. UI spec, "Layout".
- * The only client part of the header. The button shows the word "Menu" and an icon, and says whether the panel is open
- * (aria-expanded). Escape and a chosen link close it, and Escape puts the focus back on the button. The red SwiftRescue
+ * The only client part of the header. The button is an icon only (a 48 px square named "Menu" by its aria-label, since 2026-10-13,
+ * to leave room for the full wordmark on a phone) and says whether the panel is open (aria-expanded). Escape and a chosen link close it, and Escape puts the focus back on the button. The red SwiftRescue
  * button is not in the panel: it stays in the bar, so it is always one tap away.
  */
 import { Menu, X } from "lucide-react";
@@ -35,13 +35,13 @@ export function MobileMenu({ links }: MobileMenuProps) {
       <button
         ref={buttonRef}
         type="button"
+        aria-label="Menu"
         aria-expanded={isOpen}
         aria-controls={isOpen ? panelId : undefined}
         onClick={() => setIsOpen((current) => !current)}
-        className="inline-flex min-h-12 items-center gap-2 rounded-md border border-paper/60 px-3 text-base font-semibold sm:px-4"
+        className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-md border border-paper/60"
       >
-        <DecorativeIcon icon={isOpen ? X : Menu} />
-        Menu
+        <DecorativeIcon icon={isOpen ? X : Menu} className="h-6 w-6" />
       </button>
       {isOpen && (
         // The header is `relative`, so the panel sits right under the bar, across the whole width.

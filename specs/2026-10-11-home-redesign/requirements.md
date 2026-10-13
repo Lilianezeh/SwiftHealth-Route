@@ -244,6 +244,28 @@ and before the pull request leaves draft.
   type, swapped when the type changes, only the chosen photo downloaded) and on the login page (`hero.jpg`), with the Magnific
   credit on those pages only and none of those photos on the home page.
 
+- **R38. The new logo (replaces R16).** One reusable inline SVG component, `components/layout/Logo.tsx` (the pin alone is also
+  exported). A map pin (the map pin's shape) in `sky` `#1A7CAD` with a white heartbeat line, and next to it the wordmark
+  "SwiftHealth" (navy, `pine-dark`) and "Route" (`sky`). On a dark background (the `forest` bar and the dark hero, where the header
+  always is) the tone is inverted: a white pin with a `sky` line, "SwiftHealth" in white and "Route" in the new light blue
+  `sky-pale` `#DCF2FC`. From 640 px one line; below 640 px stacked, with "ROUTE" in 10 px letter-spaced capitals. The words come from
+  `config/brand.ts`. Screen readers hear "SwiftHealth Route" once (`role="img"` with that label, the SVG and the words hidden).
+  The favicon `src/app/icon.svg` is the pin with the line only (`sky` pin, white line); its test now compares the blue with the
+  `sky` token (it compared with `forest` before). The owner approved the SVG on 2026-10-13 (the preview image and code were shown).
+- **R39. A new token, `sky-pale` (`#DCF2FC`),** for "Route" on a dark background. Computed 2026-10-13: 4.85:1 on `forest`, 5.48:1
+  on the middle of the hero gradient (where the logo sits), 4.54:1 over a pure white photo under the 80% veil (worst case); a more
+  saturated light blue fails 4.5:1 on one of these. White on `sky` 4.64:1, `sky` on white 4.64:1, `pine-dark` on white 8.92:1.
+- **R40. A phone header with the full wordmark from 360 px (replaces R32's "word hidden below 400 px").** The Menu button is an icon
+  only, with `aria-label="Menu"` (a 48 px square); the SwiftRescue button is smaller on a phone (10 px at the sides, 16 px at 640 px
+  and up) and has the siren (R36). Below 360 px the stacked "ROUTE" is hidden first. **Measured** in the real browser
+  (2026-10-13, the widest fallback font): with "ROUTE" hidden, "SwiftHealth" still overflowed the screen between 320 and 340 px
+  (the content was 341 px wide) and fits from 344 px, so **below 344 px only the pin is drawn** (as the owner decided in advance for
+  this case), and the name stays for screen readers. No sideways scrolling at 320 px and the Menu button is always fully inside the
+  screen.
+- **R41. The real-browser check also covers the wordmark.** `tests/end-to-end/home-layout.spec.ts` checks that "SwiftHealth" and
+  "Route" are visible and inside the screen at 360 and 375 px (and at every width from 360 px in the sweep), and that Menu, an
+  icon-only button, is fully inside the screen at every width below 768 px.
+
 ## Decisions
 
 Decisions 1 to 4 and 7 are my defaults for questions the owner's brief left open; the owner can change any of them on review.

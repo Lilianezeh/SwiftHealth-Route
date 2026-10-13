@@ -9,6 +9,7 @@ import { expect, test, type Page } from "@playwright/test";
 // Width and a realistic window height: a window of that width on a laptop or the screen of a phone or a tablet.
 const VIEWPORTS = [
   { width: 320, height: 568 },
+  { width: 360, height: 740 },
   { width: 375, height: 667 },
   { width: 600, height: 800 },
   { width: 768, height: 700 },
@@ -17,6 +18,7 @@ const VIEWPORTS = [
 ];
 const STACKED_BELOW = 1024; // the side-by-side hero starts here
 const MENU_BUTTON_BELOW = 768; // the header links are in the bar from here, the Menu button below
+const WORDMARK_FROM = 360; // the full wordmark ("SwiftHealth" and "Route") is visible from here (R40)
 
 type Measure = {
   scrollWidth: number;
@@ -24,6 +26,7 @@ type Measure = {
   headingLines: { left: number; right: number; top: number }[];
   headingOverflow: number;
   header: { text: string; left: number; right: number; width: number }[];
+  wordmark: { text: string; left: number; right: number; width: number }[]; // "SwiftHealth" and "Route" as drawn (width 0: hidden)
   headingBottom: number;
   buttonBottom: number;
 };
@@ -40,10 +43,18 @@ async function measure(page: Page): Promise<Measure> {
       innerWidth: window.innerWidth,
       headingLines: [...range.getClientRects()].map((rect) => ({ left: rect.left, right: rect.right, top: rect.top })),
       headingOverflow: heading.scrollWidth - heading.clientWidth,
+      // The Menu button is an icon only: its name is its aria-label.
       header: [...document.querySelectorAll("header a, header button")].map((element) => {
         const box = element.getBoundingClientRect();
-        return { text: (element.textContent ?? "").trim(), left: box.left, right: box.right, width: box.width };
+        const text = (element.textContent ?? "").trim() || (element.getAttribute("aria-label") ?? "");
+        return { text, left: box.left, right: box.right, width: box.width };
       }),
+      wordmark: [...document.querySelectorAll('header [role="img"] span')]
+        .filter((element) => ["SwiftHealth", "Route"].includes((element.textContent ?? "").trim()) && element.children.length === 0)
+        .map((element) => {
+          const box = element.getBoundingClientRect();
+          return { text: (element.textContent ?? "").trim(), left: box.left, right: box.right, width: box.width };
+        }),
       headingBottom: heading.getBoundingClientRect().bottom,
       buttonBottom: button.getBoundingClientRect().bottom,
     };
@@ -60,10 +71,15 @@ function problemsAt(width: number, result: Measure): string[] {
   if (result.headingLines.some((line) => !inside(line.left, line.right))) problems.push("a line of the heading is outside the screen");
   if (result.headingOverflow > 1) problems.push("the heading is clipped by its own box");
 
-  const wordmark = item("SwiftHealth");
   const logoLink = result.header[0];
   if (!logoLink || logoLink.width <= 0 || !inside(logoLink.left, logoLink.right)) problems.push("the logo is not inside the screen");
-  if (wordmark && !inside(wordmark.left, wordmark.right)) problems.push("the wordmark is outside the screen");
+  // The wordmark: both words visible from 360 px; below that whatever is drawn must be inside the screen.
+  for (const text of ["SwiftHealth", "Route"]) {
+    const word = result.wordmark.find((entry) => entry.text === text);
+    if (!word) problems.push(`the word ${text} of the logo is missing`);
+    else if (width >= WORDMARK_FROM && word.width <= 0) problems.push(`the word ${text} of the logo is not visible at ${width} px`);
+    else if (word.width > 0 && !inside(word.left, word.right)) problems.push(`the word ${text} of the logo is outside the screen`);
+  }
   const rescue = item("SwiftRescue");
   if (!rescue || !inside(rescue.left, rescue.right)) problems.push("SwiftRescue is missing or outside the screen");
   const links = width >= MENU_BUTTON_BELOW ? item("For facilities") : item("Menu");
@@ -83,6 +99,14 @@ for (const { width, height } of VIEWPORTS) {
 
     test("fits the screen: no sideways scrolling, a heading that is not cut off, a header with the links or the Menu button", async ({ page }) => {
       expect(problemsAt(width, await measure(page))).toEqual([]);
+    });
+
+    test("shows both words of the logo, SwiftHealth and Route (from 360 px)", async ({ page }) => {
+      test.skip(width < WORDMARK_FROM, "below 360 px the stacked ROUTE is hidden first, and if needed the whole wordmark (R40)");
+      const header = page.locator("header");
+
+      await expect(header.getByText("SwiftHealth", { exact: true })).toBeVisible();
+      await expect(header.getByText("Route", { exact: true })).toBeVisible();
     });
 
     test("wraps the heading below 1024 px: it is not one long line past the edge", async ({ page }) => {

@@ -225,6 +225,21 @@ Tests: `HomePage.test.tsx`, `SiteFooter.test.tsx`, `HomeSections.test.tsx`, `des
   200 and has `lg:min-h-[85svh]` and no plain `min-h-[85svh]`.
 - [ ] **For the owner, in a browser:** on a tablet there is no large empty blue gap between the photo band and the heading.
 
+### Task 14: SwiftHealth Route, the new logo, the phone header (2026-10-13)
+Tests: `brand.test.ts`, `Logo.test.tsx`, `icon.test.ts`, `SiteHeader.test.tsx`, `MobileMenu.test.tsx`, `design-tokens.test.ts`,
+`SiteFooter.test.tsx`, `HomeSections.test.tsx`, and the real-browser `tests/end-to-end/home-layout.spec.ts`. Not ticked until the owner
+has checked the preview.
+- [ ] The name is only written in `config/brand.ts`; the footer, title, description, manifest, Overview text and logo read it
+- [ ] `sky-pale` is `#dcf2fc` and passes 4.5:1 on `forest`, on the middle of the gradient and over the worst-case veil
+- [ ] Logo: the pin with the heartbeat line in both tones; the wordmark "SwiftHealth" and "Route"; stacked below 640 px with a small
+  letter-spaced ROUTE, one line from 640 px; one accessible name, "SwiftHealth Route"; no cross
+- [ ] The favicon is the pin with the line only, the blue equals the `sky` token
+- [ ] Menu is an icon-only button named Menu; SwiftRescue is smaller on a phone and has the siren (white, hidden from screen readers)
+- [ ] Real browser: "SwiftHealth" and "Route" visible at 360 and 375 px; Menu fully inside the screen below 768 px; no sideways
+  scroll at 320 px; the 1-pixel sweep
+- [ ] The whole suite, lint, typecheck and build pass
+- [ ] **The owner checks the preview** (the logo in the header, the footer, the tab icon, the phone header at 320, 360 and 375 px)
+
 ### Task 13: widths 320 to 1023 px (2026-10-12)
 Tests: `HomeSections.test.tsx`, `SiteHeader.test.tsx`, `Logo.test.tsx`, and the real-browser `tests/end-to-end/home-layout.spec.ts`.
 - [x] Real browser (Chromium 152 in the frontend container, 2026-10-12; first run against the old code failed at 320 and 375 px, the

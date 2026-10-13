@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /** Tests for the phone menu of the header. Requirements: FR-02, NFR-10 (48 px, keyboard, screen readers), NFR-04.
- * UI spec, "Layout": the Menu button shows the word and an icon, says whether it is open (aria-expanded), opens a panel with
+ * UI spec, "Layout": the Menu button is an icon with the accessible name Menu (owner, 2026-10-13), says whether it is open (aria-expanded), opens a panel with
  * the links, and Esc closes it. SwiftRescue is not in the panel: it stays in the bar (SiteHeader.test.tsx).
  */
 import { render, screen, within } from "@testing-library/react";
@@ -15,13 +15,16 @@ function renderMenu() {
 }
 
 describe("MobileMenu", () => {
-  it("has a Menu button with the word and a decorative icon, at least 48 px high", () => {
+  it("has an icon-only Menu button (aria-label Menu, no visible word), a 48 px square at least (R40)", () => {
     renderMenu();
 
     const button = screen.getByRole("button", { name: "Menu" });
+    expect(button).toHaveAttribute("aria-label", "Menu");
     expect(button.className).toMatch(/min-h-12(\s|$)/);
+    expect(button.className).toMatch(/min-w-12(\s|$)/); // 48 px wide too
+    expect(button.className).toMatch(/\bjustify-center\b/);
     expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
-    expect(button).toHaveTextContent("Menu");
+    expect(button.textContent).toBe(""); // the icon only: the name is the aria-label
   });
 
   it("starts closed: aria-expanded is false and there are no links", () => {

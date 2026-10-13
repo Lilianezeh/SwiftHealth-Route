@@ -17,6 +17,9 @@ beforeEach(() => {
   address.pathname = "/find";
 });
 
+// A link's name as a screen reader says it: the logo is one image labelled "SwiftHealth Route"; the other links are their text.
+const nameOf = (link: HTMLElement) => link.querySelector('[role="img"]')?.getAttribute("aria-label") ?? link.textContent;
+
 describe("SiteHeader", () => {
   it("has the SwiftHealth wordmark, a link to the home page", () => {
     render(<SiteHeader />);
@@ -35,7 +38,7 @@ describe("SiteHeader", () => {
   it("puts the links in the order Find care, SwiftRescue, For facilities", () => {
     render(<SiteHeader />);
 
-    const names = screen.getAllByRole("link").map((link) => link.textContent);
+    const names = screen.getAllByRole("link").map(nameOf);
 
     expect(names).toEqual(["SwiftHealth Route", "Find care", "SwiftRescue", "For facilities"]);
   });
@@ -133,7 +136,7 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
 
     expect(screen.queryByRole("link", { name: "Find care" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
+    expect(screen.getAllByRole("link").map(nameOf)).toEqual([
       "SwiftHealth Route",
       "SwiftRescue",
       "For facilities",
@@ -172,30 +175,38 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "SwiftHealth Route" })).toHaveAttribute("href", "/");
   });
 
-  it("has the logo in the wordmark link: a pin that screen readers do not read, then the word", () => {
-    render(<SiteHeader />);
-
-    const wordmark = screen.getByRole("link", { name: "SwiftHealth Route" });
-    expect(wordmark.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
-    expect(wordmark).toHaveTextContent("SwiftHealth Route");
-  });
-
-  it("is compact on a phone so it fits 320 px, and roomier from 640 px (R32): small wordmark and side space", () => {
-    render(<SiteHeader />);
-
-    expect(screen.getByRole("link", { name: "SwiftHealth Route" }).className).toMatch(/\btext-base\b.*\bsm:text-lg\b/);
-    expect(screen.getByRole("link", { name: "SwiftRescue" }).className).toMatch(/\bpx-3\b.*\bsm:px-4\b/);
-    expect(screen.getByRole("button", { name: "Menu" }).className).toMatch(/\bpx-3\b.*\bsm:px-4\b/);
-  });
-
-  it("draws only the pin below 400 px and keeps the word for screen readers, so the link is still named SwiftHealth Route (R32)", () => {
+  it("has the new logo in the first link: one image named SwiftHealth Route, a pin and the words SwiftHealth and Route (R38)", () => {
     render(<SiteHeader />);
 
     const link = screen.getByRole("link", { name: "SwiftHealth Route" });
-    const word = within(link).getByText("SwiftHealth Route");
-    expect(word.className).toMatch(/\bmax-\[399px\]:sr-only\b/); // hidden to the eye only below 400 px
-    expect(word.className).not.toMatch(/(^|\s)(hidden|invisible)\b/); // never display:none, which would take away the name
+    expect(within(link).getAllByRole("img", { name: "SwiftHealth Route" })).toHaveLength(1); // heard once
     expect(link.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    expect(within(link).getByText("SwiftHealth")).toBeInTheDocument();
+    expect(within(link).getByText("Route")).toBeInTheDocument();
+  });
+
+  it("always uses the dark tone of the logo: a white pin and light words, on the blue bar and on the hero (the owner's decision)", () => {
+    for (const pathname of ["/", "/find"]) {
+      address.pathname = pathname;
+      const { container, unmount } = render(<SiteHeader />);
+
+      expect(container.querySelector(".logo-pin__body")?.getAttribute("class"), pathname).toMatch(/\bfill-white\b/);
+      expect(container.querySelector(".logo-pin__pulse")?.getAttribute("class"), pathname).toMatch(/\bstroke-sky\b/);
+      expect(screen.getByText("SwiftHealth").className, pathname).toMatch(/\btext-white\b/);
+      expect(screen.getByText("Route").className, pathname).toMatch(/\btext-sky-pale\b/);
+      unmount();
+    }
+  });
+
+  it("is compact on a phone so the full wordmark fits from 360 px: a smaller SwiftRescue button and an icon-only Menu (R40)", () => {
+    render(<SiteHeader />);
+
+    expect(screen.getByRole("link", { name: "SwiftRescue" }).className).toMatch(/\bpx-2\.5\b.*\bsm:px-4\b/);
+    const menu = screen.getByRole("button", { name: "Menu" });
+    expect(menu).toHaveAttribute("aria-label", "Menu");
+    expect(menu.textContent).toBe(""); // the icon only
+    expect(menu.className).toMatch(/\bmin-w-12\b/);
+    expect(menu.className).not.toMatch(/\bpx-4\b/);
   });
 
   it("has a small white siren icon (lucide) on the red SwiftRescue button, hidden from screen readers, and no cross (R36)", () => {
