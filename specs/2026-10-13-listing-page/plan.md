@@ -22,8 +22,8 @@ Files that will change or appear (frontend unless written otherwise):
 
 ### Task 0: the spec
 - [x] `requirements.md`, `plan.md`, `validation.md` written (the three feature files only, 2026-10-13); the owner reviews.
-- [ ] After the owner's review and answers: update `specs/frontend/ui-spec.md` section 2.4 (it still has the older text), mark decision 9 of
-  `specs/2026-10-11-listing-detail-api/requirements.md` as replaced by D2 and D4 here, and update the roadmap's 6b block. Spec first, then code.
+- [x] After the owner's answers (2026-10-13): `specs/frontend/ui-spec.md` section 2.4 updated, decision 9 of
+  `specs/2026-10-11-listing-detail-api/requirements.md` marked as replaced by D2 and D4 here, and the roadmap's 6b block updated. Spec first, then code.
 
 ### Task 1: the Directions icon (D5)
 - [ ] Tests first: `DirectionsIcon` is 24 × 24, `currentColor`, `aria-hidden`, a diamond and an arrow, no other file imports lucide `Route`

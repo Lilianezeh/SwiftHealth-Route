@@ -246,16 +246,23 @@ FR-04 to FR-08, US-01, US-05. **API:** `GET /search`, `GET /meta`.
   roadmap).
 
 ### 2.4 Listing page — `/listing/[slug]`
-FR-09 to FR-13, US-02, US-03, US-06, US-07. **API:** `GET /listings/{slug}`.
-1. Name, category, `OpenNowBadge`, `VerifiedDate`.
-2. Big **Call** button (primary number) and **Directions** button.
-3. Address and landmark; entrance photo if available.
-4. Other phone numbers, each with its own Call button.
-5. Opening hours for the week; today highlighted; past-midnight shown as "20:00 – 02:00 (next day)".
-6. Services with fee ranges: "₦1,500 – ₦3,000 · estimate, collected 28 Sep 2026".
-7. **Share** (WhatsApp / copy link) and `ReportLink`.
-8. `Disclaimer`.
-**404:** "This listing isn't available. It may be under re-verification." + link to search.
+FR-09 to FR-13, FR-47, US-02, US-03, US-06, US-07. **API:** `GET /listings/{slug}`. Full detail, with the owner's answers of 2026-10-13: `specs/2026-10-13-listing-page/requirements.md`.
+**Loading:** in the browser, like `/search` (skeleton, "The service is waking up" after 5 s, Retry after 45 s); no query string; no map; every link `prefetch={false}`.
+1. If `recently_reported_not_working`: the amber note "Recently reported as not working. Call before you go." at the top (never red).
+2. Name, category, `OpenNowBadge`, `hours_note`, `VerifiedDate` (and "Verification due" when it applies).
+3. Big **Call** button (the primary number; the primary button, 56 px); beside it **WhatsApp** only when that phone is marked `is_whatsapp`
+   (Option A: a white button, a `#075E54` border, the owner's green WhatsApp glyph at 24 px, the label "WhatsApp" in `ink`; it links to
+   `https://wa.me/<234…>?text=Hello%2C%20I%20found%20you%20on%20SwiftHealth%20Route.`); then **Directions** (the diamond road-sign icon).
+4. Address and landmark; the entrance photo (`https://` only, lazy, fixed size, alt "Entrance of <name>").
+5. Other phone numbers (label, number, their own Call and, if marked, WhatsApp buttons).
+6. Opening hours for the week in **12-hour time**; today highlighted with the word "Today" (Lagos time); past midnight "8:00 PM – 2:00 AM (next day)";
+   closed days "Closed"; a 24-hour listing shows **"Open 24 hours, every day"** instead of the table.
+7. Services with fee ranges ("₦1,500 – ₦3,000", "From ₦1,500", "₦1,500"; "collected 28 Sep 2026" when there is a date) and the words
+   "Estimate — confirm with the facility" once.
+8. **Share via WhatsApp** and **Copy link** (the link is only `/listing/<slug>`; the message is "<name> on SwiftHealth Route: <link>"), and "Report a problem with this listing".
+9. `Disclaimer`.
+**Privacy:** no position of the visitor in any address or message; the Directions link uses the facility's coordinates only.
+**404:** the heading "Listing not found", "This listing isn't available. It may be under re-verification.", a "Search for care" button and a link to the home page.
 
 ### 2.5 SwiftRescue — `/emergency`
 **Interim version, until phase 7** (owner's addition with the home page redesign, 2026-10-11; FR-14, FR-02): a static page with
