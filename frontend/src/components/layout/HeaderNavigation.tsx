@@ -3,9 +3,11 @@
  * On the home page "Find care" is left out, because the hero button does the same; on every other page it is there.
  * SwiftRescue is never left out (FR-02). The header (a client component) tells it which page this is.
  */
+import { Siren } from "lucide-react";
 import Link from "next/link";
 
 import { MobileMenu } from "@/components/layout/MobileMenu";
+import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { siteConfig } from "@/config/site";
 
 const BAR_LINK =
@@ -26,8 +28,10 @@ export function HeaderNavigation({ isHomePage }: HeaderNavigationProps) {
         )}
         <Link
           href={siteConfig.emergencyLink.href}
-          className="inline-flex min-h-12 items-center rounded-md bg-emergency px-3 text-base font-semibold text-white sm:px-4"
+          className="inline-flex min-h-12 items-center gap-1.5 rounded-md bg-emergency px-3 text-base font-semibold text-white sm:px-4"
         >
+          {/* A small siren, white like the text (currentColor), hidden from screen readers; never a cross (R36). */}
+          <DecorativeIcon icon={Siren} className="h-4 w-4" />
           {siteConfig.emergencyLink.label}
         </Link>
         <Link href={siteConfig.facilitiesLink.href} className={BAR_LINK}>

@@ -169,6 +169,20 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **CI path filters:** seen in PR #5: `Frontend CI` did not run on backend-only commits, so that direction works. Once
   the PR also changed `frontend/`, both workflows ran on every push, because a pull request is judged on its whole
   diff, not one commit. To see `Backend CI` skipped, use a pull request that changes only `frontend/`.
+- **Brand renamed to SwiftHealth Route; check the CAC business name search before buying a domain or printing anything.** (Owner,
+  2026-10-13.) The name is in one file, `frontend/src/config/brand.ts`; SwiftRescue stays as the emergency name. The repo, the
+  folders and the Netlify address keep their old names.
+- **Consider the layout check in CI (later).** `frontend/tests/end-to-end/home-layout.spec.ts` (Playwright, `npm run test:e2e`)
+  measures the home page in a real browser at 320 to 1100 px. It is not in the pull request check on purpose (owner, 2026-10-13):
+  the check has no browser, and adding one means an install step and a built site to open (slower). Revisit when more screens
+  have a layout worth guarding; the Alpine container needs `apk add chromium` and `CHROMIUM_PATH=/usr/bin/chromium`.
+- **Phase 10 idea: photos on the facility owner sign-up and the login page (owner, 2026-10-13).** On the owner sign-up page, show a
+  photo that matches the facility type the owner picks: Hospital = `hospital.jpg`, Clinic = `clinic.jpg`, Maternity =
+  `maternity.jpg`, Pharmacy = `pharmacy.jpg`, Laboratory = `laboratory.jpg` (originals in
+  `/mnt/c/Users/Lilian/Desktop/IMAGES/`). The photo swaps when the type changes and only the chosen photo downloads (one `<img>`
+  whose `src` changes, not five loaded and hidden). The login page shows `hero.jpg`. None of these photos appear on the home page,
+  and the Magnific credit appears on those pages only. Needs its own spec, tests first, and the licence terms of the Magnific
+  photos checked first (NFR-13); WebP files made with `scripts/optimize-home-images.mjs`-style budgets.
 
 ## Day 1 — 2026-10-04
 - **Built:** Repo skeleton, Docker Compose, spike for open-now + nearest search.

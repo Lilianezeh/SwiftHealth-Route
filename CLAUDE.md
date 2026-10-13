@@ -1,11 +1,13 @@
-# CLAUDE.md — SwiftHealth
+# CLAUDE.md — SwiftHealth Route
 
-I'm building SwiftHealth, an emergency, hospital and pharmacy finder that helps people quickly find verified
+I'm building SwiftHealth Route, an emergency, hospital and pharmacy finder that helps people quickly find verified
 healthcare facilities and emergency contacts near them. Keep the code simple, readable and maintainable rather
 than clever, and tell me what you changed and why.
 
 ## What we are building
-SwiftHealth is the app; SwiftRescue is the name of its emergency section and the emergency button.
+SwiftHealth Route is the app (renamed from SwiftHealth on 2026-10-13; the repo, the folders and the Netlify address keep the old
+name, and the name lives in one file, `frontend/src/config/brand.ts`); SwiftRescue is the name of its emergency section and the
+emergency button.
 We launch in Enugu first (pilot area), but nothing in names or code should be tied to Enugu only.
 A verified directory of health facilities and emergency contacts for Enugu (pilot area first).
 Residents search, see listings, and call or get directions in one tap. Staff verify every listing.

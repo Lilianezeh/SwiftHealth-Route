@@ -28,7 +28,7 @@ describe("SiteFooter", () => {
     expect(inner.className).toMatch(/\bmax-w-6xl\b/);
     expect(inner.className).toMatch(/\bpx-4\b/);
     expect(inner.contains(screen.getByRole("navigation", { name: "Footer" }))).toBe(true);
-    expect(inner.contains(screen.getByText("© 2026 SwiftHealth"))).toBe(true);
+    expect(inner.contains(screen.getByText("© 2026 SwiftHealth Route"))).toBe(true);
     expect(container.querySelector("footer")?.className).not.toMatch(/(^|\s)px-/); // no padding of its own at the far edge
   });
 
@@ -102,7 +102,7 @@ describe("SiteFooter", () => {
     render(<SiteFooter />);
 
     expect(siteConfig.copyrightYear).toBe(2026);
-    expect(screen.getByText(`© ${siteConfig.copyrightYear} SwiftHealth`)).toBeInTheDocument();
+    expect(screen.getByText(`© ${siteConfig.copyrightYear} SwiftHealth Route`)).toBeInTheDocument();
     const source = readSource("components/layout/SiteFooter.tsx");
     expect(source).not.toMatch(/new Date|getFullYear|Date\.now/);
   });
@@ -112,7 +112,7 @@ describe("SiteFooter", () => {
 
     const text = container.textContent ?? "";
 
-    expect(text.indexOf("Contact")).toBeLessThan(text.indexOf("© 2026 SwiftHealth"));
-    expect(text.trim().endsWith("© 2026 SwiftHealth")).toBe(true);
+    expect(text.indexOf("Contact")).toBeLessThan(text.indexOf("© 2026 SwiftHealth Route"));
+    expect(text.trim().endsWith("© 2026 SwiftHealth Route")).toBe(true);
   });
 });

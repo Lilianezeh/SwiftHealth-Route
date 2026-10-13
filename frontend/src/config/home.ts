@@ -8,6 +8,8 @@
  * Alt text was written after looking at each converted photo: short, factual, no medical claim. The owner reviews it on the
  * preview. No text of the home page names a city (R6): the first city stays in `siteConfig.launchCity` for other parts of the app.
  */
+import { brand } from "@/config/brand";
+
 export type HomePhoto = {
   src: string; // a file of public/images/home, WebP
   width: number; // pixels, fixed: the browser keeps the room for the photo before it has loaded
@@ -60,7 +62,7 @@ export const HOME_WORDS = {
   },
   overview: {
     heading: "Overview",
-    text: "SwiftHealth helps you find hospitals, clinics, pharmacies, labs and emergency contacts that are open right now. Every listing is checked by our team, so the number you call and the hours you see are ones you can trust.",
+    text: `${brand.name} helps you find hospitals, clinics, pharmacies, labs and emergency contacts that are open right now. Every listing is checked by our team, so the number you call and the hours you see are ones you can trust.`,
   },
   browse: { heading: "Browse by type" },
   why: {

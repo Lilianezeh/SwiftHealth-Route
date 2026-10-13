@@ -21,7 +21,7 @@ describe("SiteHeader", () => {
   it("has the SwiftHealth wordmark, a link to the home page", () => {
     render(<SiteHeader />);
 
-    expect(screen.getByRole("link", { name: "SwiftHealth" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "SwiftHealth Route" })).toHaveAttribute("href", "/");
   });
 
   it("has Find care to /find, red SwiftRescue to /emergency, and For facilities to /list-your-facility", () => {
@@ -37,7 +37,7 @@ describe("SiteHeader", () => {
 
     const names = screen.getAllByRole("link").map((link) => link.textContent);
 
-    expect(names).toEqual(["SwiftHealth", "Find care", "SwiftRescue", "For facilities"]);
+    expect(names).toEqual(["SwiftHealth Route", "Find care", "SwiftRescue", "For facilities"]);
   });
 
   it("makes SwiftRescue red (the emergency colour, white text), and no other link is red (FR-02)", () => {
@@ -134,7 +134,7 @@ describe("SiteHeader", () => {
 
     expect(screen.queryByRole("link", { name: "Find care" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
-      "SwiftHealth",
+      "SwiftHealth Route",
       "SwiftRescue",
       "For facilities",
     ]);
@@ -169,33 +169,48 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
 
     expect(screen.getByRole("link", { name: "SwiftRescue" })).toHaveAttribute("href", "/emergency");
-    expect(screen.getByRole("link", { name: "SwiftHealth" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "SwiftHealth Route" })).toHaveAttribute("href", "/");
   });
 
   it("has the logo in the wordmark link: a pin that screen readers do not read, then the word", () => {
     render(<SiteHeader />);
 
-    const wordmark = screen.getByRole("link", { name: "SwiftHealth" });
+    const wordmark = screen.getByRole("link", { name: "SwiftHealth Route" });
     expect(wordmark.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
-    expect(wordmark).toHaveTextContent("SwiftHealth");
+    expect(wordmark).toHaveTextContent("SwiftHealth Route");
   });
 
   it("is compact on a phone so it fits 320 px, and roomier from 640 px (R32): small wordmark and side space", () => {
     render(<SiteHeader />);
 
-    expect(screen.getByRole("link", { name: "SwiftHealth" }).className).toMatch(/\btext-base\b.*\bsm:text-lg\b/);
+    expect(screen.getByRole("link", { name: "SwiftHealth Route" }).className).toMatch(/\btext-base\b.*\bsm:text-lg\b/);
     expect(screen.getByRole("link", { name: "SwiftRescue" }).className).toMatch(/\bpx-3\b.*\bsm:px-4\b/);
     expect(screen.getByRole("button", { name: "Menu" }).className).toMatch(/\bpx-3\b.*\bsm:px-4\b/);
   });
 
-  it("draws only the pin below 400 px and keeps the word for screen readers, so the link is still named SwiftHealth (R32)", () => {
+  it("draws only the pin below 400 px and keeps the word for screen readers, so the link is still named SwiftHealth Route (R32)", () => {
     render(<SiteHeader />);
 
-    const link = screen.getByRole("link", { name: "SwiftHealth" });
-    const word = within(link).getByText("SwiftHealth");
+    const link = screen.getByRole("link", { name: "SwiftHealth Route" });
+    const word = within(link).getByText("SwiftHealth Route");
     expect(word.className).toMatch(/\bmax-\[399px\]:sr-only\b/); // hidden to the eye only below 400 px
     expect(word.className).not.toMatch(/(^|\s)(hidden|invisible)\b/); // never display:none, which would take away the name
     expect(link.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("has a small white siren icon (lucide) on the red SwiftRescue button, hidden from screen readers, and no cross (R36)", () => {
+    render(<SiteHeader />);
+
+    const rescue = screen.getByRole("link", { name: "SwiftRescue" }); // the siren adds nothing to the name
+    const icon = rescue.querySelector("svg");
+    expect(icon).not.toBeNull();
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+    expect(icon?.getAttribute("class")).toMatch(/lucide-siren/); // the lucide Siren
+    expect(icon?.getAttribute("class")).not.toMatch(/cross|plus|heart|hospital/); // never a red cross or a medical cross
+    expect(rescue.className).toMatch(/\btext-white\b/); // the icon takes the white of the text (currentColor)
+    expect(rescue.textContent).toBe("SwiftRescue");
+    expect(rescue.className).toMatch(/\bgap-/); // a little space between the icon and the word
+    expect(rescue.querySelectorAll("svg")).toHaveLength(1);
   });
 
   it("keeps every tap target at 48 px or more, the Menu button too", () => {

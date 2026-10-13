@@ -223,6 +223,27 @@ header is wider than the screen** (the Menu button ends at 396 px) and the page 
   `http://localhost:3000`) and a browser; it is not part of `npm test` or of the pull request check (that check has no browser). In
   the Alpine container: `apk add chromium` and `CHROMIUM_PATH=/usr/bin/chromium`.
 
+### Seventh revision, 2026-10-13: the name SwiftHealth Route, a new logo, a phone header with the full wordmark
+
+The owner asked for these changes before the pull request is marked ready. The owner checks the preview before any box is ticked
+and before the pull request leaves draft.
+
+- **R35. The app is called "SwiftHealth Route".** The name is in one file, `frontend/src/config/brand.ts`: `name` ("SwiftHealth
+  Route"), the two parts of the wordmark (`main` "SwiftHealth" and `accent` "Route") and `emergencyName` ("SwiftRescue", unchanged).
+  `config/site.ts` takes its `name` and the SwiftRescue link label from it, and every text on screen takes the name from there: the
+  header logo, the footer ("© 2026 SwiftHealth Route"), the page title and description (`app/layout.tsx`), the web manifest
+  (`app/manifest.ts`) and the Overview text ("SwiftHealth Route helps you find ..."; the rest of the owner's words are unchanged).
+  The repo, the folders and the Netlify address keep their old names, and so does the API's own title. `CLAUDE.md`, the PRD's
+  naming line and the UI spec say the new name. LOG.md has the reminder to check the CAC business name search before buying a
+  domain or printing anything. Not a legal opinion: the owner decides what that search needs.
+- **R36. A siren icon on the SwiftRescue button.** The red SwiftRescue button in the header has a small lucide `Siren` icon, white,
+  before the word, hidden from screen readers (`DecorativeIcon`). Never a red cross or a medical cross. The button is a little
+  smaller on a phone (R38).
+- **R37. LOG.md reminders (no code).** The Playwright layout check is deliberately not in the pull request check: LOG.md has an item
+  to consider it later. LOG.md also holds the Phase 10 idea of photos on the facility owner sign-up page (one photo per facility
+  type, swapped when the type changes, only the chosen photo downloaded) and on the login page (`hero.jpg`), with the Magnific
+  credit on those pages only and none of those photos on the home page.
+
 ## Decisions
 
 Decisions 1 to 4 and 7 are my defaults for questions the owner's brief left open; the owner can change any of them on review.

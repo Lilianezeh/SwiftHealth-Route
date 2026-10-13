@@ -4,7 +4,7 @@
  * accent with a thin white edge, because the header is forest blue and a forest pin would vanish on it. It is decoration: the word
  * next to it names the link, so screen readers skip the SVG. The favicon (src/app/icon.svg) is this pin alone, in forest blue.
  */
-import { siteConfig } from "@/config/site";
+import { brand } from "@/config/brand";
 
 export function Logo() {
   return (
@@ -25,7 +25,7 @@ export function Logo() {
         <path className="logo-pin__plus fill-white" d="M16 9h4v6h6v4h-6v6h-4v-6h-6v-4h6z" />
       </svg>
       {/* Below 400 px only the pin is drawn, so the header fits 320 px; sr-only keeps the word for screen readers. */}
-      <span className="max-[399px]:sr-only">{siteConfig.name}</span>
+      <span className="max-[399px]:sr-only">{brand.name}</span>
     </span>
   );
 }
