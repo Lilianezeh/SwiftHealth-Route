@@ -192,6 +192,17 @@ The changes are R25 to R29 of the "Fifth revision, 2026-10-12" in [requirements.
   and text, footer in the page container, softer veil, tablets use the phone hero (US-13, NFR-10)`.
 - [x] (2f86c17) Push, wait for the checks, and tell the owner the preview is ready.
 
+### Task 13: widths 320 to 1023 px, a lower band, a header that fits, and a real-browser check (tests first)
+R31 to R34 in [requirements.md](requirements.md). Files: `HomeHero.tsx` (the stacked text column, a lower band), `SiteHeader.tsx`,
+`Logo.tsx`, `HeaderNavigation.tsx` and `MobileMenu.tsx` (a header that fits at 320 px), `playwright.config.ts`,
+`tests/end-to-end/home-layout.spec.ts`, `package.json` (`test:e2e`), `.gitignore`, and the unit tests.
+- [x] (6f7d5a6) Write the tests first: the unit tests (band `h-64`, `md:h-72`; the text row is a flex row only from `lg:`; the column
+  `w-full min-w-0`; the heading `break-words`; the compact header classes; the logo word hidden below 400 px but kept for screen
+  readers) and the real-browser spec. Run the spec against the current build: it fails at 320 to 395 px.
+- [x] (6f7d5a6) Change the components; run the real-browser spec until it passes at every width (19 passed, 1 skipped by design).
+- [x] (6f7d5a6) Run lint, typecheck, the whole suite (640 tests) and the build, one at a time, then commit and push; tell the owner the
+  preview is ready.
+
 ### Task 12: no forced tall hero below 1024 px (tests first)
 R30 in [requirements.md](requirements.md). One class in `HomeHero.tsx` (`min-h-[85svh]` becomes `lg:min-h-[85svh]`) and its test.
 - [x] (f3cada1) Change the hero test first (the minimum height is `lg:` only, no plain or `md:` minimum height); it fails.

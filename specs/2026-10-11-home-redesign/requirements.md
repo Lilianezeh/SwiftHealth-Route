@@ -197,6 +197,32 @@ Where this section and R18 to R24 disagree, this section wins. The `hero3` crop 
   there is no large empty blue gap on a tablet. The minimum height of 85% of the screen (R19) applies from 1024 px only. The owners
   pair stays left-aligned as it is (the owner confirmed).
 
+### Sixth revision, 2026-10-12: widths from 320 to 1023 px, checked in a real browser
+
+The owner reported three problems at 768 px. A headless Chromium (152, in the frontend container) was used to measure the page at
+320, 375, 600, 768, 900 and 1024 px and at every width from 320 to 1100 px (also with other fonts and a stretched heading).
+Result: at 768 px that browser shows the heading on one line, inside the screen, and the header with the logo, SwiftRescue and
+"For facilities"; **the owner's two 768 px symptoms could not be reproduced there** (the owner's browser, system or fonts may
+differ; the owner is asked to say which if it still happens). What the browser did show, at every font tried: **below 396 px the
+header is wider than the screen** (the Menu button ends at 396 px) and the page scrolls sideways.
+
+- **R31. The heading never clips, in any engine.** In the stacked layout (below 1024 px) the text column has an explicit full width
+  (`w-full min-w-0`) and is not a flex item (the row is a flex row only from 1024 px), and the `h1` may break anywhere if it has
+  to (`break-words`), so no engine can size the column by its single-line width and push the text past the screen edge. It wraps at
+  every width from 320 to 1023 px, with nothing clipped.
+- **R32. The header fits at every width.** Every width has either the links (from 768 px: "For facilities" and "SwiftRescue") or
+  the Menu button (below 768 px), always inside the screen, and the page never scrolls sideways. The header is more compact on a
+  phone: the wordmark is 16 px (18 px from 640 px), SwiftRescue and Menu have 12 px at the sides (16 px from 640 px), and below 400
+  px only the pin of the logo is drawn, with the word kept for screen readers (the link's name is still "SwiftHealth").
+- **R33. A lower photo band.** The band is 16 rem high on a phone and 18 rem from 768 px to 1023 px (it was 18 and 24 rem), so the
+  heading and "Find care near me" are on the first screen at 768 px (the button's bottom is above 640 px).
+- **R34. A real-browser check.** `tests/end-to-end/home-layout.spec.ts` (Playwright, `npm run test:e2e`) opens the home page at 320,
+  375, 600, 768, 900 and 1024 px and checks: no sideways scrolling; every line of the heading inside the screen and wrapped (below
+  1024 px); the logo, SwiftRescue and the links or the Menu button inside the screen; the heading and the button on the first
+  screen; and a sweep of every 4th width from 320 to 1100 px. It needs a running site (`BASE_URL`, default
+  `http://localhost:3000`) and a browser; it is not part of `npm test` or of the pull request check (that check has no browser). In
+  the Alpine container: `apk add chromium` and `CHROMIUM_PATH=/usr/bin/chromium`.
+
 ## Decisions
 
 Decisions 1 to 4 and 7 are my defaults for questions the owner's brief left open; the owner can change any of them on review.

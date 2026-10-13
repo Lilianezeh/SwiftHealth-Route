@@ -225,6 +225,23 @@ Tests: `HomePage.test.tsx`, `SiteFooter.test.tsx`, `HomeSections.test.tsx`, `des
   200 and has `lg:min-h-[85svh]` and no plain `min-h-[85svh]`.
 - [ ] **For the owner, in a browser:** on a tablet there is no large empty blue gap between the photo band and the heading.
 
+### Task 13: widths 320 to 1023 px (2026-10-12)
+Tests: `HomeSections.test.tsx`, `SiteHeader.test.tsx`, `Logo.test.tsx`, and the real-browser `tests/end-to-end/home-layout.spec.ts`.
+- [x] Real browser (Chromium 152 in the frontend container, 2026-10-12; first run against the old code failed at 320 and 375 px, the
+  header's Menu button ended at 396 px; after the change 19 passed and 1 was skipped by design; a 1-pixel sweep from 320 to 1100 px
+  found no header item outside the screen and no sideways scrolling), at 320, 375, 600, 768, 900 and 1024 px: `the page does not scroll sideways`; `every line of the heading is inside
+  the screen, and wrapped below 1024 px`; `the logo, SwiftRescue and the links or the Menu button are inside the screen`; `the heading
+  and Find care near me are on the first screen`; and a sweep of every 4th width from 320 to 1100 px
+- [x] Unit: the band is `h-64` and `md:h-72`; the text row is a flex row only from `lg:`; the column is `w-full min-w-0`; the heading
+  has `break-words`; the header is compact on a phone; below 400 px the logo word is `sr-only` and the link is still named SwiftHealth
+- [x] The whole suite still passes (640 tests; two earlier full runs each had one unrelated timing failure, `AreaSelect` and
+  `SearchPage`, which passed alone and on the next full run: the known load flake, seen while the machine was busy); lint and
+  typecheck are clean; the build is static (`/` 113 kB first load JS)
+- [x] CI and preview (2026-10-12, 6f7d5a6): Frontend CI passes (Backend CI did not run); the preview `/` is 200 and has
+  `max-[399px]:sr-only`, `h-64 shrink-0` and `break-words`. The real-browser spec is not part of the pull request check (no browser there).
+- [ ] **For the owner:** if the heading is still cut off or the header links are missing at 768 px, say which browser, system and
+  window size: it could not be reproduced in Chromium 152 (the 768 px page was correct there before this change).
+
 ## Review-focus edge cases
 
 Checked by the tests and by the build (2026-10-11; the hero details changed on 2026-10-12, see Tasks 7, 8 and 9):

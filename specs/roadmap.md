@@ -204,6 +204,8 @@ branch after this one.
 - Task 11, fixes after the owner's review (2026-10-12): owners photo smaller with the text beside it, the footer in the page
   container and no beige band, a shorter softer veil, tablets use the phone hero up to 1024 px: **done** (637 tests); the
   owner's review of the new preview is next
+- Task 13, widths 320 to 1023 px (owner, 2026-10-12): the heading never clips, the header fits at every width, a lower photo band,
+  and a real-browser check (Playwright): **done** (640 tests); the owner's review of the new preview is next
 - Task 6, wrap-up: checks and build **done** (584 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
   review on the preview
 
