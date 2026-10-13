@@ -24,7 +24,8 @@ services:
     build: ./frontend
     env_file: .env
     command: npm run dev
-    volumes: [./frontend:/app, /app/node_modules]
+    # netlify.toml (read-only, at /netlify.toml, next to /app) lets tests/unit/homePerformance.test.tsx read the cache headers.
+    volumes: [./frontend:/app, /app/node_modules, "./netlify.toml:/netlify.toml:ro"]
     ports: ["127.0.0.1:3000:3000"]
     depends_on: [backend]
 
