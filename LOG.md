@@ -63,6 +63,14 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   gives up on a server page after about 30 seconds. So Google cannot read the listing text yet (NFR-12, a Should). Once the API
   answers at once, render `/listing/[slug]` on the server, with a title and description per listing, and keep the browser
   load as the fallback. Needs its own spec, tests first.
+- **Watch: a frontend test that failed once in a full run (seen 2026-10-11, home redesign branch).**
+  `tests/unit/NearbySuggestions.test.tsx`, "asks for one open pharmacy and one 24-hour place, both with the position", failed
+  (the output showed about 3.3 s for it) in one run of the whole frontend suite. It passed when run alone, and in every full run
+  after it (574, 582 and 584 tests). The error text was not captured, so the cause is not known; the guess is timing under load
+  (Docker on a laptop; the test limit is already 20 s). Nothing was changed in that test or in `NearbySuggestions`. If it fails
+  again: copy the full error text and which other tests were running, run the file alone and then the full suite twice, and
+  look for a timer or a shared state between tests (`vi.useFakeTimers`, `sessionStorage`, the `fetch` stub) before raising a
+  limit. Remove this note after about 10 full runs with no failure.
 - **Reminder: `hours_note` is English only (owner's decision, 2026-10-10).** "Closes", "Opens", "tomorrow", the day names and
   "midnight" are written in the backend code (`services/hours.py`). If SwiftHealth ever adds another language, this text needs
   translating, and at that point reconsider sending the time as data and formatting it on the frontend. Revisit before any
@@ -161,6 +169,33 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 - **CI path filters:** seen in PR #5: `Frontend CI` did not run on backend-only commits, so that direction works. Once
   the PR also changed `frontend/`, both workflows ran on every push, because a pull request is judged on its whole
   diff, not one commit. To see `Backend CI` skipped, use a pull request that changes only `frontend/`.
+- **Brand renamed to SwiftHealth Route; check the CAC business name search before buying a domain or printing anything.** (Owner,
+  2026-10-13.) The name is in one file, `frontend/src/config/brand.ts`; SwiftRescue stays as the emergency name. The repo, the
+  folders and the Netlify address keep their old names.
+- **Consider the layout check in CI (later).** `frontend/tests/end-to-end/home-layout.spec.ts` (Playwright, `npm run test:e2e`)
+  measures the home page in a real browser at 320 to 1100 px. It is not in the pull request check on purpose (owner, 2026-10-13):
+  the check has no browser, and adding one means an install step and a built site to open (slower). Revisit when more screens
+  have a layout worth guarding; the Alpine container needs `apk add chromium` and `CHROMIUM_PATH=/usr/bin/chromium`.
+- **Run Lighthouse on the main site after PR #21 merges; if Total Blocking Time is still red there, investigate in a follow-up.**
+  (Owner, 2026-10-13.) On the preview, mobile in Incognito, the score went from 37 to 64: Accessibility 100, Best Practices 100,
+  FCP 2.2 s, LCP 2.9 s, CLS 0.006, Total Blocking Time 1,420 ms (still the weak point; about 101 kB of the JavaScript is the
+  Next.js and React runtime).
+- **A new home page photo needs a new file name (owner's performance fix, 2026-10-13).** `netlify.toml` now caches `/images/*` for a
+  year (`immutable`), because the photos were revalidated on every visit and Lighthouse scored 37 on mobile. A photo replaced under
+  the same name would stay in visitors' caches, so change the `target` in `scripts/optimize-home-images.mjs` and the `src` in
+  `src/config/home.ts` together. Check the header on the next deploy preview (`curl -I`).
+- **The layout checks depend on the browser's fallback font (seen 2026-10-13).** `tests/end-to-end/home-layout.spec.ts` passes in the
+  Alpine container's Chromium, but with Ubuntu's Chromium and DejaVu Sans (a wide font) the header is up to 27 px too wide between
+  344 and 370 px and the 320 x 568 first screen needs 21 px more. The old build fails the same way, so it is the font, not a change.
+  Real phones use their own system font (narrower). Decide later whether to design for the wider font (for example show the word
+  "SwiftHealth" only from 372 px) or to pin a font in the check.
+- **Phase 10 idea: photos on the facility owner sign-up and the login page (owner, 2026-10-13).** On the owner sign-up page, show a
+  photo that matches the facility type the owner picks: Hospital = `hospital.jpg`, Clinic = `clinic.jpg`, Maternity =
+  `maternity.jpg`, Pharmacy = `pharmacy.jpg`, Laboratory = `laboratory.jpg` (originals in
+  `/mnt/c/Users/Lilian/Desktop/IMAGES/`). The photo swaps when the type changes and only the chosen photo downloads (one `<img>`
+  whose `src` changes, not five loaded and hidden). The login page shows `hero.jpg`. None of these photos appear on the home page,
+  and the Magnific credit appears on those pages only. Needs its own spec, tests first, and the licence terms of the Magnific
+  photos checked first (NFR-13); WebP files made with `scripts/optimize-home-images.mjs`-style budgets.
 
 ## Day 1 — 2026-10-04
 - **Built:** Repo skeleton, Docker Compose, spike for open-now + nearest search.
@@ -249,7 +284,9 @@ Open reminders. Each says when it is due. Remove a line once it is done.
 
 - Proposed (not final): product name "SwiftHealth Route", tagline "Hospitals, pharmacies and emergency help, open near you." The rename is pending a CAC business-name check and a trademark check (together with the Play Store, App Store, domain and social handle checks above). Do not rename anything until those checks pass; then apply it in the rename chore after 5B-1.
 
-- To do (own feature, after phase 5B-2): home page refresh with photos: the hero, the category cards, and the ambulance and fire service pictures in SwiftRescue. Needs the owner's photos (rights and licence confirmed), compressed for slow 3G (NFR-01) with alt text, and the UI spec first. The SwiftRescue pictures must not slow `/emergency`, which has to work offline.
+- **In progress (2026-10-11): the home page redesign with photos**, branch `feature/home-redesign`, folder `specs/2026-10-11-home-redesign/`: the hero, the category tiles, the new header and footer. Simplified on 2026-10-12 after the owner's review of the preview: two photos only (the hero and the owner photo), icon tiles instead of photo cards, no SwiftRescue photo band, no About part, no red button in the hero, and no city named on the page. Still to do, in phase 7: pictures on `/emergency` itself. They must not slow `/emergency`, which has to work offline (NFR-03).
+- **Before launch: keep a record of where the home page photos come from (owner, 2026-10-12).** The first photos came from Magnific's free collection (ten were downloaded, two used) and the footer credited Magnific. On 2026-10-12 the owner replaced them with Unsplash photos and removed the credit. After a second round the page uses `hero3.jpg` (hero: stethoscope and blood pressure gauge) and `hero4.jpg` (facility owners: health worker with a blister pack); `owner2.jpg` and the first `hero4` crop are no longer used. The owner removed the credit, because the owner states that these photos need no attribution. Keep the page of each photo (the link, the photographer's name, the date) in one place, and have the licence terms of both sources checked with the rest of the legal review (NFR-13). We do not state here what either licence allows. The Magnific files are no longer on the site.
+- **Home page buttons and "Coming soon" pages (2026-10-11; the home page has only the header's red button since 2026-10-12: "Emergency help" and "Open SwiftRescue" were removed).** The red header button goes to `/emergency`. The owner added a minimal page there in the home redesign (a red "Call 112" button and one line), until the full phase 7 page; 112 was checked against NCC pages (see `specs/2026-10-11-home-redesign/requirements.md`, decision 18). "List your facility" goes to `/list-your-facility` (phase 10) and "About" is phase 13b: both still say "Coming soon". The minimal page also carries the sentence of FR-26 ("SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112."), added at the owner's request (2026-10-12).
 
 ## Day 7 — 2026-10-10
 - **Built:** Phase 5B-1, the Find page (`/find`) and the results page (`/search`), frontend only (branch
@@ -295,3 +332,33 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   the keyboard rules, the history entry for the toggle and the default centre, and decided what to keep out of scope.
 - **Tomorrow:** phase 6, the listing page (`GET /listings/{slug}` and the Call and Directions page, US-02, US-03, US-06,
   US-07), or the home page photo refresh; the owner chooses.
+
+## Day 8, part 2 — 2026-10-11
+- **Built:** Phase 6a, `GET /listings/{slug}` (backend only; branch `feature/listing-detail-api`, **done: merged as PR #20,
+  `6fdb5fa`**). A published listing with its phones (the primary first), 7 opening-hours entries (`HH:MM`; a day with no hours
+  is closed), services with fees as 2-decimal strings, the fixed disclaimer, `hours_note`, `is_open_now` and
+  `verification_due`; anything not published and any unknown slug give the same 404 "Listing not found". New field
+  `recently_reported_not_working`: a listing that 2 different reporters called "not working" in 7 days is hidden from search
+  but still opens from its link, so the page can warn. New column `phone_numbers.is_whatsapp` (default false, with a migration
+  that is safe on filled tables; the seed and demo data never set it), and a new requirement FR-47 (Should), the WhatsApp
+  button of phase 6b. One shared `is_verification_due` rule for search and the listing page. 769 backend tests passing, ruff
+  clean; Backend CI green.
+- **Broke / fixed:** the first full-suite run never started, because I wrote its output to a scratch folder of an old session
+  that no longer existed. Two test runs at the same time shared the test database, which caused 2 failures and very slow runs;
+  from then on only one test process at a time (the same tests passed alone). Docker Desktop's WSL integration was off for a
+  while, so no test could run until the owner turned it back on. WhatsApp was first written into FR-10 and then moved to its own
+  FR-47 on the owner's instruction (FR-10 has its original wording). An older test said the categories revision was the only
+  migration head; it now checks that the history has one head.
+- **Production (owner):** Render ran the migration; `/listings/<slug>` returned the listing with `is_whatsapp` false on every
+  phone, 7 `opening_hours` entries, `recently_reported_not_working` false and an `hours_note`; `/listings/does-not-exist`
+  returned 404 "Listing not found"; the search total is still 4; `/docs` lists `GET /listings/{slug}`.
+- **Still open:** phase 6b, the listing page (the owner's decisions for it are in
+  `specs/2026-10-11-listing-detail-api/requirements.md`); the "Search this area", tile provider and Privacy page reminders; the
+  `wa.me` link format still has to be checked on WhatsApp's own help page before 6b builds it; server-rendered listing pages
+  for Google (after the Render upgrade).
+- **Learned:** When tests fail for strange reasons, check the setup first. Docker had switched off, and two test runs at once broke each other, but the code was fine.
+- **AI use:** Claude Code wrote the spec first, then the tests and the code for each task; I chose the WhatsApp flag and its
+  rules (default false, never set by the seed), FR-47 as its own requirement, that a reported listing stays reachable with a
+  warning, the one shared rule for "verification due", and the decisions for the page (12-hour times, fee wording, the
+  notice, the new Directions icon).
+- **Tomorrow:** phase 6b, the listing page (`feature/listing-page`): spec first, then tests, then the page.

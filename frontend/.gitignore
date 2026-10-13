@@ -1,0 +1,7 @@
+# Full-size originals of the home page photos (about 60 MB): never committed.
+# scripts/optimize-home-images.mjs reads them and writes the small WebP files to public/images/home/.
+image-sources/
+
+# Output of the real-browser checks (npm run test:e2e).
+test-results/
+playwright-report/

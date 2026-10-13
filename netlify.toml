@@ -14,3 +14,12 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# The photos of the home page are cached for a year (the owner, 2026-10-13: Lighthouse 37; the photos were sent with max-age=0 and
+# revalidated on every visit). /_next/static already has the same header from the Netlify Next.js runtime (checked on the preview).
+# Because of this, a NEW photo must get a NEW file name (hero3, hero4-portrait did): a replaced file with the same name would
+# stay in visitors' caches. Spec: specs/2026-10-11-home-redesign/ (R42). The path is relative to the site, not to `base`.
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

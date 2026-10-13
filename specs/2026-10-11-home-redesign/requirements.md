@@ -1,0 +1,393 @@
+# Home page redesign (phase 13a, pulled forward): requirements
+
+What the new home page (`/`), the site header and the footer must do, and the decisions behind them. How we build it is in
+[plan.md](plan.md); how we know it is done is in [validation.md](validation.md). Frontend only. The owner asked for it on
+2026-10-11 and will review it on the Netlify preview.
+
+## Requirements
+
+- **US-13** ([prd.md](../prd.md)) and **NFR-01:** the home page loads fast on a 3G phone. First page weight stays under 500 KB:
+  only the hero photo is part of the first load, every other photo loads when it is near the screen.
+- **FR-02:** the red SwiftRescue button stays visible on every page, in the header, on phones too.
+- **FR-14:** the national emergency number, 112, is shown first and always. This feature adds a minimal `/emergency` page with a
+  large red "Call 112" button, because three red buttons of the home page lead there (decision 18). The full page is phase 7.
+- **NFR-04:** works on cheap Android phones and iPhone Safari, from 320 px wide, with no sideways scrolling.
+- **NFR-10:** 48 px tap targets, 16 px text (also the "small" line), good contrast (white text on the photo overlay is at least
+  4.5:1 whatever the photo), alt text on every image, a keyboard and screen reader can use the whole page and the menu.
+- **NFR-07:** what the page says about location ("Your location stays private") is true: SwiftHealth keeps the position in the
+  browser tab only and sends it only to the search (UI spec 2.3).
+- **NFR-12:** a clear, single `h1` and a page description, so the home page reads well in a search result.
+
+Source of truth: [ui-spec.md](../frontend/ui-spec.md) (global layout, and 2.1, rewritten by this feature), [prd.md](../prd.md).
+Branch: `feature/home-redesign`. Every commit and test references these IDs.
+
+Fit with the project: [mission.md](../mission.md) wants residents to find open care quickly; the home page is the first thing
+a resident, a partner or a facility owner sees. [tech-stack.md](../tech-stack.md) is unchanged: Next.js, Tailwind, `next/image`,
+`lucide-react` (already installed). No new package, no animation, no backend change.
+
+## In scope
+
+- The home page `/` with 9 parts, in this order: header, hero, how it works, browse by type, why SwiftHealth, the SwiftRescue
+  band, for facility owners, about, footer (the exact words are in [ui-spec.md](../frontend/ui-spec.md), section 2.1).
+- The site header and footer, for every page, because they live in the root layout: a new header (logo, Find care, SwiftRescue,
+  For facilities, and a menu button on phones) and a footer with the photo credit and the copyright line.
+- Ten photos from the owner's `IMAGES` folder, converted to WebP and compressed for 3G, served with `next/image` at fixed sizes,
+  with alt text; plus a smaller phone version of the hero photo (decision 19).
+- A minimal `/emergency` page: a large red "Call 112" button and one line (decision 18). It replaces the "Coming soon" text and
+  nothing more.
+- A small script that makes the WebP files, so the work can be repeated.
+- The wording must work for the whole of Nigeria: the first city is named once, in one place, never as "Enugu only".
+
+## Out of scope (planned elsewhere)
+
+- The full SwiftRescue page (the verified lists, share my location, share the list, offline use, the FR-26 disclaimer):
+  phase 7. The pages `/list-your-facility` (phase 10) and `/about` (phase 13b) are "Coming soon" pages today. See decision 4.
+- Pictures on `/emergency` (the ambulance and fire photos there): phase 7. `LOG.md` keeps that reminder.
+- The listing page (phase 6b) and its new Directions icon: their own feature, on its own branch.
+- A real logo file: none exists, so the logo is the word SwiftHealth (decision 2).
+- Pricing, "the problem" and "how we verify" parts of the old landing outline: dropped from the home page (decision 5).
+- Server-side health check of the API on the home page: removed (decision 6).
+- Dark mode, animation, a slideshow, a carousel, testimonials, statistics: none, on purpose.
+
+## Revision, 2026-10-12: simpler, after the owner's review of the preview
+
+The owner looked at the preview of pull request #21 and asked for a simpler page. Where this section and a decision below
+disagree, **this section wins**. The decisions below keep their text, with a note where they are replaced.
+
+- **R1. Two photos only** *(the photos and file names were replaced by R8 on 2026-10-12)*: `hero.jpg` (the hero) and `owner.jpg`
+  (the facility owners part). The other eight photos are deleted
+  from `public/images/home/`: `hero2`, `hospital`, `clinic`, `maternity`, `pharmacy`, `laboratory`, `ambulance`, `fire`. The
+  small phone version of the hero (`hero-phone.webp`, decision 19, the owner's earlier addition) stays, so three files remain.
+  Images table (replaces the table of decision 8): `hero.webp` 1280 × 853 under 150 kB, `hero-phone.webp` 640 × 427 under 50 kB,
+  `owner.webp` 800 × 533 under 80 kB.
+- **R2. Browse by type is icon tiles,** not photo cards: a `lucide` icon (`Hospital`, `Stethoscope`, `Baby`, `Pill`,
+  `FlaskConical`) in a light blue circle over the label, the whole tile one link to the search for its category (replaces
+  decision 16).
+- **R3. The SwiftRescue photo band and the About part are removed completely.** The page has seven parts: header, hero, how it
+  works, browse by type, why SwiftHealth, for facility owners, footer. The way to SwiftRescue on the home page is the red
+  button of the header, which is on every page (FR-02).
+- **R4. The hero:** a lighter blue background (`pine-100`), one large photo, no second photo and no overlay. On a desktop (768 px
+  and up) the text is on the left and the photo on the right; on a phone the photo is below the text. In both the photo
+  **overlaps the bottom edge of the hero into the next section** (replaces the layout of decision 9). The text is dark blue
+  (`pine-dark`, 7.4:1 on `pine-100`; `ink-soft` 5.8:1 for the small line), because white would be 1.2:1 on this blue (computed
+  on 2026-10-12). The hero button is the primary blue one (white text on `forest` is 5.6:1).
+- **R5. The hero has one button, "Find care near me",** and the small line "Free to use · No sign-up needed". The red "Emergency
+  help" button is removed. Red now appears on the home page only in the header's SwiftRescue button (replaces decision 10 for
+  this page; the "Call 112" button of `/emergency` stays red).
+- **R6. No city is named on the home page or in its page description** (replaces decision 13). The hero line is "Hospitals,
+  pharmacies and emergency help, open near you." `siteConfig.launchCity` stays in `config/site.ts`, because other parts of the
+  app may use it (owner, 2026-10-12); the home page does not.
+- **R7. Footer unchanged:** "Images designed by Magnific" is still true for the two photos (decision 14).
+  *(Replaced by R10 on 2026-10-12: the Magnific photos are gone, so the credit is removed.)*
+
+### Second revision, 2026-10-12: new photos
+
+The owner added two Unsplash photos to the `IMAGES` folder (`hero4.jpg`, `owner2.jpg`; `hero3.jpg` is not used for now) and asked
+to replace the two photos of the page. Where this section and R1 to R7 disagree, this section wins.
+
+- **R8. The photos are replaced.** `hero4.jpg` is the hero on every screen size: a big version for tablets and desktops and a
+  smaller one of 640 px for phones, so a phone downloads only the small one (decision 19 stays: one `<picture>` with a phone-only
+  `<source>`). `owner2.jpg` replaces the owner photo. The old files `hero.webp`, `hero-phone.webp` and `owner.webp` are deleted.
+  The new files are `hero4.webp`, `hero4-phone.webp` and `owner2.webp` (new names, so nothing can serve an old photo from a cache).
+- **R9. The shape and the sizes.** Both new photos are portrait (hero4 is 4160 × 6240, owner2 is 2700 × 3779), and the layout is the
+  same as before, with the same overlap. A portrait photo in the right-hand column would make the hero very tall, so each is cut
+  to a 4:3 band by hand (the head, and for the hero the blister pack too, stay in the picture; the crop is checked by eye on the
+  converted files). Sizes and budgets (replace the table of R1): `hero4.webp` 1280 × 960 under 150 kB, `hero4-phone.webp` 640 ×
+  480 under 50 kB, `owner2.webp` 800 × 600 under 80 kB. They are converted the same way as before (WebP, quality lowered until
+  the budget is met). The alt text is written after looking at each converted photo.
+- **R10. The photo credit is removed from the footer.** No Magnific photo remains, and the owner states that Unsplash photos need
+  no attribution, so the footer has the six links and "© 2026 SwiftHealth" only, with no outside link. (This record repeats the
+  owner's statement; it does not state what the Unsplash licence says. `LOG.md` has a reminder to keep the photo pages and to
+  check the licence terms with the legal review, NFR-13.) This replaces R7 and decisions 14 and 17.
+
+### Third revision, 2026-10-12: other photos, a sky blue hero, an Overview, a logo
+
+The owner asked again (all photos are from Unsplash and, the owner states, need no attribution). Where this section and R1 to R10
+disagree, this section wins.
+
+- **R11. The photos change again.** The hero is `hero3.jpg` (a stethoscope and a blood pressure gauge, portrait 4000 × 6016) on every
+  screen size, with a small phone version of 640 px. The facility owners part uses `hero4.jpg` (a smiling health worker holding a
+  blister pack, portrait 4160 × 6240), shown whole. `owner2` is no longer used. New files: `hero3.webp`, `hero3-phone.webp` and
+  `hero4-portrait.webp` (a new name, because `hero4.webp` already existed with other content). Deleted: `hero4.webp`,
+  `hero4-phone.webp`, `owner2.webp`. Sizes and budgets (replace R9): `hero3.webp` 1200 × 1200 under 150 kB, `hero3-phone.webp`
+  640 × 640 under 50 kB (a square, cut by hand from the portrait so that both the stethoscope head and the whole gauge stay in the
+  picture), `hero4-portrait.webp` 800 × 1200 under 100 kB (the whole photo, 2:3, no crop; the budget is 100 kB, not 80, because a
+  whole portrait has more pixels; it is lazy, so it does not count in the first load).
+- **R12. The hero layout.** *Tablet and desktop (768 px and up):* the text is on the left, inside the page width; the photo covers
+  the right half of the hero, from the top of the hero to the right edge of the screen, rounded on its left side, and goes about
+  6 rem below the hero's bottom edge, over the next section. *Phone:* the photo is below the text, the full width of the screen, and
+  the hero's edge is pulled up over it. The Overview part, which comes next, has the room at its top.
+- **R13. A new colour token, `sky` (`#A9DDF3`),** is the hero background (the owner wanted a real sky blue, not `pine-100`, and
+  suggested this value). Computed on 2026-10-12: `pine-dark` text on it is 6.08:1 (needs 4.5), `ink-soft` 4.82:1, `ink` 10.80:1,
+  the forest focus ring and the forest button edge 3.83:1 (need 3), white 1.47:1. It passes as suggested, so it is not adjusted.
+  All hero text is `pine-dark`. The token is added to `globals.css`, the UI spec table and the token tests.
+- **R14. "Find care" is hidden in the header on the home page only,** in the bar and in the phone menu (the hero button does the
+  same). It stays on every other page. The header reads the address in a small client part (`HeaderNavigation`), so the layout
+  itself stays a server component.
+- **R15. An Overview part right after the hero** with the owner's words ("SwiftHealth helps you find hospitals, clinics, pharmacies,
+  labs and emergency contacts that are open right now. Every listing is checked by our team, so the number you call and the hours
+  you see are ones you can trust."), and "Why SwiftHealth" is renamed **"Benefits"**. The page has eight parts. The sentence about
+  the team checking every listing is a promise about verification (US-07, FR-32): it is the owner's wording and matches how the
+  product is meant to work.
+- **R16. A simple logo.** A map pin with a white plus inside, an inline SVG, next to the word SwiftHealth, in the header; the pin
+  alone is the favicon. No red cross. The pin has the shape of the pins of the results map. In the header it is the bright blue
+  `accent` with a white plus and a thin white edge (a `forest` pin would vanish on the `forest` header); the favicon (`src/app/
+  icon.svg`, which Next.js serves as the tab icon) is `forest` blue with a white plus, with the colour written in the file because
+  a favicon cannot read a CSS variable (a test checks that it equals the `forest` token).
+- **R17. The owners photo is whole.** `hero4-portrait.webp` is never cropped or stretched: full width on a phone; beside the text on
+  a tablet and desktop with a maximum height of 32 rem (it gets narrower to keep its shape).
+
+### Fourth revision, 2026-10-12: a hero closer to the reference site
+
+The owner compared the preview with the reference site (https://www.swifthealth.co) and asked for a hero like it. The reference was
+not opened for this work: everything below follows the owner's written description. Where this section and R11 to R17 disagree,
+this section wins (R12 and R13 are replaced; R11, R14, R16 and R17 stand).
+
+- **R18. The header on the home page is transparent.** On `/` only, the header has no bar of its own: no background, no line under
+  it. It sits on top of the hero (position absolute, above the photo), with the logo and the links in white. The red SwiftRescue
+  button is unchanged. Every other page keeps the blue `forest` bar with its `accent` line. The header becomes a small client
+  component that reads the address (it was a server component with a client navigation, R14); "Find care" is still hidden on `/`.
+- **R19. The hero has a gradient, white text, and is tall.** The flat `sky` background is replaced by a sky blue gradient, lighter on
+  one side (top right) and deeper on the other (bottom left), from the `sky` token to `pine-dark`. The heading (large), the line
+  and the small line are white, in the lower left. White text needs 4.5:1 everywhere on the gradient, so the **`sky` token changes
+  from `#A9DDF3` to `#1A7CAD`** (computed 2026-10-12: white on `#1A7CAD` is 4.64:1; on `pine-dark` `#134F6A` it is 8.92:1, so every
+  point between them passes; the old `#A9DDF3` was only 1.47:1 with white). The hero is at least 85% of the screen height
+  (`min-h-[85svh]`), so it fills most of the first screen.
+- **R20. The hero photo fills one side, with a slanted edge and no overlap.** *Tablet and desktop (768 px and up):* `hero3` fills the
+  whole right half of the hero from top to bottom and to the right edge of the screen, with a slanted left edge (`clip-path`), no
+  rounded corners, and no part below the hero (so no white gap). *Phone:* the photo is a band at the top of the hero, the full width,
+  with a slanted bottom edge, and the white text is below it on the gradient. The hero button is white with dark blue text
+  (a new `onDark` button variant), because the `pine` button would vanish on the dark gradient.
+- **R21. A dark veil behind the header, over the photo only.** The header's white links would be on a white photo (sheets), so the
+  top 8 rem of the photo box has a veil: `pine-dark` at 85% opacity down to 60% of its height, then fading to nothing. Worst case
+  (the photo is pure white there) white on it is 6.02:1, computed.
+- **R22. "How it works" is removed** (the three cards, their config text and their tests). The Overview no longer needs the extra room
+  at its top, because the photo no longer overlaps: it has the normal `py-12`.
+- **R23. Benefits is a full-width band in the header blue** (`forest`), with white text and white icons (each icon in a `pine-dark`
+  circle). White on `forest` is 5.61:1, white on `pine-dark` 8.92:1.
+- **R24. The new order:** header, hero, Overview, Benefits, Browse by type, For facility owners, footer. Seven parts, four `h2`.
+
+### Fifth revision, 2026-10-12: fixes after the owner's review of the fourth
+
+Where this section and R18 to R24 disagree, this section wins. The `hero3` crop does not change.
+
+- **R25. Facility owners: a smaller photo, the text right beside it.** From 768 px the portrait photo is 26 rem high (it was at most
+  32 rem; the width follows from its 2:3 shape, about 17.3 rem) and the text sits right beside it with a normal gap (2.5 rem), both
+  vertically centred, so there is no big empty space between them. The photo stays whole and the text column is at most 36 rem wide.
+  On a phone nothing changes (the photo is the full width of the content, the text below it).
+- **R26. The footer: no beige band, in line with the content.** On the home page the footer comes straight after the last part: no
+  top margin (that margin showed the beige page colour between the white part and the footer) and no line above the links. On every
+  other page the gap and the line stay. On every page the footer's links and the © line are inside the same container as the section
+  headings (`max-w-6xl`, 16 px at the sides), not at the far left edge. The footer reads the address, so it is a client component like
+  the header.
+- **R27. A shorter, softer veil.** The dark veil over the top of the hero photo is 6 rem high (it was 8 rem) and `pine-dark` at
+  80% (it was 85%) down to 50% of its height (3 rem, which covers the header's text, about 1.4 to 2.6 rem from the top), then fades
+  out gently over the other 3 rem (it solid-held for 4.8 rem before). White on `pine-dark` at 80% over a pure white photo is
+  **5.26:1** (computed 2026-10-12), so the header links still pass 4.5:1.
+- **R28. Tablets use the phone hero layout.** Up to 1023 px the hero is the phone layout: the photo is a band at the top (18 rem high
+  on a phone, 24 rem from 768 px so the band is not a thin strip) with the slanted bottom edge, the header over it, and the white
+  text below at the full width of the page. The side-by-side layout with the slanted left edge starts at **1024 px** (`lg:`), where
+  it was 768 px. The `<picture>` is unchanged: the small file only up to 767 px, the big one from 768 px.
+- **R29. The heading does not break into short lines.** The `h1` is 36 px on a phone, 48 px from 768 px, 60 px from 1024 px, and uses
+  balanced line breaks (`text-balance`), so a tablet never shows one long line and a single word on the next ("fast." alone). At
+  1024 px the left column is about 464 px wide: the heading is two lines, "Find open care" and "near you, fast.". The owners' photo
+  and the Benefits and Browse parts keep their 768 px breakpoint.
+- **R30. The tall hero is only for the side-by-side layout (owner, 2026-10-12, after the review of the fifth revision).** In the
+  stacked layout (below 1024 px) the hero has no forced minimum height: it is the photo band, then the text with normal spacing, so
+  there is no large empty blue gap on a tablet. The minimum height of 85% of the screen (R19) applies from 1024 px only. The owners
+  pair stays left-aligned as it is (the owner confirmed).
+
+### Sixth revision, 2026-10-12: widths from 320 to 1023 px, checked in a real browser
+
+The owner reported three problems at 768 px. A headless Chromium (152, in the frontend container) was used to measure the page at
+320, 375, 600, 768, 900 and 1024 px and at every width from 320 to 1100 px (also with other fonts and a stretched heading).
+Result: at 768 px that browser shows the heading on one line, inside the screen, and the header with the logo, SwiftRescue and
+"For facilities"; **the owner's two 768 px symptoms could not be reproduced there** (the owner's browser, system or fonts may
+differ; the owner is asked to say which if it still happens). What the browser did show, at every font tried: **below 396 px the
+header is wider than the screen** (the Menu button ends at 396 px) and the page scrolls sideways.
+
+- **R31. The heading never clips, in any engine.** In the stacked layout (below 1024 px) the text column has an explicit full width
+  (`w-full min-w-0`) and is not a flex item (the row is a flex row only from 1024 px), and the `h1` may break anywhere if it has
+  to (`break-words`), so no engine can size the column by its single-line width and push the text past the screen edge. It wraps at
+  every width from 320 to 1023 px, with nothing clipped.
+- **R32. The header fits at every width.** Every width has either the links (from 768 px: "For facilities" and "SwiftRescue") or
+  the Menu button (below 768 px), always inside the screen, and the page never scrolls sideways. The header is more compact on a
+  phone: the wordmark is 16 px (18 px from 640 px), SwiftRescue and Menu have 12 px at the sides (16 px from 640 px), and below 400
+  px only the pin of the logo is drawn, with the word kept for screen readers (the link's name is still "SwiftHealth").
+- **R33. A lower photo band.** The band is 16 rem high on a phone and 18 rem from 768 px to 1023 px (it was 18 and 24 rem), so the
+  heading and "Find care near me" are on the first screen at 768 px (the button's bottom is above 640 px).
+- **R34. A real-browser check.** `tests/end-to-end/home-layout.spec.ts` (Playwright, `npm run test:e2e`) opens the home page at 320,
+  375, 600, 768, 900 and 1024 px and checks: no sideways scrolling; every line of the heading inside the screen and wrapped (below
+  1024 px); the logo, SwiftRescue and the links or the Menu button inside the screen; the heading and the button on the first
+  screen; and a sweep of every 4th width from 320 to 1100 px. It needs a running site (`BASE_URL`, default
+  `http://localhost:3000`) and a browser; it is not part of `npm test` or of the pull request check (that check has no browser). In
+  the Alpine container: `apk add chromium` and `CHROMIUM_PATH=/usr/bin/chromium`.
+
+### Seventh revision, 2026-10-13: the name SwiftHealth Route, a new logo, a phone header with the full wordmark
+
+The owner asked for these changes before the pull request is marked ready. The owner checks the preview before any box is ticked
+and before the pull request leaves draft.
+
+- **R35. The app is called "SwiftHealth Route".** The name is in one file, `frontend/src/config/brand.ts`: `name` ("SwiftHealth
+  Route"), the two parts of the wordmark (`main` "SwiftHealth" and `accent` "Route") and `emergencyName` ("SwiftRescue", unchanged).
+  `config/site.ts` takes its `name` and the SwiftRescue link label from it, and every text on screen takes the name from there: the
+  header logo, the footer ("© 2026 SwiftHealth Route"), the page title and description (`app/layout.tsx`), the web manifest
+  (`app/manifest.ts`) and the Overview text ("SwiftHealth Route helps you find ..."; the rest of the owner's words are unchanged).
+  The repo, the folders and the Netlify address keep their old names, and so does the API's own title. `CLAUDE.md`, the PRD's
+  naming line and the UI spec say the new name. LOG.md has the reminder to check the CAC business name search before buying a
+  domain or printing anything. Not a legal opinion: the owner decides what that search needs.
+- **R36. A siren icon on the SwiftRescue button.** The red SwiftRescue button in the header has a small lucide `Siren` icon, white,
+  before the word, hidden from screen readers (`DecorativeIcon`). Never a red cross or a medical cross. The button is a little
+  smaller on a phone (R38).
+- **R37. LOG.md reminders (no code).** The Playwright layout check is deliberately not in the pull request check: LOG.md has an item
+  to consider it later. LOG.md also holds the Phase 10 idea of photos on the facility owner sign-up page (one photo per facility
+  type, swapped when the type changes, only the chosen photo downloaded) and on the login page (`hero.jpg`), with the Magnific
+  credit on those pages only and none of those photos on the home page.
+
+- **R38. The new logo (replaces R16).** One reusable inline SVG component, `components/layout/Logo.tsx` (the pin alone is also
+  exported). A map pin (the map pin's shape) in `sky` `#1A7CAD` with a white heartbeat line, and next to it the wordmark
+  "SwiftHealth" (navy, `pine-dark`) and "Route" (`sky`). On a dark background (the `forest` bar and the dark hero, where the header
+  always is) the tone is inverted: a white pin with a `sky` line, "SwiftHealth" in white and "Route" in the new light blue
+  `sky-pale` `#DCF2FC`. From 640 px one line; below 640 px stacked, with "ROUTE" in 10 px letter-spaced capitals. The words come from
+  `config/brand.ts`. Screen readers hear "SwiftHealth Route" once (`role="img"` with that label, the SVG and the words hidden).
+  The favicon `src/app/icon.svg` is the pin with the line only (`sky` pin, white line); its test now compares the blue with the
+  `sky` token (it compared with `forest` before). The owner approved the SVG on 2026-10-13 (the preview image and code were shown).
+- **R39. A new token, `sky-pale` (`#DCF2FC`),** for "Route" on a dark background. Computed 2026-10-13: 4.85:1 on `forest`, 5.48:1
+  on the middle of the hero gradient (where the logo sits), 4.54:1 over a pure white photo under the 80% veil (worst case); a more
+  saturated light blue fails 4.5:1 on one of these. White on `sky` 4.64:1, `sky` on white 4.64:1, `pine-dark` on white 8.92:1.
+- **R40. A phone header with the full wordmark from 360 px (replaces R32's "word hidden below 400 px").** The Menu button is an icon
+  only, with `aria-label="Menu"` (a 48 px square); the SwiftRescue button is smaller on a phone (10 px at the sides, 16 px at 640 px
+  and up) and has the siren (R36). Below 360 px the stacked "ROUTE" is hidden first. **Measured** in the real browser
+  (2026-10-13, the widest fallback font): with "ROUTE" hidden, "SwiftHealth" still overflowed the screen between 320 and 340 px
+  (the content was 341 px wide) and fits from 344 px, so **below 344 px only the pin is drawn** (as the owner decided in advance for
+  this case), and the name stays for screen readers. No sideways scrolling at 320 px and the Menu button is always fully inside the
+  screen.
+- **R41. The real-browser check also covers the wordmark.** `tests/end-to-end/home-layout.spec.ts` checks that "SwiftHealth" and
+  "Route" are visible and inside the screen at 360 and 375 px (and at every width from 360 px in the sweep), and that Menu, an
+  icon-only button, is fully inside the screen at every width below 768 px.
+
+### Eighth revision, 2026-10-13: a faster home page
+
+The owner measured the preview with Lighthouse (mobile, Incognito): Performance 37, CLS fine, FCP, LCP and TBT red. A baseline was
+measured in headless Chromium against a production build (before the change): each width downloads one hero photo (375 px: the
+44.7 kB phone file; 768 and 1024 px: the 149.3 kB file), the portrait (29.7 kB) is fetched at load although `loading="lazy"`, the
+heading, line, button and Overview text are in the first HTML (34.7 kB, 7.4 kB compressed), and the page downloads **131.9 kB** of
+JavaScript in 12 files (101 kB is the shared Next.js and React runtime), among them the chunks of the `/find` and `/emergency`
+pages, prefetched because links to them are on the screen. No Leaflet, chart or search-map code loads. The photos on the CDN were
+sent with `max-age=0, must-revalidate`, so every visit revalidated them. This section changes what can be changed; it states what
+cannot.
+
+- **R42. Long caching for the photos.** `netlify.toml` sends `Cache-Control: public, max-age=31536000, immutable` for `/images/*`
+  (`/_next/static/*` already has it from the Netlify Next.js runtime: checked on the preview). Because the photos are cached for a
+  year, **a new photo gets a new file name** (as `hero3`, `hero4-portrait` did); `scripts/optimize-home-images.mjs` says so and
+  LOG.md has the rule.
+- **R43. No prefetch of other pages from the home page.** Every link of the home page (the header, the hero button, the browse
+  tiles, the owners button and the footer) has `prefetch={false}`, so the home page does not download the JavaScript and data of
+  `/find`, `/emergency`, `/search` and the others before the visitor asks for them. A click still opens the page (a little later).
+- **R44. The header and the footer are server components.** They are chosen by the route group, not by reading the address in the
+  browser: `app/(home)/` (the home page: the transparent header, no gap above the footer), `app/(public)/` (the public pages: the blue
+  bar, the gap and the line), `app/(dashboards)/` (`/admin` and `/provider`, the blue bar), and `app/not-found.tsx` (the blue bar). The
+  root layout keeps only `<html>`, `<body>` and the metadata. **Every URL stays exactly the same** (a route group is not part of the
+  URL). `SiteHeader` and `SiteFooter` take an `isHomePage` prop. The only client component left in the header is the Menu button
+  (`MobileMenu`).
+- **R45. No `next/image` client code on the home page.** The owners' photo is drawn with the plain `<img>` attributes that
+  `getImageProps` gives (as the hero already is), so the `next/image` component's JavaScript is not sent. Nothing else changes: the
+  same file, size, alt text and `loading="lazy"`.
+- **R46. Checked in a real browser.** `tests/end-to-end/home-layout.spec.ts` also checks, at 375 and 768 px: exactly one hero
+  photo is requested (`hero3-phone.webp` on a phone, `hero3.webp` from 768 px, never both); the owners' photo has `loading="lazy"`;
+  no script of another page (`/find`, `/emergency`, `/search`) and no map code is downloaded on the home page; the heading and
+  the button are in the first HTML (the server's answer, before any script runs). The cache headers are checked by a unit test of
+  `netlify.toml` and, after deploy, on the preview.
+- **R47. What does not change, and why.** (a) About 101 kB of the JavaScript is the Next.js and React runtime that every App Router
+  page ships; it cannot be removed without leaving the framework. (b) The portrait stays natively lazy (`loading="lazy"`): the owner
+  decided that no scroll watcher is needed for 29 kB; Chrome starts a lazy image early on a short page, so it can still appear in the
+  Network panel at load. (c) The site uses the system font stack: no web font is downloaded, so there is nothing to block the text.
+  (d) The photos are already under their budgets (149.0, 44.4 and 29.4 kB; 150, 50 and 100 kB), so they are not compressed again.
+
+## Decisions
+
+Decisions 1 to 4 and 7 are my defaults for questions the owner's brief left open; the owner can change any of them on review.
+Decisions 8 onward follow the owner's brief (2026-10-11).
+
+1. **The new header and footer are for every page,** not only the home page. They live in the root layout, and FR-02 asks for
+   the red button on every page. The logo now links to `/` (it linked to `/find`).
+2. **The logo is a text wordmark, "SwiftHealth".** There is no logo file. The rule "no invented things" applies: no made-up
+   symbol. When a real logo exists it replaces the word in one place.
+3. **On a phone the red SwiftRescue button stays in the bar** beside the menu button (FR-02). The menu button opens a panel with
+   Find care and For facilities. From tablet width up, all links are in the bar.
+4. **A known risk, now reduced (owner's addition, 2026-10-11):** "Emergency help", "Open SwiftRescue" and the header button lead
+   to `/emergency`, which said "Coming soon" until phase 7. This feature replaces that with the minimal page of decision 18. The
+   pages `/list-your-facility` and `/about` still say "Coming soon", which is not a danger.
+5. **Dropped from the home page:** the old outline had "the problem", "how we verify", "who it's for" and "pricing". The new
+   page follows the owner's 9 parts. The featured-listing price (₦5,000, a placeholder) belongs on the facility page (phases
+   10 and 12). The UI spec 2.1 is rewritten.
+6. **The home page is fully static.** The old page called the API for a status line. That line is removed, so the page never
+   waits for a sleeping API and is served as static content. `getHealth` stays in `lib/api/client.ts` with its test.
+7. **Photos are `next/image` with `unoptimized`:** the files are already the final size and format, so they are served as they
+   are from the CDN, with no image service in between and no second compression. Every image has `width`, `height` and alt text
+   (a small `HomePhoto` component makes the alt text required by its types). Every image is lazy except the hero, which is
+   loaded at once (see decision 19: it does not use `priority`, so a phone does not preload the big file).
+8. *(The table below is replaced by R1 on 2026-10-12: three files remain.)* **The images are made by a script** (`frontend/scripts/optimize-home-images.mjs`) that uses `sharp`, the image library that
+   Next.js already installs; it is not added to `package.json`. The full-size originals (60 MB) are not committed: they go in
+   `frontend/image-sources/`, which is git-ignored. The script lowers the quality step by step until each file is under its
+   budget.
+
+   | Image | Pixels (fixed) | Budget |
+   | --- | --- | --- |
+   | `hero.webp` | 1280 × 853 | 150 kB |
+   | `hero-phone.webp` (the same photo, for phones) | 640 × 427 | 50 kB (owner's addition) |
+   | `hero2.webp` | 960 × 640 | 150 kB |
+   | `hospital`, `clinic`, `maternity`, `pharmacy`, `laboratory` | 640 × 480 | 60 kB each |
+   | `ambulance`, `fire` | 640 × 427 | 60 kB each (my choice) |
+   | `owner.webp` | 800 × 533 | 80 kB (my choice) |
+
+   `hospital.jpg` is a portrait photo, so its card is cropped to 4:3; the crop is checked by eye on the converted file.
+9. *(Replaced by R4 on 2026-10-12: the phone photo is now below the text, with no overlay, and there is no second photo.)*
+   **Phones get one hero photo, behind the text,** under a dark blue overlay (`pine-dark` at 80% or more, so white text is at
+   least 4.5:1 on any photo). From tablet width up the text is on the left and the two photos on the right, as an overlapping
+   pair: `hero.webp` large and `hero2.webp` smaller, in front, with rounded corners. `hero2` is a lazy image inside a box that
+   is `hidden` on phones: a browser does not fetch a lazy image that is not shown. This is checked in the Network panel at phone
+   width, and on a phone. If a browser ever fetched it anyway, the fallback is to draw that one image from a small client
+   component only when the screen is wide.
+10. *(Narrowed by R5 on 2026-10-12: on the home page red is only the header's button.)* **Red only for emergency:** the header's SwiftRescue button, the hero's "Emergency help", the band's "Open SwiftRescue" and
+    the "Call 112" button of the emergency page. Nowhere else. A test scans for the `emergency` colour.
+11. **Blue palette and the current font stack** (the system font; no web font), tokens only: no hex or rgb colour in code.
+12. **No invented numbers or quotes.** The page says only what the product does. A test fails if the page text has a percent sign
+    or a number other than the step numbers and the year.
+13. *(Replaced by R6 on 2026-10-12: the home page names no city.)* **The city is named once, in one place** (`siteConfig`), and used in the hero line and the About text, written as "Now live
+    in Enugu, with more cities coming" and "Starting in Enugu. Growing across Nigeria." No text says "Enugu only" or "only in
+    Enugu"; a test checks it. The site description in the page head says the same.
+14. *(Replaced by R10 on 2026-10-12: no photo credit.)* **Footer:** the existing six links, then "Images designed by Magnific" (a link to https://www.magnific.com that opens in a
+    new tab with `rel="noopener noreferrer"`), then "© 2026 SwiftHealth". The owner confirmed on 2026-10-11 that all ten photos,
+    including the laboratory one, are from Magnific's free collection, so the Unsplash line is dropped. The year is a constant
+    in `siteConfig`, not read from the clock.
+15. **Alt text is written after looking at each converted photo:** short, factual, no medical claim. The owner reviews it on the
+    preview. Every photo is informative, so none has an empty alt.
+16. *(The cards are icon tiles since R2, 2026-10-12; the links are unchanged.)* **The category cards link to the search** filtered by the category slug the seed already uses: `/search?category=hospital`,
+    `clinic`, `maternity`, `pharmacy`, `laboratory`. The whole card is one link.
+17. *(Replaced by R10 on 2026-10-12: the reminder is now about the Unsplash photos.)* **Reminder for launch:** keep proof of the Magnific free downloads, and check the attribution wording against Magnific's own
+    licence terms (`LOG.md`, a legal check with NFR-13). This spec does not state what the licence allows.
+18. **A minimal `/emergency` page (owner's addition, 2026-10-11).** A page with the heading "SwiftRescue", a large red **Call
+    112** button (`tel:112`), the line **"Our full list of verified ambulance, fire and hospital emergency numbers is coming
+    soon."** and the sentence of FR-26 (below). Nothing else: no advice, no list, no map. It replaces the "Coming soon" page of phase 0 and is replaced by the full
+    page in phase 7.
+    - **Source for 112 (checked on 2026-10-11):** the NCC (the Nigerian Communications Commission) says it on its own pages: "a
+      dedicated toll-free Emergency Number, 112"
+      ([press statement of 23 April 2021, which also commissioned the centre in Enugu](https://www.ncc.gov.ng/media-centre/press-releases/press-statement-minister-commissions-nccs-emergency-communication);
+      [the NCC page on its Emergency Communication Centres](https://ncc.gov.ng/node/3132)), and calls it "NCC's 112 National
+      Emergency Number"
+      ([press release](https://ncc.gov.ng/media-centre/press-releases/covid-19-nccs-112-national-emergency-number-offers-succour-nigerians)).
+      The PRD already says it (FR-14). The NCC pages say the centres are being built state by state and cover all 36 states and
+      the FCT as a goal, so the page promises nothing about the answer, and the button says only "Call 112".
+    - **The sentence of FR-26 (added at the owner's request, 2026-10-11):** the PRD asks the SwiftRescue page to say
+      "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call
+      112." The minimal page first had only the button and the line about the list; the owner then asked for this sentence too,
+      so the page has the heading, the button, the line about the list and this sentence, in that order, always visible.
+19. **A smaller hero for phones (owner's addition, 2026-10-11).** The hero is one `<picture>`. Its `<source>` for screens up to
+    767 px wide has `srcset="hero-phone.webp 640w"` and `sizes="100vw"` (about 50 kB); the `<img>` inside it is `hero.webp`
+    (1280 px) for wider screens. The `<source>` has only one candidate and a `media` rule, so every phone-width screen takes the
+    small file, whatever its pixel density: a plain two-file `srcset` with `sizes` lets a high-density phone choose the big file,
+    which would defeat the purpose. The tag is made with `getImageProps` from `next/image` (Next.js's own way to do this), with
+    fixed width and height and alt text. The hero is not given `priority`, because that would also ask every phone to preload the
+    big file; it has `loading="eager"` and `fetchPriority="high"`, and it is in the first HTML, so the browser finds it at once.
+    A phone then downloads `hero-phone.webp` only (not `hero.webp`, not `hero2.webp`), checked in the Network panel.

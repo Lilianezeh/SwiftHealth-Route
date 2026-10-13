@@ -9,7 +9,7 @@ Oct 3, 2026 · Lilian Ezichi Ezeh
 
 This document defines what the SwiftHealth MVP (Emergency, Hospital & Pharmacy Finder) must do, launching in Enugu, for building it and for partners reviewing it. It combines a product requirements document (what and why) with the detailed functional and non-functional requirements of a software requirements specification (how it must behave).
 
-**Naming:** SwiftHealth is the app. SwiftRescue is the name of its emergency section and the emergency button shown on every page; wherever this document says "Emergency section" or "Emergency button", it means SwiftRescue.
+**Naming:** SwiftHealth Route is the app (renamed from SwiftHealth on 2026-10-13; the rest of this document still says SwiftHealth and means the same app). SwiftRescue is the name of its emergency section and the emergency button shown on every page; wherever this document says "Emergency section" or "Emergency button", it means SwiftRescue.
 
 **Product:** a mobile-friendly website with verified listings of health facilities and emergency contacts for one pilot area of Enugu, plus an admin panel for the team that verifies the data.
 

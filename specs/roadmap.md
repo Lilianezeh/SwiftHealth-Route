@@ -177,10 +177,49 @@ FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Merged a
 - Still to do before launch (`LOG.md`, "To do later"): "Search this area", the tile provider review, and map tiles on the
   Privacy page.
 
+### Home page redesign (phase 13a, pulled forward by the owner, 2026-10-11). Ready to merge (PR #21, branch `feature/home-redesign`; the owner approved the preview on 2026-10-13 and tried "Call 112" on a real phone; every validation box is ticked)
+US-13, NFR-01, FR-02, NFR-04, NFR-10, NFR-07, NFR-12. Frontend-only: `Backend CI` must not run on it. Feature folder:
+[requirements](2026-10-11-home-redesign/requirements.md), [plan](2026-10-11-home-redesign/plan.md),
+[validation](2026-10-11-home-redesign/validation.md). The new home page in 9 parts, the new header (with a phone menu) and
+footer (with the photo credit), and 10 photos converted to WebP for 3G, with a smaller hero for phones. It also replaces the
+"Coming soon" text of `/emergency` with a minimal page (a red "Call 112" button), until phase 7. Phase 6b waits for its own
+branch after this one.
+- Task 0, spec (UI spec layout and 2.1, feature folder, roadmap, `LOG.md`): **done**
+- Task 1, the photos (script, WebP files, alt text): **done**
+- Task 2, header and footer: **done**
+- Task 3, hero, how it works, browse by type, why SwiftHealth: **done**
+- Task 4, the band, the facility part, About, the page: **done**
+- Task 5, the minimal `/emergency` page (a red "Call 112" button; the owner's addition, 112 checked against NCC pages): **done**
+- Task 7, a simpler home page after the owner's review of the preview (2026-10-12: two photos, icon tiles, a lighter hero with one
+  photo that overlaps into the next section, no band, no About, no red hero button, no city): **done** (589 tests); the owner's review
+  of the new preview is next
+- Task 8, new hero and owner photos (Unsplash, from `hero4.jpg` and `owner2.jpg`; `hero3.jpg` unused) and no photo credit in the
+  footer: **done** (591 tests); the owner's review of the new preview is next
+- Task 9, other photos (`hero3` hero, `hero4` whole in the owners part), a sky blue hero (new `sky` token), an Overview part,
+  "Why SwiftHealth" renamed "Benefits", "Find care" hidden in the header on the home page, and a logo and favicon: **done**
+  (622 tests; `/` is static, 113 kB first load JS); the owner's review of the new preview is next
+- Task 10, a hero like the reference site (owner, 2026-10-12): transparent header on the home page, a sky blue gradient with white
+  text, the photo filling the right side with a slanted edge, no How it works, Benefits as a blue band, and the new order: **done**
+  (632 tests; `/` is static, 113 kB first load JS); the owner's review of the new preview is next
+- Task 11, fixes after the owner's review (2026-10-12): owners photo smaller with the text beside it, the footer in the page
+  container and no beige band, a shorter softer veil, tablets use the phone hero up to 1024 px: **done** (637 tests); the
+  owner's review of the new preview is next
+- Task 13, widths 320 to 1023 px (owner, 2026-10-12): the heading never clips, the header fits at every width, a lower photo band,
+  and a real-browser check (Playwright): **done** (640 tests); the owner's review of the new preview is next
+- Task 12, no forced tall hero below 1024 px: **done**
+- Task 14, the name SwiftHealth Route (one brand file), a new logo (a pin with a heartbeat line), an icon-only Menu, a siren on
+  SwiftRescue, a phone header that fits 320 px: **done** (657 tests); approved by the owner on 2026-10-13
+- Task 15, a faster home page (owner, 2026-10-13, Lighthouse mobile 37): cache headers for the photos, no prefetch of other pages, the
+  header and the footer as server components through route groups, no `next/image` client code: **done** (668 tests); JavaScript
+  131.9 to 111.9 kB, 12 to 7 files; the owner's Lighthouse on the preview: 37 to 64 (Total Blocking Time 1,420 ms: a follow-up in
+  `LOG.md` after the merge)
+- Task 6, wrap-up: checks and build **done** (584 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
+  review on the preview
+
 ### Phase 6: Listing page. In progress
 US-02, US-03, US-06, US-07. Split in two pull requests, like phase 5: the API first, then the page (owner, 2026-10-11).
 
-#### Phase 6a: `GET /listings/{slug}`. In progress (branch `feature/listing-detail-api`)
+#### Phase 6a: `GET /listings/{slug}`. Done (merged, PR #20)
 FR-09 to FR-11, FR-13, FR-47, US-06, US-07, FR-08, FR-22. Backend-only: `Frontend CI` must not run on it. Feature folder:
 [requirements](2026-10-11-listing-detail-api/requirements.md), [plan](2026-10-11-listing-detail-api/plan.md),
 [validation](2026-10-11-listing-detail-api/validation.md). It also records the owner's decisions for 6b. It adds one column,
@@ -190,10 +229,11 @@ FR-09 to FR-11, FR-13, FR-47, US-06, US-07, FR-08, FR-22. Backend-only: `Fronten
 - Task 2, the repository: **done**
 - Task 3, schemas and service: **done**; Task 3b, one shared `verification_due` rule for search and the page: **done**
 - Task 4, the route: **done**
-- Task 5, wrap-up: full suite **done** (769 passed, ruff clean); draft pull request next; the production check after the merge
-  and the deploy (the owner)
+- Task 5, wrap-up: full suite **done** (769 passed, ruff clean); pull request #20 `Backend CI` green and **merged**
+  (`6fdb5fa`); production checked by the owner (the migration ran, `/listings/<slug>` answers, an unknown slug is a 404,
+  `/docs` lists it, search total still 4)
 
-#### Phase 6b: the listing page. Next (`feature/listing-page`, after 6a is merged)
+#### Phase 6b: the listing page. Next (branch `feature/listing-page`, 6a is merged)
 US-02, US-03, FR-09 to FR-13 and FR-47 (FR-12 Share and FR-47 WhatsApp are Shoulds). The page with Call, WhatsApp (for numbers marked as WhatsApp) and
 Directions buttons, the 12-hour hours table, the fees, share, the report link and the notice for a reported listing. It loads
 in the browser, like `/search`. It also changes the Directions icon everywhere (cards, map popups, the page) to a diamond road
@@ -242,7 +282,8 @@ US-11, US-12.
 
 ### Phase 13: Landing page, information pages and polish. Next
 US-13.
-- 13a: landing page
+- 13a: landing page. **Pulled forward by the owner (2026-10-11): in progress, see "Home page redesign" below** (branch
+  `feature/home-redesign`)
 - 13b: About, How we verify, Privacy policy, Terms of use, Contact us (FR-23)
 - 13c: accessibility and speed pass (NFR-01, NFR-10)
 

@@ -25,6 +25,8 @@ const SPEC_TOKENS: Record<string, string> = {
   line: "#d7e1df",
   "pine-100": "#dcecf4",
   "pine-50": "#eef6fa",
+  "sky-pale": "#dcf2fc", // "Route" in the logo on a dark background: the lightest blue that passes 4.5:1 there (owner, 2026-10-13)
+  sky: "#1a7cad",// the light end of the home page hero gradient: the lightest sky blue with 4.5:1 for white text (owner, 2026-10-12)
   open: "#147a48",
   "open-bg": "#e7f6ed",
   closed: "#465451",
@@ -105,6 +107,12 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     ["ink", "pine-50", "text on a light panel"],
     ["forest", "pine-100", "Verified label"],
     ["forest", "pine-50", "light panel"],
+    ["white", "sky", "the hero text on the lightest point of the gradient"],
+    ["white", "forest", "the Benefits band: white text and white icons"],
+    ["sky-pale", "forest", "Route in the logo on the blue header bar"],
+    ["sky", "white", "Route in the logo on a light background, and the white pulse on the sky pin"],
+    ["pine-dark", "white", "SwiftHealth in the logo on a light background"],
+    ["pine-dark", "white", "the text of the white hero button"],
     ["open", "open-bg", "Open now label"],
     ["closed", "closed-bg", "Closed label"],
     ["amber-ink", "amber-wash", "Verification due label"],
@@ -115,6 +123,45 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
 
   it("the main blue is readable as small text on paper (the old green pine was 4.4:1)", () => {
     expect(contrast(tokens.pine, tokens.paper)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("the hero gradient goes from sky to pine-dark: white text passes at both ends, so everywhere between them", () => {
+    expect(contrast(WHITE, tokens.sky)).toBeGreaterThanOrEqual(4.5); // 4.64: the lightest point
+    expect(contrast(WHITE, tokens["pine-dark"])).toBeGreaterThanOrEqual(4.5); // 8.92: the deepest point
+    // It is a sky blue, not a grey or a green: the blue channel is the strongest by far.
+    const [red, green, blue] = [1, 3, 5].map((start) => parseInt(tokens.sky.slice(start, start + 2), 16));
+    expect(blue).toBeGreaterThan(green);
+    expect(green).toBeGreaterThan(red);
+  });
+
+  it("Route in the logo (sky-pale) is readable on every dark background the logo can sit on, down to the worst case (R39)", () => {
+    const mix = (foreground: string, background: string, share: number) => {
+      const channels = (colour: string) => [1, 3, 5].map((start) => parseInt(colour.slice(start, start + 2), 16));
+      const mixed = channels(foreground).map((value, index) =>
+        Math.round(share * value + (1 - share) * channels(background)[index]),
+      );
+      return `#${mixed.map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+    };
+    const gradientMiddle = mix(tokens.sky, tokens["pine-dark"], 0.5); // where the logo sits on the hero: "to top right" has its middle at the top left corner
+    const veilOverWhite = mix(tokens["pine-dark"], WHITE, 0.8); // the veil over a pure white photo
+
+    expect(contrast(tokens["sky-pale"], tokens.forest)).toBeGreaterThanOrEqual(4.5); // 4.85
+    expect(contrast(tokens["sky-pale"], gradientMiddle)).toBeGreaterThanOrEqual(4.5); // 5.48
+    expect(contrast(tokens["sky-pale"], veilOverWhite)).toBeGreaterThanOrEqual(4.5); // 4.54
+    // The white pin on those backgrounds and its sky line on the white pin
+    expect(contrast(WHITE, tokens.forest)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(tokens.sky, WHITE)).toBeGreaterThanOrEqual(4.5); // the pulse line of the dark tone
+    // A sky pin on the forest bar would vanish: the reason the header always uses the dark tone
+    expect(contrast(tokens.sky, tokens.forest)).toBeLessThan(3);
+  });
+
+  it("the veil behind the header links (pine-dark at 80%) keeps white readable even over a pure white photo", () => {
+    const veil = tokens["pine-dark"];
+    const channels = [1, 3, 5].map((start) => parseInt(veil.slice(start, start + 2), 16));
+    const overWhite = channels.map((channel) => Math.round(0.8 * channel + 0.2 * 255));
+    const blended = `#${overWhite.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
+
+    expect(contrast(WHITE, blended)).toBeGreaterThanOrEqual(4.5); // 5.26 (the owner found the 85% veil, 6.02, heavy and grey)
   });
 
   it("the bright blue accent is not readable as text (3:1), so it is decoration only", () => {
@@ -145,6 +192,12 @@ describe("the focus ring (owner's decision, 2026-10-09; WCAG 2.2 asks for 3:1)",
 
   it("a paper ring is at least 3:1 on a forest background", () => {
     expect(contrast(tokens.paper, tokens.forest)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("a paper ring is at least 3:1 on both ends of the hero gradient, which carries on-dark (the forest ring is not on sky)", () => {
+    expect(contrast(tokens.paper, tokens.sky)).toBeGreaterThanOrEqual(3);
+    expect(contrast(tokens.paper, tokens["pine-dark"])).toBeGreaterThanOrEqual(3);
+    expect(contrast(tokens.forest, tokens.sky)).toBeLessThan(3);
   });
 
   it("globals.css draws a 3 px forest ring, and a paper ring inside .on-dark", () => {
