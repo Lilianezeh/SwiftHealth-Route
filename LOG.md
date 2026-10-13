@@ -176,6 +176,10 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   measures the home page in a real browser at 320 to 1100 px. It is not in the pull request check on purpose (owner, 2026-10-13):
   the check has no browser, and adding one means an install step and a built site to open (slower). Revisit when more screens
   have a layout worth guarding; the Alpine container needs `apk add chromium` and `CHROMIUM_PATH=/usr/bin/chromium`.
+- **Run Lighthouse on the main site after PR #21 merges; if Total Blocking Time is still red there, investigate in a follow-up.**
+  (Owner, 2026-10-13.) On the preview, mobile in Incognito, the score went from 37 to 64: Accessibility 100, Best Practices 100,
+  FCP 2.2 s, LCP 2.9 s, CLS 0.006, Total Blocking Time 1,420 ms (still the weak point; about 101 kB of the JavaScript is the
+  Next.js and React runtime).
 - **A new home page photo needs a new file name (owner's performance fix, 2026-10-13).** `netlify.toml` now caches `/images/*` for a
   year (`immutable`), because the photos were revalidated on every visit and Lighthouse scored 37 on mobile. A photo replaced under
   the same name would stay in visitors' caches, so change the `target` in `scripts/optimize-home-images.mjs` and the `src` in

@@ -196,7 +196,8 @@ replace the tests about the dark-text sky hero, the overlapping photo, the Overv
   header is `on-dark absolute inset-x-0 top-0 z-20 text-white`, and the CSS has the gradient, the veil and both `clip-path` rules.
 - [x] CI and preview (2026-10-12, 163833e): Frontend CI passes (Backend CI did not run); the preview `/` is 200, its header is
   `on-dark absolute inset-x-0 top-0 z-20 text-white`, it has the gradient class and no "How it works".
-- [ ] **For the owner, in a browser:** the look of the slanted edges and the veil at 320 px, 768 px and desktop width; the white
+- [x] (owner approved the preview, 2026-10-13: "laptop and tablet look right", the header correct at 320, 344, 360 and 370 px)
+  **For the owner, in a browser:** the look of the slanted edges and the veil at 320 px, 768 px and desktop width; the white
   header links over the photo; the gradient's deep and light sides. Not seen by me: the tests check classes and computed contrast,
   not pixels.
 
@@ -216,17 +217,17 @@ Tests: `HomePage.test.tsx`, `SiteFooter.test.tsx`, `HomeSections.test.tsx`, `des
   `lg:` and `md:h-96` and `md:h-[26rem]` rules.
 - [x] CI and preview (2026-10-12, 2f86c17): Frontend CI passes (Backend CI did not run); the preview `/` is 200, its footer is
   `text-base` (no margin, no line), the heading has `text-balance`, the owners photo has `md:h-[26rem]`.
-- [ ] **For the owner, in a browser:** the heading on a tablet (768 to 1023 px) and at 1024 px has no single word left alone on a
+- [x] (owner approved the preview, 2026-10-13: tablet looks right) **For the owner, in a browser:** the heading on a tablet (768 to 1023 px) and at 1024 px has no single word left alone on a
   line; the band on a tablet does not cut the stethoscope or the gauge; the veil looks gentle. Not seen by me (no browser here).
 
 ### Task 12: no forced tall hero below 1024 px (2026-10-12)
 - [x] `the hero's minimum height of 85% of the screen is lg: only`: no `min-h-[85svh]` without `lg:`, none with `md:`
 - [x] The whole suite still passes (637); the built page has `lg:min-h-[85svh]`; CI (f3cada1): Frontend CI passes, the preview `/` is
   200 and has `lg:min-h-[85svh]` and no plain `min-h-[85svh]`.
-- [ ] **For the owner, in a browser:** on a tablet there is no large empty blue gap between the photo band and the heading.
+- [x] (owner approved the preview, 2026-10-13: tablet looks right) **For the owner, in a browser:** on a tablet there is no large empty blue gap between the photo band and the heading.
 
 ### Task 15: a faster home page (2026-10-13)
-Measured in headless Chromium (Playwright) on a production build, sizes as sent (compressed). Not ticked until the owner has checked the preview.
+Measured in headless Chromium (Playwright) on a production build, sizes as sent (compressed). Ticked on 2026-10-13, after the owner checked the preview and ran Lighthouse (commit `8c84429`).
 
 | | Before | After |
 | --- | --- | --- |
@@ -253,29 +254,33 @@ Measured in headless Chromium (Playwright) on a production build, sizes as sent 
 - Browser spec against the production build, on this machine (Ubuntu Chromium, DejaVu Sans, wider than the Alpine container's font):
   the new download checks pass (5 of 5), and all layout checks pass except three that **fail the same way on the old build**
   (the header at 344 to 370 px and the 320 x 568 first screen): see LOG.md. In the Alpine container's font they passed before.
-- [ ] `netlify.toml` sends the one-year `immutable` cache header for `/images/*` (unit test; then checked on the preview)
-- [ ] Every link of the home page has `prefetch={false}`; the home page's scripts are only its own, the framework's and the Menu button's
-- [ ] The header and the footer are server components; the route groups choose them; every URL is unchanged (the build's route list is
+- [x] `netlify.toml` sends the one-year `immutable` cache header for `/images/*` (unit test; checked on the preview with `curl -I`)
+- [x] Every link of the home page has `prefetch={false}`; the home page's scripts are only its own, the framework's and the Menu button's
+- [x] The header and the footer are server components; the route groups choose them; every URL is unchanged (the build's route list is
   the same as before); `/admin`, `/provider` and the not-found page still have the header and the footer
-- [ ] The owners' photo is drawn without `next/image`; same file, size, alt text and `loading="lazy"`
-- [ ] Real browser: one hero photo per width; lazy portrait; no other page's code; the first HTML has the heading and the button
-- [ ] The whole suite, lint, typecheck, build and the real-browser spec pass
-- [ ] **The owner checks the preview** (and runs Lighthouse again)
+- [x] The owners' photo is drawn without `next/image`; same file, size, alt text and `loading="lazy"`
+- [x] Real browser: one hero photo per width; lazy portrait; no other page's code; the first HTML has the heading and the button
+- [x] The whole suite, lint, typecheck, build pass (668 tests); the real-browser spec: the download checks pass, and the three layout
+  checks that fail on this machine fail the same way on the old build (wider fallback font, see LOG.md)
+- [x] **The owner checks the preview** (and runs Lighthouse again): on 2026-10-13 mobile, Incognito, Performance 37 to **64**,
+  Accessibility 100, Best Practices 100, FCP 2.2 s, LCP 2.9 s, CLS 0.006, Total Blocking Time 1,420 ms (LOG.md has the follow-up)
 
 ### Task 14: SwiftHealth Route, the new logo, the phone header (2026-10-13)
 Tests: `brand.test.ts`, `Logo.test.tsx`, `icon.test.ts`, `SiteHeader.test.tsx`, `MobileMenu.test.tsx`, `design-tokens.test.ts`,
-`SiteFooter.test.tsx`, `HomeSections.test.tsx`, and the real-browser `tests/end-to-end/home-layout.spec.ts`. Not ticked until the owner
-has checked the preview.
-- [ ] The name is only written in `config/brand.ts`; the footer, title, description, manifest, Overview text and logo read it
-- [ ] `sky-pale` is `#dcf2fc` and passes 4.5:1 on `forest`, on the middle of the gradient and over the worst-case veil
-- [ ] Logo: the pin with the heartbeat line in both tones; the wordmark "SwiftHealth" and "Route"; stacked below 640 px with a small
+`SiteFooter.test.tsx`, `HomeSections.test.tsx`, and the real-browser `tests/end-to-end/home-layout.spec.ts`. Ticked on 2026-10-13, after
+the owner checked the preview (commits `67e6271` and `6475f57`).
+- [x] The name is only written in `config/brand.ts`; the footer, title, description, manifest, Overview text and logo read it
+  (`brand.test.ts`; the owner saw the tab title "SwiftHealth Route" on the preview)
+- [x] `sky-pale` is `#dcf2fc` and passes 4.5:1 on `forest`, on the middle of the gradient and over the worst-case veil
+- [x] Logo: the pin with the heartbeat line in both tones; the wordmark "SwiftHealth" and "Route"; stacked below 640 px with a small
   letter-spaced ROUTE, one line from 640 px; one accessible name, "SwiftHealth Route"; no cross
-- [ ] The favicon is the pin with the line only, the blue equals the `sky` token
-- [ ] Menu is an icon-only button named Menu; SwiftRescue is smaller on a phone and has the siren (white, hidden from screen readers)
-- [ ] Real browser: "SwiftHealth" and "Route" visible at 360 and 375 px; Menu fully inside the screen below 768 px; no sideways
-  scroll at 320 px; the 1-pixel sweep
-- [ ] The whole suite, lint, typecheck and build pass
-- [ ] **The owner checks the preview** (the logo in the header, the footer, the tab icon, the phone header at 320, 360 and 375 px)
+- [x] The favicon is the pin with the line only, the blue equals the `sky` token
+- [x] Menu is an icon-only button named Menu; SwiftRescue is smaller on a phone and has the siren (white, hidden from screen readers)
+- [x] Real browser: "SwiftHealth" and "Route" visible at 360 and 375 px; Menu fully inside the screen below 768 px; no sideways
+  scroll at 320 px; the 1-pixel sweep (container Chromium: "SwiftHealth" from 344 px, "Route" from 359 px, pin only below 344 px)
+- [x] The whole suite, lint, typecheck and build pass
+- [x] **The owner checks the preview**: on 2026-10-13 the header was correct at 320 px (the pin only), 344 px ("SwiftHealth", no
+  ROUTE), 360 and 370 px (the full stacked logo); no sideways scroll; the Menu button fully visible; the tab title says SwiftHealth Route
 
 ### Task 13: widths 320 to 1023 px (2026-10-12)
 Tests: `HomeSections.test.tsx`, `SiteHeader.test.tsx`, `Logo.test.tsx`, and the real-browser `tests/end-to-end/home-layout.spec.ts`.
@@ -291,7 +296,7 @@ Tests: `HomeSections.test.tsx`, `SiteHeader.test.tsx`, `Logo.test.tsx`, and the 
   typecheck are clean; the build is static (`/` 113 kB first load JS)
 - [x] CI and preview (2026-10-12, 6f7d5a6): Frontend CI passes (Backend CI did not run); the preview `/` is 200 and has
   `max-[399px]:sr-only`, `h-64 shrink-0` and `break-words`. The real-browser spec is not part of the pull request check (no browser there).
-- [ ] **For the owner:** if the heading is still cut off or the header links are missing at 768 px, say which browser, system and
+- [x] (no report since: the owner's checks on 2026-10-13 found nothing cut off) **For the owner:** if the heading is still cut off or the header links are missing at 768 px, say which browser, system and
   window size: it could not be reproduced in Chromium 152 (the 768 px page was correct there before this change).
 
 ## Review-focus edge cases
@@ -303,23 +308,31 @@ Checked by the tests and by the build (2026-10-11; the hero details changed on 2
 - [x] **Static page.** The build shows `/` as static (`○`, it was `ƒ` while it called the API): 6.5 kB, 113 kB first load JS.
 - [x] **The phone hero is the small file by construction** (one candidate, a media rule), not by luck with the pixel density.
 
-For the owner, in a browser (see the smoke test):
-- [ ] **320 px.** No sideways scrolling; the buttons stack; the header bar (wordmark, SwiftRescue, Menu) fits.
-- [ ] **A very long word or large text size.** The headings wrap; nothing is cut off.
-- [ ] **Phone: only the small hero.** At 360 px wide, with the cache off, the Network panel shows a request for
-  `hero-phone.webp` (about 28 kB) and none for `hero.webp` or `hero2`; at 1280 px it shows `hero.webp` and `hero2` and not
-  `hero-phone.webp`. Checked on a high-density phone too (it must still take the small file).
-- [ ] **First load under 500 KB.** At 360 px, cache off, before scrolling, the total transferred is under 500 KB; the other photos
-  load only when scrolled near.
-- [ ] **The hero photo is the largest contentful element** and is found at once (it is in the first HTML).
-- [ ] **Keyboard.** Tab goes through the header, the menu panel, the hero buttons, the cards and the footer in reading order; the
-  focus ring is visible on the dark header, the photo overlay and the white background.
-- [ ] **Screen reader.** One `h1`, then `h2`s; each card is one link with its label; icons are hidden; the photos have alt text.
+For the owner, in a browser (see the smoke test). Restated on 2026-10-13 for the current page (the first version of these boxes
+named `hero-phone.webp`, `hero2` and "How it works", which are gone) and ticked with the evidence:
+- [x] **320 px.** No sideways scrolling; the buttons stack; the header bar (the pin only, SwiftRescue, Menu) fits. (The owner saw it on
+  the preview; the real-browser spec and a 1-pixel sweep from 320 to 420 px, 2026-10-13.)
+- [x] **A very long word or large text size.** The headings wrap; nothing is cut off. (The real-browser check with a heading made much
+  wider passes; `break-words` on the heading.)
+- [x] **Phone: only the small hero.** At 375 px (cache empty) the page requests `hero3-phone.webp` (44.7 kB) and no other hero file; at
+  768 px and 1024 px only `hero3.webp` (149.3 kB). A real-browser test checks it at 375 and 768 px. (Not tried on a high-density
+  phone: the `<picture>` source has one candidate, so the pixel density cannot change the file.)
+- [x] **First load under 500 KB.** At 375 px, cache empty, before scrolling, 200.2 kB in 11 requests (304.8 kB at 768 px), measured
+  2026-10-13; the portrait photo is natively lazy (Chrome still starts it early on a short page).
+- [x] **The hero photo is the largest contentful element** and is found at once: Chromium's largest-contentful-paint entry is the
+  hero `<img>` at 375 px and at 1280 px, and the photo is in the first HTML (2026-10-13).
+- [x] **Keyboard.** At 1280 px Tab goes header (logo, SwiftRescue, For facilities), then the hero button, the five tiles, the owners
+  button, then the six footer links: reading order, every stop with a 3 px focus ring (the light `paper` ring on the dark header and
+  hero, the `forest` ring on white). The phone menu's Escape and focus return are in `MobileMenu.test.tsx`.
+- [x] **Screen reader structure.** One `h1`, then four `h2`s; every photo has alt text; every icon is hidden; every link and button
+  has a name; the logo is one image named "SwiftHealth Route"; `lang="en"` (checked in the browser, 2026-10-13). Not tried with a
+  real screen reader.
 - [x] **The 112 source.** The sources of decision 18 are real NCC pages (checked on 2026-10-11, quoted there); the page makes no
   promise about the answer, and it now carries the sentence of FR-26 (the owner asked for it).
 - [ ] **A call from a phone.** On a real phone, "Call 112" opens the dialler with 112 filled in. The owner does NOT place the
-  call to test it.
-- [ ] **Links that lead to "Coming soon".** `/list-your-facility` and `/about` still say "Coming soon" (decision 4);
+  call to test it. **Still open (2026-10-13): this needs a real phone and nobody has tried it.** What is checked: `/emergency` has the
+  red "Call 112" link to `tel:112`, the line about the list, and the FR-26 sentence (unit tests and a browser check).
+- [x] **Links that lead to "Coming soon".** `/list-your-facility` and `/about` still say "Coming soon" (decision 4);
   `/emergency` has the minimal page. The owner knows; nothing here hides it.
 
 ## Security checklist
@@ -336,21 +349,26 @@ For the owner, in a browser (see the smoke test):
 
 ## Smoke test (owner, on the Netlify preview)
 
-Updated on 2026-10-12 for the simpler page (Task 7).
-- [ ] Phone (a real phone): the hero is dark blue text on the lighter blue, readable, with one "Find care near me" button; the photo
-  is below the text and its bottom overlaps the edge into the next section without covering any text; the menu opens and closes;
-  SwiftRescue is always visible; every button and tile goes to the right place; nothing scrolls sideways.
-- [ ] Laptop at 1280 px: the text on the left and the photo on the right, overlapping the bottom edge of the hero into "How it
-  works" without covering its text; the five tiles in one row; the header shows all four links.
-- [ ] Laptop at about 768 px (the smallest tablet layout): the overlap is still clear of the text of the next part.
-- [ ] Laptop with DevTools at 360 px, Network, cache off, throttled to 3G: the first load is under 500 KB, only
-  `hero-phone.webp` is requested for the hero (no `hero.webp`), and `owner.webp` loads while scrolling.
-- [ ] The words match the brief (and the page says no city anywhere); the alt texts are right for the two new photos; the footer
-  has the six links and the copyright line only (no photo credit).
-- [ ] The two new photos look right, cut to 4:3 (the hero shows the face and the blister pack, the owner photo the person and the
-  hands on the counter), and neither is blurry or over-compressed. `hero4-phone.webp` is the only hero file a phone requests.
-- [ ] `/emergency`: the red Call 112 button, the line about the list and the FR-26 sentence; the button opens the dialler on a phone.
-- [ ] Other pages (`/find`, `/search`) still look right with the new header and footer.
+Updated on 2026-10-13 for the current page (it was written for Task 7; the hero, the photos, the header and the order of the parts
+changed since). Ticked after the owner approved the preview on 2026-10-13 and the checks above.
+- [x] Phone: the hero is the photo band on top and the white text on the blue gradient below it, with one white "Find care near me"
+  button; the header (logo, SwiftRescue, icon-only Menu) is correct at 320, 344, 360 and 370 px; nothing scrolls sideways; SwiftRescue
+  is always visible; the menu opens and closes (`MobileMenu.test.tsx`); every button and tile goes to the right place
+  (`HomePage.test.tsx`). (The owner checked the widths in a browser; "Call 112" on a real phone is the open box above.)
+- [x] Laptop at 1280 px: the text on the left, the photo filling the right half with the slanted edge, the transparent header on top,
+  the five tiles in one row, the header with SwiftRescue and For facilities (Find care is left out on the home page on purpose).
+  (The owner: "laptop and tablet look right".)
+- [x] Tablet (768 to 1023 px): the stacked layout, the photo band, the heading wrapped. (The owner: "laptop and tablet look right".)
+- [x] Network at a phone width, cache empty: the first load is 200.2 kB (under 500 KB), only `hero3-phone.webp` is requested for the
+  hero, and the portrait is natively lazy (Chrome starts it early on a short page). Measured, not throttled to 3G.
+- [x] The words match the brief (and the page says no city anywhere: a test); the alt texts are right for the two photos; the footer
+  has the six links and the copyright line only (no photo credit: a test).
+- [x] The two photos look right: the hero square keeps the stethoscope head and the whole gauge, the owners' portrait is whole and not
+  blurry (the owner approved the preview).
+- [x] `/emergency`: the red Call 112 link, the line about the list and the FR-26 sentence (checked in a browser, 2026-10-13); that the
+  link opens the dialler on a phone is the open box above.
+- [x] Other pages (`/find`, `/search`, `/emergency`, `/about`, `/list-your-facility`) answer 200 with the blue header bar, the footer
+  and no sideways scrolling at 375 px (checked in a browser, 2026-10-13); I did not judge how they look beyond that.
 
 ## Merge checklist
 
@@ -373,8 +391,9 @@ Updated on 2026-10-12 for the simpler page (Task 7).
   as `image/webp`, answers 404 for the old `hero.webp`, `hero-phone.webp` and `owner.webp`, and its home page has no `href="http…"`
   link, no "Magnific", no "Unsplash" and no "Enugu"; its `<picture>` has the phone-only source `hero4-phone.webp 640w`.
 - [x] The UI spec, the [roadmap](../roadmap.md) and `LOG.md` are up to date.
-- [ ] The smoke test above is done on the preview.
-- [ ] The pull request stays a draft until every box above is ticked.
+- [x] The smoke test above is done on the preview (2026-10-13).
+- [ ] The pull request stays a draft until every box above is ticked. **One box is still open: "A call from a phone" (a real
+  phone). The owner asked on 2026-10-13 to mark the pull request ready anyway; tick this box after trying it, before merging.**
 
 Note: this branch also carries `dc8685c` (the 6a "done" docs, a docs-only commit that was not yet on `main`), so the pull request
 shows it too. One run of the full suite had a single failure in `NearbySuggestions.test.tsx` that passed when run alone and in

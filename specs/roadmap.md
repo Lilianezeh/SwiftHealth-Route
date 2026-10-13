@@ -177,7 +177,7 @@ FR-07 (Should). The List | Map toggle and the Leaflet map on `/search`. Merged a
 - Still to do before launch (`LOG.md`, "To do later"): "Search this area", the tile provider review, and map tiles on the
   Privacy page.
 
-### Home page redesign (phase 13a, pulled forward by the owner, 2026-10-11). In progress (branch `feature/home-redesign`)
+### Home page redesign (phase 13a, pulled forward by the owner, 2026-10-11). Ready to merge (PR #21, branch `feature/home-redesign`; the owner approved the preview on 2026-10-13, one box left in the validation: "Call 112" on a real phone)
 US-13, NFR-01, FR-02, NFR-04, NFR-10, NFR-07, NFR-12. Frontend-only: `Backend CI` must not run on it. Feature folder:
 [requirements](2026-10-11-home-redesign/requirements.md), [plan](2026-10-11-home-redesign/plan.md),
 [validation](2026-10-11-home-redesign/validation.md). The new home page in 9 parts, the new header (with a phone menu) and
@@ -206,8 +206,13 @@ branch after this one.
   owner's review of the new preview is next
 - Task 13, widths 320 to 1023 px (owner, 2026-10-12): the heading never clips, the header fits at every width, a lower photo band,
   and a real-browser check (Playwright): **done** (640 tests); the owner's review of the new preview is next
+- Task 12, no forced tall hero below 1024 px: **done**
+- Task 14, the name SwiftHealth Route (one brand file), a new logo (a pin with a heartbeat line), an icon-only Menu, a siren on
+  SwiftRescue, a phone header that fits 320 px: **done** (657 tests); approved by the owner on 2026-10-13
 - Task 15, a faster home page (owner, 2026-10-13, Lighthouse mobile 37): cache headers for the photos, no prefetch of other pages, the
-  header and the footer as server components through route groups, no `next/image` client code: in progress
+  header and the footer as server components through route groups, no `next/image` client code: **done** (668 tests); JavaScript
+  131.9 to 111.9 kB, 12 to 7 files; the owner's Lighthouse on the preview: 37 to 64 (Total Blocking Time 1,420 ms: a follow-up in
+  `LOG.md` after the merge)
 - Task 6, wrap-up: checks and build **done** (584 tests; `/` is static, 113 kB first load JS); draft pull request next; the owner's
   review on the preview
 

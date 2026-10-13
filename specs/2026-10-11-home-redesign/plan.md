@@ -99,7 +99,7 @@ No backend change, no new package (`sharp` is already in `node_modules` through 
   `gh pr checks` and the Netlify preview link are in [validation.md](validation.md). (The photo script had saved each file by
   encoding it a second time, so a file was a little different from the one measured against its budget; it now writes the
   measured bytes. Found while checking the preview.)
-- [ ] The owner reviews the preview (phone and desktop; Network panel at phone width), see [validation.md](validation.md). Then
+- [x] (reviewed several times; approved on 2026-10-13, see Tasks 7 to 15) The owner reviews the preview (phone and desktop; Network panel at phone width), see [validation.md](validation.md). Then
   update the roadmap and `LOG.md` once, and tick the boxes with their commit hashes. (The owner's first review led to Task 7;
   review again after it.)
 
@@ -197,21 +197,21 @@ R42 to R47 in [requirements.md](requirements.md). Files: `netlify.toml` (cache h
 `app/(home)/`, `app/(public)/layout.tsx`, `app/(dashboards)/`, `app/not-found.tsx`; files moved with `git mv`, no URL changes),
 `PageFrame.tsx`, `SiteHeader.tsx`, `HeaderNavigation.tsx`, `SiteFooter.tsx` (server components), `HomeImage.tsx`, `prefetch={false}` on
 the home page's links, `scripts/optimize-home-images.mjs` (the file-name rule), and the tests. Done on the host (Docker Desktop's WSL
-integration was off). The owner checks the preview before any box is ticked.
-- [ ] Write the tests first (unit: netlify.toml headers, server components, prefetch off, route-group files and the layouts; real
+integration was off). The owner checked the preview before any box was ticked (2026-10-13).
+- [x] (8c84429) Write the tests first (unit: netlify.toml headers, server components, prefetch off, route-group files and the layouts; real
   browser: one hero photo per width, lazy portrait, no other page's code, the first HTML). They fail.
-- [ ] Make the changes; measure again (the same script as the baseline) and fill the before and after table in the validation.
-- [ ] Run lint, typecheck, the whole suite, the build and the real-browser spec, one at a time; commit; push; wait for the owner.
+- [x] (8c84429) Make the changes; measure again (the same script as the baseline) and fill the before and after table in the validation.
+- [x] (8c84429) Run lint, typecheck, the whole suite, the build and the real-browser spec, one at a time; commit; push; wait for the owner.
 
 ### Task 14: the name SwiftHealth Route, a new logo, a phone header with the full wordmark (tests first)
 R35 to R41 in [requirements.md](requirements.md). Part 1 (rename, siren, LOG, CLAUDE.md) is committed (67e6271). Part 2: `styles/globals.css`
 (`sky-pale`), `Logo.tsx` (the pin with the heartbeat line, the wordmark, two tones), `SiteHeader.tsx`, `MobileMenu.tsx` (icon-only),
 `HeaderNavigation.tsx` (a smaller SwiftRescue), `app/icon.svg`, the Playwright spec, and the tests. The owner checks the preview
-before any box below is ticked and before the pull request leaves draft.
-- [ ] Write the tests first (token, Logo, header, MobileMenu, icon, Playwright at 360 and 375 px). They fail.
-- [ ] Change the components; run the real-browser spec and a 1-pixel sweep until it passes, and decide from the 320 px measurement
-  whether "SwiftHealth" or only the pin is drawn below 360 px.
-- [ ] Run lint, typecheck, the whole suite and the build, one at a time, then commit and push; wait for the owner's preview check.
+before any box below is ticked and before the pull request leaves draft (done on 2026-10-13).
+- [x] (6475f57) Write the tests first (token, Logo, header, MobileMenu, icon, Playwright at 360 and 375 px). They fail.
+- [x] (6475f57) Change the components; run the real-browser spec and a 1-pixel sweep until it passes, and decide from the 320 px measurement
+  whether "SwiftHealth" or only the pin is drawn below 360 px (the pin only below 344 px; "SwiftHealth" alone from 344 px).
+- [x] (6475f57) Run lint, typecheck, the whole suite and the build, one at a time, then commit and push; wait for the owner's preview check.
 
 ### Task 13: widths 320 to 1023 px, a lower band, a header that fits, and a real-browser check (tests first)
 R31 to R34 in [requirements.md](requirements.md). Files: `HomeHero.tsx` (the stacked text column, a lower band), `SiteHeader.tsx`,
