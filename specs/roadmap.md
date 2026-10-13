@@ -240,6 +240,18 @@ in the browser, like `/search`. It also changes the Directions icon everywhere (
 sign with a right-turn arrow, drawn in code. Its feature folder and the UI spec 2.4 changes come first (Task 0). The owner's
 decisions are in the 6a requirements (6b decisions 1 to 10).
 
+### Find by type and home page wording. Next after phase 6b (owner, 2026-10-13; not started)
+US-01, US-13, FR-04, FR-05, NFR-01, NFR-07, NFR-10. Frontend only (the search API already filters on the exact category). It needs its own spec
+folder and a go-ahead on its plan; the full list of the owner's points, the proposed type words and the empty-results wording are in
+[`LOG.md`](../LOG.md) ("Find by type and home page wording").
+- Rename "Browse by type" to "Find by type"; a type tile shows only that type (checked on 2026-10-13: it already does).
+- A type word typed in the search box applies that type's filter (a reviewed word list for Nigerian usage).
+- A slim photo banner for the chosen type with a heading ("Pharmacies near you"); the owner's Magnific photos for now, converted to about 40 KB,
+  only the chosen photo downloads, the "Designed by Magnific" credit with its link on the search page only while a Magnific photo shows; the photo list
+  and the credit in one config file; a replaced photo gets a new file name. `hospital.jpg` and `maternity.jpg` are replaced first (`LOG.md`).
+- New words for the "Why SwiftHealth Route" section (was "Benefits"), the facility owners section, the hero and the Overview, and the page's meta
+  description; the empty search results mention that the first city is Enugu. Everything is checked at 320, 360 and 768 px.
+
 ### Phase 7: SwiftRescue, the emergency section. Next
 US-04, US-09, US-14.
 - 7a: `GET /emergency`

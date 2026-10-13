@@ -223,4 +223,7 @@ Public user accounts, patient reviews, native Android app, appointment and lab b
 - [ ] Will we show fees at launch if few facilities share them?
 - [ ] Who is the medical advisor and who reviews legal terms?
 - [ ] Final domain (swifthealth.ng or similar)?
+- [x] Price of a basic listing? **Free during launch** (owner decision, 2026-10-13; the home page says "Listing is free during our launch"). Paying never
+  buys the verified badge. Featured listings stay as FR-44 and FR-45 say: at most one, clearly labelled "Sponsored", never in SwiftRescue (FR-19).
+  Possible paid extras later: more photos, a monthly call and visit report.
 - [ ] Featured listing price? Placeholder: ₦5,000.00 per month (to be confirmed).

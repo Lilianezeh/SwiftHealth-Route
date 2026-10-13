@@ -207,6 +207,62 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   whose `src` changes, not five loaded and hidden). The login page shows `hero.jpg`. None of these photos appear on the home page,
   and the Magnific credit appears on those pages only. Needs its own spec, tests first, and the licence terms of the Magnific
   photos checked first (NFR-13); WebP files made with `scripts/optimize-home-images.mjs`-style budgets.
+- **Next feature after the listing page: "Find by type and home page wording" (owner, 2026-10-13). Not started: it needs its own spec in
+  `specs/<date>-find-by-type/`, tests first, and a go-ahead on the plan.** Roadmap entry: "Find by type and home page wording".
+  1. Rename the home section "Browse by type" to **"Find by type"**.
+  2. A type tile shows **only** that type. Checked on 2026-10-13: the tile goes to `/search?category=<slug>` and the API filters on the exact
+     slug, so no other type comes back (live check: hospital 4, clinic 2, maternity 2, pharmacy 6, laboratory 2, each only its own type).
+  3. **A type word typed in the search box applies that type's filter.** Proposed words for Nigerian usage (all lower case, plural and
+     spacing ignored; the whole query must be the type word, so "pharmacy ogui" stays a text search): *pharmacy*: pharmacy, pharmacies, chemist,
+     chemists, chemist shop, drug store, drugstore, patent medicine, PPMV; *hospital*: hospital, hospitals, general hospital, teaching
+     hospital, medical centre, medical center; *clinic*: clinic, clinics, health centre, health center, PHC, primary health centre,
+     dispensary; *maternity*: maternity, maternity home, maternity centre, maternity center, midwife; *laboratory*: lab, labs, laboratory,
+     laboratories, medical lab, diagnostic, diagnostics, diagnostic centre, diagnostic center. Not mapped on purpose: ambulance, police,
+     fire and blood (they belong to SwiftRescue and the Blood page). The owner reviews the list; typos stay with the existing fuzzy text search.
+  4. **A slim photo banner for the chosen type** at the top of the results, with a heading like "Pharmacies near you". Photos: the owner's
+     Magnific files in `/mnt/c/Users/Lilian/Desktop/IMAGES/` (`hospital.jpg`, `clinic.jpg`, `maternity.jpg`, `pharmacy.jpg`,
+     `laboratory.jpg`), converted with `scripts/optimize-home-images.mjs` to about 40 KB or less each, with alt text; only the chosen type's photo
+     downloads. The required **"Designed by Magnific" credit with its link** shows under the banner, on the search page only, and only while a
+     Magnific photo is showing. The photo list and the credit live in **one config file**, so Unsplash photos can replace them later; a replaced
+     photo gets a **new file name** (the photos are cached for a year, `netlify.toml`). No readable brand names and no identifiable patients.
+  5. **"Why" section:** the heading "Benefits" becomes **"Why SwiftHealth Route"** (the name comes from `config/brand.ts`) and the four cards read:
+     "Verified information" / "Our team checks each listing before it goes live and re-checks it regularly."; "See what's open now" / "Find places
+     open right now, including late-night and 24-hour services."; "Built for mobile data" / "Light pages built for a weak connection.";
+     "Your location stays private" / "Your location is used only to show places near you. We don't store it." (Checked: the position is kept in the
+     browser tab and sent to the API for each search; the API does not store it and scrubs `lat` and `lng` from its logs, api-spec "Privacy (NFR-07)".)
+  6. **Facility owners section:** heading "Own or manage a healthcare facility?"; text "List your facility on SwiftHealth Route so people nearby can
+     find you, call you and get directions. Listing is free during our launch, and every listing is checked by our team before it goes live."; the
+     button stays "List your facility" (the page behind it is still "Coming soon", phase 10). "Free during launch" is the owner's decision, now in
+     `specs/prd.md` (Open questions).
+  7. **Hero and Overview:** hero heading "Find care that's open now, near you."; hero text "Verified hospitals, clinics, pharmacies and labs, with phone
+     numbers, opening hours and directions."; the button "Find care near me" and the small line "Free to use · No sign-up needed" stay. Overview
+     heading "What is SwiftHealth Route?"; text "SwiftHealth Route is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes,
+     pharmacies and laboratories near you, see which are open right now, and call or get directions in one tap. Our team checks every listing before it
+     goes live and re-checks it regularly." ("Built for Nigeria" stays, the owner's decision.) The page's meta description is updated to match.
+  8. **Empty search results (today and proposed).** Today `SearchStatus` says "No matches. Try removing a filter or widening the distance." (and the
+     nearby cards say "No open pharmacy found nearby. Try a wider search."). Proposed: keep that first line when a filter is on, say "No places found
+     near you yet." when there is no filter, and add a second line in both cases: **"We're starting in Enugu and adding more places soon."** (the search
+     page may name the city; the home page does not). The owner confirms the exact words in the spec.
+  9. Check that every new headline, line and card fits at **320, 360 and 768 px** without being cut off (the real-browser check).
+- **Overview sentence to add back, and one to change (owner, 2026-10-13).** (a) The sentence "If a number doesn't work, you can tell us so we can fix it."
+  was taken out of the Overview because the report form is still a "Coming soon" page: add it back when the report form is live (roadmap **Phase 9a**,
+  `POST /reports` and the form, FR-20 and FR-21). (b) When the WhatsApp button is live (the listing page), change "call or get directions in one tap" in
+  the Overview to "call, chat on WhatsApp or get directions in one tap".
+- **Decide pricing (owner, 2026-10-13).** Basic listing free during launch. Paying never buys the verified badge. Featured listings follow FR-44 and FR-45:
+  at most one, clearly labelled Sponsored, never in SwiftRescue (FR-19). Possible paid extras later: more photos, a monthly call and visit report. (The
+  free-during-launch part is recorded in `specs/prd.md`, Open questions. The featured price is still the open placeholder of ₦5,000.00 per month.)
+- **Before public launch: remove or clearly mark the demo listings, so every live "verified" claim is true (owner, 2026-10-13).** Already planned in part:
+  roadmap **14d** removes them at the end (`REMOVE_DEMO_LISTINGS=true` on Render, redeploy, confirm `/search?q=DEMO` returns 0, set it back to `false`).
+  Not planned: anything before then. The live site shows 4 fictional demo listings today next to the home page's words about verified listings, so
+  either remove them earlier or add a visible "Demo" mark to every demo listing (card, page and map popup) until 14d. Decide with the owner.
+- **Replace two Magnific photos before the "Find by type" feature (owner, 2026-10-13).** `hospital.jpg` shows a patient in a hospital bed with her face clearly
+  visible (and is a tall 9:16 portrait, hard to crop into a slim banner); `maternity.jpg` is a doctor consultation with a pill bottle, not a maternity scene.
+  `pharmacy.jpg` is optional to replace (its hands look slightly unnatural, so it may be AI-generated). `clinic.jpg` and `laboratory.jpg` are fine
+  (no patients, no readable brand names at preview size). A replacement gets a new file name.
+- **Idea: a small WhatsApp button on the search result cards (owner, 2026-10-13).** Not in the listing page phase. It needs the API to say whether a
+  card's primary number is a WhatsApp number (`primary_phone_is_whatsapp` on `ListingSummary`, filled by the query that fills `primary_phone`; search, emergency
+  and blood results share the shape) and an icon-only 48 px button after Call and Directions (the official glyph, accessible name "WhatsApp <name>").
+  The map popups would stay as they are. Needs its own small phase, backend and frontend, tests first.
 
 ## Day 1 — 2026-10-04
 - **Built:** Repo skeleton, Docker Compose, spike for open-now + nearest search.
