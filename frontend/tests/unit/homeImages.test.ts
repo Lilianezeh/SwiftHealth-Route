@@ -5,7 +5,7 @@
  * dropped or replaced are deleted.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { HOME_PHOTOS, type HomePhoto } from "@/config/home";
@@ -106,18 +106,20 @@ describe("the home page photos", () => {
 });
 
 describe("the photo files in the repository", () => {
-  it("have no original JPG, JPEG or PNG anywhere in public/", () => {
+  it("have no original JPG, JPEG or PNG anywhere in public/, except the one small WhatsApp glyph (a brand file, not a photo)", () => {
     const found: string[] = [];
     const walk = (folder: string) => {
       for (const entry of readdirSync(folder, { withFileTypes: true })) {
         const path = join(folder, entry.name);
         if (entry.isDirectory()) walk(path);
-        else if (/\.(jpe?g|png)$/i.test(entry.name)) found.push(path);
+        else if (/\.(jpe?g|png)$/i.test(entry.name)) found.push(path.replace(`${FRONTEND}${sep}`, ""));
       }
     };
     walk(join(FRONTEND, "public"));
 
-    expect(found).toEqual([]);
+    // The listing page's WhatsApp button uses the owner's WhatsApp glyph, only scaled to 72 x 72 (whatsappGlyph.test.ts): a PNG with
+    // transparency, a few kilobytes. It is the one exception; any other PNG or JPG, such as a photo original, is still refused.
+    expect(found).toEqual([join("public", "images", "brand", "whatsapp-glyph-72.png")]);
   });
 
   it("keep the full-size originals out of git: image-sources/ is ignored by frontend/.gitignore", () => {

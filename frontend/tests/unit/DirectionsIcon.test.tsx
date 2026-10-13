@@ -70,11 +70,15 @@ describe("the one Directions button, in every place", () => {
     expect(link).toHaveAccessibleName("Directions to Night Pharmacy A (opens in a new tab)");
   });
 
-  it("is the only Directions button: the cards and the map popups use it, and no file still draws the old lucide Route icon", () => {
+  it("is the only Directions button: the cards, the map popups and the listing page use it, and no file still draws the old lucide Route icon", () => {
     const files = sourceFiles();
     const users = files.filter((file) => file.text.includes("<DirectionsButton")).map((file) => file.path.replace(process.cwd(), ""));
     expect(users.sort()).toEqual(
-      ["/src/components/listings/ListingCard.tsx", "/src/components/search/MapPopup.tsx"].sort(),
+      [
+        "/src/components/listing/ContactButtons.tsx", // the listing page
+        "/src/components/listings/ListingCard.tsx", // the result cards
+        "/src/components/search/MapPopup.tsx", // the map popups
+      ].sort(),
     );
     for (const file of files) {
       expect(file.text, file.path).not.toMatch(/import \{[^}]*\bRoute\b[^}]*\} from "lucide-react"/s);
