@@ -244,6 +244,14 @@ Open reminders. Each says when it is due. Remove a line once it is done.
      near you yet." when there is no filter, and add a second line in both cases: **"We're starting in Enugu and adding more places soon."** (the search
      page may name the city; the home page does not). The owner confirms the exact words in the spec.
   9. Check that every new headline, line and card fits at **320, 360 and 768 px** without being cut off (the real-browser check).
+  10. **The "Near you" section on `/find` must not show the same place twice (owner, 2026-10-13).** Seen on the live site: "DEMO – Always Open
+     Pharmacy" was both "Closest open pharmacy" and "Closest open 24-hour place". Today the two cards in `NearbySuggestions` load on their own, each
+     asking for `limit=1`, so neither knows what the other shows. Wanted: when both slots would show the same listing, the second slot shows the **next closest
+     different 24-hour place** (so that card asks for `limit=2` and takes the first listing that is not the pharmacy card's; or the parent compares the two
+     answers); if there is no other 24-hour place, show **one card with both labels** ("Closest open pharmacy" and "Closest open 24-hour place", spanning
+     both columns) instead of two identical cards. Tests first: (a) two different answers show two cards; (b) the same listing first in both shows the
+     second 24-hour listing in the second slot; (c) the same listing and no second one shows a single card with both labels; (d) the second card never
+     shows a listing that the first one shows; (e) a failure or an empty answer in one card does not change the other; no position in any address.
 - **Overview sentence to add back, and one to change (owner, 2026-10-13).** (a) The sentence "If a number doesn't work, you can tell us so we can fix it."
   was taken out of the Overview because the report form is still a "Coming soon" page: add it back when the report form is live (roadmap **Phase 9a**,
   `POST /reports` and the form, FR-20 and FR-21). (b) When the WhatsApp button is live (the listing page), change "call or get directions in one tap" in

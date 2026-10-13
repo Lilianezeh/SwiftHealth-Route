@@ -253,6 +253,8 @@ folder and a go-ahead on its plan; the full list of the owner's points, the prop
   and the credit in one config file; a replaced photo gets a new file name. `hospital.jpg` and `maternity.jpg` are replaced first (`LOG.md`).
 - New words for the "Why SwiftHealth Route" section (was "Benefits"), the facility owners section, the hero and the Overview, and the page's meta
   description; the empty search results mention that the first city is Enugu. Everything is checked at 320, 360 and 768 px.
+- On `/find`, the "Near you" cards never show the same place twice: if the closest open pharmacy is also the closest open 24-hour place, the second
+  card shows the next closest different 24-hour place, or, when there is none, one card carries both labels. With a test (`LOG.md`, item 10).
 
 ### Phase 7: SwiftRescue, the emergency section. Next
 US-04, US-09, US-14.
