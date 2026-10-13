@@ -371,6 +371,26 @@ changed since). Ticked after the owner approved the preview on 2026-10-13 and th
 - [x] Other pages (`/find`, `/search`, `/emergency`, `/about`, `/list-your-facility`) answer 200 with the blue header bar, the footer
   and no sideways scrolling at 375 px (checked in a browser, 2026-10-13); I did not judge how they look beyond that.
 
+## After the merge: the live site (2026-10-13)
+
+PR #21 is merged (`2fec908`). The owner checked the live site (Incognito, Lighthouse mobile):
+
+| | Preview before the speed work | Preview after it | **Live site after the merge** |
+| --- | --- | --- | --- |
+| Performance | 37 | 64 | **73** |
+| Accessibility | | 100 | **100** |
+| Best Practices | | 100 | **100** |
+| SEO | | | **92** |
+| First Contentful Paint | | 2.2 s | **1.1 s** |
+| Largest Contentful Paint | | 2.9 s | **1.4 s** |
+| Cumulative Layout Shift | | 0.006 | **0.004** |
+| Speed Index | | | **4.2 s** |
+| Total Blocking Time | | 1,420 ms | **1,300 ms (red)** |
+
+- Total Blocking Time is still red: a follow-up is in `LOG.md` (to be investigated after the listing page).
+- "Call 112" opens the dialler on the owner's Honor phone (the call was not placed).
+- The header is correct at 320, 344, 360 and 370 px on the live site.
+
 ## Merge checklist
 
 - [x] `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` are clean (2026-10-12, on `1f1cdcc`): lint and

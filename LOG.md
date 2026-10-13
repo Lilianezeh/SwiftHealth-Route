@@ -176,10 +176,21 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   measures the home page in a real browser at 320 to 1100 px. It is not in the pull request check on purpose (owner, 2026-10-13):
   the check has no browser, and adding one means an install step and a built site to open (slower). Revisit when more screens
   have a layout worth guarding; the Alpine container needs `apk add chromium` and `CHROMIUM_PATH=/usr/bin/chromium`.
-- **Run Lighthouse on the main site after PR #21 merges; if Total Blocking Time is still red there, investigate in a follow-up.**
-  (Owner, 2026-10-13.) On the preview, mobile in Incognito, the score went from 37 to 64: Accessibility 100, Best Practices 100,
-  FCP 2.2 s, LCP 2.9 s, CLS 0.006, Total Blocking Time 1,420 ms (still the weak point; about 101 kB of the JavaScript is the
-  Next.js and React runtime).
+- **Home page Total Blocking Time is red (1,300 ms): investigate after the listing page.** (Owner, 2026-10-13.) PR #21 is merged. On the
+  live site (Incognito, Lighthouse mobile) the scores are Performance 73 (the preview before the speed work: 37), Accessibility 100,
+  Best Practices 100, SEO 92; FCP 1.1 s, LCP 1.4 s, CLS 0.004, Speed Index 4.2 s, Total Blocking Time 1,300 ms (red). The record is
+  in `specs/2026-10-11-home-redesign/validation.md`. Lighthouse's clues to follow: JavaScript execution 1.9 s; main-thread work
+  4.7 s; 15 long tasks; forced reflow; document request latency (about 540 ms of estimated savings); legacy JavaScript 11 KiB; and
+  the "Powered by Netlify" badge on the live site. About 101 kB of the JavaScript is the Next.js and React runtime, which cannot be
+  removed. Needs its own small spec and a before and after measurement.
+- **Later feature: privacy-friendly usage tracking (owner, 2026-10-13).** Three parts. (1) Visit analytics with a cookie-free
+  tool: compare Cloudflare Web Analytics, GoatCounter and Umami; no Google Analytics. (2) Our own daily counts of searches and of
+  Call, WhatsApp and Directions taps per listing, with no IP address, no location and no personal data. (3) Update the Privacy page
+  to explain all of it. What the PRD already says: `specs/prd.md`, section "Analytics", asks for anonymous events only (searches
+  with term, category and filters, listing views, Call taps, Directions taps, Emergency page opens, emergency list shares, reports
+  submitted) and the roadmap lists it as phase 14c. It does not cover WhatsApp taps (FR-47 came later), a visit analytics tool, daily
+  counts per listing, or what the Privacy page must say; and storing a search term can hold personal data, so decide in the spec
+  whether to keep the term at all (NFR-07). Needs its own spec, tests first.
 - **A new home page photo needs a new file name (owner's performance fix, 2026-10-13).** `netlify.toml` now caches `/images/*` for a
   year (`immutable`), because the photos were revalidated on every visit and Lighthouse scored 37 on mobile. A photo replaced under
   the same name would stay in visitors' caches, so change the `target` in `scripts/optimize-home-images.mjs` and the `src` in
