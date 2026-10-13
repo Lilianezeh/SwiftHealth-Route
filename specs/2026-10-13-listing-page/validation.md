@@ -15,6 +15,10 @@ of the feature, with the evidence, after the owner has checked the preview. Chec
   First Load limit of D10 (115 kB) is met exactly; the own-JavaScript target of **8 kB is missed by 0.48 kB** (the page's parts all ship to
   the browser because the page loads its data there). No map, chart or `next/image` code is on the page (a test and the browser check).
   The owner decides whether 8.5 kB is fine or whether to trim further.
+- Backend, whole suite in the container after the last change: **790 passed** (769 before this feature, plus 21 for the fixture).
+- Pull request #22 (draft), on `ac1deb1`: `Frontend CI` **pass** (1m54s) and `Backend CI` **pass** (1m23s); Netlify `Header rules` and
+  `Redirect rules` pass, `Pages changed` skipping, `deploy-preview` pass: <https://deploy-preview-22--swifthealth-ng.netlify.app>. The preview
+  answers 200 on `/listing/demo-always-open-pharmacy-ogui` and serves `whatsapp-glyph-72.png` (3,963 bytes, `image/png`, cached for a year).
 - Looked at by me in screenshots (phone 375 px and laptop 1024 px): the layout, the Call and WhatsApp buttons side by side, the Directions
   road-sign icon at 24 px, the amber notice, "Today" in the hours, the fees, the share buttons. Not looked at: real phones.
 - The preview (Netlify) uses the production API, which has the demo listings and no fixture: a demo listing's page shows no WhatsApp button
