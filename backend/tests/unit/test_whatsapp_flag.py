@@ -114,10 +114,14 @@ async def test_no_demo_listing_phone_is_marked_whatsapp(session: AsyncSession) -
 
 
 def test_the_seed_and_demo_code_never_set_is_whatsapp() -> None:
+    """Only one seed file may mention the flag: the local, development-only fictional fixture of
+    specs/2026-10-13-listing-page/requirements.md D11, which the owner asked for so the WhatsApp button can be seen
+    locally. Its numbers are the impossible +234-then-a-zero form, so no real person can be reached. The main seed
+    (seed.py, seed_data.py) and the production demo listings (demo_listings*.py) still never set it."""
     offenders = [
         str(file.relative_to(BACKEND_FOLDER))
         for file in sorted((BACKEND_FOLDER / "seed").glob("*.py"))
         if "is_whatsapp" in file.read_text()
     ]
 
-    assert offenders == []
+    assert offenders == ["seed/whatsapp_fixture.py"]
