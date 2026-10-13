@@ -13,6 +13,10 @@ services:
 
   backend:
     build: ./backend
+    # Local only: run as uid 1000, gid 1000 (the same ids as the first user of a normal Linux or WSL install) so the files that the
+    # container writes into the mounted ./backend (__pycache__, .pytest_cache, .ruff_cache) are yours, not root's. It is set here
+    # and not in backend/Dockerfile, because Render builds that Dockerfile for production (render.yaml) and this change is not tested there.
+    user: "1000:1000"
     env_file: .env
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes: [./backend:/app]
