@@ -95,7 +95,10 @@ no legal claim about them. A different file later gets a different file name (th
 - New token: `whatsapp-dark` `#075E54` (the border). No `whatsapp` token is needed: the green is inside the file. Plain `#25D366` with white text is not
   used (1.98:1). `design-tokens.test.ts` checks `ink` on white (15.83:1), `#075E54` on white (7.67:1), and `ink` on `open-bg` (14.17:1).
 - **Not chosen:** Option B (a `#075E54` button with white text, 7.67:1) and a generic green chat bubble as a fallback (not needed: the official glyph is available).
-- Call stays the primary button; this one is a secondary button, and the glyph appears **once** on the page (the brand rule about prominence).
+- Call stays the primary button; this one is a secondary button. The glyph appears **only inside a WhatsApp button** (once for each number
+  marked as WhatsApp, so a listing with two WhatsApp numbers has two), never in the Share buttons or anywhere else: the brand rule is that
+  WhatsApp's mark must not be the most prominent thing on the page, and Call is bigger and filled. (Corrected during the build: the first
+  wording said "once on the page", which could not hold for a listing with two WhatsApp numbers.)
 
 ### D3. WhatsApp on the search result cards: not in this phase (owner's decision)
 The cards and the map popups have only `primary_phone`, with no flag, and they do not change. A small icon-only WhatsApp button on the cards
@@ -138,7 +141,9 @@ The cards and the map popups have only `primary_phone`, with no flag, and they d
   rest stay as they are.
 - **Last verified (US-07):** the existing `VerifiedDate` ("Verified 3 days ago") and, when `verification_due` is `true`, the "Verification
   due" label of the cards.
-- **Disclaimer (FR-13):** the API's `disclaimer` text, at the bottom, 16 px.
+- **Disclaimer (FR-13):** the API's `disclaimer` text, at the bottom, 16 px. The API sentence now says "SwiftHealth Route is a directory and does
+  not give medical advice. Fees are estimates; confirm with the facility." (it said SwiftHealth: the rename of 2026-10-13 applies to what is on
+  screen; `backend/app/services/listing_service.py`, with its test and the api-spec example).
 - **Report link:** "Report a problem with this listing" to `/report/<id>` (that page is a "Coming soon" placeholder until roadmap phase 9a).
 - **No medical advice anywhere** (CLAUDE.md); the page says what the facility is and when it is open, nothing else.
 

@@ -3,6 +3,25 @@
 Spec: [requirements.md](requirements.md). Plan: [plan.md](plan.md). **Nothing is built yet: every box is open.** Boxes are ticked at the end
 of the feature, with the evidence, after the owner has checked the preview. Check this file before saying the feature is done.
 
+## Build results (2026-10-13, before the owner's preview check; the boxes below stay unticked until the owner has checked)
+
+- Frontend, in the container: `npm run lint` clean, `npm run typecheck` clean, **824 unit tests pass** (67 files), the build passes.
+- Backend, in the container: `ruff check .` clean; the whole suite passed except one guard test that I then updated on purpose
+  (`test_the_seed_and_demo_code_never_set_is_whatsapp` now names the one fixture file); that test, the disclaimer test and the listing
+  detail API tests pass after the change (the whole backend suite is run once more before the pull request is ready).
+- Real browser (Playwright, the local fixture, the dev site): **19 of 19 pass** at 320, 375, 768 and 1024 px (this machine's Chromium uses a wide
+  fallback font, wider than a phone's).
+- Size: the route `/listing/[slug]` is **8.48 kB** of its own JavaScript and **115 kB First Load** (the shared runtime is 103 kB). The
+  First Load limit of D10 (115 kB) is met exactly; the own-JavaScript target of **8 kB is missed by 0.48 kB** (the page's parts all ship to
+  the browser because the page loads its data there). No map, chart or `next/image` code is on the page (a test and the browser check).
+  The owner decides whether 8.5 kB is fine or whether to trim further.
+- Looked at by me in screenshots (phone 375 px and laptop 1024 px): the layout, the Call and WhatsApp buttons side by side, the Directions
+  road-sign icon at 24 px, the amber notice, "Today" in the hours, the fees, the share buttons. Not looked at: real phones.
+- The preview (Netlify) uses the production API, which has the demo listings and no fixture: a demo listing's page shows no WhatsApp button
+  (every demo number has `is_whatsapp` false, as designed) and still says "SwiftHealth is a directory" until this branch is merged and Render
+  redeploys. The WhatsApp button, the notice and the other fixture cases are seen locally at
+  `http://localhost:3000/listing/test-fixture-whatsapp-clinic` after `docker compose exec backend python -m seed.whatsapp_fixture`.
+
 ## Requirements checked by tests
 
 - [ ] **US-02, FR-10, D1:** Call is the primary button; it is the largest; the primary phone is first; each other phone has its own Call button
@@ -11,7 +30,7 @@ of the feature, with the evidence, after the owner has checked the preview. Chec
   (the conversion is tested on its own: plus, local, bare, spaces, dashes, wrong lengths give no button); it opens in a new tab with
   `rel="noopener noreferrer"`; its accessible name says the facility and "opens in a new tab"
 - [ ] **D2, the icon:** the owner's WhatsApp glyph, only scaled (`whatsapp-glyph-72.png`: 72 × 72, one colour `#25D366`, transparent), is an `<img>` with empty alt
-  shown at 24 px; the label is "WhatsApp"; the glyph appears once on the page; the link format quotes the owner's two sentences from the help page
+  shown at 24 px; the label is "WhatsApp"; the glyph appears only inside the WhatsApp buttons (one for each marked number) and nowhere else; the link format quotes the owner's two sentences from the help page
 - [ ] **D2, the look and the contrast (Option A):** a white button with a `#075E54` border and an `ink` label; every pair passes in
   `design-tokens.test.ts` (`ink` on white 15.83:1, border `#075E54` on white 7.67:1, `ink` on the `open-bg` hover 14.17:1); no white text on `#25D366`
 - [ ] **US-03, D5:** one `DirectionsIcon` (a diamond road sign with a right-turn arrow, drawn in code) is used by the result cards, the map popups and the

@@ -233,9 +233,11 @@ FR-09 to FR-11, FR-13, FR-47, US-06, US-07, FR-08, FR-22. Backend-only: `Fronten
   (`6fdb5fa`); production checked by the owner (the migration ran, `/listings/<slug>` answers, an unknown slug is a 404,
   `/docs` lists it, search total still 4)
 
-#### Phase 6b: the listing page. In progress: spec written and the owner's answers recorded (2026-10-13); no code yet
+#### Phase 6b: the listing page. Built (2026-10-13), waiting for the owner's preview check; the plan's boxes are ticked after it
 Feature folder: [requirements](2026-10-13-listing-page/requirements.md), [plan](2026-10-13-listing-page/plan.md), [validation](2026-10-13-listing-page/validation.md).
-Branch `feature/listing-page`, 6a is merged. The first build step shows the owner the drawn Directions icon before it is wired in.
+Branch `feature/listing-page`, 6a is merged. Built: the Directions road-sign icon at 24 px everywhere, the listing page with Call, WhatsApp
+(Option A, the owner's glyph), 12-hour hours, fees, the reported notice, share and copy, the not-found page, a local fictional fixture
+(`python -m seed.whatsapp_fixture`), and a real-browser check. Open for the owner: own JavaScript 8.48 kB against a target of 8 kB.
 US-02, US-03, FR-09 to FR-13 and FR-47 (FR-12 Share and FR-47 WhatsApp are Shoulds). The page with Call, WhatsApp (for numbers marked as WhatsApp) and
 Directions buttons, the 12-hour hours table, the fees, share, the report link and the notice for a reported listing. It loads
 in the browser, like `/search`. It also changes the Directions icon everywhere (cards, map popups, the page) to a diamond road

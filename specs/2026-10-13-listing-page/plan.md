@@ -1,9 +1,10 @@
 # Plan: the listing page (phase 6b)
 
 Spec: [requirements.md](requirements.md). Validation: [validation.md](validation.md). Branch `feature/listing-page`.
-**Nothing below is built yet.** The owner answered the six questions on 2026-10-13 (see `requirements.md`); the build starts with Task 1, which
-shows the owner the drawn Directions icon before it is wired in, and goes on only after the owner agrees. Boxes are ticked with their commit hash at
-the end of the feature, once, together with the roadmap and `LOG.md`.
+**Built on 2026-10-13, waiting for the owner's preview check.** The owner answered the six questions (see `requirements.md`), approved the
+Directions icon at 24 px, and Tasks 1 to 7 are done in these commits: Task 1 `8be3083`; Tasks 2 and 3 `11ac28b`; Task 4 `0ab68aa` (the
+building blocks) and `630ea4a` (the components); Task 5 `54c9b45`; Task 6 `da4e8a2` and `e5d85e3`; the disclaimer rename `54dcf65`; Task 7
+`57618d3`. As with the home page, the boxes below are ticked with their commit hash only after the owner has checked the preview (Task 8).
 
 Files that will change or appear (frontend unless written otherwise):
 - `components/listings/DirectionsIcon.tsx` (new), `DirectionsButton.tsx` (uses it): the road-sign icon, everywhere.
