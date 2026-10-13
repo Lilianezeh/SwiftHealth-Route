@@ -1,6 +1,7 @@
 # Requirements: the listing page (phase 6b)
 
-Branch `feature/listing-page`. Status: **spec written, waiting for the owner's review. No code yet.**
+Branch `feature/listing-page`. Status: **spec updated with the owner's answers (2026-10-13). No code yet** (the first step of the build is to
+show the owner the drawn Directions icon).
 Roadmap: phase 6b (6a, the API `GET /listings/{slug}`, is merged: PR #20). Frontend and one local-only seed fixture; no API change.
 
 ## What this covers
@@ -31,7 +32,17 @@ The API (`GET /listings/{slug}`, `specs/backend/api-spec.md`) already returns ev
 404 `{"detail": "Listing not found"}`. **This phase changes no API and no table** (still 9 tables).
 
 The owner's earlier decisions for 6b are in `specs/2026-10-11-listing-detail-api/requirements.md` ("Owner's decisions for phase 6b", 1 to 10).
-This file keeps them, and **replaces decision 9** (the icon and the message of the WhatsApp button) and decision 3's message (see D4 and D7).
+This file keeps them and **replaces decision 9** (the icon and the message of the WhatsApp button): see D2.
+
+## The owner's answers (2026-10-13), and where they are used
+
+1. Button look: **Option A** (white button, the official green glyph, dark text, a `#075E54` border) → D2.
+2. Official icon: the owner's file `/mnt/c/Users/Lilian/Desktop/IMAGES/whatsapp.png`, which the owner downloaded from Meta's brand resources site;
+   a scaled-down copy goes under `frontend/public/images/brand/` (scaling is allowed; no recolouring, no editing) → D2.
+3. Cards: WhatsApp on the listing page only for now; a small card button is a `LOG.md` idea for later → D3.
+4. Help page: "How to use click to chat", <https://whatsapp.com/faq/en/general/26000030>, quoted in D2 and in the unit tests; the caveat is gone → D2.
+5. Share message: `<facility name> on SwiftHealth Route: <link>` → D4.
+6. A 24-hour listing shows **"Open 24 hours, every day"** instead of the table → D6.
 
 ## Decisions
 
@@ -45,80 +56,59 @@ This file keeps them, and **replaces decision 9** (the icon and the message of t
 - Layout: the buttons wrap (`flex-wrap`, each at least 8.5 rem wide), so on a 320 px screen WhatsApp drops under Call instead of
   being squeezed. No sideways scroll (a real-browser check).
 
-### D2. The WhatsApp button (FR-47), with two looks for the owner to choose from
-**Link.** `https://wa.me/<number>?text=<message>` with the number in international form, digits only (no `+`, no spaces, no dashes, no
-leading zero): a stored `+2348030000000` and a local `08030000000` both give `2348030000000`. The function that converts is new, pure and
-tested on its own (the `+234` form, the local `0803` form, the bare `234` form, spaces and dashes, and wrong lengths give no button).
-It is built on the existing `toE164` rule: a Nigerian number is `234` and ten digits. The link opens in a new tab with
-`rel="noopener noreferrer"`. Its accessible name is "WhatsApp <facility name> (opens in a new tab)".
-**Message** (exactly, URL-encoded): `Hello, I found you on SwiftHealth Route.` (the name comes from `config/brand.ts`). It never holds a
-position, a slug, a name or anything else.
+### D2. The WhatsApp button (FR-47): Option A, the official glyph
+**The link.** `https://wa.me/<number>?text=<message>` with the number in international form, digits only: no `+`, no spaces, no dashes, no leading zero.
+A stored `+2348030000000` and a local `08030000000` both give `2348030000000`. The function that converts is new, pure and tested on its own
+(the `+234` form, the local `0803` form, the bare `234` form, spaces and dashes, and wrong lengths give no button), built on the existing `toE164` rule:
+a Nigerian number is `234` and ten digits. The link opens in a new tab with `rel="noopener noreferrer"`. Its accessible name is
+"WhatsApp <facility name> (opens in a new tab)".
+**The message** (exactly, URL-encoded): `Hello, I found you on SwiftHealth Route.` (the name comes from `config/brand.ts`). It never holds a position, a slug,
+a name or anything else.
 
-**Official source for the link format** (CLAUDE.md: never invent another service's fields):
-WhatsApp Help Center, "How to use click to chat": <https://faq.whatsapp.com/5913398998672934>. As summarised by a search of that page on
-2026-10-13: the link is `wa.me/<number>`; the number is the full phone number in international format; zeroes, brackets and dashes are
-left out; a prefilled message is `https://wa.me/<number>?text=<urlencodedtext>`; the number must have an active WhatsApp account. **Caveat:**
-that page is drawn by JavaScript and its full text could not be fetched here, so before Task 2 the owner or I open it in a browser and
-confirm the sentence about the number format; the unit tests then quote it. (Meta also documents `wa.me/message/<code>` short links for
-businesses, which hide the number, but those need a WhatsApp Business setup per listing and are not used here.)
+**The official source for the format.** WhatsApp Help Center, "How to use click to chat": <https://whatsapp.com/faq/en/general/26000030>.
+The owner supplied these sentences from that page (I could not open it myself; the owner's text is quoted as given), and the unit tests quote them:
+- "Use https://wa.me/<number> where the <number> is a full phone number in international format. Omit any zeroes, brackets, or dashes when adding the phone number in international format."
+- "Use https://wa.me/whatsappphonenumber?text=urlencodedtext where whatsappphonenumber is a full phone number in international format and urlencodedtext is the URL-encoded pre-filled message."
+- The general format page also says to remove any leading 0s.
 
 **The icon: what WhatsApp's brand guidelines say.** Page: "WhatsApp brand assets and guidelines" (Meta Brand Resource Center),
-<https://www.whatsappbrand.com/> (it redirects to <https://www.meta.com/en-gb/brand/resources/whatsapp/whatsapp-brand/>). Read on 2026-10-13:
-- Only the official assets may be used: "You can only use the official WhatsApp Brand Resources that are available from the WhatsApp Brand
-  Resources website", and "you may not modify the WhatsApp Brand Resources in any way" (no recolouring: "You shouldn't modify any colours in
-  our logos"). They may be scaled "as long as they are not the most distinctive or prominent feature on your web page".
-- Do not "combine the WhatsApp name or logos ... with any other logo, company name, mark or generic terms"; do not "use an image
-  confusingly similar to the WhatsApp telephone logo"; do not imply "partnership, sponsorship or endorsement by WhatsApp"; write the
-  name "WhatsApp" with a capital W and A, never abbreviated, in the same font size and style as the text around it.
-- The page gives no hex value, no clear-space rule and no minimum size, and says nothing specific about a "chat on WhatsApp" button
-  (search results mention a branded "Chat on WhatsApp" button in green and white on the help centre, which I could not open).
-- **So the official icon may be used to link to a chat, if it is the official, unmodified file.** That is the plan: the **official WhatsApp
-  glyph, unchanged**, with the label "WhatsApp" (plain text, same size as the other buttons' labels).
-- **Needs the owner:** I cannot download the official files (the brand site serves them behind its own download page). The owner
-  downloads the glyph (the green one, and the white one if Option B is chosen) from the brand resources site and gives me the files; I
-  add them **unmodified** as `<img>` files under `frontend/public/images/brand/` (no recolouring, no inline editing). The owner also reads
-  the site's terms before launch (NFR-13); this spec makes no legal claim about them.
-- **Fallback, only if the owner cannot or does not want to use the official file:** a plain green chat bubble (lucide `MessageCircle`,
-  never a handset, so not "confusingly similar to the WhatsApp telephone logo") in `#25D366` (the green commonly used for WhatsApp; the
-  brand pages I could read do not state a hex value), with the label "WhatsApp". The button works the same.
+<https://www.whatsappbrand.com/> (it redirects to <https://www.meta.com/en-gb/brand/resources/whatsapp/whatsapp-brand/>), read on 2026-10-13:
+- Only the official assets may be used: "You can only use the official WhatsApp Brand Resources that are available from the WhatsApp Brand Resources
+  website", and "you may not modify the WhatsApp Brand Resources in any way" ("You shouldn't modify any colours in our logos"). They may be scaled
+  "as long as they are not the most distinctive or prominent feature on your web page".
+- Do not "combine the WhatsApp name or logos ... with any other logo, company name, mark or generic terms"; do not "use an image confusingly similar to
+  the WhatsApp telephone logo"; do not imply "partnership, sponsorship or endorsement by WhatsApp"; write "WhatsApp" with a capital W and A, never
+  abbreviated, in the same font size and style as the text around it. The page gives no hex value, no clear-space rule and no minimum size.
 
-**The look: the button must be green. Two options for the owner to pick.** Contrast is computed (WCAG: text 4.5:1; a button edge or an
-icon next to its label 3:1 is enough, and the label carries the meaning).
+**The file.** The owner's `whatsapp.png` (checked 2026-10-13): 2880 × 2880 px, a transparent PNG, one solid colour **`#25D366`** (green: the check the owner
+asked for passes), the speech bubble with the handset cut out (transparent). It is used **unchanged except for its size**: a scaled-down copy,
+`frontend/public/images/brand/whatsapp-glyph-72.png` (72 × 72, made with `sharp` `resize` only, no recolouring, no sharpening, no cropping; about 2 to 3 kB),
+shown at 24 × 24 CSS px (so it is sharp on a 3× phone) as `<img alt="" width="24" height="24">` (decoration: the label "WhatsApp" names the button).
+The original stays out of the repository (a 2880 px file is not needed). The owner reads the brand site's terms before launch (NFR-13); this spec makes
+no legal claim about them. A different file later gets a different file name (the photos and brand files are cached for a year).
 
-| | Option A: white button, green icon, dark text | Option B: dark green button, white text |
-| --- | --- | --- |
-| Button | white background, 2 px border `#075E54` (7.67:1 on white), 12 px radius, like the secondary button | background `#075E54`, no border |
-| Icon | the official green glyph (about 1.98:1 on white: it is a picture beside the label, not text) | the official glyph in the variant meant for a dark background, if the asset pack has one (to confirm); else white |
-| Label "WhatsApp" | `ink` `#1D2421`: **15.83:1** on white (or `pine-dark` 8.92:1) | white: **7.67:1** on `#075E54` |
-| Hover / press | background `open-bg` `#E7F6ED` (label stays 15:1) | background `#054740`; white on it 10.6:1 |
-| Looks like | the existing secondary buttons, with a green accent | a strong green block, as prominent as Call |
-| Risk | the glyph's green is only a small accent; it reads as "WhatsApp" because of the icon and word | being as heavy as Call can compete with it (the brand page also asks that WhatsApp is not the most prominent thing) |
+**The look, Option A (chosen).** The button must be green; contrast is computed (text needs 4.5:1; a button edge 3:1):
+- white background, a 2 px border `#075E54` (7.67:1 on white), 12 px radius, like the secondary button; the green glyph on the left (the handset
+  shows as white, since it is transparent), then the label **"WhatsApp"** in `ink` `#1D2421` (**15.83:1** on white), 16 px, semi-bold;
+- hover and press: background `open-bg` `#E7F6ED` (`ink` on it is 14.17:1, the border on it 6.87:1); the focus ring is the usual `forest` ring.
+- The glyph itself is about 1.98:1 on white: it is a picture next to a word, not text, and the word carries the meaning.
+- New token: `whatsapp-dark` `#075E54` (the border). No `whatsapp` token is needed: the green is inside the file. Plain `#25D366` with white text is not
+  used (1.98:1). `design-tokens.test.ts` checks `ink` on white (15.83:1), `#075E54` on white (7.67:1), and `ink` on `open-bg` (14.17:1).
+- **Not chosen:** Option B (a `#075E54` button with white text, 7.67:1) and a generic green chat bubble as a fallback (not needed: the official glyph is available).
+- Call stays the primary button; this one is a secondary button, and the glyph appears **once** on the page (the brand rule about prominence).
 
-My recommendation: **Option A.** Call stays the clear main button (decision D1) and the official glyph keeps its own colours, which the
-brand rules ask us not to touch. Plain `#25D366` with white text is **not** an option: white on it is only 1.98:1.
-New tokens if chosen: `whatsapp-dark` `#075E54` (both options), `whatsapp` `#25D366` (the fallback icon only); `design-tokens.test.ts`
-checks every pair above.
-
-### D3. WhatsApp on the search result cards: a proposal, to be decided by the owner
-The cards and the map popups have only `primary_phone` (a string): `ListingSummary` has no `is_whatsapp`, so today they cannot know.
-- **Proposal: not in this phase.** A card would need an API change (`primary_phone_is_whatsapp` on `ListingSummary`, filled by the same
-  query that fills `primary_phone`; search, emergency and blood results share the shape) and a third 48 px button on a card that already has
-  Call and Directions (on a 320 px screen it would not fit in one row; it would have to be an icon-only button with the accessible name
-  "WhatsApp <name>"). The result list is the page that has to stay light and calm.
-- **Alternative, if the owner wants it:** a small icon-only WhatsApp button (48 × 48, the official glyph) after Call and Directions on
-  the cards (the popups stay as they are), as its own small phase with a backend change, tests first.
-- **Question for the owner:** keep WhatsApp on the listing page only (recommended), or add the small card button as a follow-up?
+### D3. WhatsApp on the search result cards: not in this phase (owner's decision)
+The cards and the map popups have only `primary_phone`, with no flag, and they do not change. A small icon-only WhatsApp button on the cards
+(with a new API field `primary_phone_is_whatsapp`) is a `LOG.md` idea for later.
 
 ### D4. Share (FR-12) and the link that is shared
 - Two buttons under the contact buttons: **"Share via WhatsApp"** and **"Copy link"** (secondary buttons, 48 px; lucide `Share2` and
-  `Link` icons, decorative). The share button is plain text with a neutral icon, not the WhatsApp glyph, so WhatsApp's mark appears once on the
-  page (the brand rule about prominence).
+  `Link` icons, decorative). The share button is plain text with a neutral icon, not the WhatsApp glyph (the brand rule about prominence).
 - The shared link is **only** `<site address>/listing/<slug>`: built with `new URL("/listing/" + slug, window.location.origin)`, so it never
   carries a query, a hash, a position or anything else even if the visitor opened the page with one. "Share via WhatsApp" opens
-  `https://wa.me/?text=<message>` (no number: WhatsApp then asks who to send it to, per the help page) in a new tab with
-  `rel="noopener noreferrer"`; the message is `<facility name> on SwiftHealth Route: <the link>` (URL-encoded). "Copy link" uses
-  `navigator.clipboard.writeText`; when it is not available or refuses, the link is shown in a read-only field to copy by hand. A line that
-  says "Link copied" (`role="status"`) confirms.
+  `https://wa.me/?text=<message>` (no number: WhatsApp then asks who to send it to) in a new tab with `rel="noopener noreferrer"`; the message is
+  `<facility name> on SwiftHealth Route: <the link>` (URL-encoded; the owner confirmed these words). "Copy link" uses `navigator.clipboard.writeText`;
+  when it is not available or refuses, the link is shown in a read-only field to copy by hand. A line that says "Link copied" (`role="status"`) confirms.
 - Tests check the link is exactly `/listing/<slug>` for a page opened with `?lat=6.45&lng=7.5#x`, and that neither message holds a coordinate.
 
 ### D5. Directions: a new road-sign icon, everywhere
@@ -127,29 +117,29 @@ The cards and the map popups have only `primary_phone` (a string): `ListingSumma
   `lucide-react` 1.47.0 has `Diamond` and `CornerUpRight` separately but no such icon (checked 2026-10-11).
 - It replaces the lucide `Route` icon in the one shared `DirectionsButton`, so it changes **everywhere at once**: the result cards, the
   map popups and the new page. The word "Directions" and the accessible name ("Directions to <name> (opens in a new tab)") do not change.
-- **The owner sees the drawn icon before it is used** (as with the logo): Task 1 draws it, renders it at 24, 32 and 64 px on white and on
-  the `pine` button, and shows it; only then is it wired in.
+- **The owner sees the drawn icon before it is used** (as with the logo): the first step of the build draws it, renders it at 24, 32 and 64 px on white
+  and on the `pine` button, and shows it; only then is it wired in.
 - The Directions link uses the **facility's** latitude and longitude as the destination, never the visitor's position (privacy, D9).
 
 ### D6. Opening hours, fees, notice, disclaimer, verification
 - **Hours table (FR-09, US-06):** seven rows, Monday first, in 12-hour time: `8:00 AM – 5:00 PM`; midnight is `12:00 AM`, noon `12:00 PM`;
   a shift past midnight reads `8:00 PM – 2:00 AM (next day)`; a closed day reads `Closed`. When `is_24_hours` is true the section says
-  **"Open 24 hours"** instead of the table. **Today's row is highlighted** (a stronger weight and a "Today" word, not colour alone), today
-  being the day in **Africa/Lagos** time, not the visitor's device time. The API sends `HH:MM`; a pure function converts (tested: noon,
-  midnight, 9:05, past-midnight, closed).
+  **"Open 24 hours, every day"** instead of the table (the owner's answer). **Today's row is highlighted** (a stronger weight and a "Today"
+  word, not colour alone), today being the day in **Africa/Lagos** time, not the visitor's device time. The API sends `HH:MM`; a pure function
+  converts (tested: noon, midnight, 9:05, past-midnight, closed).
 - **`hours_note`** ("Closes 9:00 PM", "Opens Monday 7:30 AM") and the `OpenNowBadge` show at the top, as on the cards.
 - **Fees (FR-11, owner decision 5):** per service a line: both limits `₦1,500 – ₦3,000`; equal limits `₦1,500`; only a minimum
   `From ₦1,500`; no fee hides the fee line; with `fee_collected_at` the line adds "collected 28 Sep 2026", without it the date is hidden.
   The words **"Estimate — confirm with the facility"** always show once above the services. Money arrives as strings ("1500.00") and is
   formatted as text; it is never turned into a float for calculation.
 - **The notice (FR-22, decision 6):** when `recently_reported_not_working` is `true`, the top of the page shows
-  **"Recently reported as not working. Call before you go."** in the amber notice style (the tokens `amber-ink` on `amber-wash`, 5.3:1, with a
+  **"Recently reported as not working. Call before you go."** in the amber notice style (`amber-ink` on `amber-wash`, 5.3:1, with a
   lucide `TriangleAlert` icon; never red, which belongs to emergencies). It is a `role="note"`; the listing, the Call button and the
   rest stay as they are.
 - **Last verified (US-07):** the existing `VerifiedDate` ("Verified 3 days ago") and, when `verification_due` is `true`, the "Verification
   due" label of the cards.
 - **Disclaimer (FR-13):** the API's `disclaimer` text, at the bottom, 16 px.
-- **Report link:** "Report a problem with this listing" to `/report/<id>` (that page is a placeholder until its phase).
+- **Report link:** "Report a problem with this listing" to `/report/<id>` (that page is a "Coming soon" placeholder until roadmap phase 9a).
 - **No medical advice anywhere** (CLAUDE.md); the page says what the facility is and when it is open, nothing else.
 
 ### D7. The entrance photo
@@ -171,12 +161,11 @@ jump), `loading="lazy"`, `decoding="async"`, `referrerPolicy="no-referrer"`, a r
   for the 404 page.
 
 ### D9. Privacy (NFR-07): no location in any address or message
-- The page never reads the visitor's position (it does not touch `sessionStorage`'s position) and the API request has no `lat` or `lng`
+- The page never reads the visitor's position (it does not touch the position in `sessionStorage`) and the API request has no `lat` or `lng`
   (so `distance_km` is `null` and the page does not show a distance).
 - No address the page builds holds a position: the page's own address, the share link, the WhatsApp contact link and the WhatsApp share
   message are all fixed shapes (D2, D4). The Google Maps link holds only the **facility's** coordinates.
-- Tests: the request URL has no `?`; the four links above contain no digits that look like a coordinate (a test renders the page with a
-  position in `sessionStorage` and checks it does not appear anywhere).
+- Tests: the request URL has no `?`; a test renders the page with a position in `sessionStorage` and checks it does not appear anywhere.
 
 ### D10. Small and fast (NFR-01), and no map
 - No Leaflet, no chart code, no `next/image` client code on this page. The page's own JavaScript stays under **8 kB** sent
@@ -190,7 +179,7 @@ jump), `loading="lazy"`, `decoding="async"`, `referrerPolicy="no-referrer"`, a r
 ### D11. Demo data stays honest; a clearly fictional fixture for local testing
 - The seed and the production demo listings keep `is_whatsapp = false` for every number (no change).
 - A **local-only fixture**, `backend/seed/whatsapp_fixture.py` (run with `docker compose exec backend python -m seed.whatsapp_fixture`),
-  adds **one** listing marked fictional in its name and description ("TEST FIXTURE (fictional): WhatsApp demo clinic"), with a unique slug
+  adds **one** listing marked fictional in its name and description ("TEST FIXTURE (fictional): WhatsApp demo clinic"), with the slug
   `test-fixture-whatsapp-clinic`, one primary number that is a WhatsApp number and a second that is not, fees of every kind (a range, a single value, a
   minimum only, none), a past-midnight day, a closed day, `recently_reported_not_working` set through two fictional reports, and an
   `https` entrance photo from a neutral placeholder. The numbers use the same impossible form as the main seed (`+234` then zeros, which
@@ -200,14 +189,9 @@ jump), `loading="lazy"`, `decoding="async"`, `referrerPolicy="no-referrer"`, a r
   that is expected; the owner checks the link and the look, not a chat.
 
 ## Out of scope for 6b
-Server rendering for Google (after the Render upgrade); the report form's real page; a map on this page; editing; featured placement;
-distance on this page; photos upload (Cloudinary phase); the card WhatsApp button (D3, unless the owner asks); Igbo.
+Server rendering for Google (after the Render upgrade); the report form's real page (phase 9a); a map on this page; editing; featured placement;
+distance on this page; photo upload (Cloudinary phase); the WhatsApp button on the cards (D3, a `LOG.md` idea); Igbo.
 
-## Open questions for the owner (this review)
-1. **Button look:** Option A (white, green icon, dark text; recommended) or Option B (dark green, white text)?
-2. **Official icon:** please download the official WhatsApp glyph file(s) from the brand resources site and hand them over (or tell me to use
-   the fallback bubble). I cannot download them.
-3. **Cards:** WhatsApp on the listing page only (recommended), or also a small card button as a follow-up (needs an API field)?
-4. **Help page:** open <https://faq.whatsapp.com/5913398998672934> once in a browser and tell me if the number-format sentence matches (I could not read it here).
-5. **Share message:** "<name> on SwiftHealth Route: <link>" is fine, or other words?
-6. **24-hour listings:** "Open 24 hours" instead of the table is fine, or show the seven rows anyway?
+## Still open
+Nothing for the owner right now. The first build step shows the drawn Directions icon, and the build starts only after the owner has seen it
+and agreed the plan.

@@ -1,9 +1,9 @@
 # Plan: the listing page (phase 6b)
 
 Spec: [requirements.md](requirements.md). Validation: [validation.md](validation.md). Branch `feature/listing-page`.
-**Nothing below is built yet.** The plan starts only after the owner reviews the requirements and answers the open questions
-(button look, official icon file, cards, help page, share message, 24-hour listings). Boxes are ticked with their commit hash at the end of
-the feature, once, together with the roadmap and `LOG.md`.
+**Nothing below is built yet.** The owner answered the six questions on 2026-10-13 (see `requirements.md`); the build starts with Task 1, which
+shows the owner the drawn Directions icon before it is wired in, and goes on only after the owner agrees. Boxes are ticked with their commit hash at
+the end of the feature, once, together with the roadmap and `LOG.md`.
 
 Files that will change or appear (frontend unless written otherwise):
 - `components/listings/DirectionsIcon.tsx` (new), `DirectionsButton.tsx` (uses it): the road-sign icon, everywhere.
@@ -13,7 +13,7 @@ Files that will change or appear (frontend unless written otherwise):
 - `components/listing/` (new folder): `ListingDetailView` (client), `ListingSkeleton`, `ListingNotFound`, `ReportedNotice`, `ContactButtons`,
   `WhatsAppButton`, `OtherPhones`, `HoursTable`, `ServicesFees`, `EntrancePhoto`, `ShareButtons`.
 - `app/(public)/listing/[slug]/page.tsx` (the existing placeholder becomes the shell), `styles/globals.css` (`whatsapp-dark`, `whatsapp`),
-  `public/images/brand/` (the official WhatsApp glyph, unmodified: from the owner).
+  `public/images/brand/whatsapp-glyph-72.png` (the owner's `whatsapp.png`, only scaled to 72 × 72 with `sharp`; no recolouring or editing).
 - `backend/seed/whatsapp_fixture.py` (new, local only) and its test in `backend/tests/`.
 - `tests/unit/` for each piece and `tests/end-to-end/listing-page.spec.ts` (Playwright).
 - Docs (after the owner's review): `specs/frontend/ui-spec.md` section 2.4, `specs/roadmap.md`, `LOG.md`.
@@ -36,7 +36,8 @@ Files that will change or appear (frontend unless written otherwise):
   `whatsAppContactUrl` (the exact message), `whatsAppShareUrl`, `shareLink(slug, origin)` (never a query or a hash);
   `formatTime12` (midnight, noon, 9:05, 23:59), `hoursRows` (7 rows, past midnight "(next day)", closed, today in Africa/Lagos, near midnight in
   Lagos while the device is elsewhere), `formatFee` (range, equal, minimum only, none, with and without the date).
-- [ ] Open the WhatsApp help page in a browser (owner or me), confirm the number-format sentence, and quote it in the test's comment.
+- [ ] The unit tests quote the owner's two sentences from the click-to-chat help page (<https://whatsapp.com/faq/en/general/26000030>, in `requirements.md` D2)
+  and the leading-zero rule; there is no open caveat.
 
 ### Task 3: the API call and the types (D8, D9)
 - [ ] Tests first: `getListing` requests `/listings/<slug>` with the slug URL-encoded and **no query string**, maps 404 to a "not found" result
@@ -44,12 +45,13 @@ Files that will change or appear (frontend unless written otherwise):
 
 ### Task 4: the components (D1, D2, D6, D7)
 - [ ] Tests first for each: `ContactButtons` (Call always; WhatsApp only when `is_whatsapp`; the primary first; other phones each with their
-  own buttons; Directions hidden for a position that is not real, as today), `WhatsAppButton` (the link, the name, the colour classes of the
-  option the owner picked, the contrast pairs in `design-tokens.test.ts`, the glyph is an `<img>` with empty alt), `HoursTable` (12-hour, today
-  marked with a word, "Open 24 hours"), `ServicesFees` (the five fee cases, the estimate words once, no date), `ReportedNotice` (the words, `role="note"`,
+  own buttons; Directions hidden for a position that is not real, as today), `WhatsAppButton` (the link, the name, Option A: white, a `#075E54`
+  border, `ink` label; the contrast pairs in `design-tokens.test.ts`; the glyph is the scaled copy as an `<img>` with empty alt and a fixed 24 px size), `HoursTable`
+  (12-hour, today marked with a word, "Open 24 hours, every day" for a 24-hour listing), `ServicesFees` (the five fee cases, the estimate words once, no date), `ReportedNotice` (the words, `role="note"`,
   amber, not red), `EntrancePhoto` (https only, alt, lazy, fixed size, vanishes on error), `ShareButtons` (the link, the clipboard fallback,
   "Link copied" `role="status"`), `ListingNotFound` (the words, the button).
-- [ ] Add `whatsapp-dark` (and `whatsapp` for the fallback) to `globals.css` and the token tests.
+- [ ] Add `whatsapp-dark` (`#075E54`) to `globals.css` and the token tests. Make `public/images/brand/whatsapp-glyph-72.png` from the owner's
+  `whatsapp.png` with `sharp` `resize` only, and a test that it is 72 × 72, one colour `#25D366`, with transparency (so it was not recoloured).
 
 ### Task 5: the page (D8, D9, D10)
 - [ ] Tests first: the shell shows the skeleton; the page shows a listing from a mocked answer (every field of FR-09); a 404 shows "Listing not found"

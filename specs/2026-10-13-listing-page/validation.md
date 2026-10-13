@@ -10,14 +10,14 @@ of the feature, with the evidence, after the owner has checked the preview. Chec
   `https://wa.me/2348030000000?text=Hello%2C%20I%20found%20you%20on%20SwiftHealth%20Route.` for `+2348030000000` and for `08030000000`
   (the conversion is tested on its own: plus, local, bare, spaces, dashes, wrong lengths give no button); it opens in a new tab with
   `rel="noopener noreferrer"`; its accessible name says the facility and "opens in a new tab"
-- [ ] **D2, the icon:** the official WhatsApp glyph is used unmodified as an `<img>` file with empty alt (or, only if the owner chose it, the green
-  chat bubble fallback); the label is "WhatsApp"; the glyph appears once on the page
-- [ ] **D2, the look and the contrast:** the button is green in the owner's chosen option; every pair in the spec passes in
-  `design-tokens.test.ts` (A: `ink` on white 15.83:1, border `#075E54` on white 7.67:1; B: white on `#075E54` 7.67:1, hover 10.6:1); no white text on `#25D366`
+- [ ] **D2, the icon:** the owner's WhatsApp glyph, only scaled (`whatsapp-glyph-72.png`: 72 × 72, one colour `#25D366`, transparent), is an `<img>` with empty alt
+  shown at 24 px; the label is "WhatsApp"; the glyph appears once on the page; the link format quotes the owner's two sentences from the help page
+- [ ] **D2, the look and the contrast (Option A):** a white button with a `#075E54` border and an `ink` label; every pair passes in
+  `design-tokens.test.ts` (`ink` on white 15.83:1, border `#075E54` on white 7.67:1, `ink` on the `open-bg` hover 14.17:1); no white text on `#25D366`
 - [ ] **US-03, D5:** one `DirectionsIcon` (a diamond road sign with a right-turn arrow, drawn in code) is used by the result cards, the map popups and the
   listing page; no other Directions icon is left; the accessible name is unchanged; the link holds the facility's coordinates only
 - [ ] **US-06, FR-09, D6:** hours in 12-hour time; midnight is 12:00 AM and noon 12:00 PM; past-midnight shows "(next day)"; closed days say Closed;
-  "Open 24 hours" replaces the table for a 24-hour listing; today's row is marked with a word, by Lagos time (a test with the device clock in another zone
+  "Open 24 hours, every day" replaces the table for a 24-hour listing; today's row is marked with a word, by Lagos time (a test with the device clock in another zone
   near midnight in Lagos)
 - [ ] **FR-11, D6:** the five fee cases (range, equal, minimum only, none, with and without the date); "Estimate — confirm with the facility" shows once
 - [ ] **FR-22, D6:** "Recently reported as not working. Call before you go." shows when the flag is true, in the amber style with an icon, never red;
@@ -63,5 +63,5 @@ of the feature, with the evidence, after the owner has checked the preview. Chec
 - [ ] No new package; no `dangerouslySetInnerHTML`; every text is rendered as text (the facility's name and description are data from our own API)
 - [ ] The photo address is only used when it starts with `https://`
 - [ ] External links use `rel="noopener noreferrer"`
-- [ ] The official WhatsApp files are unmodified; the owner has read the brand site's terms (NFR-13); this repo makes no legal claim about them
+- [ ] The WhatsApp glyph file is only a scaled copy of the owner's download (no recolouring, no editing); the owner has read the brand site's terms (NFR-13); this repo makes no legal claim about them
 - [ ] No position of the visitor in any address or message (D9)
