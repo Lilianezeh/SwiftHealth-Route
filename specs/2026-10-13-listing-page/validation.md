@@ -34,6 +34,23 @@ of the feature, with the evidence, after the owner has checked the preview. Chec
 - Size: `/listing/[slug]` is **8.58 kB** of its own JavaScript (target 9 kB, met) and **115 kB First Load** (limit 116 kB, met).
 - Not looked at: real phones.
 
+## The owner's own checks (notes only: no box above is ticked from these)
+
+Done, 2026-10-13 and 2026-10-14 (reported by the owner):
+- **Honor phone, on the preview** (production API, demo listings only): the diamond Directions icon shows on the search cards; the listing page
+  opens; "Share via WhatsApp" and "Copy link" are there; the demo listings correctly show no WhatsApp button (their numbers are not marked as
+  WhatsApp numbers, by design).
+- **Laptop, local test clinic, earlier** (before the polish changes): the WhatsApp button beside Call; 12-hour hours with "Today"; the fee styles;
+  the amber "reported" note.
+
+**Still to check tomorrow (left unticked):**
+- [ ] The main number line in local format, under the buttons (local clinic and preview)
+- [ ] The compact "Verified" badge (it fits its content, not full width)
+- [ ] What "Copy link" pastes: only `/listing/<slug>`
+- [ ] "Share via WhatsApp" opens WhatsApp
+- [ ] `/listing/nothing-here` shows the friendly "Listing not found" page
+- [ ] On the local test clinic: Call and WhatsApp are the same height, and "Home visit" shows "Ask for price"
+
 ## Requirements checked by tests
 
 - [ ] **US-02, FR-10, D1:** Call is the primary (filled) button; Call and WhatsApp are the same height (56 px); the primary phone is first; each

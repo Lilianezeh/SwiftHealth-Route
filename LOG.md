@@ -446,3 +446,35 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   warning, the one shared rule for "verification due", and the decisions for the page (12-hour times, fee wording, the
   notice, the new Directions icon).
 - **Tomorrow:** phase 6b, the listing page (`feature/listing-page`): spec first, then tests, then the page.
+
+## Day 9 — 2026-10-13 and 2026-10-14
+- **Built:**
+  - **PR #21 (home page redesign) merged and live.** Lighthouse mobile on the live site, from the owner's own run: Performance 73, Accessibility 100,
+    Best Practices 100, SEO 92 (the preview before the speed work: 37).
+  - **Rename to SwiftHealth Route, with a new logo.** The name lives in one file, `frontend/src/config/brand.ts`; the repo, the folders and the Netlify
+    address keep the old name.
+  - **Docker as user 1000 for the frontend and the backend** (`5d907fa`, `95f4380`), so files the containers write belong to the owner, not root. The
+    backend setting is in `docker-compose.yml` only, because Render builds the backend Dockerfile.
+  - **The listing page, phase 6b (draft PR #22, branch `feature/listing-page`).** Call and WhatsApp (white button, the owner's glyph, only for numbers
+    marked as WhatsApp), the Directions road-sign icon at 24 px, 12-hour hours with "Today", fees, the amber "reported" note, entrance photo, Share via
+    WhatsApp and Copy link, and a friendly "Listing not found". After the owner's review: Call and WhatsApp the same 56 px height, phone numbers shown
+    in local format (0803 123 4567) with the main number as a line under the buttons, the Verified badge fitting its content, "Ask for price" when a
+    service has no fee, and the page's own JavaScript target set to 9 kB (8.58 kB built; First Load 115 kB). A local, development-only fictional
+    fixture (`python -m seed.whatsapp_fixture`) shows the cases the demo data hides on purpose. 833 frontend and 790 backend tests passing; real-browser
+    checks 23 of 23; Frontend CI and Backend CI green.
+  - **The "Find by type and home page wording" plan is recorded** (this file, "To do later", items 1 to 11, and the roadmap), not built. The latest
+    item: a chosen type must be clearly visible on the results page, with a "Pharmacies near you" heading and a removable "Pharmacy ✕" chip.
+- **Broke / fixed:** the owner tested on the laptop with the repo on `main`, so the old code showed and the new work did not; checking the branch
+  first fixed it. The browser-test libraries kept in the session scratch folder were gone the next day and had to be downloaded again. `gh pr edit`
+  fails on this repo (a Projects classic warning), so the pull request text is changed through `gh api`. Pasted messages are not acted on until the
+  owner types "yes, apply it".
+- **Owner's checks so far:** Honor phone on the preview (diamond icon on the cards, the page opens, Share via WhatsApp and Copy link are there, demo
+  listings show no WhatsApp button as designed) and the laptop earlier (WhatsApp beside Call, 12-hour hours with Today, fee styles, amber note).
+  Still to check, listed in `specs/2026-10-13-listing-page/validation.md`: the main number line, the compact Verified badge, what Copy link pastes,
+  Share via WhatsApp opening WhatsApp, `/listing/nothing-here`, and Call and WhatsApp at the same height with "Ask for price" on the local clinic.
+- **Still open:** PR #22 stays a draft until the owner has checked the preview and the boxes are ticked; the backend disclaimer wording ("SwiftHealth
+  Route") reaches production only after the merge and a Render redeploy; the home page Total Blocking Time (1,300 ms) after the listing page.
+- **Learned:** Before testing on my laptop, check which branch I'm on, because I was testing old code on main. Demo data can hide features on purpose (no WhatsApp on fake numbers). And always measure first: Lighthouse showed my photos were already small and the code was the slow part.
+- **AI use:** Claude Code wrote the specs first, then the tests and the code; I chose the WhatsApp button's look, the local phone format, "Ask for
+  price", the 9 kB target, the Find by type wording and the chip, and I checked the preview on my own phone.
+- **Tomorrow:** check the preview and the local test clinic (list in `validation.md`), then tick the boxes and mark PR #22 ready, or send fixes.
