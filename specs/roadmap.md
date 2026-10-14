@@ -255,6 +255,9 @@ folder and a go-ahead on its plan; the full list of the owner's points, the prop
 - A slim photo banner for the chosen type with a heading ("Pharmacies near you"); the owner's Magnific photos for now, converted to about 40 KB,
   only the chosen photo downloads, the "Designed by Magnific" credit with its link on the search page only while a Magnific photo shows; the photo list
   and the credit in one config file; a replaced photo gets a new file name. `hospital.jpg` and `maternity.jpg` are replaced first (`LOG.md`).
+- A chosen type is clearly visible on the results page (owner, 2026-10-14; the live site showed only "Search results" after the Pharmacy tile, so it
+  looked unfiltered): the heading becomes e.g. "Pharmacies near you" and a visible "Pharmacy ✕" chip under the search box shows the active filter and
+  removes it with one tap, for a tile and for a typed word alike (`LOG.md`, item 11).
 - New words for the "Why SwiftHealth Route" section (was "Benefits"), the facility owners section, the hero and the Overview, and the page's meta
   description; the empty search results mention that the first city is Enugu. Everything is checked at 320, 360 and 768 px.
 - On `/find`, the "Near you" cards never show the same place twice: if the closest open pharmacy is also the closest open 24-hour place, the second

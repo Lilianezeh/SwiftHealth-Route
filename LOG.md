@@ -252,6 +252,15 @@ Open reminders. Each says when it is due. Remove a line once it is done.
      both columns) instead of two identical cards. Tests first: (a) two different answers show two cards; (b) the same listing first in both shows the
      second 24-hour listing in the second slot; (c) the same listing and no second one shows a single card with both labels; (d) the second card never
      shows a listing that the first one shows; (e) a failure or an empty answer in one card does not change the other; no position in any address.
+  11. **A chosen type must be clearly visible on the results page (owner, 2026-10-14).** The owner tested the live site: tapping the Pharmacy tile
+     correctly showed only the 2 pharmacies, but the page said only "Search results", so it looked unfiltered. Wanted, whenever a type is chosen
+     (from a tile or from a typed type word, point 3): (a) the heading changes from "Search results" to the type's own words, e.g. **"Pharmacies near
+     you"** (with the photo banner of point 4); (b) a visible **"Pharmacy ✕" chip under the search box** shows the active filter, and one tap on it
+     removes the filter (the page then goes back to "Search results" and all types). The chip is at least 48 px high with 16 px text, the ✕ is an
+     icon hidden from screen readers and the chip's name says "Remove the Pharmacy filter"; the heading and the chip come from the same category
+     in the address, so they never disagree. Tests first: tile -> heading and chip; typed word -> the same; chip tap -> filter gone, heading back
+     to "Search results", the other filters (open now, distance, area) kept; no chip and the plain heading when no type is chosen; the chip's
+     position is not in any address beyond what the search already sends (NFR-07). Real-browser check at 320, 360 and 768 px.
 - **Overview sentence to add back, and one to change (owner, 2026-10-13).** (a) The sentence "If a number doesn't work, you can tell us so we can fix it."
   was taken out of the Overview because the report form is still a "Coming soon" page: add it back when the report form is live (roadmap **Phase 9a**,
   `POST /reports` and the form, FR-20 and FR-21). (b) When the WhatsApp button is live (the listing page), change "call or get directions in one tap" in
