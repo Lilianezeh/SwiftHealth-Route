@@ -1,7 +1,7 @@
 # Requirements: Find by type and home page wording
 
-Branch `feature/find-by-type`. Status: **spec written for the owner's review (2026-10-15). No code yet.** Nothing is built until the owner has read
-this, answered the questions at the end, and said go on the plan.
+Branch `feature/find-by-type`. Status: **spec updated with the owner's answers (2026-10-15). No code yet.** Nothing is built until the owner has
+confirmed the two short lists at the end (the type words and the empty-results words), confirmed the Magnific credit (D6), and said go on the plan.
 Roadmap: "Find by type and home page wording" (after phase 6b). **Frontend only**: the search API already filters on the exact category slug, so there
 is no backend change, no new table, no new package.
 Source: the owner's points 1 to 11 in `LOG.md` ("To do later", "Next feature after the listing page"), and the owner's answers of 2026-10-15 (the
@@ -68,6 +68,16 @@ five plural headings, `clinic.jpg` and `laboratory.jpg` approved, `hospital.jpg`
 - With a chosen type, the page `h1` changes from **"Search results"** to:
   **"Hospitals near you"**, **"Clinics near you"**, **"Maternity homes near you"**, **"Pharmacies near you"**, **"Laboratories near you"**
   (the owner's words, 2026-10-15). With no type, or a type that is not one of the five, it stays **"Search results"**.
+- **"near you" only when it is true** (owner, 2026-10-15). With a chosen type, the heading depends on where the results are anchored; the first row that applies wins:
+
+| The results are... | Heading | Example |
+| --- | --- | --- |
+| filtered to an **area** (`area` in the address, from the Filters sheet) | **"<Type> in <Area>"** | **Pharmacies in Ogui** |
+| sorted from the visitor's **position** (no area filter) | **"<Type> near you"** | Pharmacies near you |
+| neither (no position shared, no area) | **"<Type>"** alone | Pharmacies |
+
+  "<Type>" is the plural of the table above (Hospitals, Clinics, Maternity homes, Pharmacies, Laboratories). The area's name is rendered as text, exactly as
+  `GET /meta` gives it. The position itself is never in the heading or the address.
 - The heading is written by the client part of the page (the address is read in the browser, as the results are), so the `h1` moves from `page.tsx`
   into a small client component inside the existing `<Suspense>`. While the address is being read the page shows a **grey placeholder bar** of the same
   height (with the words "Loading results" for screen readers only), **not** the words "Search results", so a visitor on a slow connection never sees
@@ -117,17 +127,20 @@ five plural headings, `clinic.jpg` and `laboratory.jpg` approved, `hospital.jpg`
 ### D6. The photo banner (point 4) — the last task
 - **When it shows.** A slim photo banner at the top of the results, **only** when a type is chosen **and** that type has a photo marked
   **`approved: true`** in the config. A type without an approved photo shows **no banner and no credit**; its heading and chip work exactly the same
-  (D3, D4). The photos are approved by the owner, one by one, in `config/types.ts`:
+  (D3, D4). The photos are approved by the owner, one by one, in `config/types.ts`. The originals are in `/mnt/c/Users/Lilian/Desktop/IMAGES/`.
+  **The owner's answer of 2026-10-15: use the Magnific photos we already have, approved for now; hospital and maternity may be replaced later.**
+  One exception, from the owner's own rule ("if the licence is unclear, keep the hospital banner off"):
 
-| Type | File (the owner's original) | Status on 2026-10-15 |
-| --- | --- | --- |
-| clinic | `clinic.jpg` | approved by the owner (no faces, no brand names found) |
-| laboratory | `laboratory.jpg` | approved by the owner (no faces, no brand names found) |
-| pharmacy | `pharmacy.jpg` | optional to replace (the hands look a little unnatural, it may be AI-made): it stays approved unless the owner replaces it (question 1) |
-| hospital | `hospital.jpg` | **not approved**: a patient's face is clearly visible, and it is a tall 9:16 portrait; **must be replaced first** |
-| maternity | `maternity.jpg` | **not approved**: a doctor consultation with a pill bottle, not a maternity scene; **must be replaced first** |
+| Type | File | `approved` in the config | Why |
+| --- | --- | --- | --- |
+| clinic | `clinic.jpg` | **true** | approved by the owner (no faces, no brand names found) |
+| laboratory | `laboratory.jpg` | **true** | approved by the owner (no faces, no brand names found) |
+| pharmacy | `pharmacy.jpg` | **true** | approved by the owner for now (the hands look a little unnatural, it may be AI-made) |
+| maternity | `maternity.jpg` | **true** | approved by the owner for now: a doctor consultation with a pill bottle, **not a maternity scene**; to be replaced later |
+| hospital | `hospital.jpg` | **false** | a patient's face is clearly visible, and Magnific's rules on people shown in a way that could harm or imply endorsement could not be read in full (see "Magnific's rules" below); it is also a tall 9:16 portrait that needs a hand-made 3:1 cut. **No hospital banner until the owner has read the rules and sets it to `true` (or replaces the photo)** |
 
-  Until a replacement is approved, `approved` stays `false` and the hospital and maternity results show no banner.
+  The flag is one line per type in the config: switching the hospital banner on later is a one-word change plus its converted file, with no other code.
+  A type with `approved: false` shows no banner and no credit, and its heading and chip work as for every type.
 - **What the banner is.** One `<img>` of one WebP file for the chosen type, **960 × 320 (3:1)**, **about 40 kB or less**, with a fixed `width` and
   `height`, alt text and no text inside the picture. It fills the content width and keeps its shape (about 114 px high on a phone, 224 px at the full
   672 px). The heading is **above** it, as plain text, so no text sits on the photo and contrast never depends on the picture. The order on the page is:
@@ -139,12 +152,26 @@ five plural headings, `clinic.jpg` and `laboratory.jpg` approved, `hospital.jpg`
   a year (`immutable`): the name in the script and the `src` in the config change together. A test checks that `width` and `height` are the real size of
   each file and that each file is under its budget (like `homeImages.test.ts`).
 - **Alt text** is written after looking at each converted photo: short, factual, no medical claim, no brand name.
-- **The credit.** "Designed by Magnific", with its link, shows **under the banner**, on the search page only, and **only while a Magnific photo is
-  showing**. The text and the link address are in the same config file as the photos, so Unsplash photos can replace them later (an Unsplash photo has
-  its own credit entry, or none). The link opens in a new tab with `rel="noopener noreferrer"`, 16 px text, a 48 px tap target. **The address of the link
-  is the one in the owner's Magnific licence; I will not guess it (question 2).**
-- **Photo rules.** No readable brand names and no identifiable patients. The licence and attribution terms of the Magnific photos are checked by the
-  owner first (NFR-13); this repo makes no legal claim about them.
+- **The credit.** **"Designed by Magnific"**, a link to **<https://www.magnific.com>**, shows **under the banner** (next to the photo it credits), on the
+  search page only, and **only while a Magnific photo is showing**. The text and the link address are in the same config file as the photos, so Unsplash
+  photos can replace them later (an Unsplash photo has its own credit entry, or none). The link opens in a new tab with `rel="noopener noreferrer"`
+  and says "(opens in a new tab)" to screen readers, 16 px text, a 48 px tap target, in a visible colour (never hidden or tiny).
+  - **Where this comes from.** In the git history of PR #21 the footer credit was `{ text: "Images designed by Magnific", href: "https://www.magnific.com" }`
+    (commit `c5d2758`, `config/site.ts`; it was removed in `1f1cdcc` on 2026-10-12 when the photos were replaced). The wording the owner gave for this
+    feature is "Designed by Magnific"; Magnific's help page "Licenses and attribution" is reported by search results (see "Magnific's rules" below) to ask for
+    **"Designed by Magnific" with a link to magnific.com**, in a visible spot next to the resource, or else in the site footer. So the plan uses
+    **"Designed by Magnific" under the banner** (the preferred place), not the old footer wording. The owner confirms this on the live page before Task 8.
+- **Photo rules.** No readable brand names. The licence and attribution terms of the Magnific photos are the owner's to check (NFR-13); this repo makes no
+  legal claim about them. A photo of an identifiable person is the case to look at twice (the hospital photo, and the doctor in the maternity photo).
+- **Magnific's rules (what I could and could not read, 2026-10-15).** Magnific's own pages <https://www.magnific.com/ai/docs/licenses-attribution> and
+  <https://www.magnific.com/ai/docs/usage-rights-general-rules> answered **403 Forbidden** to my tools (a bot block), so **I could not read them and
+  cannot quote them word for word**; I did not try to get round the block. What search results report, as a summary and not a quotation: the free licence
+  **always requires attribution** ("Designed by Magnific" with a link to magnific.com, visible, next to the resource where possible, otherwise the footer
+  or a credits page; a hidden or hard-to-read credit does not count); Magnific content must not be used in a way that is defamatory, obscene or offensive,
+  or in a context that could harm the reputation of the author, Magnific or **the people depicted**, including **implying that a depicted person endorses
+  a product, service or cause without consent**; attribution does not cure that. **Nothing I found says that health or medical contexts are allowed or
+  forbidden.** Because the answer about a patient's face on a hospital directory is therefore unclear, the hospital banner is off (the table above).
+  The owner reads the two pages in a browser and the licence file of each downloaded photo.
 - **Slow data.** The banner never delays the results: the results and the chip do not wait for the picture, and the picture has its size reserved, so
   nothing jumps when it loads (no layout shift).
 
@@ -166,7 +193,7 @@ These are the owner's words, exactly. They replace the text in `config/home.ts`;
 | Owners heading | Run a hospital, clinic or pharmacy? | **Own or manage a healthcare facility?** |
 | Owners text | List your facility for free and help people find you when they need you. We verify every listing before it goes live. | **List your facility on {brand.name} so people nearby can find you, call you and get directions. Listing is free during our launch, and every listing is checked by our team before it goes live.** |
 | Owners button | List your facility | unchanged (the page behind it is still "Coming soon", phase 10) |
-| Page description (the home page) | the site-wide one: "SwiftHealth Route: Emergency, Hospital & Pharmacy Finder. Verified listings and one-tap calling." | **proposed:** "{brand.name} is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes, pharmacies and laboratories near you." (the owner approves it, question 4) |
+| Page description (the home page) | the site-wide one: "SwiftHealth Route: Emergency, Hospital & Pharmacy Finder. Verified listings and one-tap calling." | **proposed:** "{brand.name} is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes, pharmacies and laboratories near you." (the owner's answer 4: fine when it matches the agreed Overview wording, which it does: the first two sentences, word for word; a test compares them) |
 
 - **Checked facts.** "Your location ... We don't store it": the position is kept in the browser tab and sent to the API for each search; the API does not
   store it and scrubs `lat` and `lng` from its logs (api-spec, "Privacy (NFR-07)"). "Free during our launch" is the owner's decision, recorded in
@@ -174,7 +201,8 @@ These are the owner's words, exactly. They replace the text in `config/home.ts`;
 - **No city on the home page.** None of these texts names a city (the 2026-10-12 rule), and none says "Enugu only".
 - The four cards keep their icons, in the same order (BadgeCheck, Clock, Signal, Lock); the headings keep their ids.
 - **Not changed here** (`LOG.md`, Overview notes): the sentence "If a number doesn't work, you can tell us so we can fix it." comes back when the
-  report form is live (roadmap Phase 9a). The WhatsApp wording of the Overview is question 3.
+  report form is live (roadmap Phase 9a). **The WhatsApp wording stays out** (owner's answer 3, 2026-10-15): the Overview keeps "call or get directions in
+  one tap" until real listings have WhatsApp numbers.
 - **A risk, not a decision.** The new hero line and the cards say "Verified" while the live site still shows four fictional demo listings. That is already
   in `LOG.md` ("Before public launch: remove or clearly mark the demo listings"); this feature does not change it.
 
@@ -186,7 +214,7 @@ These are the owner's words, exactly. They replace the text in `config/home.ts`;
     (today "Enugu"); the words "Enugu" are never written into the component, so nothing is tied to Enugu only. A test fails if the component names the
     city. The search page may name the city; the home page does not.
 - Not changed: the "Near you" card empty messages ("No open pharmacy found nearby", "No 24-hour place found nearby", "Try a wider search.") keep their words.
-- The owner confirms the exact words in the review (question 5).
+- The owner confirms the exact words from the short list at the end of this file.
 
 ### D9. "Near you" never shows the same place twice (point 10)
 - Seen on the live site: the same listing was both "Closest open pharmacy" and "Closest open 24-hour place". Today each card loads on its own with
@@ -216,7 +244,8 @@ first-load weight under 500 KB (NFR-01), and the results page's own JavaScript s
 
 ### D11. Documents
 Spec first, then code: after the owner's review, `specs/frontend/ui-spec.md` is updated (2.1 the home page words and the section name, 2.2 item 6 the
-"Near you" rule, 2.3 the heading, the chip, the empty text and the banner), and the roadmap and `LOG.md` once at the end of each stage (the plan says which).
+"Near you" rule, 2.3 the heading, the chip, the empty text and the banner), and the roadmap and `LOG.md` once, at the end of the feature (the banner is the
+last task, in the same pull request).
 
 ## Out of scope for this feature
 - Chips for filters other than the type (service, area, open now...): they stay in the Filters sheet.
@@ -226,15 +255,31 @@ Spec first, then code: after the owner's review, `specs/frontend/ui-spec.md` is 
 - Photos on the facility owner sign-up and login pages (the Phase 10 idea): the same five photos will be reused there later, with the same approval.
 - Changing the tab title for a chosen type, any API change, any analytics of the search term.
 
-## Questions for the owner (the answers go in this file before any code)
-1. **`pharmacy.jpg`:** keep it as approved for the banner, or replace it too?
-2. **The Magnific credit:** the exact address (URL) the credit "Designed by Magnific" must link to, and the licence text that asks for it (NFR-13). I will not guess it.
-3. **The Overview and WhatsApp:** the WhatsApp button is live for numbers marked as WhatsApp. Should the Overview now say "call, chat on WhatsApp or get
-   directions in one tap" (your note in `LOG.md`), or keep "call or get directions in one tap" while the demo listings have no WhatsApp numbers?
-4. **The home page description:** is the proposed text in D7 right, and should the other pages keep the site-wide description?
-5. **The empty-results words and the "filter is on" rule** (D8), and **the type-word list** (D5), which you said you would confirm here.
-6. **"near you" without a position:** the heading "Pharmacies near you" is the same when the visitor gave no position and no area, and the list is sorted
-   A to Z (the count line says so). Keep your words always (the plan's default), or say "Pharmacies" alone when there is no position and no area?
-7. **One pull request or two:** Tasks 1 to 7 need no new photos, so I suggest they are one pull request that you check on the preview and merge, and the
-   banner (Task 8, last) follows as a small second pull request when `hospital.jpg` and `maternity.jpg` are replaced. Or one pull request that waits for the photos?
-8. **A type word on top of a chosen type** (D5): the typed type replaces the chosen one. Right?
+## The owner's answers (2026-10-15)
+1. **Photos:** use the Magnific photos we already have for all five types, approved for now; hospital and maternity may be replaced later. **Applied in D6,
+   with one exception:** the hospital banner is off (`approved: false`) because Magnific's rules on people could not be read in full (the owner's own
+   rule: "if it is not allowed or unclear, keep the hospital banner off"). The owner reads the rules and switches it on, or replaces the photo.
+2. **Magnific credit:** found in the git history (commit `c5d2758`, removed in `1f1cdcc`): "Images designed by Magnific" linking to <https://www.magnific.com>.
+   **Proposed for the banner: "Designed by Magnific", linking to <https://www.magnific.com>, under the banner** (D6). The owner confirms before Task 8 starts.
+3. **Overview:** keep "call or get directions in one tap" until real listings have WhatsApp numbers (D7 already says so).
+4. **Home page description:** fine if it matches the agreed Overview wording. It is the first two sentences of the Overview, word for word, with "built for Nigeria"
+   and no city (D7); a test compares the two texts.
+5. **Type words and empty-results wording:** the owner confirms them from the short list below, then they are final.
+6. **No position:** just "Pharmacies" (no "near you"), and with a chosen area "Pharmacies in Ogui" (D3).
+7. **One pull request:** the banner is in this same pull request, as the last task (Task 8). The pull request is not merged until Task 8 is done.
+8. **A typed type word replaces the current type chip** (D5).
+
+## To confirm in the spec review (short lists, one line per type)
+
+**Type words** (capitals, spaces, hyphens and dots are ignored; a plural is accepted; the whole query must be the word):
+- Pharmacy: pharmacy, pharmacies, chemist, chemists, chemist shop, drug store, drugstore, patent medicine, PPMV
+- Hospital: hospital, hospitals, general hospital, teaching hospital, medical centre, medical center
+- Clinic: clinic, clinics, health centre, health center, PHC, primary health centre, dispensary
+- Maternity: maternity, maternity home, maternity centre, maternity center, midwife
+- Laboratory: lab, labs, laboratory, laboratories, medical lab, diagnostic, diagnostics, diagnostic centre, diagnostic center
+- Not mapped: ambulance, police, fire, blood.
+
+**Empty search results** (the first line depends on whether any filter is on, text included; the second line always follows):
+- A filter is on: "No matches. Try removing a filter or widening the distance."
+- No filter: "No places found near you yet."
+- Second line, both cases: "We're starting in Enugu and adding more places soon." (the city comes from `siteConfig.launchCity`, never written into the component)

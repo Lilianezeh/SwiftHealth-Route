@@ -13,6 +13,11 @@ Things the owner must do before real visitors use the site.
   (white button, dark green border, the glyph) and the words in `specs/2026-10-13-listing-page/requirements.md` D2 and the comments in
   `frontend/scripts/make-whatsapp-glyph.mjs` and `frontend/tests/unit/whatsappGlyph.test.ts` agree with them, and change the button if they do not.
   Deferred box in `specs/2026-10-13-listing-page/validation.md` (Security and privacy checklist).
+- [ ] **Read Magnific's licence and attribution terms, and decide the hospital banner (NFR-13)** (owner, 2026-10-15). The type banners use Magnific photos
+  with the credit "Designed by Magnific" (link <https://www.magnific.com>). Magnific's pages answered 403 to my tools, so I could not quote them: read
+  <https://www.magnific.com/ai/docs/licenses-attribution> and <https://www.magnific.com/ai/docs/usage-rights-general-rules> in a browser, plus the licence
+  file of each photo, especially for people shown in a health setting. Until then the hospital banner is off (`approved: false`,
+  `specs/2026-10-15-find-by-type/requirements.md` D6). Also keep the download records (see "keep a record of where the home page photos come from").
 
 - **Render collation provider (before the production `pg_trgm` check):** PostgreSQL 18 release notes say `pg_trgm`
   behaviour can change on clusters whose default collation provider is not libc. Local and CI use the image default

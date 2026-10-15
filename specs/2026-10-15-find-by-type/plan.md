@@ -1,9 +1,10 @@
 # Plan: Find by type and home page wording
 
 Spec: [requirements.md](requirements.md). Validation: [validation.md](validation.md). Branch `feature/find-by-type`.
-**Status: written for the owner's review (2026-10-15). Nothing below is started.** The owner answers the questions at the end of `requirements.md`
-and gives the go-ahead on this plan first. Every task is tests first. Boxes are ticked with their commit hash at the end of each stage, after the
-owner has checked the preview (as for the home page and the listing page).
+**Status: updated with the owner's answers (2026-10-15). Nothing below is started.** The owner confirms the type words, the empty-results words and the
+Magnific credit (end of `requirements.md`) and gives the go-ahead on this plan first. Every task is tests first. Boxes are ticked with their commit hash
+at the end of the feature, after the owner has checked the preview (as for the home page and the listing page). **One pull request**, with the banner as
+its last task (owner, 2026-10-15); it stays a draft and is not merged until Task 8 is done.
 
 Frontend only; no API change, no new table, no new package.
 
@@ -22,9 +23,9 @@ Frontend only; no API change, no new table, no new package.
 - Docs: `specs/frontend/ui-spec.md` 2.1, 2.2, 2.3 (Task 0), the roadmap, `LOG.md`.
 
 ## Stages
-- **Stage 1: Tasks 1 to 7.** Everything except the photos. It can be built and checked on the preview while the owner finds the new photos.
-- **Stage 2: Task 8, the photo banner, the last task.** Needs the approved photos and the credit address. Suggested as a second, small pull request
-  (question 7 of `requirements.md`).
+- **Stage 1: Tasks 1 to 7.** Everything except the banner. It is built and checked on the preview first.
+- **Stage 2: Task 8, the photo banner, the last task, in the same pull request.** All five photos are approved for now except the hospital one (`approved:
+  false` until the owner has read Magnific's rules); it starts after the owner confirms the credit.
 
 ## Tasks (tests first in every task)
 
@@ -39,8 +40,9 @@ Frontend only; no API change, no new table, no new package.
 - [ ] Add `config/types.ts` (slug, chip label, heading; photos come in Task 8). Rename `BrowseByType.tsx` to `FindByType.tsx` and `HOME_WORDS.browse` to `findByType`.
 
 ### Task 2: the heading and the chip (D2, D3, D4)
-- [ ] Tests first: with each of the five types the `h1` is "Hospitals near you", "Clinics near you", "Maternity homes near you", "Pharmacies near you",
-  "Laboratories near you"; with no type, or `?category=ambulance`, it is "Search results"; the placeholder shows (and not "Search results") until the address is read;
+- [ ] Tests first: with a position the `h1` is "Hospitals near you", "Clinics near you", "Maternity homes near you", "Pharmacies near you", "Laboratories near you"; with
+  no position and no area it is "Hospitals", "Clinics", "Maternity homes", "Pharmacies", "Laboratories"; with an `area` in the address it is "Pharmacies in Ogui" (an area wins over a
+  position, and the area's name is shown as text); with no type, or `?category=ambulance`, it is "Search results"; the placeholder shows (and not "Search results") until the address is read;
   the chip shows "Pharmacy" with a ✕ hidden from screen readers, its name is "Remove the Pharmacy filter", it is a button at least 48 px high with 16 px text;
   a tap removes only `category` (the typed text, area, service, open now, 24 hours, distance and `view=map` stay), replaces the address with no history entry, brings back
   "Search results", moves focus to the `h1` and announces "Pharmacy filter removed" in a polite live region; no chip when no type is chosen; a category outside the five
@@ -84,7 +86,9 @@ Frontend only; no API change, no new table, no new package.
 - [ ] Once, at the end of stage 1: `validation.md`, the roadmap and `LOG.md` updated; the plan boxes of Tasks 1 to 7 ticked with their commit hashes after the owner's check.
 
 ### Task 8: the photo banner (the last task) (D6)
-Starts only when the owner has replaced `hospital.jpg` and `maternity.jpg`, approved the replacements, and given the credit address and the licence text (questions 1 and 2).
+Starts only after the owner has confirmed the credit ("Designed by Magnific", linking to <https://www.magnific.com>, under the banner). Photos: clinic, laboratory, pharmacy and
+maternity are approved for now; the hospital photo stays `approved: false` (no banner) until the owner has read Magnific's rules or replaced it. A later replacement is one new file and one
+config line.
 - [ ] Tests first: `config/types.ts` marks a type's photo `approved` and the banner shows **only** then (a type with `approved: false`, or no photo, shows no banner and no credit, while its
   heading and chip still show); one `<img>` for the chosen type and none for the others (only the chosen photo downloads); `width` and `height` are the real size of each file and
   each file is under its budget; alt text is not empty; the credit "Designed by Magnific" with its link (`target="_blank"`, `rel="noopener noreferrer"`, 16 px, 48 px high) shows under the
@@ -95,5 +99,5 @@ Starts only when the owner has replaced `hospital.jpg` and `maternity.jpg`, appr
 - [ ] Update the UI spec 2.3, `validation.md`, the roadmap and `LOG.md` for the banner, tick the boxes with their commit hashes, and only then call the feature done.
 
 ## Questions that block a task
-- Tasks 1 to 7 can start after the owner's go-ahead and answers 3 to 8 of `requirements.md` (answers 3 and 4 only block Task 6).
-- Task 8 is blocked by answers 1 and 2 and by the new `hospital.jpg` and `maternity.jpg`.
+- Tasks 1 to 7 can start after the owner's go-ahead and the confirmation of the two short lists (the type words block Task 3, the empty-results words Task 4).
+- Task 8 is blocked only by the owner's confirmation of the credit. The hospital banner stays off until the owner switches it on.

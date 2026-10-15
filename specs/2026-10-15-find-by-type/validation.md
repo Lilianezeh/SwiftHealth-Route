@@ -1,8 +1,8 @@
 # Validation: Find by type and home page wording
 
-Spec: [requirements.md](requirements.md). Plan: [plan.md](plan.md). **Nothing is built yet: every box is open.** Boxes are ticked at the end of each
-stage, with the evidence, after the owner has checked the preview. Check this file before saying the feature is done. Stage 1 is Tasks 1 to 7;
-stage 2 is the photo banner (Task 8, the last task).
+Spec: [requirements.md](requirements.md). Plan: [plan.md](plan.md). **Nothing is built yet: every box is open.** Boxes are ticked at the end of the
+feature, with the evidence, after the owner has checked the preview. Check this file before saying the feature is done. One pull request: stage 1 is
+Tasks 1 to 7; stage 2 is the photo banner (Task 8, the last task); the pull request is not merged until both are checked.
 
 ## Requirements checked by tests (stage 1)
 
@@ -10,7 +10,8 @@ stage 2 is the photo banner (Task 8, the last task).
   least 48 px high; a results page for `?category=pharmacy` sends `category=pharmacy` to the API and shows only the pharmacies of a mocked answer; the Find shortcuts go to the same addresses
 - [ ] **D2:** the type is the one `category` in the address; the heading, the chip and the Filters sheet read it and agree; `config/types.ts` has the same five slugs as the tiles
   and the shortcuts; a category outside the five (`?category=ambulance`) keeps the heading "Search results" and still shows a chip with its real name
-- [ ] **D3, point 11:** the headings are exactly "Hospitals near you", "Clinics near you", "Maternity homes near you", "Pharmacies near you", "Laboratories near you"; "Search results" with no
+- [ ] **D3, point 11:** with a position the headings are exactly "Hospitals near you", "Clinics near you", "Maternity homes near you", "Pharmacies near you", "Laboratories near you"; with no
+  position and no area just "Hospitals", "Clinics", "Maternity homes", "Pharmacies", "Laboratories"; with an area "Pharmacies in Ogui" (the area wins over the position); "Search results" with no
   type; while the address is being read a placeholder shows, never the words "Search results"
 - [ ] **D4, point 11, NFR-10:** the chip shows "Pharmacy" and a ✕ hidden from screen readers; its name is "Remove the Pharmacy filter"; it is a button at least 48 px high with 16 px text
   and the focus ring; a tap removes only `category` and keeps the text, area, service, open now, 24 hours, distance and `view=map`; the address is replaced with no history entry; the
@@ -57,9 +58,11 @@ stage 2 is the photo banner (Task 8, the last task).
 - [ ] **D6, NFR-13:** the credit "Designed by Magnific" and its link (the owner's address) show under the banner, on the search page only, only while a Magnific photo shows; the link has `rel="noopener noreferrer"`
 - [ ] **D6:** a replaced photo has a new file name in the script and in the config; the cache header of `/images/*` is checked on the preview (`curl -I`)
 - [ ] **D6, NFR-01:** the results and the chip do not wait for the picture; no layout shift when it loads (checked at 320, 360 and 768 px and on throttled 3G)
-- [ ] **Photos (owner):** `hospital.jpg` and `maternity.jpg` replaced and approved (no identifiable patient, no readable brand name, the right scene); `pharmacy.jpg` kept or replaced; the Magnific licence and
-  attribution terms read by the owner (NFR-13). This repo makes no legal claim about them
-- [ ] **Merge checklist, stage 2:** lint, typecheck, tests and build clean; both CIs green; the owner checked the preview; the UI spec 2.3, `validation.md`, the roadmap and `LOG.md` updated; the plan boxes of Task 8 ticked
+- [ ] **Photos (owner):** clinic, laboratory, pharmacy and maternity are `approved: true` (the owner's answer of 2026-10-15; maternity is not a maternity scene and is to be replaced later); the hospital
+  photo is `approved: false` and shows **no banner** until the owner has read Magnific's rules on people and switches it on, or replaces the photo (a test checks the flag)
+- [ ] **Credit:** the owner confirmed "Designed by Magnific" linking to <https://www.magnific.com>, under the banner, against Magnific's "Licenses and attribution" page (which I could not read: it answered 403)
+- [ ] **NFR-13 (owner, before launch):** the Magnific licence and attribution terms read by the owner, with the licence file of each downloaded photo. This repo makes no legal claim about them
+- [ ] **Merge checklist, one pull request:** lint, typecheck, tests and build clean; both CIs green; the owner checked the preview; the UI spec 2.3, `validation.md`, the roadmap and `LOG.md` updated; the plan boxes of Task 8 ticked
 
 ## Security and privacy checklist
 
