@@ -21,7 +21,7 @@ from app.services.verification import is_verification_due
 
 # FR-13
 DISCLAIMER = (
-    "SwiftHealth is a directory and does not give medical advice. "
+    "SwiftHealth Route is a directory and does not give medical advice. "
     "Fees are estimates; confirm with the facility."
 )
 DAYS_IN_A_WEEK = 7

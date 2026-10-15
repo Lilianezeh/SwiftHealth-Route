@@ -1,8 +1,9 @@
-/** The Google Maps directions link, from the listing's own latitude and longitude. Requirements: FR-06, FR-10, NFR-10. */
-import { Route } from "lucide-react";
-
+/** The Google Maps directions link, from the listing's own latitude and longitude. Requirements: FR-06, FR-10, NFR-10.
+ * The one Directions button of the site: the result cards, the map popups and the listing page all use it, so the road-sign icon
+ * (DirectionsIcon, 24 px) changes everywhere at once. The link holds the facility's position only, never the visitor's (NFR-07).
+ */
+import { DirectionsIcon } from "@/components/listings/DirectionsIcon";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 
 type DirectionsButtonProps = { latitude: number; longitude: number; facilityName: string };
 
@@ -23,7 +24,7 @@ export function DirectionsButton({ latitude, longitude, facilityName }: Directio
       aria-label={`Directions to ${facilityName} (opens in a new tab)`}
       className={buttonClasses("secondary")}
     >
-      <DecorativeIcon icon={Route} />
+      <DirectionsIcon />
       Directions
     </a>
   );

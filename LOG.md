@@ -6,6 +6,14 @@ One entry per day. Keep it short and honest.
 
 Open reminders. Each says when it is due. Remove a line once it is done.
 
+### Pre-launch checklist
+Things the owner must do before real visitors use the site.
+- [ ] **Read the WhatsApp brand terms (NFR-13)** (owner, 2026-10-15). Not read yet. The WhatsApp button uses the owner's downloaded WhatsApp glyph, only
+  scaled (<https://www.whatsappbrand.com/>, which redirects to Meta's brand resource page). Read the live terms, check that the button's look
+  (white button, dark green border, the glyph) and the words in `specs/2026-10-13-listing-page/requirements.md` D2 and the comments in
+  `frontend/scripts/make-whatsapp-glyph.mjs` and `frontend/tests/unit/whatsappGlyph.test.ts` agree with them, and change the button if they do not.
+  Deferred box in `specs/2026-10-13-listing-page/validation.md` (Security and privacy checklist).
+
 - **Render collation provider (before the production `pg_trgm` check):** PostgreSQL 18 release notes say `pg_trgm`
   behaviour can change on clusters whose default collation provider is not libc. Local and CI use the image default
   (libc). Confirm that Render's database also uses libc, or reindex the `pg_trgm` indexes after any change.
@@ -176,10 +184,21 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   measures the home page in a real browser at 320 to 1100 px. It is not in the pull request check on purpose (owner, 2026-10-13):
   the check has no browser, and adding one means an install step and a built site to open (slower). Revisit when more screens
   have a layout worth guarding; the Alpine container needs `apk add chromium` and `CHROMIUM_PATH=/usr/bin/chromium`.
-- **Run Lighthouse on the main site after PR #21 merges; if Total Blocking Time is still red there, investigate in a follow-up.**
-  (Owner, 2026-10-13.) On the preview, mobile in Incognito, the score went from 37 to 64: Accessibility 100, Best Practices 100,
-  FCP 2.2 s, LCP 2.9 s, CLS 0.006, Total Blocking Time 1,420 ms (still the weak point; about 101 kB of the JavaScript is the
-  Next.js and React runtime).
+- **Home page Total Blocking Time is red (1,300 ms): investigate after the listing page.** (Owner, 2026-10-13.) PR #21 is merged. On the
+  live site (Incognito, Lighthouse mobile) the scores are Performance 73 (the preview before the speed work: 37), Accessibility 100,
+  Best Practices 100, SEO 92; FCP 1.1 s, LCP 1.4 s, CLS 0.004, Speed Index 4.2 s, Total Blocking Time 1,300 ms (red). The record is
+  in `specs/2026-10-11-home-redesign/validation.md`. Lighthouse's clues to follow: JavaScript execution 1.9 s; main-thread work
+  4.7 s; 15 long tasks; forced reflow; document request latency (about 540 ms of estimated savings); legacy JavaScript 11 KiB; and
+  the "Powered by Netlify" badge on the live site. About 101 kB of the JavaScript is the Next.js and React runtime, which cannot be
+  removed. Needs its own small spec and a before and after measurement.
+- **Later feature: privacy-friendly usage tracking (owner, 2026-10-13).** Three parts. (1) Visit analytics with a cookie-free
+  tool: compare Cloudflare Web Analytics, GoatCounter and Umami; no Google Analytics. (2) Our own daily counts of searches and of
+  Call, WhatsApp and Directions taps per listing, with no IP address, no location and no personal data. (3) Update the Privacy page
+  to explain all of it. What the PRD already says: `specs/prd.md`, section "Analytics", asks for anonymous events only (searches
+  with term, category and filters, listing views, Call taps, Directions taps, Emergency page opens, emergency list shares, reports
+  submitted) and the roadmap lists it as phase 14c. It does not cover WhatsApp taps (FR-47 came later), a visit analytics tool, daily
+  counts per listing, or what the Privacy page must say; and storing a search term can hold personal data, so decide in the spec
+  whether to keep the term at all (NFR-07). Needs its own spec, tests first.
 - **A new home page photo needs a new file name (owner's performance fix, 2026-10-13).** `netlify.toml` now caches `/images/*` for a
   year (`immutable`), because the photos were revalidated on every visit and Lighthouse scored 37 on mobile. A photo replaced under
   the same name would stay in visitors' caches, so change the `target` in `scripts/optimize-home-images.mjs` and the `src` in
@@ -196,6 +215,79 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   whose `src` changes, not five loaded and hidden). The login page shows `hero.jpg`. None of these photos appear on the home page,
   and the Magnific credit appears on those pages only. Needs its own spec, tests first, and the licence terms of the Magnific
   photos checked first (NFR-13); WebP files made with `scripts/optimize-home-images.mjs`-style budgets.
+- **Next feature after the listing page: "Find by type and home page wording" (owner, 2026-10-13). Not started: it needs its own spec in
+  `specs/<date>-find-by-type/`, tests first, and a go-ahead on the plan.** Roadmap entry: "Find by type and home page wording".
+  1. Rename the home section "Browse by type" to **"Find by type"**.
+  2. A type tile shows **only** that type. Checked on 2026-10-13: the tile goes to `/search?category=<slug>` and the API filters on the exact
+     slug, so no other type comes back (live check: hospital 4, clinic 2, maternity 2, pharmacy 6, laboratory 2, each only its own type).
+  3. **A type word typed in the search box applies that type's filter.** Proposed words for Nigerian usage (all lower case, plural and
+     spacing ignored; the whole query must be the type word, so "pharmacy ogui" stays a text search): *pharmacy*: pharmacy, pharmacies, chemist,
+     chemists, chemist shop, drug store, drugstore, patent medicine, PPMV; *hospital*: hospital, hospitals, general hospital, teaching
+     hospital, medical centre, medical center; *clinic*: clinic, clinics, health centre, health center, PHC, primary health centre,
+     dispensary; *maternity*: maternity, maternity home, maternity centre, maternity center, midwife; *laboratory*: lab, labs, laboratory,
+     laboratories, medical lab, diagnostic, diagnostics, diagnostic centre, diagnostic center. Not mapped on purpose: ambulance, police,
+     fire and blood (they belong to SwiftRescue and the Blood page). The owner reviews the list; typos stay with the existing fuzzy text search.
+  4. **A slim photo banner for the chosen type** at the top of the results, with a heading like "Pharmacies near you". Photos: the owner's
+     Magnific files in `/mnt/c/Users/Lilian/Desktop/IMAGES/` (`hospital.jpg`, `clinic.jpg`, `maternity.jpg`, `pharmacy.jpg`,
+     `laboratory.jpg`), converted with `scripts/optimize-home-images.mjs` to about 40 KB or less each, with alt text; only the chosen type's photo
+     downloads. The required **"Designed by Magnific" credit with its link** shows under the banner, on the search page only, and only while a
+     Magnific photo is showing. The photo list and the credit live in **one config file**, so Unsplash photos can replace them later; a replaced
+     photo gets a **new file name** (the photos are cached for a year, `netlify.toml`). No readable brand names and no identifiable patients.
+  5. **"Why" section:** the heading "Benefits" becomes **"Why SwiftHealth Route"** (the name comes from `config/brand.ts`) and the four cards read:
+     "Verified information" / "Our team checks each listing before it goes live and re-checks it regularly."; "See what's open now" / "Find places
+     open right now, including late-night and 24-hour services."; "Built for mobile data" / "Light pages built for a weak connection.";
+     "Your location stays private" / "Your location is used only to show places near you. We don't store it." (Checked: the position is kept in the
+     browser tab and sent to the API for each search; the API does not store it and scrubs `lat` and `lng` from its logs, api-spec "Privacy (NFR-07)".)
+  6. **Facility owners section:** heading "Own or manage a healthcare facility?"; text "List your facility on SwiftHealth Route so people nearby can
+     find you, call you and get directions. Listing is free during our launch, and every listing is checked by our team before it goes live."; the
+     button stays "List your facility" (the page behind it is still "Coming soon", phase 10). "Free during launch" is the owner's decision, now in
+     `specs/prd.md` (Open questions).
+  7. **Hero and Overview:** hero heading "Find care that's open now, near you."; hero text "Verified hospitals, clinics, pharmacies and labs, with phone
+     numbers, opening hours and directions."; the button "Find care near me" and the small line "Free to use · No sign-up needed" stay. Overview
+     heading "What is SwiftHealth Route?"; text "SwiftHealth Route is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes,
+     pharmacies and laboratories near you, see which are open right now, and call or get directions in one tap. Our team checks every listing before it
+     goes live and re-checks it regularly." ("Built for Nigeria" stays, the owner's decision.) The page's meta description is updated to match.
+  8. **Empty search results (today and proposed).** Today `SearchStatus` says "No matches. Try removing a filter or widening the distance." (and the
+     nearby cards say "No open pharmacy found nearby. Try a wider search."). Proposed: keep that first line when a filter is on, say "No places found
+     near you yet." when there is no filter, and add a second line in both cases: **"We're starting in Enugu and adding more places soon."** (the search
+     page may name the city; the home page does not). The owner confirms the exact words in the spec.
+  9. Check that every new headline, line and card fits at **320, 360 and 768 px** without being cut off (the real-browser check).
+  10. **The "Near you" section on `/find` must not show the same place twice (owner, 2026-10-13).** Seen on the live site: "DEMO – Always Open
+     Pharmacy" was both "Closest open pharmacy" and "Closest open 24-hour place". Today the two cards in `NearbySuggestions` load on their own, each
+     asking for `limit=1`, so neither knows what the other shows. Wanted: when both slots would show the same listing, the second slot shows the **next closest
+     different 24-hour place** (so that card asks for `limit=2` and takes the first listing that is not the pharmacy card's; or the parent compares the two
+     answers); if there is no other 24-hour place, show **one card with both labels** ("Closest open pharmacy" and "Closest open 24-hour place", spanning
+     both columns) instead of two identical cards. Tests first: (a) two different answers show two cards; (b) the same listing first in both shows the
+     second 24-hour listing in the second slot; (c) the same listing and no second one shows a single card with both labels; (d) the second card never
+     shows a listing that the first one shows; (e) a failure or an empty answer in one card does not change the other; no position in any address.
+  11. **A chosen type must be clearly visible on the results page (owner, 2026-10-14).** The owner tested the live site: tapping the Pharmacy tile
+     correctly showed only the 2 pharmacies, but the page said only "Search results", so it looked unfiltered. Wanted, whenever a type is chosen
+     (from a tile or from a typed type word, point 3): (a) the heading changes from "Search results" to the type's own words, e.g. **"Pharmacies near
+     you"** (with the photo banner of point 4); (b) a visible **"Pharmacy ✕" chip under the search box** shows the active filter, and one tap on it
+     removes the filter (the page then goes back to "Search results" and all types). The chip is at least 48 px high with 16 px text, the ✕ is an
+     icon hidden from screen readers and the chip's name says "Remove the Pharmacy filter"; the heading and the chip come from the same category
+     in the address, so they never disagree. Tests first: tile -> heading and chip; typed word -> the same; chip tap -> filter gone, heading back
+     to "Search results", the other filters (open now, distance, area) kept; no chip and the plain heading when no type is chosen; the chip's
+     position is not in any address beyond what the search already sends (NFR-07). Real-browser check at 320, 360 and 768 px.
+- **Overview sentence to add back, and one to change (owner, 2026-10-13).** (a) The sentence "If a number doesn't work, you can tell us so we can fix it."
+  was taken out of the Overview because the report form is still a "Coming soon" page: add it back when the report form is live (roadmap **Phase 9a**,
+  `POST /reports` and the form, FR-20 and FR-21). (b) When the WhatsApp button is live (the listing page), change "call or get directions in one tap" in
+  the Overview to "call, chat on WhatsApp or get directions in one tap".
+- **Decide pricing (owner, 2026-10-13).** Basic listing free during launch. Paying never buys the verified badge. Featured listings follow FR-44 and FR-45:
+  at most one, clearly labelled Sponsored, never in SwiftRescue (FR-19). Possible paid extras later: more photos, a monthly call and visit report. (The
+  free-during-launch part is recorded in `specs/prd.md`, Open questions. The featured price is still the open placeholder of ₦5,000.00 per month.)
+- **Before public launch: remove or clearly mark the demo listings, so every live "verified" claim is true (owner, 2026-10-13).** Already planned in part:
+  roadmap **14d** removes them at the end (`REMOVE_DEMO_LISTINGS=true` on Render, redeploy, confirm `/search?q=DEMO` returns 0, set it back to `false`).
+  Not planned: anything before then. The live site shows 4 fictional demo listings today next to the home page's words about verified listings, so
+  either remove them earlier or add a visible "Demo" mark to every demo listing (card, page and map popup) until 14d. Decide with the owner.
+- **Replace two Magnific photos before the "Find by type" feature (owner, 2026-10-13).** `hospital.jpg` shows a patient in a hospital bed with her face clearly
+  visible (and is a tall 9:16 portrait, hard to crop into a slim banner); `maternity.jpg` is a doctor consultation with a pill bottle, not a maternity scene.
+  `pharmacy.jpg` is optional to replace (its hands look slightly unnatural, so it may be AI-generated). `clinic.jpg` and `laboratory.jpg` are fine
+  (no patients, no readable brand names at preview size). A replacement gets a new file name.
+- **Idea: a small WhatsApp button on the search result cards (owner, 2026-10-13).** Not in the listing page phase. It needs the API to say whether a
+  card's primary number is a WhatsApp number (`primary_phone_is_whatsapp` on `ListingSummary`, filled by the query that fills `primary_phone`; search, emergency
+  and blood results share the shape) and an icon-only 48 px button after Call and Directions (the official glyph, accessible name "WhatsApp <name>").
+  The map popups would stay as they are. Needs its own small phase, backend and frontend, tests first.
 
 ## Day 1 — 2026-10-04
 - **Built:** Repo skeleton, Docker Compose, spike for open-now + nearest search.
@@ -362,3 +454,36 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   warning, the one shared rule for "verification due", and the decisions for the page (12-hour times, fee wording, the
   notice, the new Directions icon).
 - **Tomorrow:** phase 6b, the listing page (`feature/listing-page`): spec first, then tests, then the page.
+
+## Day 9 — 2026-10-13 and 2026-10-14
+- **Built:**
+  - **PR #21 (home page redesign) merged and live.** Lighthouse mobile on the live site, from the owner's own run: Performance 73, Accessibility 100,
+    Best Practices 100, SEO 92 (the preview before the speed work: 37).
+  - **Rename to SwiftHealth Route, with a new logo.** The name lives in one file, `frontend/src/config/brand.ts`; the repo, the folders and the Netlify
+    address keep the old name.
+  - **Docker as user 1000 for the frontend and the backend** (`5d907fa`, `95f4380`), so files the containers write belong to the owner, not root. The
+    backend setting is in `docker-compose.yml` only, because Render builds the backend Dockerfile.
+  - **The listing page, phase 6b (draft PR #22, branch `feature/listing-page`).** Call and WhatsApp (white button, the owner's glyph, only for numbers
+    marked as WhatsApp), the Directions road-sign icon at 24 px, 12-hour hours with "Today", fees, the amber "reported" note, entrance photo, Share via
+    WhatsApp and Copy link, and a friendly "Listing not found". After the owner's review: Call and WhatsApp the same 56 px height, phone numbers shown
+    in local format (0803 123 4567) with the main number as a line under the buttons, the Verified badge fitting its content, "Ask for price" when a
+    service has no fee, and the page's own JavaScript target set to 9 kB (8.58 kB built; First Load 115 kB). A local, development-only fictional
+    fixture (`python -m seed.whatsapp_fixture`) shows the cases the demo data hides on purpose. 833 frontend and 790 backend tests passing; real-browser
+    checks 23 of 23; Frontend CI and Backend CI green.
+  - **The "Find by type and home page wording" plan is recorded** (this file, "To do later", items 1 to 11, and the roadmap), not built. The latest
+    item: a chosen type must be clearly visible on the results page, with a "Pharmacies near you" heading and a removable "Pharmacy ✕" chip.
+- **Broke / fixed:** the owner tested on the laptop with the repo on `main`, so the old code showed and the new work did not; checking the branch
+  first fixed it. The browser-test libraries kept in the session scratch folder were gone the next day and had to be downloaded again. `gh pr edit`
+  fails on this repo (a Projects classic warning), so the pull request text is changed through `gh api`. Pasted messages are not acted on until the
+  owner types "yes, apply it".
+- **Owner's checks (all passed, 2026-10-15):** Honor phone on the preview (diamond icon on the cards and the page, the main number line in local
+  format, Copy link pastes only `/listing/<slug>`, Share via WhatsApp opens WhatsApp with the link, `/listing/nothing-here` shows "Listing not
+  found", demo listings show no WhatsApp button as designed) and the laptop (WhatsApp in Option A beside Call at the same height, "Front desk · 0000
+  000 0951", the compact Verified badge, "Ask for price", "Today", fee styles, amber note). The boxes of `specs/2026-10-13-listing-page/validation.md`
+  and `plan.md` are ticked, except one box deferred to pre-launch: the WhatsApp brand terms (NFR-13), now in "Pre-launch checklist" at the top.
+- **Still open:** the owner merges PR #22 (marked ready on 2026-10-15); the backend disclaimer wording ("SwiftHealth Route") reaches production
+  only after the merge and a Render redeploy; the home page Total Blocking Time (1,300 ms) after the listing page.
+- **Learned:** Before testing on my laptop, check which branch I'm on, because I was testing old code on main. Demo data can hide features on purpose (no WhatsApp on fake numbers). And always measure first: Lighthouse showed my photos were already small and the code was the slow part.
+- **AI use:** Claude Code wrote the specs first, then the tests and the code; I chose the WhatsApp button's look, the local phone format, "Ask for
+  price", the 9 kB target, the Find by type wording and the chip, and I checked the preview on my own phone.
+- **Tomorrow:** merge PR #22, check the live site, then start the next feature, "Find by type and home page wording" (spec and plan first).

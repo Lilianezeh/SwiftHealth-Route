@@ -233,12 +233,35 @@ FR-09 to FR-11, FR-13, FR-47, US-06, US-07, FR-08, FR-22. Backend-only: `Fronten
   (`6fdb5fa`); production checked by the owner (the migration ran, `/listings/<slug>` answers, an unknown slug is a 404,
   `/docs` lists it, search total still 4)
 
-#### Phase 6b: the listing page. Next (branch `feature/listing-page`, 6a is merged)
+#### Phase 6b: the listing page. Built and checked by the owner (2026-10-15); PR #22 ready for the owner to merge. One box deferred to pre-launch: read the WhatsApp brand terms (NFR-13)
+Feature folder: [requirements](2026-10-13-listing-page/requirements.md), [plan](2026-10-13-listing-page/plan.md), [validation](2026-10-13-listing-page/validation.md).
+Branch `feature/listing-page`, 6a is merged. Built: the Directions road-sign icon at 24 px everywhere, the listing page with Call, WhatsApp
+(Option A, the owner's glyph), 12-hour hours, fees, the reported notice, share and copy, the not-found page, a local fictional fixture
+(`python -m seed.whatsapp_fixture`), and a real-browser check. Own JavaScript 8.48 kB; the owner accepted it and set the target to 9 kB (2026-10-13).
+Polish after the owner's review: equal Call and WhatsApp height, the main number as text in the local reading format (0803 123 4567), the
+verified badge fitting its content, "Ask for price" for a service with no fee.
 US-02, US-03, FR-09 to FR-13 and FR-47 (FR-12 Share and FR-47 WhatsApp are Shoulds). The page with Call, WhatsApp (for numbers marked as WhatsApp) and
 Directions buttons, the 12-hour hours table, the fees, share, the report link and the notice for a reported listing. It loads
 in the browser, like `/search`. It also changes the Directions icon everywhere (cards, map popups, the page) to a diamond road
 sign with a right-turn arrow, drawn in code. Its feature folder and the UI spec 2.4 changes come first (Task 0). The owner's
 decisions are in the 6a requirements (6b decisions 1 to 10).
+
+### Find by type and home page wording. Next after phase 6b (owner, 2026-10-13; not started)
+US-01, US-13, FR-04, FR-05, NFR-01, NFR-07, NFR-10. Frontend only (the search API already filters on the exact category). It needs its own spec
+folder and a go-ahead on its plan; the full list of the owner's points, the proposed type words and the empty-results wording are in
+[`LOG.md`](../LOG.md) ("Find by type and home page wording").
+- Rename "Browse by type" to "Find by type"; a type tile shows only that type (checked on 2026-10-13: it already does).
+- A type word typed in the search box applies that type's filter (a reviewed word list for Nigerian usage).
+- A slim photo banner for the chosen type with a heading ("Pharmacies near you"); the owner's Magnific photos for now, converted to about 40 KB,
+  only the chosen photo downloads, the "Designed by Magnific" credit with its link on the search page only while a Magnific photo shows; the photo list
+  and the credit in one config file; a replaced photo gets a new file name. `hospital.jpg` and `maternity.jpg` are replaced first (`LOG.md`).
+- A chosen type is clearly visible on the results page (owner, 2026-10-14; the live site showed only "Search results" after the Pharmacy tile, so it
+  looked unfiltered): the heading becomes e.g. "Pharmacies near you" and a visible "Pharmacy ✕" chip under the search box shows the active filter and
+  removes it with one tap, for a tile and for a typed word alike (`LOG.md`, item 11).
+- New words for the "Why SwiftHealth Route" section (was "Benefits"), the facility owners section, the hero and the Overview, and the page's meta
+  description; the empty search results mention that the first city is Enugu. Everything is checked at 320, 360 and 768 px.
+- On `/find`, the "Near you" cards never show the same place twice: if the closest open pharmacy is also the closest open 24-hour place, the second
+  card shows the next closest different 24-hour place, or, when there is none, one card carries both labels. With a test (`LOG.md`, item 10).
 
 ### Phase 7: SwiftRescue, the emergency section. Next
 US-04, US-09, US-14.

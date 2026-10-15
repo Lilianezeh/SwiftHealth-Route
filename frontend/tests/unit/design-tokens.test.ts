@@ -25,6 +25,7 @@ const SPEC_TOKENS: Record<string, string> = {
   line: "#d7e1df",
   "pine-100": "#dcecf4",
   "pine-50": "#eef6fa",
+  "whatsapp-dark": "#075e54", // the border of the WhatsApp button on the listing page (owner's Option A, 2026-10-13)
   "sky-pale": "#dcf2fc", // "Route" in the logo on a dark background: the lightest blue that passes 4.5:1 there (owner, 2026-10-13)
   sky: "#1a7cad",// the light end of the home page hero gradient: the lightest sky blue with 4.5:1 for white text (owner, 2026-10-12)
   open: "#147a48",
@@ -110,6 +111,10 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     ["white", "sky", "the hero text on the lightest point of the gradient"],
     ["white", "forest", "the Benefits band: white text and white icons"],
     ["sky-pale", "forest", "Route in the logo on the blue header bar"],
+    ["ink", "white", "the label of the WhatsApp button (15.83:1)"],
+    ["whatsapp-dark", "white", "the border of the WhatsApp button on white (7.67:1)"],
+    ["ink", "open-bg", "the label of the WhatsApp button on hover and press (14.17:1)"],
+    ["whatsapp-dark", "open-bg", "the border of the WhatsApp button on hover and press (6.87:1)"],
     ["sky", "white", "Route in the logo on a light background, and the white pulse on the sky pin"],
     ["pine-dark", "white", "SwiftHealth in the logo on a light background"],
     ["pine-dark", "white", "the text of the white hero button"],
@@ -153,6 +158,12 @@ describe("every text and background pair is readable (at least 4.5:1, NFR-10)", 
     expect(contrast(tokens.sky, WHITE)).toBeGreaterThanOrEqual(4.5); // the pulse line of the dark tone
     // A sky pin on the forest bar would vanish: the reason the header always uses the dark tone
     expect(contrast(tokens.sky, tokens.forest)).toBeLessThan(3);
+  });
+
+  it("WhatsApp's own green (#25D366) is the colour of the glyph only: white text on it would be 1.98:1, so the button's text is ink on white", () => {
+    expect(contrast(WHITE, "#25d366")).toBeLessThan(3);
+    expect(contrast(tokens.ink, WHITE)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(tokens["whatsapp-dark"], WHITE)).toBeGreaterThanOrEqual(3); // a button edge needs 3:1
   });
 
   it("the veil behind the header links (pine-dark at 80%) keeps white readable even over a pure white photo", () => {

@@ -97,7 +97,8 @@ exactly 9 tables. The one change to the data model is a new column, `phone_numbe
    Call before you go."
 7. **Primary phone first** with the big Call button; the other numbers each have their own Call button.
 8. **404 page:** "This listing isn't available. It may be under re-verification." with a link to search (UI spec 2.4).
-9. **WhatsApp button (owner, 2026-10-11; FR-47, a Should).**
+9. **WhatsApp button (owner, 2026-10-11; FR-47, a Should).** *(Replaced on 2026-10-13 by D2 and D4 of `specs/2026-10-13-listing-page/requirements.md`:
+   the official glyph (the owner's file) instead of a generic bubble, Option A, and the message "Hello, I found you on SwiftHealth Route." The rest below still holds.)*
    - Beside **Call**, for the numbers with `is_whatsapp: true` only. Call stays the primary (filled) button; WhatsApp is a
      secondary button. A number that is not marked gets Call alone. The listing page only: a card or a map popup has just
      `primary_phone`, with no flag, and does not change.

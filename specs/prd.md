@@ -9,6 +9,8 @@ Oct 3, 2026 · Lilian Ezichi Ezeh
 
 This document defines what the SwiftHealth MVP (Emergency, Hospital & Pharmacy Finder) must do, launching in Enugu, for building it and for partners reviewing it. It combines a product requirements document (what and why) with the detailed functional and non-functional requirements of a software requirements specification (how it must behave).
 
+**Phone numbers (owner, 2026-10-13):** stored as +234..., and shown for reading in the local format Nigerians write them, 0803 123 4567, wherever a number is shown as text. The `tel:` and `wa.me` links stay international.
+
 **Naming:** SwiftHealth Route is the app (renamed from SwiftHealth on 2026-10-13; the rest of this document still says SwiftHealth and means the same app). SwiftRescue is the name of its emergency section and the emergency button shown on every page; wherever this document says "Emergency section" or "Emergency button", it means SwiftRescue.
 
 **Product:** a mobile-friendly website with verified listings of health facilities and emergency contacts for one pilot area of Enugu, plus an admin panel for the team that verifies the data.
@@ -223,4 +225,7 @@ Public user accounts, patient reviews, native Android app, appointment and lab b
 - [ ] Will we show fees at launch if few facilities share them?
 - [ ] Who is the medical advisor and who reviews legal terms?
 - [ ] Final domain (swifthealth.ng or similar)?
+- [x] Price of a basic listing? **Free during launch** (owner decision, 2026-10-13; the home page says "Listing is free during our launch"). Paying never
+  buys the verified badge. Featured listings stay as FR-44 and FR-45 say: at most one, clearly labelled "Sponsored", never in SwiftRescue (FR-19).
+  Possible paid extras later: more photos, a monthly call and visit report.
 - [ ] Featured listing price? Placeholder: ₦5,000.00 per month (to be confirmed).

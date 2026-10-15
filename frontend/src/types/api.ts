@@ -26,6 +26,37 @@ export type ListingSummary = {
   hours_note: string | null;
 };
 
+/** One phone number of a listing page (api-spec, "ListingDetail"). `is_whatsapp` is only true when staff or the provider said so (FR-47). */
+export type PhoneRead = { number: string; label: string | null; is_primary: boolean; is_whatsapp: boolean };
+
+/** One day of the week. A day with no hours is closed, with null times. 0 = Monday ... 6 = Sunday. */
+export type OpeningHoursRead = {
+  day_of_week: number;
+  opens_at: string | null; // "HH:MM", Lagos time
+  closes_at: string | null; // earlier than opens_at means the shift runs past midnight
+  is_closed: boolean;
+};
+
+/** One service with its fee range. Money is a string with 2 decimals ("1500.00"), never a number (api-spec, Conventions). */
+export type ServiceRead = {
+  name: string;
+  fee_min_naira: string | null;
+  fee_max_naira: string | null;
+  fee_collected_at: string | null; // "YYYY-MM-DD"
+};
+
+/** The answer of GET /listings/{slug} (api-spec, "ListingDetail"): the summary plus everything the page shows (FR-09). */
+export type ListingDetail = ListingSummary & {
+  landmark: string | null;
+  description: string | null;
+  entrance_photo_url: string | null;
+  phones: PhoneRead[]; // the primary number first
+  opening_hours: OpeningHoursRead[]; // always 7, Monday first
+  services: ServiceRead[];
+  recently_reported_not_working: boolean; // the FR-22 rule: the listing is still shown, so the page can warn
+  disclaimer: string; // FR-13
+};
+
 /** The answer of GET /search. */
 export type SearchResponse = { items: ListingSummary[]; total: number };
 

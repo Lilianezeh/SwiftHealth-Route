@@ -111,7 +111,7 @@ Used in search results, emergency groups and blood results.
     { "name": "Malaria test", "fee_min_naira": "1500.00", "fee_max_naira": "3000.00", "fee_collected_at": "2026-09-28" }
   ],
   "recently_reported_not_working": false,
-  "disclaimer": "SwiftHealth is a directory and does not give medical advice. Fees are estimates; confirm with the facility."
+  "disclaimer": "SwiftHealth Route is a directory and does not give medical advice. Fees are estimates; confirm with the facility."
 }
 ```
 

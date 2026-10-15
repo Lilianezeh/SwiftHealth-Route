@@ -235,8 +235,9 @@ def test_fees_are_strings_with_2_decimals_a_missing_fee_stays_null_and_the_date_
 # --- the rest of the answer ---
 
 def test_the_disclaimer_is_the_fixed_text() -> None:
+    # The app became SwiftHealth Route on 2026-10-13: the name shows on every listing page.
     assert detail(make_rows()).disclaimer == (
-        "SwiftHealth is a directory and does not give medical advice. "
+        "SwiftHealth Route is a directory and does not give medical advice. "
         "Fees are estimates; confirm with the facility."
     )
     assert DISCLAIMER == detail(make_rows()).disclaimer
