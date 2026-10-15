@@ -233,7 +233,7 @@ FR-09 to FR-11, FR-13, FR-47, US-06, US-07, FR-08, FR-22. Backend-only: `Fronten
   (`6fdb5fa`); production checked by the owner (the migration ran, `/listings/<slug>` answers, an unknown slug is a 404,
   `/docs` lists it, search total still 4)
 
-#### Phase 6b: the listing page. Built (2026-10-13), waiting for the owner's preview check; the plan's boxes are ticked after it
+#### Phase 6b: the listing page. Built and checked by the owner (2026-10-15); PR #22 ready for the owner to merge. One box deferred to pre-launch: read the WhatsApp brand terms (NFR-13)
 Feature folder: [requirements](2026-10-13-listing-page/requirements.md), [plan](2026-10-13-listing-page/plan.md), [validation](2026-10-13-listing-page/validation.md).
 Branch `feature/listing-page`, 6a is merged. Built: the Directions road-sign icon at 24 px everywhere, the listing page with Call, WhatsApp
 (Option A, the owner's glyph), 12-hour hours, fees, the reported notice, share and copy, the not-found page, a local fictional fixture

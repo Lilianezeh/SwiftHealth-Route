@@ -6,6 +6,14 @@ One entry per day. Keep it short and honest.
 
 Open reminders. Each says when it is due. Remove a line once it is done.
 
+### Pre-launch checklist
+Things the owner must do before real visitors use the site.
+- [ ] **Read the WhatsApp brand terms (NFR-13)** (owner, 2026-10-15). Not read yet. The WhatsApp button uses the owner's downloaded WhatsApp glyph, only
+  scaled (<https://www.whatsappbrand.com/>, which redirects to Meta's brand resource page). Read the live terms, check that the button's look
+  (white button, dark green border, the glyph) and the words in `specs/2026-10-13-listing-page/requirements.md` D2 and the comments in
+  `frontend/scripts/make-whatsapp-glyph.mjs` and `frontend/tests/unit/whatsappGlyph.test.ts` agree with them, and change the button if they do not.
+  Deferred box in `specs/2026-10-13-listing-page/validation.md` (Security and privacy checklist).
+
 - **Render collation provider (before the production `pg_trgm` check):** PostgreSQL 18 release notes say `pg_trgm`
   behaviour can change on clusters whose default collation provider is not libc. Local and CI use the image default
   (libc). Confirm that Render's database also uses libc, or reindex the `pg_trgm` indexes after any change.
@@ -468,13 +476,14 @@ Open reminders. Each says when it is due. Remove a line once it is done.
   first fixed it. The browser-test libraries kept in the session scratch folder were gone the next day and had to be downloaded again. `gh pr edit`
   fails on this repo (a Projects classic warning), so the pull request text is changed through `gh api`. Pasted messages are not acted on until the
   owner types "yes, apply it".
-- **Owner's checks so far:** Honor phone on the preview (diamond icon on the cards, the page opens, Share via WhatsApp and Copy link are there, demo
-  listings show no WhatsApp button as designed) and the laptop earlier (WhatsApp beside Call, 12-hour hours with Today, fee styles, amber note).
-  Still to check, listed in `specs/2026-10-13-listing-page/validation.md`: the main number line, the compact Verified badge, what Copy link pastes,
-  Share via WhatsApp opening WhatsApp, `/listing/nothing-here`, and Call and WhatsApp at the same height with "Ask for price" on the local clinic.
-- **Still open:** PR #22 stays a draft until the owner has checked the preview and the boxes are ticked; the backend disclaimer wording ("SwiftHealth
-  Route") reaches production only after the merge and a Render redeploy; the home page Total Blocking Time (1,300 ms) after the listing page.
+- **Owner's checks (all passed, 2026-10-15):** Honor phone on the preview (diamond icon on the cards and the page, the main number line in local
+  format, Copy link pastes only `/listing/<slug>`, Share via WhatsApp opens WhatsApp with the link, `/listing/nothing-here` shows "Listing not
+  found", demo listings show no WhatsApp button as designed) and the laptop (WhatsApp in Option A beside Call at the same height, "Front desk · 0000
+  000 0951", the compact Verified badge, "Ask for price", "Today", fee styles, amber note). The boxes of `specs/2026-10-13-listing-page/validation.md`
+  and `plan.md` are ticked, except one box deferred to pre-launch: the WhatsApp brand terms (NFR-13), now in "Pre-launch checklist" at the top.
+- **Still open:** the owner merges PR #22 (marked ready on 2026-10-15); the backend disclaimer wording ("SwiftHealth Route") reaches production
+  only after the merge and a Render redeploy; the home page Total Blocking Time (1,300 ms) after the listing page.
 - **Learned:** Before testing on my laptop, check which branch I'm on, because I was testing old code on main. Demo data can hide features on purpose (no WhatsApp on fake numbers). And always measure first: Lighthouse showed my photos were already small and the code was the slow part.
 - **AI use:** Claude Code wrote the specs first, then the tests and the code; I chose the WhatsApp button's look, the local phone format, "Ask for
   price", the 9 kB target, the Find by type wording and the chip, and I checked the preview on my own phone.
-- **Tomorrow:** check the preview and the local test clinic (list in `validation.md`), then tick the boxes and mark PR #22 ready, or send fixes.
+- **Tomorrow:** merge PR #22, check the live site, then start the next feature, "Find by type and home page wording" (spec and plan first).

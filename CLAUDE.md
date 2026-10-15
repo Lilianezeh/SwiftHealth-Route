@@ -131,6 +131,8 @@ The reference logic is spikes/open_now_nearest.py. Its three tests live in backe
 ## Never
 - Never push to `main` (and never commit on it). Changes reach `main` only through a pull request that the owner
   merges. Check the branch with `git branch --show-current` before every commit and push (see "How to work").
+- Never add AI co-author or "Generated with" lines to commit messages or pull request descriptions (owner, 2026-10-15; also switched off
+  in `.claude/settings.json` with `attribution.commit` and `attribution.pr` set to ""). AI use is recorded in the LOG.md day entries instead.
 - Never commit or print secrets; never edit .env. Use test keys only.
 - Never invent library APIs, Paystack/Termii/Cloudinary fields or legal claims. If unsure, say so and
   point to the official docs.

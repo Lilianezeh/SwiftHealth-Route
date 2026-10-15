@@ -1,7 +1,8 @@
 # Validation: the listing page (phase 6b)
 
-Spec: [requirements.md](requirements.md). Plan: [plan.md](plan.md). **Nothing is built yet: every box is open.** Boxes are ticked at the end
-of the feature, with the evidence, after the owner has checked the preview. Check this file before saying the feature is done.
+Spec: [requirements.md](requirements.md). Plan: [plan.md](plan.md). **Built and checked (2026-10-15): every box is ticked `[x]` except one
+deferred box `[-]` (the WhatsApp brand terms, NFR-13, deferred to pre-launch by the owner).** Boxes were ticked at the end of the feature, with
+the evidence, after the owner checked the preview. Check this file before saying the feature is done.
 
 ## Build results (2026-10-13, before the owner's preview check; the boxes below stay unticked until the owner has checked)
 
@@ -43,78 +44,86 @@ Done, 2026-10-13 and 2026-10-14 (reported by the owner):
 - **Laptop, local test clinic, earlier** (before the polish changes): the WhatsApp button beside Call; 12-hour hours with "Today"; the fee styles;
   the amber "reported" note.
 
-**Still to check tomorrow (left unticked):**
-- [ ] The main number line in local format, under the buttons (local clinic and preview)
-- [ ] The compact "Verified" badge (it fits its content, not full width)
-- [ ] What "Copy link" pastes: only `/listing/<slug>`
-- [ ] "Share via WhatsApp" opens WhatsApp
-- [ ] `/listing/nothing-here` shows the friendly "Listing not found" page
-- [ ] On the local test clinic: Call and WhatsApp are the same height, and "Home visit" shows "Ask for price"
+**Checked on 2026-10-15 (reported by the owner; all passed):**
+- [x] Laptop, local test clinic: Call and WhatsApp the same height; the line "Front desk · 0000 000 0951"; the compact "Verified" badge; "Ask for
+  price" on Home visit; "Today" on Thursday; the WhatsApp button in Option A (white, green icon, dark text, same height as Call)
+- [x] Honor phone, preview, Incognito: the diamond Directions icon on the cards and on the listing page; the main number line in local format;
+  "Copy link" pastes only `/listing/<slug>`; "Share via WhatsApp" opens WhatsApp with the link; `/listing/nothing-here` shows "Listing not found";
+  the demo listings correctly show no WhatsApp button
+- All PR #22 checks passed (`Frontend CI`, `Backend CI`, the Netlify checks).
 
 ## Requirements checked by tests
 
-- [ ] **US-02, FR-10, D1:** Call is the primary (filled) button; Call and WhatsApp are the same height (56 px); the primary phone is first; each
+- [x] **US-02, FR-10, D1:** Call is the primary (filled) button; Call and WhatsApp are the same height (56 px); the primary phone is first; each
   other phone has its own Call button; the main number is also shown as text under the buttons
-- [ ] **D12:** `formatPhoneForReading` turns `+2348031234567`, `08031234567` and `2348031234567` into `0803 123 4567`; anything that is not a
+- [x] **D12:** `formatPhoneForReading` turns `+2348031234567`, `08031234567` and `2348031234567` into `0803 123 4567`; anything that is not a
   Nigerian number is returned unchanged; the main number line and the other numbers use it; the `tel:` and `wa.me` links stay international
-- [ ] **D6, the badge:** the "Verified … ago" badge and the "Verification due" label fit their content (they do not stretch across the page)
-- [ ] **FR-11, D6:** a service with no fee shows "Ask for price" (no amount, no date)
-- [ ] **FR-47, D2:** the WhatsApp button appears only for a phone with `is_whatsapp: true`; none when false; the link is exactly
+- [x] **D6, the badge:** the "Verified … ago" badge and the "Verification due" label fit their content (they do not stretch across the page)
+- [x] **FR-11, D6:** a service with no fee shows "Ask for price" (no amount, no date)
+- [x] **FR-47, D2:** the WhatsApp button appears only for a phone with `is_whatsapp: true`; none when false; the link is exactly
   `https://wa.me/2348030000000?text=Hello%2C%20I%20found%20you%20on%20SwiftHealth%20Route.` for `+2348030000000` and for `08030000000`
   (the conversion is tested on its own: plus, local, bare, spaces, dashes, wrong lengths give no button); it opens in a new tab with
   `rel="noopener noreferrer"`; its accessible name says the facility and "opens in a new tab"
-- [ ] **D2, the icon:** the owner's WhatsApp glyph, only scaled (`whatsapp-glyph-72.png`: 72 × 72, one colour `#25D366`, transparent), is an `<img>` with empty alt
+- [x] **D2, the icon:** the owner's WhatsApp glyph, only scaled (`whatsapp-glyph-72.png`: 72 × 72, one colour `#25D366`, transparent), is an `<img>` with empty alt
   shown at 24 px; the label is "WhatsApp"; the glyph appears only inside the WhatsApp buttons (one for each marked number) and nowhere else; the link format quotes the owner's two sentences from the help page
-- [ ] **D2, the look and the contrast (Option A):** a white button with a `#075E54` border and an `ink` label; every pair passes in
+- [x] **D2, the look and the contrast (Option A):** a white button with a `#075E54` border and an `ink` label; every pair passes in
   `design-tokens.test.ts` (`ink` on white 15.83:1, border `#075E54` on white 7.67:1, `ink` on the `open-bg` hover 14.17:1); no white text on `#25D366`
-- [ ] **US-03, D5:** one `DirectionsIcon` (a diamond road sign with a right-turn arrow, drawn in code) is used by the result cards, the map popups and the
+- [x] **US-03, D5:** one `DirectionsIcon` (a diamond road sign with a right-turn arrow, drawn in code) is used by the result cards, the map popups and the
   listing page; no other Directions icon is left; the accessible name is unchanged; the link holds the facility's coordinates only
-- [ ] **US-06, FR-09, D6:** hours in 12-hour time; midnight is 12:00 AM and noon 12:00 PM; past-midnight shows "(next day)"; closed days say Closed;
+- [x] **US-06, FR-09, D6:** hours in 12-hour time; midnight is 12:00 AM and noon 12:00 PM; past-midnight shows "(next day)"; closed days say Closed;
   "Open 24 hours, every day" replaces the table for a 24-hour listing; today's row is marked with a word, by Lagos time (a test with the device clock in another zone
   near midnight in Lagos)
-- [ ] **FR-11, D6:** the five fee cases (range, equal, minimum only, none, with and without the date); "Estimate — confirm with the facility" shows once
-- [ ] **FR-22, D6:** "Recently reported as not working. Call before you go." shows when the flag is true, in the amber style with an icon, never red;
+- [x] **FR-11, D6:** the five fee cases (range, equal, minimum only, none, with and without the date); "Estimate — confirm with the facility" shows once
+- [x] **FR-22, D6:** "Recently reported as not working. Call before you go." shows when the flag is true, in the amber style with an icon, never red;
   the rest of the page is unchanged; it is absent when false
-- [ ] **US-07, FR-13, D6:** the verified date, the "Verification due" label when `verification_due`, the API's disclaimer
-- [ ] **D7:** the entrance photo shows only for an `https://` address; `http://`, `javascript:` and an empty value show nothing; alt text always; lazy;
+- [x] **US-07, FR-13, D6:** the verified date, the "Verification due" label when `verification_due`, the API's disclaimer
+- [x] **D7:** the entrance photo shows only for an `https://` address; `http://`, `javascript:` and an empty value show nothing; alt text always; lazy;
   fixed size; the frame disappears if the photo fails
-- [ ] **FR-12, D4:** "Share via WhatsApp" and "Copy link"; the shared link is exactly `<origin>/listing/<slug>` even when the page was opened with
+- [x] **FR-12, D4:** "Share via WhatsApp" and "Copy link"; the shared link is exactly `<origin>/listing/<slug>` even when the page was opened with
   `?lat=6.45&lng=7.5#x`; no message holds a coordinate; the clipboard failure shows the link to copy by hand; "Link copied" is a `role="status"`
-- [ ] **D8:** the skeleton, "The service is waking up" after 5 s, Retry after 45 s; a 404 shows "Listing not found", "This listing isn't available. It
+- [x] **D8:** the skeleton, "The service is waking up" after 5 s, Retry after 45 s; a 404 shows "Listing not found", "This listing isn't available. It
   may be under re-verification." and a "Search for care" button; other failures show Retry; the tab title is "<name> | SwiftHealth Route"
-- [ ] **NFR-07, D9:** the API request has no query string; a position stored in `sessionStorage` appears in no link, no message and no request
-- [ ] **NFR-01, D10:** the page's source imports no Leaflet, no chart code and no `next/image`; every link has `prefetch={false}`; the built route is within
+- [x] **NFR-07, D9:** the API request has no query string; a position stored in `sessionStorage` appears in no link, no message and no request
+- [x] **NFR-01, D10:** the page's source imports no Leaflet, no chart code and no `next/image`; every link has `prefetch={false}`; the built route is within
   its budget (own JS under 9 kB, First Load JS at or under 116 kB)
-- [ ] **NFR-10:** every button and link is at least 48 px high; text is 16 px or more; the focus ring is visible; one `h1`; the heading levels are in order;
+- [x] **NFR-10:** every button and link is at least 48 px high; text is 16 px or more; the focus ring is visible; one `h1`; the heading levels are in order;
   every icon is hidden from screen readers; the buttons wrap instead of overflowing at 320 px
-- [ ] **D11:** the fixture adds the one fictional listing and nothing else; running it twice changes nothing; it refuses when `APP_ENV=production`;
+- [x] **D11:** the fixture adds the one fictional listing and nothing else; running it twice changes nothing; it refuses when `APP_ENV=production`;
   the seed and the production demo data keep `is_whatsapp = false`
 
 ## Real browser (Playwright, on a production build with the fixture)
 
-- [ ] No sideways scrolling at 320, 375, 768 and 1024 px
-- [ ] The WhatsApp button is only on the marked number; Call and WhatsApp are the same height; the verified badge is not full width
-- [ ] No script downloaded by the page contains "leaflet" or comes from the search page; the network log holds no `lat=`, no `lng=` and none of the fixture's coordinates
+- [x] No sideways scrolling at 320, 375, 768 and 1024 px
+- [x] The WhatsApp button is only on the marked number; Call and WhatsApp are the same height; the verified badge is not full width
+- [x] No script downloaded by the page contains "leaflet" or comes from the search page; the network log holds no `lat=`, no `lng=` and none of the fixture's coordinates
   except in the Google Maps link
-- [ ] The 404 page for an unknown slug
+- [x] The 404 page for an unknown slug
 
 ## Commands (in the containers)
 
-- [ ] `docker compose exec frontend npm run lint`, `npm run typecheck`, `npm test`, `npm run build`
-- [ ] `docker compose exec backend pytest -q` and `docker compose exec backend ruff check .`
+- [x] `docker compose exec frontend npm run lint`, `npm run typecheck`, `npm test`, `npm run build`
+- [x] `docker compose exec backend pytest -q` and `docker compose exec backend ruff check .`
 
 ## Merge checklist
 
-- [ ] Lint, typecheck, the unit tests and the build are clean; the numbers are written here
-- [ ] On the draft pull request, `Frontend CI` and `Backend CI` are green (the backend part is only the fixture)
-- [ ] The UI spec 2.4, the roadmap and `LOG.md` are up to date
-- [ ] **The owner checked the preview** (the look of the WhatsApp button in the chosen option, the Directions icon on the cards, the popups and the page, the 12-hour hours,
-  the notice, the share buttons, the 404 page) and the pull request stays a draft until every box above is ticked
+- [x] Lint, typecheck, the unit tests and the build are clean; the numbers are written here
+- [x] On the draft pull request, `Frontend CI` and `Backend CI` are green (the backend part is only the fixture)
+- [x] The UI spec 2.4, the roadmap and `LOG.md` are up to date
+- [x] **The owner checked the preview** (the look of the WhatsApp button in the chosen option, the Directions icon on the cards, the popups and the page, the 12-hour hours,
+  the notice, the share buttons, the 404 page); the pull request stayed a draft until every box was ticked or deferred (see "The owner's own checks")
 
 ## Security and privacy checklist
 
-- [ ] No new package; no `dangerouslySetInnerHTML`; every text is rendered as text (the facility's name and description are data from our own API)
-- [ ] The photo address is only used when it starts with `https://`
-- [ ] External links use `rel="noopener noreferrer"`
-- [ ] The WhatsApp glyph file is only a scaled copy of the owner's download (no recolouring, no editing); the owner has read the brand site's terms (NFR-13); this repo makes no legal claim about them
-- [ ] No position of the visitor in any address or message (D9)
+- [x] No new package (`git diff main..HEAD` shows no change to `package.json`, the lock file or the backend requirements); no
+  `dangerouslySetInnerHTML` or `innerHTML` anywhere in `frontend/src`; every text is rendered as text (checked in the code, 2026-10-15)
+- [x] The photo address is only used when it starts with `https://` (`EntrancePhoto.tsx` returns nothing otherwise; tested)
+- [x] External links use `rel="noopener noreferrer"` (every `target="_blank"` of the listing page: WhatsApp, Directions, Share via WhatsApp)
+- [x] The WhatsApp glyph file is only a scaled copy of the owner's download (no recolouring, no editing): `scripts/make-whatsapp-glyph.mjs` only
+  calls `resize(72, 72).png()`, and `whatsappGlyph.test.ts` checks the colour `#25D366`, the transparency and that the script does nothing else
+  (checked in the code, 2026-10-15)
+- [-] **Deferred to pre-launch (NFR-13): the owner has read the WhatsApp brand terms.** Reason: the owner has not read them yet. Until then the
+  repo makes only one statement about them, a quotation of the brand site's own sentences (in the requirements D2, the glyph script and its test,
+  as read on 2026-10-13); it is a record of what the page said, not legal advice, and it is to be checked against the live terms. Tracked in
+  `LOG.md` under "Pre-launch checklist".
+- [x] No position of the visitor in any address or message (D9): the listing code (`components/listing`, `hooks/useListing.ts`,
+  `lib/api/listing.ts`) never reads `sessionStorage` or the location store; tests and the real-browser network log check it (no `lat=`, no `lng=`)

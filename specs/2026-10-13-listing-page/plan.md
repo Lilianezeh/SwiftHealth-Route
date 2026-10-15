@@ -27,59 +27,59 @@ Files that will change or appear (frontend unless written otherwise):
   `specs/2026-10-11-listing-detail-api/requirements.md` marked as replaced by D2 and D4 here, and the roadmap's 6b block updated. Spec first, then code.
 
 ### Task 1: the Directions icon (D5)
-- [ ] Tests first: `DirectionsIcon` is 24 × 24, `currentColor`, `aria-hidden`, a diamond and an arrow, no other file imports lucide `Route`
+- [x] (`8be3083`) Tests first: `DirectionsIcon` is 24 × 24, `currentColor`, `aria-hidden`, a diamond and an arrow, no other file imports lucide `Route`
   for Directions; `DirectionsButton`, `ListingCard` and `MapPopup` render the new icon; the button's name is unchanged.
-- [ ] Draw the SVG, render it at 24, 32 and 64 px on white and on the `pine` button, **show the owner, wait for approval**, then wire it into
+- [x] (`8be3083`) Draw the SVG, render it at 24, 32 and 64 px on white and on the `pine` button, **show the owner, wait for approval**, then wire it into
   `DirectionsButton` (cards, popups and the page get it at once).
 
 ### Task 2: pure helpers (D2, D4, D6)
-- [ ] Tests first, then code: `toWhatsAppNumber` (plus, local, bare, spaces and dashes, wrong lengths, a non-Nigerian number gives none),
+- [x] (`11ac28b`) Tests first, then code: `toWhatsAppNumber` (plus, local, bare, spaces and dashes, wrong lengths, a non-Nigerian number gives none),
   `whatsAppContactUrl` (the exact message), `whatsAppShareUrl`, `shareLink(slug, origin)` (never a query or a hash);
   `formatTime12` (midnight, noon, 9:05, 23:59), `hoursRows` (7 rows, past midnight "(next day)", closed, today in Africa/Lagos, near midnight in
   Lagos while the device is elsewhere), `formatFee` (range, equal, minimum only, none, with and without the date).
-- [ ] The unit tests quote the owner's two sentences from the click-to-chat help page (<https://whatsapp.com/faq/en/general/26000030>, in `requirements.md` D2)
+- [x] (`11ac28b`) The unit tests quote the owner's two sentences from the click-to-chat help page (<https://whatsapp.com/faq/en/general/26000030>, in `requirements.md` D2)
   and the leading-zero rule; there is no open caveat.
 
 ### Task 3: the API call and the types (D8, D9)
-- [ ] Tests first: `getListing` requests `/listings/<slug>` with the slug URL-encoded and **no query string**, maps 404 to a "not found" result
+- [x] (`11ac28b`) Tests first: `getListing` requests `/listings/<slug>` with the slug URL-encoded and **no query string**, maps 404 to a "not found" result
   and the other errors as `/search` does (timeout, network, server); the "waking up" and "Retry" times are the existing 5 s and 45 s.
 
 ### Task 4: the components (D1, D2, D6, D7)
-- [ ] Tests first for each: `ContactButtons` (Call always; WhatsApp only when `is_whatsapp`; the primary first; other phones each with their
+- [x] (`630ea4a`) Tests first for each: `ContactButtons` (Call always; WhatsApp only when `is_whatsapp`; the primary first; other phones each with their
   own buttons; Directions hidden for a position that is not real, as today), `WhatsAppButton` (the link, the name, Option A: white, a `#075E54`
   border, `ink` label; the contrast pairs in `design-tokens.test.ts`; the glyph is the scaled copy as an `<img>` with empty alt and a fixed 24 px size), `HoursTable`
   (12-hour, today marked with a word, "Open 24 hours, every day" for a 24-hour listing), `ServicesFees` (the five fee cases, the estimate words once, no date), `ReportedNotice` (the words, `role="note"`,
   amber, not red), `EntrancePhoto` (https only, alt, lazy, fixed size, vanishes on error), `ShareButtons` (the link, the clipboard fallback,
   "Link copied" `role="status"`), `ListingNotFound` (the words, the button).
-- [ ] Add `whatsapp-dark` (`#075E54`) to `globals.css` and the token tests. Make `public/images/brand/whatsapp-glyph-72.png` from the owner's
+- [x] (`0ab68aa`) Add `whatsapp-dark` (`#075E54`) to `globals.css` and the token tests. Make `public/images/brand/whatsapp-glyph-72.png` from the owner's
   `whatsapp.png` with `sharp` `resize` only, and a test that it is 72 × 72, one colour `#25D366`, with transparency (so it was not recoloured).
 
 ### Task 5: the page (D8, D9, D10)
-- [ ] Tests first: the shell shows the skeleton; the page shows a listing from a mocked answer (every field of FR-09); a 404 shows "Listing not found"
+- [x] (`54c9b45`) Tests first: the shell shows the skeleton; the page shows a listing from a mocked answer (every field of FR-09); a 404 shows "Listing not found"
   with the Search button; a slow answer shows the waking notice; a failure shows Retry; the title changes; the page asks for nothing but
   `/listings/<slug>`; a position in `sessionStorage` never appears in any link or message; every link has `prefetch={false}`; the page's source
   imports no Leaflet and no `next/image`.
-- [ ] Wire `ListingDetailView` into `app/(public)/listing/[slug]/page.tsx`.
+- [x] (`54c9b45`) Wire `ListingDetailView` into `app/(public)/listing/[slug]/page.tsx`.
 
 ### Task 6: the local fixture (D11)
-- [ ] Tests first (backend, pytest): the fixture adds one listing with the fictional slug, two phones (one WhatsApp), the five fee cases, a
+- [x] (`da4e8a2`, `e5d85e3`, and `54dcf65` for the disclaimer wording) Tests first (backend, pytest): the fixture adds one listing with the fictional slug, two phones (one WhatsApp), the five fee cases, a
   past-midnight day, a closed day and two reports; running it twice changes nothing; it refuses when `APP_ENV=production`; it touches no
   other row; `seed.seed` and the production demo data still have `is_whatsapp = false` everywhere. Then the code. (This is the only backend
   change, so `Backend CI` will run on this pull request.)
 
 ### Task 7: real browser
-- [ ] `tests/end-to-end/listing-page.spec.ts` against the fixture: at 320, 375, 768 and 1024 px no sideways scroll; the WhatsApp button only on
+- [x] (`57618d3`, extended in `bd13c28`) `tests/end-to-end/listing-page.spec.ts` against the fixture: at 320, 375, 768 and 1024 px no sideways scroll; the WhatsApp button only on
   the marked number; the Call button is the largest; 12-hour hours with today marked; the notice; the photo; the share and copy buttons
   and the exact shared link; the 404 page; no script with "leaflet" and no request with a position in it (the network log is searched
   for the fixture's coordinates and for `lat=` and `lng=`).
 
 ### Task 7b: polish after the owner's review (2026-10-13; D1, D6, D12)
-- [ ] Tests first, then code: `formatPhoneForReading` (`0803 123 4567`, D12); Call and WhatsApp both 56 px in the main row; the main number as
+- [x] (`bd13c28`) Tests first, then code: `formatPhoneForReading` (`0803 123 4567`, D12); Call and WhatsApp both 56 px in the main row; the main number as
   text under the buttons; the other numbers in the reading format; the verified badge fits its content; "Ask for price" for a service with no
   fee. Update the older tests that said "Call is the biggest" and "no fee hides the line". Re-run the real-browser spec.
 
 ### Task 8: wrap-up
-- [ ] `npm run lint`, `typecheck`, the whole suite, the build (First Load JS for the route at or under 116 kB, own JS under 9 kB) and the
+- [x] (`ac1deb1`, `e666bd1`) `npm run lint`, `typecheck`, the whole suite, the build (First Load JS for the route at or under 116 kB, own JS under 9 kB) and the
   backend tests and `ruff`, one at a time, in the containers.
-- [ ] Update the UI spec 2.4 (done in Task 0), the roadmap and `LOG.md` once; fill `validation.md`; open a **draft** pull request that stays a draft
+- [x] (`ac1deb1`, `e666bd1`, `e75d4d6`) Update the UI spec 2.4 (done in Task 0), the roadmap and `LOG.md` once; fill `validation.md`; open a **draft** pull request that stays a draft
   until the merge checklist is ticked; wait for the owner's check of the preview.
