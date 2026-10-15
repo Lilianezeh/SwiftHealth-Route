@@ -86,9 +86,9 @@ Frontend only; no API change, no new table, no new package.
 - [ ] Once, at the end of stage 1: `validation.md`, the roadmap and `LOG.md` updated; the plan boxes of Tasks 1 to 7 ticked with their commit hashes after the owner's check.
 
 ### Task 8: the photo banner (the last task) (D6)
-Starts only after the owner has confirmed the credit ("Designed by Magnific", linking to <https://www.magnific.com>, under the banner). Photos: clinic, laboratory, pharmacy and
-maternity are approved for now; the hospital photo stays `approved: false` (no banner) until the owner has read Magnific's rules or replaced it. A later replacement is one new file and one
-config line.
+The owner confirmed the credit on 2026-10-15 ("Designed by Magnific", linking to www.magnific.com, next to the picture; checked on Magnific's own page). Photos: clinic, laboratory and pharmacy are
+`approved: true`; **hospital and maternity are `approved: false` (no banner)** until the owner replaces them or has read Magnific's rules. So Task 8 converts and shows three banners now; the hospital and
+maternity files are not converted yet (a later switch-on is one new file and one config line).
 - [ ] Tests first: `config/types.ts` marks a type's photo `approved` and the banner shows **only** then (a type with `approved: false`, or no photo, shows no banner and no credit, while its
   heading and chip still show); one `<img>` for the chosen type and none for the others (only the chosen photo downloads); `width` and `height` are the real size of each file and
   each file is under its budget; alt text is not empty; the credit "Designed by Magnific" with its link (`target="_blank"`, `rel="noopener noreferrer"`, 16 px, 48 px high) shows under the

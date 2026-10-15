@@ -112,7 +112,7 @@ five plural headings, `clinic.jpg` and `laboratory.jpg` approved, `hospital.jpg`
 | pharmacy | pharmacy, pharmacies, chemist, chemists, chemist shop, drug store, drugstore, patent medicine, PPMV |
 | hospital | hospital, hospitals, general hospital, teaching hospital, medical centre, medical center |
 | clinic | clinic, clinics, health centre, health center, PHC, primary health centre, dispensary |
-| maternity | maternity, maternity home, maternity centre, maternity center, midwife |
+| maternity | maternity, maternity home, maternity centre, maternity center, midwife, antenatal, birth centre, birth center (the last three added by the owner, 2026-10-15) |
 | laboratory | lab, labs, laboratory, laboratories, medical lab, diagnostic, diagnostics, diagnostic centre, diagnostic center |
 
 - **Not mapped on purpose:** ambulance, police, fire and blood. They belong to SwiftRescue and the Blood page, not to everyday search.
@@ -136,7 +136,7 @@ five plural headings, `clinic.jpg` and `laboratory.jpg` approved, `hospital.jpg`
 | clinic | `clinic.jpg` | **true** | approved by the owner (no faces, no brand names found) |
 | laboratory | `laboratory.jpg` | **true** | approved by the owner (no faces, no brand names found) |
 | pharmacy | `pharmacy.jpg` | **true** | approved by the owner for now (the hands look a little unnatural, it may be AI-made) |
-| maternity | `maternity.jpg` | **true** | approved by the owner for now: a doctor consultation with a pill bottle, **not a maternity scene**; to be replaced later |
+| maternity | `maternity.jpg` | **false** | **off for now (owner, 2026-10-15, after the spec review)**: a doctor consultation with a pill bottle, not a maternity scene, and it shows a person; to be replaced later, then switched on |
 | hospital | `hospital.jpg` | **false** | a patient's face is clearly visible, and Magnific's rules on people shown in a way that could harm or imply endorsement could not be read in full (see "Magnific's rules" below); it is also a tall 9:16 portrait that needs a hand-made 3:1 cut. **No hospital banner until the owner has read the rules and sets it to `true` (or replaces the photo)** |
 
   The flag is one line per type in the config: switching the hospital banner on later is a one-word change plus its converted file, with no other code.
@@ -269,13 +269,20 @@ last task, in the same pull request).
 7. **One pull request:** the banner is in this same pull request, as the last task (Task 8). The pull request is not merged until Task 8 is done.
 8. **A typed type word replaces the current type chip** (D5).
 
-## To confirm in the spec review (short lists, one line per type)
+## Approved by the owner (2026-10-15, second review)
+- **Go ahead with the plan, tests first.** The type words (with "antenatal", "birth centre" and "birth center" added to Maternity), the empty-results
+  wording and the heading rules are approved as written below and in D3, D5 and D8.
+- **The credit is confirmed:** the owner checked <https://www.magnific.com/ai/docs/licenses-attribution>: the text must read **"Designed by Magnific"**
+  with a link to **www.magnific.com**, **next to the resource**. D6 uses exactly that, under the banner.
+- **Hospital and maternity banners stay off for now** (`approved: false` for both); clinic, laboratory and pharmacy are `approved: true`.
+
+## The short lists (approved)
 
 **Type words** (capitals, spaces, hyphens and dots are ignored; a plural is accepted; the whole query must be the word):
 - Pharmacy: pharmacy, pharmacies, chemist, chemists, chemist shop, drug store, drugstore, patent medicine, PPMV
 - Hospital: hospital, hospitals, general hospital, teaching hospital, medical centre, medical center
 - Clinic: clinic, clinics, health centre, health center, PHC, primary health centre, dispensary
-- Maternity: maternity, maternity home, maternity centre, maternity center, midwife
+- Maternity: maternity, maternity home, maternity centre, maternity center, midwife, antenatal, birth centre, birth center
 - Laboratory: lab, labs, laboratory, laboratories, medical lab, diagnostic, diagnostics, diagnostic centre, diagnostic center
 - Not mapped: ambulance, police, fire, blood.
 

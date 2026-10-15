@@ -58,9 +58,9 @@ Tasks 1 to 7; stage 2 is the photo banner (Task 8, the last task); the pull requ
 - [ ] **D6, NFR-13:** the credit "Designed by Magnific" and its link (the owner's address) show under the banner, on the search page only, only while a Magnific photo shows; the link has `rel="noopener noreferrer"`
 - [ ] **D6:** a replaced photo has a new file name in the script and in the config; the cache header of `/images/*` is checked on the preview (`curl -I`)
 - [ ] **D6, NFR-01:** the results and the chip do not wait for the picture; no layout shift when it loads (checked at 320, 360 and 768 px and on throttled 3G)
-- [ ] **Photos (owner):** clinic, laboratory, pharmacy and maternity are `approved: true` (the owner's answer of 2026-10-15; maternity is not a maternity scene and is to be replaced later); the hospital
-  photo is `approved: false` and shows **no banner** until the owner has read Magnific's rules on people and switches it on, or replaces the photo (a test checks the flag)
-- [ ] **Credit:** the owner confirmed "Designed by Magnific" linking to <https://www.magnific.com>, under the banner, against Magnific's "Licenses and attribution" page (which I could not read: it answered 403)
+- [ ] **Photos (owner):** clinic, laboratory and pharmacy are `approved: true`; **hospital and maternity are `approved: false` and show no banner** until the owner replaces the photos or has read Magnific's
+  rules on people and switches them on (a test checks both flags, and that the Hospital and Maternity pages show a heading and chip but no banner and no credit)
+- [x] **Credit:** the owner confirmed on 2026-10-15, against Magnific's "Licenses and attribution" page, that the text must read "Designed by Magnific" with a link to www.magnific.com, next to the resource (my tools got 403 from that page; the owner read it)
 - [ ] **NFR-13 (owner, before launch):** the Magnific licence and attribution terms read by the owner, with the licence file of each downloaded photo. This repo makes no legal claim about them
 - [ ] **Merge checklist, one pull request:** lint, typecheck, tests and build clean; both CIs green; the owner checked the preview; the UI spec 2.3, `validation.md`, the roadmap and `LOG.md` updated; the plan boxes of Task 8 ticked
 
