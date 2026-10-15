@@ -481,9 +481,12 @@ Things the owner must do before real visitors use the site.
   found", demo listings show no WhatsApp button as designed) and the laptop (WhatsApp in Option A beside Call at the same height, "Front desk · 0000
   000 0951", the compact Verified badge, "Ask for price", "Today", fee styles, amber note). The boxes of `specs/2026-10-13-listing-page/validation.md`
   and `plan.md` are ticked, except one box deferred to pre-launch: the WhatsApp brand terms (NFR-13), now in "Pre-launch checklist" at the top.
-- **Still open:** the owner merges PR #22 (marked ready on 2026-10-15); the backend disclaimer wording ("SwiftHealth Route") reaches production
-  only after the merge and a Render redeploy; the home page Total Blocking Time (1,300 ms) after the listing page.
+- **Production (owner, 2026-10-15): PR #22 is merged (`53ab2ca`) and live.** Checked on the live site, all passed: the diamond Directions icon on
+  the search cards and listing pages, the main number line in local format, Copy link and Share via WhatsApp, the "SwiftHealth Route" disclaimer
+  (after the Render redeploy), and `/listing/nothing-here` showing "Listing not found". The preview address was removed from `CORS_ORIGINS` on
+  Render. Results are in `specs/2026-10-13-listing-page/validation.md`.
+- **Still open:** the home page Total Blocking Time (1,300 ms); the WhatsApp brand terms (NFR-13) in "Pre-launch checklist".
 - **Learned:** Before testing on my laptop, check which branch I'm on, because I was testing old code on main. Demo data can hide features on purpose (no WhatsApp on fake numbers). And always measure first: Lighthouse showed my photos were already small and the code was the slow part.
 - **AI use:** Claude Code wrote the specs first, then the tests and the code; I chose the WhatsApp button's look, the local phone format, "Ask for
   price", the 9 kB target, the Find by type wording and the chip, and I checked the preview on my own phone.
-- **Tomorrow:** merge PR #22, check the live site, then start the next feature, "Find by type and home page wording" (spec and plan first).
+- **Tomorrow:** the next feature, "Find by type and home page wording" (spec and plan first; branch `feature/find-by-type`).
