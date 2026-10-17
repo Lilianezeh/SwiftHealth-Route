@@ -284,13 +284,9 @@ FR-09 to FR-13, FR-47, US-02, US-03, US-06, US-07. **API:** `GET /listings/{slug
 **404:** the heading "Listing not found", "This listing isn't available. It may be under re-verification.", a "Search for care" button and a link to the home page.
 
 ### 2.5 SwiftRescue — `/emergency`
-**Interim version, until phase 7** (owner's addition with the home page redesign, 2026-10-11; FR-14, FR-02): a static page with
-the `h1` "SwiftRescue", a large red **Call 112** button (a `tel:112` link, at least 64 px high with 24 px text, the `emergency`
-colour with white text), the line **"Our full list of verified ambulance, fire and hospital emergency numbers is coming soon."**,
-and the sentence of FR-26, always visible under it: **"SwiftRescue connects you to emergency contacts; it does not dispatch or
-guarantee an emergency response. In danger, call 112."** (added at the owner's request, 2026-10-11). Nothing else: no list, no map,
-no advice. 112 is the NCC's national emergency number (sources in
-`specs/2026-10-11-home-redesign/requirements.md`, decision 18). Phase 7 replaces the whole page with the version below.
+*History:* until phase 7 the page was a static "Call 112" button with the line "coming soon" (the owner's addition with the home page redesign,
+2026-10-11). 112 is the NCC's national emergency number (sources in `specs/2026-10-11-home-redesign/requirements.md`, decision 18). The full page below
+replaces it; the "coming soon" line is gone.
 
 FR-14 to FR-19, FR-24 to FR-26, US-04, US-09, US-14, NFR-03. **API:** `GET /emergency`. Feature: `specs/2026-10-17-swiftrescue/`.
 1. **112 card** at the top, in the page's own HTML (no request, works offline): "National emergency number — 112" with a large red **Call 112** button (`tel:112`, 64 px high, 24 px text). The `h1` is "SwiftRescue".
