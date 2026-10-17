@@ -8,6 +8,8 @@
 import { LocateFixed } from "lucide-react";
 
 import { EmergencyGroups } from "@/components/emergency/EmergencyGroups";
+import { ShareEmergencyList } from "@/components/emergency/ShareEmergencyList";
+import { ShareMyLocation } from "@/components/emergency/ShareMyLocation";
 import { ResultsSkeleton } from "@/components/search/ResultsSkeleton";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
@@ -21,6 +23,9 @@ export function EmergencyContent() {
 
   return (
     <div className="flex flex-col gap-6">
+      <ShareMyLocation />
+      <ShareEmergencyList response={response} />
+
       {!position && locationStatus === "idle" && (
         <button type="button" onClick={ask} className={buttonClasses("secondary")}>
           <DecorativeIcon icon={LocateFixed} />
