@@ -23,3 +23,10 @@
   for = "/images/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# The service worker of SwiftRescue (FR-17, NFR-03). The browser must check for a new version of the file every time, or an old
+# worker could outlive a fix. The worker itself is plain JavaScript in frontend/public/sw.js; spec: specs/2026-10-17-swiftrescue/.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

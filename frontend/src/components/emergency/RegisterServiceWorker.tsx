@@ -1,0 +1,35 @@
+"use client";
+
+/** Registers the service worker that keeps SwiftRescue for offline use. Requirements: FR-17, NFR-03.
+ * Decision A6 in specs/2026-10-17-swiftrescue/requirements.md. It draws nothing.
+ *
+ * Only in a production build: a development server's file names change all the time and a stale kept copy would confuse. After
+ * the worker is ready, the page tells it which files of this site it loaded and its own address, so the first visit is enough
+ * (the worker starts after the page has loaded, so it did not see them). Only addresses of this site are sent.
+ */
+import { useEffect } from "react";
+
+const PAGE_PATH = "/emergency";
+
+export function RegisterServiceWorker() {
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator) || !navigator.serviceWorker) return;
+    const serviceWorker = navigator.serviceWorker;
+
+    serviceWorker
+      .register("/sw.js", { scope: "/" })
+      .then(() => serviceWorker.ready)
+      .then((registration) => {
+        const loaded = performance
+          .getEntriesByType("resource")
+          .map((entry) => entry.name)
+          .filter((address) => address.startsWith(`${window.location.origin}/`));
+        registration.active?.postMessage({ type: "keep-urls", urls: [`${window.location.origin}${PAGE_PATH}`, ...loaded] });
+      })
+      .catch(() => {
+        // no worker: the page works as before, it just cannot be opened offline
+      });
+  }, []);
+
+  return null;
+}

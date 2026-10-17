@@ -4,6 +4,7 @@
  */
 import { EmergencyContent } from "@/components/emergency/EmergencyContent";
 import { NationalLineCard } from "@/components/emergency/NationalLineCard";
+import { RegisterServiceWorker } from "@/components/emergency/RegisterServiceWorker";
 
 export default function EmergencyPage() {
   return (
@@ -11,6 +12,7 @@ export default function EmergencyPage() {
       <h1 className="text-3xl font-bold text-forest">SwiftRescue</h1>
       <NationalLineCard />
       <EmergencyContent />
+      <RegisterServiceWorker />
     </section>
   );
 }
