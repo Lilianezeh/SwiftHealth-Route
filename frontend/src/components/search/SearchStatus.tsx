@@ -3,16 +3,18 @@
  */
 import { ResultsSkeleton } from "@/components/search/ResultsSkeleton";
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { siteConfig } from "@/config/site";
 import type { SearchStatusName } from "@/hooks/useSearchResults";
 
 type SearchStatusProps = {
   status: SearchStatusName;
   total: number;
   hasPosition: boolean; // the results are sorted by distance when there is a position, by name when not
+  hasFilter: boolean; // any filter is on (the text, the type, the service, the area, open now, 24 hours, the distance)
   onRetry: () => void;
 };
 
-export function SearchStatus({ status, total, hasPosition, onRetry }: SearchStatusProps) {
+export function SearchStatus({ status, total, hasPosition, hasFilter, onRetry }: SearchStatusProps) {
   if (status === "loading" || status === "slow") {
     return (
       <div data-testid="search-status" aria-busy="true" className="flex flex-col gap-4">
@@ -37,10 +39,13 @@ export function SearchStatus({ status, total, hasPosition, onRetry }: SearchStat
   }
 
   if (total === 0) {
+    // The first line depends on whether a filter is on; the second says the first city is only the start (D8 of specs/2026-10-15-find-by-type/).
+    // The city is read from the site settings: nothing here is tied to one city.
     return (
-      <p className="rounded-2xl border border-line bg-pine-50 p-4 text-base text-ink">
-        No matches. Try removing a filter or widening the distance.
-      </p>
+      <div className="flex flex-col gap-2 rounded-2xl border border-line bg-pine-50 p-4 text-base text-ink">
+        <p>{hasFilter ? "No matches. Try removing a filter or widening the distance." : "No places found near you yet."}</p>
+        <p>{`We're starting in ${siteConfig.launchCity} and adding more places soon.`}</p>
+      </div>
     );
   }
 

@@ -153,12 +153,25 @@ describe("the /search page", () => {
     expect(searches()).toHaveLength(2);
   });
 
-  it("shows the empty state", async () => {
+  it("shows the empty state: 'No places found near you yet.' with no filter, and the second line about the first city", async () => {
     stubApi({ search: () => json({ items: [], total: 0 }) });
     render(<SearchPage />);
 
-    expect(await screen.findByText("No matches. Try removing a filter or widening the distance.")).toBeInTheDocument();
+    expect(await screen.findByText("No places found near you yet.")).toBeInTheDocument();
+    expect(screen.getByText("We're starting in Enugu and adding more places soon.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
+  });
+
+  it("shows 'No matches...' as the empty state when a filter is on (text included)", async () => {
+    for (const query of ["open_now=true", "q=zzz", "area=Ogui", "service=X-ray"]) {
+      navigation.query = query;
+      stubApi({ search: () => json({ items: [], total: 0 }) });
+      const { unmount } = render(<SearchPage />);
+
+      expect(await screen.findByText("No matches. Try removing a filter or widening the distance."), query).toBeInTheDocument();
+      expect(screen.getByText(/We're starting in/)).toBeInTheDocument();
+      unmount();
+    }
   });
 
   it("Load more asks for the next 20 and adds them; the button goes when everything is shown", async () => {
