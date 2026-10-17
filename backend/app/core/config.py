@@ -9,6 +9,11 @@ DEFAULT_JWT_SECRET ="dev-only-secret"  # public: only for local development, nev
 DEFAULT_REPORTER_KEY_SECRET = "dev-only-reporter-key-secret"  # public: only for local development
 # An HS256 key should be at least 32 bytes (RFC 7518 section 3.2). The reporter-key HMAC has the same minimum.
 MINIMUM_SECRET_BYTES = 32
+# Netlify builds each pull request at https://deploy-preview-<number>--swifthealth-ng.netlify.app.
+# The API lets exactly those addresses call it, so a preview works without listing every number in
+# CORS_ORIGINS (NFR-06). The whole address must match: https, digits only, this site's name, no port.
+# Branch deploys are not allowed.
+NETLIFY_PREVIEW_ORIGIN_REGEX = r"https://deploy-preview-[0-9]+--swifthealth-ng\.netlify\.app"
 
 
 class Settings(BaseSettings):
