@@ -82,7 +82,7 @@ Used in search results, emergency groups and blood results.
 - `distance_km` is `null` when the caller sends no location.
 - `sponsored` is `true` only for a featured listing shown in a sponsored slot (see `/search`).
 - `hours_note` is a short English text for the next change in opening hours, worked out in Africa/Lagos time, or `null`
-  ([feature](../2026-10-10-next-open-close-time/requirements.md)). `/search` fills it; the emergency and blood lists return `null`
+  ([feature](../2026-10-10-next-open-close-time/requirements.md)). `/search` and `/emergency` fill it; the blood lists return `null`
   until they are built to fill it. It always agrees with `is_open_now`: it starts with "Closes" when the listing is open now and
   with "Opens" when it is closed. The forms are: "Closes 9:00 PM", "Closes 2:00 AM tomorrow", "Closes at midnight", "Opens 7:30 AM",
   "Opens 7:30 AM tomorrow", "Opens Monday 7:30 AM", "Opens at midnight", "Opens Monday at midnight". Times are 12-hour with
@@ -220,9 +220,9 @@ FR-14 to FR-19, FR-25, FR-26. The SwiftRescue page data.
 }
 ```
 
-**Rules:** groups in this order: Ambulance, Fire, Police, 24-hour emergency units, Roadside assistance, Security, Blood banks. Within a group, nearest first if location given. No sponsored placement anywhere. `pharmacies_24h` = published pharmacies with `is_24_hours = true`, nearest first, max 10.
+**Rules:** `groups` always has all seven groups, in this order (category slugs): Ambulance `ambulance`, Fire `fire`, Police `police`, 24-hour emergency units `emergency-unit`, Roadside assistance `roadside-assistance`, Security `security`, Blood banks `blood-bank`. A group with no contact has `"contacts": []` (the page hides it). Within a group, nearest first if a location is given, otherwise by name (then id). No sponsored placement anywhere: every item has `sponsored: false`, even a listing with `featured_until` in the future (FR-19). `pharmacies_24h` = published pharmacies with `is_24_hours = true`, nearest first (by name without a location), max 10, with no distance limit. The trust rules of section 1 apply (published only, overdue ones stay with `verification_due: true`) and a listing flagged by FR-22 is left out, as in `/search`. `is_open_now` and `hours_note` are filled as in `/search`. `lat` and `lng` come together or not at all (else 422) and are never logged (NFR-07). `national_line` is a constant of the API, so `112` is present even with an empty database.
 
-**Tests:** 112 always present · no `sponsored: true` anywhere · only confirmed 24-hour pharmacies.
+**Tests:** 112 always present · all seven groups in order, empty ones as `[]` · nearest first with a location, by name without · no `sponsored: true` anywhere, even for a featured listing · only confirmed 24-hour pharmacies, max 10 · draft, hidden and flagged listings left out · `lat` without `lng` is a 422.
 
 ### GET /blood/banks
 FR-27, US-15. **Query:** `blood_group` (optional, one of `/meta` blood groups), `lat`, `lng`, `limit`, `offset`.

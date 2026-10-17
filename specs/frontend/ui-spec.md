@@ -292,14 +292,17 @@ guarantee an emergency response. In danger, call 112."** (added at the owner's r
 no advice. 112 is the NCC's national emergency number (sources in
 `specs/2026-10-11-home-redesign/requirements.md`, decision 18). Phase 7 replaces the whole page with the version below.
 
-FR-14 to FR-19, FR-24 to FR-26, US-04, US-09, US-14. **API:** `GET /emergency`.
-1. **112 card** at the top: "National emergency number — 112" with a large red **Call 112** button.
-2. **Share my location** button (`ShareLocationButton`).
-3. Groups in API order (Ambulance, Fire, Police, 24-hour emergency units, Roadside, Security, Blood banks), each a list of compact cards with Call buttons and distance.
-4. **24-hour pharmacies nearby** section.
-5. **Share emergency list** button: sends a plain-text list of names and numbers via WhatsApp or SMS.
-6. Disclaimer from the API, always visible.
-**Rules:** no sponsored content; no search box; one tap to call anything. Cached for offline use after the first visit (service worker).
+FR-14 to FR-19, FR-24 to FR-26, US-04, US-09, US-14, NFR-03. **API:** `GET /emergency`. Feature: `specs/2026-10-17-swiftrescue/`.
+1. **112 card** at the top, in the page's own HTML (no request, works offline): "National emergency number — 112" with a large red **Call 112** button (`tel:112`, 64 px high, 24 px text). The `h1` is "SwiftRescue".
+2. The sentence of FR-26 directly under the 112 card, always visible: "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112." (the API sends the same text as `disclaimer`; the page shows its own copy first so it is there offline).
+3. **Share my location** (`ShareMyLocation`): one button. After the visitor allows the position, two links appear: **Send on WhatsApp** and **Send by SMS**, with a message "I need help. My location: https://www.google.com/maps?q=<lat>,<lng>". The exact position is kept in memory only until the visitor taps Done; never in storage, an address or a request to our API. If the position is refused or unavailable: "We could not get your location. Call 112 and say where you are."
+4. **Share emergency list** (`ShareEmergencyList`): links **Share on WhatsApp** and **Share by SMS** with a plain-text list (112 first, then each group with the name and the number in the reading format, then the page address).
+5. Groups in API order (Ambulance, Fire, Police, 24-hour emergency units, Roadside assistance, Security, Blood banks), a group with no contact hidden, each a list of compact `EmergencyContactCard`s: name (a link to the listing), "Area · 1.4 km" (no distance without a position), `VerifiedDate`, and a **Call** button (none without a number), 48 px at least. When every group is empty: "We are still adding verified contacts. In danger, call 112."
+6. **24-hour pharmacies nearby**: up to 10 `ListingCard`s, nearest first with a position; a heading "24-hour pharmacies" without one.
+**States:** skeleton while loading (the 112 card, the sentence and the share links are already there); after 5 s "The service is waking up. This can take up to a minute."; on a network failure with a saved copy: the saved list with the notice "Offline — showing saved contacts from 17 Oct 2026" (the date it was saved); no saved copy: the standard error with Retry, and 112 stays on top.
+**Rules:** no sponsored content and no word "Sponsored"; no search box; one tap to call anything; no medical advice.
+**Position and the saved copy:** the list is first requested **without** a position and the answer is saved (`localStorage`, key `swiftrescue-saved-contacts`) with the date. When the visitor has allowed a position (the one the other pages keep for the tab), a second request with `lat` and `lng` adds the distances and replaces the list on screen. The saved copy never holds a position or a distance.
+**Offline** (FR-17, NFR-03): `public/sw.js` (scope `/`, registered only on this page) keeps `/emergency` (network first) and the `/_next/static/` files it loaded (cache first). It never keeps an API answer; the contacts come from the saved copy above.
 
 ### 2.6 Find blood — `/blood`
 FR-27, US-15. **API:** `GET /blood/banks`, `GET /meta`.
