@@ -18,6 +18,9 @@ export type TypePhoto = {
   width: number; // pixels, fixed: the browser keeps the room for the photo before it has loaded
   height: number;
   alt: string;
+  // The part that stays when the banner is cropped to about 140 px from 768 px (owner, 2026-10-17), as a CSS object-position: only the
+  // vertical part matters (the picture is as wide as its place). All three faces are in the upper half, so the crop keeps the top.
+  focus: string;
   approved: boolean; // only an approved photo is shown, with its credit
   credit: PhotoCredit | null; // shown next to the photo, only while the photo shows
 };
@@ -42,6 +45,7 @@ export const TYPE_CHOICES: readonly TypeChoice[] = [
       src: "/images/types/banner-clinic-1.webp",
       ...BANNER_SIZE,
       alt: "A nurse in light blue scrubs, with a stethoscope and a face mask pulled down, standing in a clinic corridor.",
+      focus: "50% 40%",
       approved: true,
       credit: MAGNIFIC_CREDIT,
     },
@@ -55,6 +59,7 @@ export const TYPE_CHOICES: readonly TypeChoice[] = [
       src: "/images/types/banner-pharmacy-1.webp",
       ...BANNER_SIZE,
       alt: "A pharmacist in a white coat speaking with a customer, with shelves of medicine boxes and bottles behind.",
+      focus: "50% 35%",
       approved: true,
       credit: MAGNIFIC_CREDIT,
     },
@@ -67,6 +72,7 @@ export const TYPE_CHOICES: readonly TypeChoice[] = [
       src: "/images/types/banner-laboratory-1.webp",
       ...BANNER_SIZE,
       alt: "A laboratory worker in a white coat and blue gloves holds a test tube beside a microscope.",
+      focus: "50% 30%",
       approved: true,
       credit: MAGNIFIC_CREDIT,
     },

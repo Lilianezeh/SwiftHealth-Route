@@ -46,6 +46,14 @@ describe("the banner photos in config/types.ts", () => {
     expect(bannerFor(undefined)).toBeUndefined();
   });
 
+  it("say which part stays when the banner is cropped to about 140 px (owner, 2026-10-17): a face-first object-position, not the middle", () => {
+    for (const slug of approvedTypes) {
+      const match = /^(\d+)% (\d+)%$/.exec(photoOf(slug).focus);
+      expect(match, `${slug}: ${photoOf(slug).focus}`).not.toBeNull();
+      expect(Number(match?.[2]), slug).toBeLessThan(50); // all three faces are in the upper half, so the crop keeps the top part
+    }
+  });
+
   it("have a new-style file name, banner-<slug>-<number>.webp, so a replaced photo gets a new name", () => {
     for (const slug of approvedTypes) expect(photoOf(slug).src, slug).toBe(`/images/types/banner-${slug}-1.webp`);
   });

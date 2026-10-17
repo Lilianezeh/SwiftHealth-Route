@@ -41,7 +41,7 @@ for (const { width, height } of WIDTHS) {
       await page.goto("/", { waitUntil: "load" });
       await page.getByRole("link", { name: "Pharmacy", exact: true }).click();
 
-      await expect(page).toHaveURL(/\/search\?category=pharmacy$/);
+      await expect(page).toHaveURL(/\/search\?category=pharmacy$/, { timeout: 60_000 }); // the dev site compiles /search on its first visit
       // No position was shared in this browser, so the heading does not say "near you".
       await expect(page.getByRole("heading", { level: 1, name: "Pharmacies" })).toBeVisible({ timeout: 60_000 });
       const chip = page.getByRole("button", { name: "Remove the Pharmacy filter" });
@@ -117,8 +117,21 @@ for (const { width, height } of WIDTHS) {
       expect(chipBox!.y).toBeGreaterThan(searchBox!.y);
       // A real 3:1 picture that fits the screen, and a credit that is a tap target.
       expect(bannerBox!.x + bannerBox!.width).toBeLessThanOrEqual(width + 0.5);
-      expect(bannerBox!.width / bannerBox!.height).toBeCloseTo(3, 1);
-      expect(creditBox!.height).toBeGreaterThanOrEqual(48);
+      if (width < 768) {
+        expect(bannerBox!.width / bannerBox!.height).toBeCloseTo(3, 1); // a phone: the whole 3:1 picture, as before
+      } else {
+        expect(bannerBox!.height).toBeCloseTo(140, 0); // tablet and laptop: about half the old height, cropped (owner, 2026-10-17)
+        expect(bannerBox!.height).toBeLessThan(bannerBox!.width / 3 - 40);
+      }
+      expect(creditBox!.height).toBeGreaterThanOrEqual(48); // the tap area is still 48 px
+      // The credit's own text sits right under the photo (tight, not a gap), at 16 px.
+      const textTop = await credit.evaluate((link) => {
+        const range = document.createRange();
+        range.selectNodeContents(link.firstChild as Node);
+        return range.getBoundingClientRect().top;
+      });
+      expect(textTop - (bannerBox!.y + bannerBox!.height)).toBeLessThanOrEqual(8);
+      expect(await credit.evaluate((link) => getComputedStyle(link).fontSize)).toBe("16px");
       expect(photos).toEqual(["/images/types/banner-pharmacy-1.webp"]); // one file, not one for each type
     });
 

@@ -224,8 +224,8 @@ placeholder bar shows instead of a heading. **A chip under the search box** show
 filter"; one tap removes only `category` (the address is replaced), focus moves to the `h1` and "Pharmacy filter removed" is announced. A category outside the five keeps "Search results" and
 still gets a chip with its name. **A type word typed in the search box** (the words are in `config/typeWords.ts`: pharmacy, chemist, drug store, PPMV...; the whole text must be the word) is turned into
 `category` before the search, so there is one request, and the address is replaced; a typed type replaces a chosen one. **Photo banner:** under the heading, only for a type whose photo is
-`approved` in `config/types.ts` (clinic, laboratory, pharmacy for now); 960 × 320, about 40 kB or less, only the chosen type's file downloads; **"Designed by Magnific"** linking to www.magnific.com
-shows next to it, only while a Magnific photo shows.
+`approved` in `config/types.ts` (clinic, laboratory, pharmacy for now); 960 × 320, about 40 kB or less, only the chosen type's file downloads; the whole 3:1 picture on a phone, **140 px high and cropped from 768 px** (owner, 2026-10-17); **"Designed by Magnific"** linking to www.magnific.com
+sits tight under it (16 px text, a 48 px tap area reaching below the text), only while a Magnific photo shows.
 **Empty:** with a filter on (text included) **"No matches. Try removing a filter or widening the distance."**; with none **"No places found near you yet."**; then, in both cases, **"We're starting in
 <launch city> and adding more places soon."** (the city from `siteConfig.launchCity`).
 

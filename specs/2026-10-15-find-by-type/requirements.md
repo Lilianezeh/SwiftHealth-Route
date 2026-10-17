@@ -143,8 +143,11 @@ five plural headings, `clinic.jpg` and `laboratory.jpg` approved, `hospital.jpg`
   (an entry can also be written with `approved: false` to keep a ready photo off). Switching hospital or maternity on later is one new file and one entry
   in `config/types.ts`, with no other code. A type with no approved photo shows no banner and no credit, and its heading and chip work as for every type.
 - **What the banner is.** One `<img>` of one WebP file for the chosen type, **960 × 320 (3:1)**, **about 40 kB or less**, with a fixed `width` and
-  `height`, alt text and no text inside the picture. It fills the content width and keeps its shape (about 114 px high on a phone, 224 px at the full
-  672 px). The heading is **above** it, as plain text, so no text sits on the photo and contrast never depends on the picture. The order on the page is:
+  `height`, alt text and no text inside the picture. It fills the content width. **Size (revised by the owner after the preview check, 2026-10-17):**
+  on a **phone (below 768 px)** it is the whole 3:1 picture as before (about 114 px high at 343 px wide); **from 768 px (tablet and laptop)** it is
+  **140 px high** (about half the old 224 px) and **cropped** with `object-fit: cover`, keeping the part named by a per-photo `focus` (CSS
+  object-position, in `config/types.ts`: clinic `50% 40%`, pharmacy `50% 35%`, laboratory `50% 30%`, so each face stays in view). The same files are used,
+  so no new file names. The heading is **above** it, as plain text, so no text sits on the photo and contrast never depends on the picture. The order on the page is:
   heading, banner, credit, then the search box with the chip under it, then the Filters button and the results. **Only the chosen type's photo downloads**: one `<img>` whose `src` is the chosen file, never five loaded
   and hidden (the same rule as the Phase 10 idea in `LOG.md`).
 - **The files.** Made by a new `scripts/optimize-type-banners.mjs` (the style of `scripts/optimize-home-images.mjs`; `sharp` is not in `package.json`)
@@ -156,7 +159,8 @@ five plural headings, `clinic.jpg` and `laboratory.jpg` approved, `hospital.jpg`
 - **The credit.** **"Designed by Magnific"**, a link to **<https://www.magnific.com>**, shows **under the banner** (next to the photo it credits), on the
   search page only, and **only while a Magnific photo is showing**. The text and the link address are in the same config file as the photos, so Unsplash
   photos can replace them later (an Unsplash photo has its own credit entry, or none). The link opens in a new tab with `rel="noopener noreferrer"`
-  and says "(opens in a new tab)" to screen readers, 16 px text, a 48 px tap target, in a visible colour (never hidden or tiny).
+  and says "(opens in a new tab)" to screen readers, in a visible colour (never hidden or tiny). **Revised by the owner, 2026-10-17: it sits tight under the
+  photo** (no gap, a hair of space above the text) **and stays 16 px text (NFR-10; the owner chose this over 14 px)**; its 48 px tap area reaches down below the text.
   - **Where this comes from.** In the git history of PR #21 the footer credit was `{ text: "Images designed by Magnific", href: "https://www.magnific.com" }`
     (commit `c5d2758`, `config/site.ts`; it was removed in `1f1cdcc` on 2026-10-12 when the photos were replaced). The wording the owner gave for this
     feature is "Designed by Magnific"; Magnific's help page "Licenses and attribution" is reported by search results (see "Magnific's rules" below) to ask for

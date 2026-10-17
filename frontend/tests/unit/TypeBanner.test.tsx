@@ -84,6 +84,52 @@ describe("the type banner", () => {
     expect(banners(container)[0].compareDocumentPosition(credit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it("keeps the credit text at 16 px but sits it tight under the photo, with the 48 px tap area reaching down below the text (owner, 2026-10-17)", async () => {
+    navigation.query = "category=laboratory";
+    stubApi({ search: ONE_RESULT });
+    const { container } = render(<SearchPage />);
+    await screen.findByRole("article");
+
+    const credit = screen.getByRole("link", { name: /^Designed by Magnific/ });
+    expect(credit.className).toMatch(/\btext-base\b/); // 16 px: the rule of NFR-10 stays
+    expect(credit.className).not.toMatch(/\btext-(xs|sm)\b/);
+    expect(credit.className).toMatch(/\bmin-h-12\b/); // the tap area is still 48 px
+    expect(credit.className).toMatch(/\bitems-start\b/); // the text is at the top of that area, next to the photo
+    expect(credit.className).not.toMatch(/\bitems-center\b/);
+    expect(credit.className).toMatch(/\bpt-0\.5\b|\bpt-1\b/); // a hair of space, not a gap
+    // The credit follows the photo straight away, with no gap between them.
+    const wrapper = banners(container)[0].parentElement as HTMLElement;
+    expect(wrapper.className).not.toMatch(/\bgap-(1|2|3|4)\b/);
+    expect(banners(container)[0].nextElementSibling).toBe(credit);
+  });
+
+  it("is the same 3:1 picture on a phone (its height follows its width) and about 140 px high from 768 px, cropped, not squeezed", async () => {
+    navigation.query = "category=clinic";
+    stubApi({ search: ONE_RESULT });
+    const { container } = render(<SearchPage />);
+    await screen.findByRole("article");
+
+    const photo = banners(container)[0];
+    expect(photo.className).toMatch(/(^|\s)h-auto(\s|$)/); // phone: as it was, the height follows the width (3:1)
+    expect(photo.className).toMatch(/\bw-full\b/);
+    expect(photo.className).toMatch(/\bmd:h-\[140px\]/); // tablet and laptop: about half the old height
+    expect(photo.className).toMatch(/\bmd:object-cover\b/); // cropped to fit, never stretched
+    expect(photo).toHaveAttribute("width", "960"); // the file and its size are unchanged
+    expect(photo).toHaveAttribute("height", "320");
+  });
+
+  it("says which part of each photo stays in the crop: the face, as a CSS object-position from the config", async () => {
+    for (const slug of ["clinic", "laboratory", "pharmacy"]) {
+      navigation.query = `category=${slug}`;
+      stubApi({ search: ONE_RESULT });
+      const { container, unmount } = render(<SearchPage />);
+      await screen.findByRole("article");
+
+      expect(banners(container)[0].style.objectPosition, slug).toMatch(/^\d+% \d+%$/);
+      unmount();
+    }
+  });
+
   it("is in this order: heading, banner, credit, search box, chip, Filters", async () => {
     navigation.query = "category=pharmacy";
     stubApi({ search: ONE_RESULT });
