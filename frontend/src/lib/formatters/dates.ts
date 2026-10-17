@@ -3,6 +3,13 @@
  */
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
+/** A date for a notice, in Lagos time: "17 Oct 2026". Returns "an earlier visit" if the value is not a date. */
+export function formatNoticeDate(isoDate: string): string {
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return "an earlier visit";
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Lagos" });
+}
+
 export function formatVerified(lastVerifiedAt: string | null, now: Date): string {
   const verifiedAt = lastVerifiedAt === null ? Number.NaN : new Date(lastVerifiedAt).getTime();
   if (Number.isNaN(verifiedAt)) return "Not yet verified";
