@@ -1,5 +1,6 @@
-/** Part 4 of the home page: browse by type, five icon tiles. Requirements: US-13, NFR-10. UI spec 2.1; revision R2
- * (2026-10-12): simple tiles, no photos. The whole tile is one link to the search for its category, named by its label.
+/** Part 5 of the home page: "Find by type" (it was "Browse by type" until 2026-10-15), five icon tiles. Requirements: US-13, NFR-10.
+ * UI spec 2.1; revision R2 (2026-10-12): simple tiles, no photos; D1 of specs/2026-10-15-find-by-type/requirements.md. The whole tile is
+ * one link to the search for its category, named by its label. A tile shows only that type: the search filters on the exact slug.
  */
 import { Baby, FlaskConical, Hospital, Pill, Stethoscope, type LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -16,12 +17,12 @@ const TILE_ICONS: Record<(typeof HOME_CATEGORIES)[number]["slug"], LucideIcon> =
   laboratory: FlaskConical,
 };
 
-export function BrowseByType() {
+export function FindByType() {
   return (
-    <section aria-labelledby="browse-heading">
+    <section aria-labelledby="find-by-type-heading">
       <div className="mx-auto max-w-6xl px-4 py-12">
-        <h2 id="browse-heading" className="text-2xl font-bold text-forest">
-          {HOME_WORDS.browse.heading}
+        <h2 id="find-by-type-heading" className="text-2xl font-bold text-forest">
+          {HOME_WORDS.findByType.heading}
         </h2>
         <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
           {HOME_CATEGORIES.map((category) => (

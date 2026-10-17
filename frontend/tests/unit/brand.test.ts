@@ -50,7 +50,9 @@ describe("the name on screen and in the metadata", () => {
   });
 
   it("says the new name in the Overview text, and the old name SwiftHealth alone nowhere in the words of the home page", () => {
-    expect(HOME_WORDS.overview.text.startsWith("SwiftHealth Route helps you find")).toBe(true);
+    expect(HOME_WORDS.overview.text.startsWith("SwiftHealth Route is a healthcare directory")).toBe(true);
+    expect(HOME_WORDS.overview.heading).toBe("What is SwiftHealth Route?");
+    expect(HOME_WORDS.owners.text).toContain("List your facility on SwiftHealth Route");
     const everyWord = JSON.stringify(HOME_WORDS);
     expect(everyWord.match(/SwiftHealth(?! Route)/g)).toBeNull();
   });

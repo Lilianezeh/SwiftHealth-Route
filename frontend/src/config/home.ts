@@ -42,8 +42,8 @@ export const HOME_PHOTOS = {
   },
 } as const satisfies Record<string, HomePhoto>;
 
-/** The five tiles of "Browse by type": the label and the category slug of the seed (the search address). The icons are
- * chosen in BrowseByType.tsx. */
+/** The five tiles of "Find by type": the label and the category slug of the seed (the search address). The icons are
+ * chosen in FindByType.tsx. */
 export const HOME_CATEGORIES = [
   { label: "Hospital", slug: "hospital" },
   { label: "Clinic", slug: "clinic" },
@@ -52,34 +52,38 @@ export const HOME_CATEGORIES = [
   { label: "Laboratory", slug: "laboratory" },
 ] as const;
 
-/** The words of the page. */
+/** The words of the page: the owner's, as agreed on 2026-10-15 (D7 of specs/2026-10-15-find-by-type/requirements.md). The app's name always
+ * comes from config/brand.ts. No text names a city. The Overview says "call or get directions in one tap" on purpose: the WhatsApp
+ * wording waits until real listings have WhatsApp numbers (owner, 2026-10-15). */
 export const HOME_WORDS = {
   hero: {
-    heading: "Find open care near you, fast.",
-    line: "Hospitals, pharmacies and emergency help, open near you.",
+    heading: "Find care that's open now, near you.",
+    line: "Verified hospitals, clinics, pharmacies and labs, with phone numbers, opening hours and directions.",
     findCare: "Find care near me",
     note: "Free to use · No sign-up needed",
   },
   overview: {
-    heading: "Overview",
-    text: `${brand.name} helps you find hospitals, clinics, pharmacies, labs and emergency contacts that are open right now. Every listing is checked by our team, so the number you call and the hours you see are ones you can trust.`,
+    heading: `What is ${brand.name}?`,
+    text: `${brand.name} is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes, pharmacies and laboratories near you, see which are open right now, and call or get directions in one tap. Our team checks every listing before it goes live and re-checks it regularly.`,
   },
-  browse: { heading: "Browse by type" },
+  // The description of the home page (the page head): the Overview's first sentence and the first part of its second one.
+  description: `${brand.name} is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes, pharmacies and laboratories near you.`,
+  findByType: { heading: "Find by type" },
   why: {
-    heading: "Benefits",
+    heading: `Why ${brand.name}`,
     items: [
-      { title: "Verified listings", text: "We check every listing before it goes live." },
-      { title: "Open now means open now", text: "Hours follow local time, including late-night places." },
-      { title: "Works on slow data", text: "Light pages that load on a weak connection." },
+      { title: "Verified information", text: "Our team checks each listing before it goes live and re-checks it regularly." },
+      { title: "See what's open now", text: "Find places open right now, including late-night and 24-hour services." },
+      { title: "Built for mobile data", text: "Light pages built for a weak connection." },
       {
         title: "Your location stays private",
-        text: "Your position stays in your browser and is used only to find places near you.",
+        text: "Your location is used only to show places near you. We don't store it.",
       },
     ],
   },
   owners: {
-    heading: "Run a hospital, clinic or pharmacy?",
-    text: "List your facility for free and help people find you when they need you. We verify every listing before it goes live.",
+    heading: "Own or manage a healthcare facility?",
+    text: `List your facility on ${brand.name} so people nearby can find you, call you and get directions. Listing is free during our launch, and every listing is checked by our team before it goes live.`,
     button: "List your facility",
   },
 } as const;
