@@ -139,8 +139,9 @@ five plural headings, `clinic.jpg` and `laboratory.jpg` approved, `hospital.jpg`
 | maternity | `maternity.jpg` | **false** | **off for now (owner, 2026-10-15, after the spec review)**: a doctor consultation with a pill bottle, not a maternity scene, and it shows a person; to be replaced later, then switched on |
 | hospital | `hospital.jpg` | **false** | a patient's face is clearly visible, and Magnific's rules on people shown in a way that could harm or imply endorsement could not be read in full (see "Magnific's rules" below); it is also a tall 9:16 portrait that needs a hand-made 3:1 cut. **No hospital banner until the owner has read the rules and sets it to `true` (or replaces the photo)** |
 
-  The flag is one line per type in the config: switching the hospital banner on later is a one-word change plus its converted file, with no other code.
-  A type with `approved: false` shows no banner and no credit, and its heading and chip work as for every type.
+  **As built:** the config has `photo: null` for hospital and maternity (no file is made for them), and an entry with `approved: true` for the other three
+  (an entry can also be written with `approved: false` to keep a ready photo off). Switching hospital or maternity on later is one new file and one entry
+  in `config/types.ts`, with no other code. A type with no approved photo shows no banner and no credit, and its heading and chip work as for every type.
 - **What the banner is.** One `<img>` of one WebP file for the chosen type, **960 × 320 (3:1)**, **about 40 kB or less**, with a fixed `width` and
   `height`, alt text and no text inside the picture. It fills the content width and keeps its shape (about 114 px high on a phone, 224 px at the full
   672 px). The heading is **above** it, as plain text, so no text sits on the photo and contrast never depends on the picture. The order on the page is:
@@ -193,7 +194,7 @@ These are the owner's words, exactly. They replace the text in `config/home.ts`;
 | Owners heading | Run a hospital, clinic or pharmacy? | **Own or manage a healthcare facility?** |
 | Owners text | List your facility for free and help people find you when they need you. We verify every listing before it goes live. | **List your facility on {brand.name} so people nearby can find you, call you and get directions. Listing is free during our launch, and every listing is checked by our team before it goes live.** |
 | Owners button | List your facility | unchanged (the page behind it is still "Coming soon", phase 10) |
-| Page description (the home page) | the site-wide one: "SwiftHealth Route: Emergency, Hospital & Pharmacy Finder. Verified listings and one-tap calling." | **proposed:** "{brand.name} is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes, pharmacies and laboratories near you." (the owner's answer 4: fine when it matches the agreed Overview wording, which it does: the first two sentences, word for word; a test compares them) |
+| Page description (the home page) | the site-wide one: "SwiftHealth Route: Emergency, Hospital & Pharmacy Finder. Verified listings and one-tap calling." | **proposed:** "{brand.name} is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes, pharmacies and laboratories near you." (the owner's answer 4: fine when it matches the agreed Overview wording, which it does: the Overview's first sentence and the first part of its second one, word for word; a test compares them) |
 
 - **Checked facts.** "Your location ... We don't store it": the position is kept in the browser tab and sent to the API for each search; the API does not
   store it and scrubs `lat` and `lng` from its logs (api-spec, "Privacy (NFR-07)"). "Free during our launch" is the owner's decision, recorded in
@@ -262,8 +263,8 @@ last task, in the same pull request).
 2. **Magnific credit:** found in the git history (commit `c5d2758`, removed in `1f1cdcc`): "Images designed by Magnific" linking to <https://www.magnific.com>.
    **Proposed for the banner: "Designed by Magnific", linking to <https://www.magnific.com>, under the banner** (D6). The owner confirms before Task 8 starts.
 3. **Overview:** keep "call or get directions in one tap" until real listings have WhatsApp numbers (D7 already says so).
-4. **Home page description:** fine if it matches the agreed Overview wording. It is the first two sentences of the Overview, word for word, with "built for Nigeria"
-   and no city (D7); a test compares the two texts.
+4. **Home page description:** fine if it matches the agreed Overview wording. It is the Overview's first sentence and the first part of its second one, word for word, with
+   "built for Nigeria" and no city (D7); a test compares the two texts.
 5. **Type words and empty-results wording:** the owner confirms them from the short list below, then they are final.
 6. **No position:** just "Pharmacies" (no "near you"), and with a chosen area "Pharmacies in Ogui" (D3).
 7. **One pull request:** the banner is in this same pull request, as the last task (Task 8). The pull request is not merged until Task 8 is done.

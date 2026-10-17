@@ -1,8 +1,27 @@
 # Validation: Find by type and home page wording
 
-Spec: [requirements.md](requirements.md). Plan: [plan.md](plan.md). **Nothing is built yet: every box is open.** Boxes are ticked at the end of the
-feature, with the evidence, after the owner has checked the preview. Check this file before saying the feature is done. One pull request: stage 1 is
-Tasks 1 to 7; stage 2 is the photo banner (Task 8, the last task); the pull request is not merged until both are checked.
+Spec: [requirements.md](requirements.md). Plan: [plan.md](plan.md). **Built (2026-10-17, Tasks 1 to 8); every box below is still open until the owner
+has checked the preview.** Boxes are ticked at the end of the feature, with the evidence, after the owner has checked the preview. Check this file before
+saying the feature is done. One pull request: stage 1 is Tasks 1 to 7; stage 2 is the photo banner (Task 8, the last task); the pull request is not merged
+until both are checked.
+
+## Build results (2026-10-17, before the owner's preview check)
+
+- Frontend, in the container: `npm run lint` clean, `npm run typecheck` clean, **913 unit tests pass** (72 files; 833 on `main`), `npm run build` passes.
+- Real browser (Playwright, on the dev site with the local database): `find-by-type.spec.ts` **21 of 21 pass** at 320, 360 and 768 px (tile, chip,
+  typed word, empty words, "Near you" merged card, the banner and its order, no banner for hospital, position never in an address). The new home words
+  are inside the screen at 320 to 1024 px (`home-layout.spec.ts`, 7 of 7 new checks).
+- Size: `/search` is **9.36 kB** of its own JavaScript and **120 kB First Load** (the limit of D10, met exactly; it was 118 kB); `/` 113 kB and
+  `/find` 115 kB; `/listing/[slug]` unchanged at 115 kB. The banner files are 11.6, 19.3 and 29.9 kB (clinic, laboratory, pharmacy).
+- **Found, not caused by this feature (as in `LOG.md`):** on this machine's wide fallback font the header's Menu button is 11 px too far right between
+  344 and 370 px on every page, so the older home-layout checks "fits the screen" (360 px) and "every 4th width" fail; they failed before this feature.
+- **Found, caused by the owner's new hero words:** at 320 × 568 the "Find care near me" button ends at 662 px, below the first screen (568 px), in this
+  machine's wide font; before it was about 21 px below the screen in the same font (`LOG.md`). On a real phone the font is narrower. The new hero line is
+  longer: this is for the owner to judge on a phone (a smaller hero text or less space on small phones would bring the button back).
+- One unit test (`SearchPage`, "shows the error with Retry...") failed once in one of three full runs under load and passed alone and in the other two:
+  a timing flake of the existing test, not of this feature.
+- Not looked at: real phones. The three photos show people (a nurse, a laboratory worker, a pharmacist), not patients; the owner approved them on
+  2026-10-15, and Magnific's rules on people stay in the pre-launch checklist (`LOG.md`).
 
 ## Requirements checked by tests (stage 1)
 
@@ -58,7 +77,7 @@ Tasks 1 to 7; stage 2 is the photo banner (Task 8, the last task); the pull requ
 - [ ] **D6, NFR-13:** the credit "Designed by Magnific" and its link (the owner's address) show under the banner, on the search page only, only while a Magnific photo shows; the link has `rel="noopener noreferrer"`
 - [ ] **D6:** a replaced photo has a new file name in the script and in the config; the cache header of `/images/*` is checked on the preview (`curl -I`)
 - [ ] **D6, NFR-01:** the results and the chip do not wait for the picture; no layout shift when it loads (checked at 320, 360 and 768 px and on throttled 3G)
-- [ ] **Photos (owner):** clinic, laboratory and pharmacy are `approved: true`; **hospital and maternity are `approved: false` and show no banner** until the owner replaces the photos or has read Magnific's
+- [ ] **Photos (owner):** clinic, laboratory and pharmacy are `approved: true`; **hospital and maternity have `photo: null` and show no banner** until the owner replaces the photos or has read Magnific's
   rules on people and switches them on (a test checks both flags, and that the Hospital and Maternity pages show a heading and chip but no banner and no credit)
 - [x] **Credit:** the owner confirmed on 2026-10-15, against Magnific's "Licenses and attribution" page, that the text must read "Designed by Magnific" with a link to www.magnific.com, next to the resource (my tools got 403 from that page; the owner read it)
 - [ ] **NFR-13 (owner, before launch):** the Magnific licence and attribution terms read by the owner, with the licence file of each downloaded photo. This repo makes no legal claim about them
