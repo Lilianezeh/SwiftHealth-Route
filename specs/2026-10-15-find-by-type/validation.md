@@ -37,6 +37,17 @@ until both are checked.
   screenshots of all three photos at 768 and 1024 px (faces kept), the whole suite (**917 unit tests**, lint, typecheck), `find-by-type.spec.ts` 21 of 21,
   `Frontend CI` green, and the new class `md:h-[140px]` is in the preview's code. The owner looks at the polish on the updated preview.
 
+## Production results (PR #23 merged on 2026-10-17, merge commit `6447b1f`; read-only checks by Claude Code the same day)
+
+Only what a plain request can show. I did not look at the site on a phone; the owner's phone check is the part above.
+- `GET https://swifthealth-ng.netlify.app/` answers 200 and the page text has "Find by type" and the new hero heading "Find care that's open now, near you."; the old
+  words "Browse by type" are gone.
+- `/search?category=pharmacy` answers 200. The heading, the chip and the banner are drawn in the browser, so they are not in the first HTML; the owner's preview check covers them.
+- The three banner files answer 200 as `image/webp` with `cache-control: public,max-age=31536000,immutable`: `banner-clinic-1.webp` 11.6 kB,
+  `banner-laboratory-1.webp` 19.3 kB, `banner-pharmacy-1.webp` 29.9 kB (the sizes in the build results above). There is no `banner-hospital` or `banner-maternity` file, as designed.
+- `GET https://swifthealth-api.onrender.com/health` answers 200 and `GET /search?category=pharmacy&limit=3` returns the demo pharmacies.
+- Nothing in Render or Netlify was changed.
+
 ## Requirements checked by tests (stage 1)
 
 - [x] **D1, FR-01, US-01:** the home section heading is "Find by type" ("Browse by type" is gone from `src`); the five tiles go to `/search?category=<slug>` and are at
