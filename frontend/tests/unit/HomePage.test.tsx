@@ -11,10 +11,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { metadata } from "@/app/layout";
-import Home from "@/app/(home)/page";
+import Home, { metadata as homeMetadata } from "@/app/(home)/page";
 import { FacilityOwners } from "@/components/home/FacilityOwners";
 import { PageFrame } from "@/components/layout/PageFrame";
-import { HOME_PHOTOS } from "@/config/home";
+import { HOME_PHOTOS, HOME_WORDS } from "@/config/home";
 import { siteConfig } from "@/config/site";
 
 import { readSource } from "../helpers/source";
@@ -33,12 +33,13 @@ describe("the facility owners part", () => {
   it("has the owner photo, the exact heading, the exact text and a List your facility button", () => {
     render(<FacilityOwners />);
 
-    expect(screen.getByRole("heading", { level: 2, name: "Run a hospital, clinic or pharmacy?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Own or manage a healthcare facility?" })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "List your facility for free and help people find you when they need you. We verify every listing before it goes live.",
+        "List your facility on SwiftHealth Route so people nearby can find you, call you and get directions. Listing is free during our launch, and every listing is checked by our team before it goes live.",
       ),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/Run a hospital, clinic or pharmacy/)).not.toBeInTheDocument();
     const button = screen.getByRole("link", { name: "List your facility" });
     expect(button).toHaveAttribute("href", "/list-your-facility");
     expect(button.className).not.toMatch(/emergency/);
@@ -79,16 +80,16 @@ describe("the facility owners part", () => {
 });
 
 describe("the whole page", () => {
-  it("has the seven parts in the owner's order: header, hero, Overview, Benefits, Browse by type, For facility owners, footer", () => {
+  it("has the seven parts in the owner's order: header, hero, Overview, Why SwiftHealth Route, Find by type, For facility owners, footer", () => {
     renderWholePage();
 
     const landmarks = [
       screen.getByRole("banner"),
       screen.getByRole("heading", { level: 1 }),
-      ...["Overview", "Benefits", "Browse by type"].map((name) =>
+      ...["What is SwiftHealth Route?", "Why SwiftHealth Route", "Find by type"].map((name) =>
         screen.getByRole("heading", { level: 2, name }),
       ),
-      screen.getByRole("heading", { level: 2, name: "Run a hospital, clinic or pharmacy?" }),
+      screen.getByRole("heading", { level: 2, name: "Own or manage a healthcare facility?" }),
       screen.getByRole("contentinfo"),
     ];
 
@@ -102,7 +103,7 @@ describe("the whole page", () => {
     }
   });
 
-  it("has one h1 and four h2 (overview, benefits, browse, facility owners), and no heading deeper than h3", () => {
+  it("has one h1 and four h2 (overview, why, find by type, facility owners), and no heading deeper than h3", () => {
     renderWholePage();
 
     const levels = screen.getAllByRole("heading").map((heading) => Number(heading.tagName.slice(1)));
@@ -145,7 +146,7 @@ describe("the whole page", () => {
       "config/home.ts",
       "components/home/HomeHero.tsx",
       "components/home/Overview.tsx",
-      "components/home/BrowseByType.tsx",
+      "components/home/FindByType.tsx",
       "components/home/WhySwiftHealth.tsx",
       "components/home/FacilityOwners.tsx",
       "components/layout/SiteHeader.tsx",
@@ -172,7 +173,8 @@ describe("the whole page", () => {
     const { container } = renderWholePage();
     const copy = container.cloneNode(true) as HTMLElement;
     copy.querySelectorAll('[aria-hidden="true"]').forEach((element) => element.remove()); // the step numbers
-    const text = (copy.textContent ?? "").replace(String(siteConfig.copyrightYear), "");
+    // "24-hour services" (the owner's words of 2026-10-15) names a kind of service; it is not a statistic.
+    const text = (copy.textContent ?? "").replace(String(siteConfig.copyrightYear), "").replaceAll("24-hour", "");
 
     expect(text).not.toContain("%");
     expect(text).not.toMatch(/\d/);
@@ -234,15 +236,28 @@ describe("the whole page", () => {
     expect(within(screen.getByRole("banner")).getByRole("link", { name: "For facilities" })).toBeInTheDocument();
   });
 
-  it("has the Overview right after the hero, and the Benefits part named Benefits", () => {
+  it("has the Overview right after the hero, then the part named Why SwiftHealth Route (it was Benefits)", () => {
     renderWholePage();
 
     const hero = screen.getByRole("heading", { level: 1 });
-    const overview = screen.getByRole("heading", { level: 2, name: "Overview" });
-    const benefits = screen.getByRole("heading", { level: 2, name: "Benefits" });
+    const overview = screen.getByRole("heading", { level: 2, name: "What is SwiftHealth Route?" });
+    const why = screen.getByRole("heading", { level: 2, name: "Why SwiftHealth Route" });
     expect(hero.compareDocumentPosition(overview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(overview.compareDocumentPosition(benefits) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.queryByText("Why SwiftHealth")).not.toBeInTheDocument();
+    expect(overview.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Benefits" })).not.toBeInTheDocument();
+  });
+
+  it("has its own page description: the first two sentences of the Overview, word for word, with no city (D7)", () => {
+    const description = String(homeMetadata.description);
+
+    expect(description).toBe(
+      "SwiftHealth Route is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes, pharmacies and laboratories near you.",
+    );
+    // It is the Overview's first sentence, and the first clause of its second one.
+    expect(HOME_WORDS.overview.text.startsWith("SwiftHealth Route is a healthcare directory built for Nigeria.")).toBe(true);
+    expect(HOME_WORDS.overview.text).toContain("Find hospitals, clinics, maternity homes, pharmacies and laboratories near you,");
+    expect(description.toLowerCase()).not.toContain("enugu");
+    expect(description.length).toBeLessThanOrEqual(160);
   });
 
   it("has no Emergency help and no Open SwiftRescue button: the way to SwiftRescue is the header's red button", () => {

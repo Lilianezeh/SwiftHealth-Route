@@ -1,24 +1,25 @@
 // @vitest-environment jsdom
-/** The middle parts of the home page: hero, Overview, Benefits, browse by type.
- * Requirements: US-13, NFR-01, NFR-10, NFR-07, FR-02. UI spec 2.1 (the exact words are the owner's, 2026-10-11; the hero, the
- * Overview, Benefits and the removal of How it works were changed on 2026-10-12, revisions R4 to R6 and R11 to R24 in
- * specs/2026-10-11-home-redesign/requirements.md). The whole page (all seven parts, in order) is tested in HomePage.test.tsx.
+/** The middle parts of the home page: hero, Overview, "Why SwiftHealth Route", find by type.
+ * Requirements: US-13, NFR-01, NFR-10, NFR-07, FR-02. UI spec 2.1 (the exact words are the owner's: 2026-10-11, changed on 2026-10-12, revisions
+ * R4 to R6 and R11 to R24 in specs/2026-10-11-home-redesign/requirements.md, and again on 2026-10-15: D1 and D7 of
+ * specs/2026-10-15-find-by-type/requirements.md). The whole page (all seven parts, in order) is tested in HomePage.test.tsx.
  */
 import { render, screen, within } from "@testing-library/react";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { BrowseByType } from "@/components/home/BrowseByType";
+import { FindByType } from "@/components/home/FindByType";
 import { HomeHero } from "@/components/home/HomeHero";
 import { Overview } from "@/components/home/Overview";
 import { WhySwiftHealth } from "@/components/home/WhySwiftHealth";
-import { HOME_PHOTOS } from "@/config/home";
+import { brand } from "@/config/brand";
+import { HOME_PHOTOS, HOME_WORDS } from "@/config/home";
 
 import { contrast, tokenColour } from "../helpers/contrast";
 import { readSource } from "../helpers/source";
 
-const HERO_LINE = "Hospitals, pharmacies and emergency help, open near you.";
+const HERO_LINE = "Verified hospitals, clinics, pharmacies and labs, with phone numbers, opening hours and directions.";
 const HERO_NOTE = "Free to use · No sign-up needed";
 
 describe("the hero", () => {
@@ -27,7 +28,8 @@ describe("the hero", () => {
 
     const headings = screen.getAllByRole("heading", { level: 1 });
     expect(headings).toHaveLength(1);
-    expect(headings[0]).toHaveTextContent(/^Find open care near you, fast\.$/);
+    expect(headings[0]).toHaveTextContent(/^Find care that's open now, near you\.$/);
+    expect(document.body.textContent).not.toContain("Find open care near you, fast.");
   });
 
   it("has the exact line, which names no city, and the exact small line at 16 px or more", () => {
@@ -270,12 +272,21 @@ describe("the Overview", () => {
   it("has an h2 and the owner's exact text", () => {
     render(<Overview />);
 
-    expect(screen.getByRole("heading", { level: 2, name: "Overview" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "What is SwiftHealth Route?" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Overview" })).not.toBeInTheDocument();
     expect(
       screen.getByText(
-        "SwiftHealth Route helps you find hospitals, clinics, pharmacies, labs and emergency contacts that are open right now. Every listing is checked by our team, so the number you call and the hours you see are ones you can trust.",
+        "SwiftHealth Route is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes, pharmacies and laboratories near you, see which are open right now, and call or get directions in one tap. Our team checks every listing before it goes live and re-checks it regularly.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("keeps 'call or get directions in one tap' (no WhatsApp wording until real listings have WhatsApp numbers) and the report sentence stays out", () => {
+    render(<Overview />);
+
+    expect(document.body.textContent).toContain("call or get directions in one tap");
+    expect(document.body.textContent?.toLowerCase()).not.toContain("whatsapp");
+    expect(document.body.textContent).not.toContain("tell us so we can fix it");
   });
 
   it("has the normal space, not extra room at its top: the hero photo no longer overlaps into it (R22)", () => {
@@ -305,7 +316,7 @@ describe("how it works (removed on 2026-10-12, R22)", () => {
   });
 });
 
-describe("browse by type", () => {
+describe("find by type", () => {
   const TILES = [
     ["Hospital", "hospital"],
     ["Clinic", "clinic"],
@@ -315,9 +326,11 @@ describe("browse by type", () => {
   ] as const;
 
   it("has an h2 and five tiles in the owner's order, each one link to the search for its category", () => {
-    render(<BrowseByType />);
+    render(<FindByType />);
 
-    expect(screen.getByRole("heading", { level: 2, name: "Browse by type" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Find by type" })).toBeInTheDocument();
+    expect(screen.queryByText("Browse by type")).not.toBeInTheDocument();
+    expect(readSource("config/home.ts")).not.toContain("Browse by type");
     const links = within(screen.getByRole("list")).getAllByRole("link");
     expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual(
       TILES.map(([label, slug]) => [label, `/search?category=${slug}`]),
@@ -325,7 +338,7 @@ describe("browse by type", () => {
   });
 
   it("gives each tile a decorative icon over its label, and no photo", () => {
-    const { container } = render(<BrowseByType />);
+    const { container } = render(<FindByType />);
 
     expect(container.querySelectorAll("img")).toHaveLength(0);
     for (const [label] of TILES) {
@@ -335,7 +348,7 @@ describe("browse by type", () => {
   });
 
   it("keeps each tile at 48 px or more, with the label at 16 px or more, and uses no red", () => {
-    const { container } = render(<BrowseByType />);
+    const { container } = render(<FindByType />);
 
     for (const [label] of TILES) {
       expect(screen.getByRole("link", { name: label }).className, label).toMatch(/min-h-(12|14|16|20|24)\b/);
@@ -345,25 +358,32 @@ describe("browse by type", () => {
   });
 });
 
-describe("Benefits (was Why SwiftHealth)", () => {
-  it("has the h2 Benefits and four items with the exact titles", () => {
+describe("Why SwiftHealth Route (was Benefits)", () => {
+  it("has the h2 'Why SwiftHealth Route' and four items with the exact titles and texts", () => {
     render(<WhySwiftHealth />);
 
-    expect(screen.getByRole("heading", { level: 2, name: "Benefits" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Why SwiftHealth Route" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Benefits" })).not.toBeInTheDocument();
     const titles = screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent);
     expect(titles).toEqual([
-      "Verified listings",
-      "Open now means open now",
-      "Works on slow data",
+      "Verified information",
+      "See what's open now",
+      "Built for mobile data",
       "Your location stays private",
     ]);
+    for (const text of [
+      "Our team checks each listing before it goes live and re-checks it regularly.",
+      "Find places open right now, including late-night and 24-hour services.",
+      "Light pages built for a weak connection.",
+      "Your location is used only to show places near you. We don't store it.",
+    ]) {
+      expect(screen.getByText(text)).toBeInTheDocument();
+    }
   });
 
-  it("does not say Why SwiftHealth any more, in the page or in the source", () => {
-    const { container } = render(<WhySwiftHealth />);
-
-    expect(container.textContent).not.toContain("Why SwiftHealth");
-    expect(readSource("config/home.ts")).not.toContain("Why SwiftHealth");
+  it("takes the app's name from the brand file, so the heading follows a rename", () => {
+    expect(HOME_WORDS.why.heading).toBe(`Why ${brand.name}`);
+    expect(readSource("config/home.ts")).not.toContain("Why SwiftHealth Route");
   });
 
   it("gives each item a decorative icon and a line of text", () => {
@@ -406,16 +426,16 @@ describe("Benefits (was Why SwiftHealth)", () => {
     expect(container.innerHTML).not.toMatch(/text-forest|text-ink|bg-white\b/); // no dark text left on the blue
   });
 
-  it("says hours follow local time, including late-night places", () => {
+  it("says the places are open right now, including late-night and 24-hour services", () => {
     render(<WhySwiftHealth />);
 
-    expect(screen.getByText(/local time, including late-night places/)).toBeInTheDocument();
+    expect(screen.getByText(/open right now, including late-night and 24-hour services/)).toBeInTheDocument();
   });
 });
 
 describe("the parts together", () => {
   it("use no red at all: the page's only red is the header's SwiftRescue button", () => {
-    for (const file of ["HomeHero", "Overview", "BrowseByType", "WhySwiftHealth"]) {
+    for (const file of ["HomeHero", "Overview", "FindByType", "WhySwiftHealth"]) {
       expect(readSource(`components/home/${file}.tsx`), file).not.toMatch(
         /bg-emergency|text-emergency|border-emergency|buttonClasses\("emergency"\)/,
       );

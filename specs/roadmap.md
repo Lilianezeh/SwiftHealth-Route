@@ -246,7 +246,7 @@ in the browser, like `/search`. It also changes the Directions icon everywhere (
 sign with a right-turn arrow, drawn in code. Its feature folder and the UI spec 2.4 changes come first (Task 0). The owner's
 decisions are in the 6a requirements (6b decisions 1 to 10).
 
-### Find by type and home page wording. Next after phase 6b (owner, 2026-10-13; not started)
+### Find by type and home page wording. Built (2026-10-17), draft PR waiting for the owner's preview check (spec: `2026-10-15-find-by-type/`)
 US-01, US-13, FR-04, FR-05, NFR-01, NFR-07, NFR-10. Frontend only (the search API already filters on the exact category). It needs its own spec
 folder and a go-ahead on its plan; the full list of the owner's points, the proposed type words and the empty-results wording are in
 [`LOG.md`](../LOG.md) ("Find by type and home page wording").

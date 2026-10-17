@@ -35,7 +35,7 @@ the evidence, after the owner checked the preview. Check this file before saying
 - Size: `/listing/[slug]` is **8.58 kB** of its own JavaScript (target 9 kB, met) and **115 kB First Load** (limit 116 kB, met).
 - Not looked at: real phones.
 
-## The owner's own checks (notes only: no box above is ticked from these)
+## The owner's own checks (on the preview and on the laptop)
 
 Done, 2026-10-13 and 2026-10-14 (reported by the owner):
 - **Honor phone, on the preview** (production API, demo listings only): the diamond Directions icon shows on the search cards; the listing page
@@ -51,6 +51,18 @@ Done, 2026-10-13 and 2026-10-14 (reported by the owner):
   "Copy link" pastes only `/listing/<slug>`; "Share via WhatsApp" opens WhatsApp with the link; `/listing/nothing-here` shows "Listing not found";
   the demo listings correctly show no WhatsApp button
 - All PR #22 checks passed (`Frontend CI`, `Backend CI`, the Netlify checks).
+
+## Production results (PR #22 merged, `53ab2ca`; the owner's checks on the live site, 2026-10-15)
+
+Reported by the owner; all passed. The demo listings are the only data on the live site, so no WhatsApp button shows there, by design.
+- [x] The diamond Directions icon on the search cards and on the listing pages
+- [x] The main number line in local format (0803 123 4567 style) on a listing page
+- [x] "Copy link" and "Share via WhatsApp" work
+- [x] The disclaimer on a listing page says "SwiftHealth Route" (the backend change reached production after the Render redeploy)
+- [x] `/listing/nothing-here` shows "Listing not found"
+- Housekeeping: the preview address (`deploy-preview-22--swifthealth-ng.netlify.app`) has been **removed from `CORS_ORIGINS` on Render**, so the live
+  API answers only the live site again.
+- Still deferred to pre-launch: the WhatsApp brand terms (NFR-13), in the "Pre-launch checklist" of `LOG.md`.
 
 ## Requirements checked by tests
 

@@ -138,8 +138,8 @@ heading); each following part has an `h2`.
 1. **Header** — see "Layout" above. On this page it is transparent and sits on top of the hero.
 2. **Hero** — a **sky blue gradient** background (owner, 2026-10-12, to be like the reference site): from the `sky` token
    (`#1A7CAD`, the lighter side, top right) to `pine-dark` (`#134F6A`, the deeper side, bottom left); no flat colour. The hero is
-   tall **from 1024 px, in the side-by-side layout only**: at least 85% of the screen height (`lg:min-h-[85svh]`); below 1024 px it has no forced height (the photo band, then the text with normal spacing: no large empty gap on a tablet; owner, 2026-10-12). `h1` **"Find open care near you, fast."** (large: 36 px on a phone,
-   48 px from 768 px, 60 px from 1024 px, with balanced line breaks so no word is left alone on a line) Line: **"Hospitals, pharmacies and emergency help, open near you."** One button: **"Find care near me"**
+   tall **from 1024 px, in the side-by-side layout only**: at least 85% of the screen height (`lg:min-h-[85svh]`); below 1024 px it has no forced height (the photo band, then the text with normal spacing: no large empty gap on a tablet; owner, 2026-10-12). `h1` **"Find care that's open now, near you."** (owner's words of 2026-10-15, feature `specs/2026-10-15-find-by-type/`; it was "Find open care near you, fast."; large: 36 px on a phone,
+   48 px from 768 px, 60 px from 1024 px, with balanced line breaks so no word is left alone on a line) Line: **"Verified hospitals, clinics, pharmacies and labs, with phone numbers, opening hours and directions."** One button: **"Find care near me"**
    (the on-dark button: white, `pine-dark` text, to `/find`). Small line (18 px): **"Free to use · No sign-up needed"**. All
    the text is **white**, in the **lower left** of the hero (on a phone, below the photo band). No red button and no second button
    in the hero: the red SwiftRescue button is in the header, on every page. **Text contrast (computed 2026-10-12):** white on
@@ -160,23 +160,25 @@ heading); each following part has an `h2`.
      `sizes="100vw"` (the small version, 640 × 640, under 50 kB), and whose `<img>` is `hero3.webp` (1200 px) for wider screens, on
      tablets and desktops. So a phone downloads only the small file. The hero is loaded at once (`loading="eager"`,
      `fetchPriority="high"`), without `priority`, so no big file is preloaded on a phone.
-3. **Overview** — `h2` **"Overview"**; text **"SwiftHealth Route helps you find hospitals, clinics, pharmacies, labs and emergency contacts
-   that are open right now. Every listing is checked by our team, so the number you call and the hours you see are ones you can
-   trust."** (the owner's words). A white part right after the hero with the normal `py-12` space (the photo no longer overlaps it).
+3. **Overview** — `h2` **"What is SwiftHealth Route?"**; text **"SwiftHealth Route is a healthcare directory built for Nigeria. Find
+   hospitals, clinics, maternity homes, pharmacies and laboratories near you, see which are open right now, and call or get directions in
+   one tap. Our team checks every listing before it goes live and re-checks it regularly."** (the owner's words of 2026-10-15; the name comes
+   from `config/brand.ts`; the home page's own description is its first two sentences). A white part right after the hero with the normal `py-12` space (the photo no longer overlaps it).
    *"How it works" (three step cards) was removed on 2026-10-12 at the owner's request.*
 4. **Benefits** (was "Why SwiftHealth"; renamed on 2026-10-12) — a **full-width band in the header blue** (`forest`), with **white**
-   text and **white icons** (each icon in a `pine-dark` circle; white on `forest` is 5.61:1, on `pine-dark` 8.92:1). `h2` "Benefits".
-   Four items with icons: **Verified listings** ("We check every listing before it goes live."), **Open now means open now**
-   ("Hours follow local time, including late-night places."), **Works on slow data** ("Light pages that load on a weak
-   connection."), **Your location stays private** ("Your position stays in your browser and is used only to find places near
-   you."). Each item has a thin white line (30% white) around it.
-5. **Browse by type** — `h2` "Browse by type". Simple icon tiles, no photos: **Hospital, Clinic, Maternity, Pharmacy,
+   text and **white icons** (each icon in a `pine-dark` circle; white on `forest` is 5.61:1, on `pine-dark` 8.92:1). `h2` **"Why SwiftHealth Route"** (was "Benefits"; the name comes from `config/brand.ts`).
+   Four items with icons: **Verified information** ("Our team checks each listing before it goes live and re-checks it regularly."),
+   **See what's open now** ("Find places open right now, including late-night and 24-hour services."), **Built for mobile data**
+   ("Light pages built for a weak connection."), **Your location stays private** ("Your location is used only to show places near you.
+   We don't store it.") (owner's words, 2026-10-15). Each item has a thin white line (30% white) around it.
+5. **Find by type** — `h2` **"Find by type"** (was "Browse by type"). Simple icon tiles, no photos: **Hospital, Clinic, Maternity, Pharmacy,
    Laboratory**, each a decorative `lucide` icon (`Hospital`, `Stethoscope`, `Baby`, `Pill`, `FlaskConical`) in a light blue circle
    over the label, the whole tile one link to `/search?category=<slug>` (`hospital`, `clinic`, `maternity`, `pharmacy`,
    `laboratory`), at least 48 px high. Two columns on a phone, five from desktop width.
 6. **For facility owners** — `hero4-portrait.webp` (2:3, 800 × 1200, the whole photo of a smiling health worker holding a blister
-   pack, **uncropped**, keeping its portrait shape) and `h2` **"Run a hospital, clinic or pharmacy?"**; text **"List your
-   facility for free and help people find you when they need you. We verify every listing before it goes live."**; button **"List
+   pack, **uncropped**, keeping its portrait shape) and `h2` **"Own or manage a healthcare facility?"**; text **"List your facility on SwiftHealth Route so people nearby can find you, call
+   you and get directions. Listing is free during our launch, and every listing is checked by our team before it goes live."** (the name from
+   `config/brand.ts`; owner's words, 2026-10-15); button **"List
    your facility"** (to `/list-your-facility`). *Phone:* the photo is the full width of the content. *Tablet and desktop (768 px and up):* it is
    **26 rem high** (about 17.3 rem wide: it keeps its 2:3 shape, never stretched and never cut) and the text is **right beside it**
    with a 2.5 rem gap, both **vertically centred**, the text at most 36 rem wide, so there is no big empty space between them.
@@ -202,7 +204,7 @@ FR-01, FR-03. **Purpose:** the app's start screen.
 3. Search box: "Search hospitals, pharmacies, labs…" → `/search?q=…`. It is a plain form (a GET to `/search`), so it works before any script has loaded.
 4. Category shortcuts (plain links): Hospitals `/search?category=hospital` · Clinics `clinic` · Pharmacies `pharmacy` · Maternity `maternity` · Labs `laboratory` · Blood (→ `/blood`, a "Coming soon" page until phase 8).
 5. "Open now near me" button → asks for the position (after the tap), then `/search?open_now=true`. The position is not in the address.
-6. **Near you** (once there is a position or a chosen area; before that, a "Show places near me" button and the area list): two cards, **Closest open pharmacy** (`category=pharmacy&open_now=true&limit=1`) and **Closest open 24-hour place** (`is_24_hours=true&limit=1`), each a `ListingCard`, then a button **See all open places near me** (`/search?open_now=true`). With an area and no position, the same two calls use `area=` and show no distance. The two cards load independently. A card with no result says "No open pharmacy found nearby" or "No 24-hour place found nearby" with a link to search all places, never an empty card; a failed card shows its own error and Retry.
+6. **Near you** (once there is a position or a chosen area; before that, a "Show places near me" button and the area list): two cards, **Closest open pharmacy** (`category=pharmacy&open_now=true&limit=1`) and **Closest open 24-hour place** (`is_24_hours=true&limit=1`), each a `ListingCard`, then a button **See all open places near me** (`/search?open_now=true`). With an area and no position, the same two calls use `area=` and show no distance. The two cards load independently, but **never show the same place twice** (owner, 2026-10-13; feature `specs/2026-10-15-find-by-type/` D9): the pharmacy card asks for 1 result and the 24-hour card for 2 and shows the first that is not the pharmacy card's; if the only 24-hour place is that pharmacy, **one card carries both labels** and spans both columns; the 24-hour card waits for the pharmacy answer so it never shows a place and then replaces it. A card with no result says "No open pharmacy found nearby" or "No 24-hour place found nearby" with a link to search all places, never an empty card; a failed card shows its own error and Retry.
 **Location:** the browser asks for permission only after a tap on a button, and only once per tab (a refusal is remembered for the tab). If refused, show an area dropdown (from `GET /meta`).
 **A stored position is used only while the browser still allows it** (found in the phone test, 2026-10-10: a tab opened from a page gets a copy of its `sessionStorage`, so a position stored before the visitor blocked the site was still used). Before using a stored position, the pages ask the browser for the permission with `navigator.permissions.query({ name: "geolocation" })`. If it says `denied`, the stored position is deleted, the refusal is remembered for the tab, and the page behaves as for a refusal (the message "We could not use your location. Choose an area instead." and the area list); a chosen area is kept. `granted` and `prompt` keep the stored position. If the browser has no permission check, or the check fails, nothing changes: the stored position is used as before. Until the check has answered, results wait for it (one search, not two).
 
@@ -215,7 +217,17 @@ FR-04 to FR-08, US-01, US-05. **API:** `GET /search`, `GET /meta`.
 5. "Load more" button (pagination, 20 at a time; page state, not in the address).
 **URL holds all filters** (`/search?category=pharmacy&open_now=true`) so results can be shared, but **never the position** (`lat`, `lng`): it is read from `sessionStorage`. Applying filters replaces the address without adding history entries. A shared link opens with the filters set and, for the receiver, no position. The address may also hold `view=map` (see "Map view"); it is not a filter.
 **States:** skeleton cards while loading; after 5 seconds "The service is waking up. This can take up to a minute."; error with Retry after 45 seconds or on an error answer.
-**Empty:** "No matches. Try removing a filter or widening the distance."
+**Heading and chip (owner, 2026-10-14 and 2026-10-15; feature `specs/2026-10-15-find-by-type/` D2 to D5).** The chosen type is the `category` in the address. The `h1` is
+**"Search results"** with no type; with one of the five types it is **"Hospitals / Clinics / Maternity homes / Pharmacies / Laboratories"** followed by **" in <Area>"** when an `area`
+is in the address, else **" near you"** when there is a position, else nothing (for example "Pharmacies in Ogui", "Pharmacies near you", "Pharmacies"). While the address is being read a grey
+placeholder bar shows instead of a heading. **A chip under the search box** shows the chosen type ("Pharmacy ✕"); it is a button of at least 48 px with 16 px text, named "Remove the Pharmacy
+filter"; one tap removes only `category` (the address is replaced), focus moves to the `h1` and "Pharmacy filter removed" is announced. A category outside the five keeps "Search results" and
+still gets a chip with its name. **A type word typed in the search box** (the words are in `config/typeWords.ts`: pharmacy, chemist, drug store, PPMV...; the whole text must be the word) is turned into
+`category` before the search, so there is one request, and the address is replaced; a typed type replaces a chosen one. **Photo banner:** under the heading, only for a type whose photo is
+`approved` in `config/types.ts` (clinic, laboratory, pharmacy for now); 960 × 320, about 40 kB or less, only the chosen type's file downloads; the whole 3:1 picture on a phone, **140 px high and cropped from 768 px** (owner, 2026-10-17); **"Designed by Magnific"** linking to www.magnific.com
+sits tight under it (16 px text, a 48 px tap area reaching below the text), only while a Magnific photo shows.
+**Empty:** with a filter on (text included) **"No matches. Try removing a filter or widening the distance."**; with none **"No places found near you yet."**; then, in both cases, **"We're starting in
+<launch city> and adding more places soon."** (the city from `siteConfig.launchCity`).
 
 **Map view** (phase 5B-2, FR-07; owner's decisions, 2026-10-11). The same results as the list, drawn on a map.
 - **View in the address.** `view=map` in the address shows the map; no `view`, or any other value, shows the list. The list is

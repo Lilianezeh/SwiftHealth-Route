@@ -123,6 +123,30 @@ for (const { width, height } of VIEWPORTS) {
       expect(result.headingBottom).toBeLessThanOrEqual(height);
       expect(result.buttonBottom).toBeLessThanOrEqual(height);
     });
+
+    // Find by type, D7 and D10 (2026-10-15): the new words (hero line, Overview, "Why SwiftHealth Route" cards, Find by type tiles, the owners
+    // section) never run past the right edge, and each text is really there.
+    test("shows the new words of the page inside the screen, none cut off", async ({ page }) => {
+      for (const words of [
+        "Verified hospitals, clinics, pharmacies and labs",
+        "What is SwiftHealth Route?",
+        "Why SwiftHealth Route",
+        "Built for mobile data",
+        "Your location stays private",
+        "Find by type",
+        "Own or manage a healthcare facility?",
+        "Listing is free during our launch",
+      ]) {
+        const box = await page.getByText(words).first().boundingBox();
+        expect(box, words).not.toBeNull();
+        expect((box?.x ?? 0) + (box?.width ?? 0), words).toBeLessThanOrEqual(width + 0.5);
+        expect(box?.x ?? 0, words).toBeGreaterThanOrEqual(-0.5);
+      }
+      // The page's own part, not the header: with this machine's wide fallback font the header is a few pixels too wide between 344 and
+      // 370 px (LOG.md, "The layout checks depend on the browser's fallback font"); the tests above report that one.
+      const overflow = await page.evaluate(() => (document.querySelector("main")?.scrollWidth ?? 0) - window.innerWidth);
+      expect(overflow).toBeLessThanOrEqual(0);
+    });
   });
 }
 
@@ -204,8 +228,8 @@ test.describe("what the home page downloads", () => {
   test("has the heading, the line and the button in the first HTML, before any script runs", async ({ request }) => {
     const html = await (await request.get("/")).text();
 
-    expect(html).toMatch(/<h1[^>]*>[^<]*Find open care near you, fast\.[^<]*<\/h1>/);
-    expect(html).toContain("Hospitals, pharmacies and emergency help, open near you.");
+    expect(html).toMatch(/<h1[^>]*>[^<]*Find care that(?:'|&#x27;)s open now, near you\.[^<]*<\/h1>/);
+    expect(html).toContain("Verified hospitals, clinics, pharmacies and labs, with phone numbers, opening hours and directions.");
     expect(html).toMatch(/<a[^>]*href="\/find"[^>]*>[^<]*Find care near me[^<]*<\/a>/);
   });
 });

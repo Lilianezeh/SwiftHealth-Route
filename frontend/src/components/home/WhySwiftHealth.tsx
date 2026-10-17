@@ -1,4 +1,4 @@
-/** Part 4 of the home page: the Benefits (it was called "Why SwiftHealth" until 2026-10-12), four items. Requirements: US-13,
+/** Part 4 of the home page: "Why <app name>" (it was "Benefits" until 2026-10-15, D7 of specs/2026-10-15-find-by-type/), four items. Requirements: US-13,
  * NFR-10, NFR-07. UI spec 2.1; revision R23 (2026-10-12): a full-width band in the header blue (`forest`) with white text and
  * white icons (white on forest is 5.61:1, on the `pine-dark` circle 8.92:1). It carries `on-dark`: the focus ring inside it is
  * the light one. The words say only what the product does: no numbers, no quotes. "Your location stays private" is true

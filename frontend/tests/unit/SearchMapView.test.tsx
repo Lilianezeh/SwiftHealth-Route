@@ -206,7 +206,7 @@ describe("the map view", () => {
     stubApi({ search: () => json({ items: [], total: 0 }) });
     render(<SearchPage />);
 
-    expect(await screen.findByText(/No matches/)).toBeInTheDocument();
+    expect(await screen.findByText("No places found near you yet.")).toBeInTheDocument(); // `view` is not a filter
     expect(screen.queryByTestId("results-map")).not.toBeInTheDocument();
   });
 
