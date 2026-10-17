@@ -89,13 +89,17 @@ async def find_candidates(
     reports_since: datetime,
     reports_to_exclude: int,
     match_threshold: float,
+    category_slugs: Sequence[str] | None = None,
 ) -> list[SearchCandidate]:
+    """`category_slugs` is for SwiftRescue: listings of any of several categories, in one query (FR-15)."""
     conditions: list[ColumnElement[bool]] = [
         Listing.status == ListingStatus.published,
         col(Listing.id).not_in(flagged_listing_ids(reports_since, reports_to_exclude)),
     ]
     if category_slug is not None:
         conditions.append(Category.slug == category_slug)
+    if category_slugs is not None:
+        conditions.append(col(Category.slug).in_(category_slugs))
     if area is not None:
         conditions.append(Listing.area == area)
     if is_24_hours:

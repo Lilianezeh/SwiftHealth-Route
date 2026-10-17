@@ -1,0 +1,234 @@
+"""GET /emergency through HTTP. Requirements: FR-14 to FR-19, FR-25, FR-26, US-04, NFR-07.
+
+The contract is specs/backend/api-spec.md, "GET /emergency". The clock is replaced with a fixed moment.
+Decisions A1 to A4 in specs/2026-10-17-swiftrescue/requirements.md.
+"""
+from collections.abc import Iterator
+from datetime import datetime, timedelta, timezone
+
+import pytest
+from httpx import AsyncClient
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from app.api.dependencies import get_current_moment
+from app.main import app
+from app.models.base import ListingStatus
+from tests.factories import add_listing, add_report
+
+pytestmark = pytest.mark.anyio
+
+TUESDAY_10_00_IN_LAGOS = datetime(2026, 10, 6, 9, 0, tzinfo=timezone.utc)
+MY_LATITUDE, MY_LONGITUDE = 6.4500, 7.5080
+GROUP_SLUGS = [
+    "ambulance", "fire", "police", "emergency-unit", "roadside-assistance", "security", "blood-bank",
+]
+DISCLAIMER = (
+    "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency "
+    "response. In danger, call 112."
+)
+
+
+@pytest.fixture
+def clock() -> Iterator[None]:
+    app.dependency_overrides[get_current_moment] = lambda: TUESDAY_10_00_IN_LAGOS
+    yield
+    app.dependency_overrides.pop(get_current_moment, None)
+
+
+async def get_emergency(client: AsyncClient, **params: object) -> dict:
+    response = await client.get("/emergency", params=params)
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def group(body: dict, slug: str) -> dict:
+    return next(entry for entry in body["groups"] if entry["category"]["slug"] == slug)
+
+
+def contact_names(body: dict, slug: str) -> list[str]:
+    return [contact["name"] for contact in group(body, slug)["contacts"]]
+
+
+async def test_emergency_needs_no_login_and_112_is_there_with_an_empty_database(
+    client: AsyncClient, clock: None
+) -> None:
+    response = await client.get("/emergency")  # no Authorization header
+    assert response.status_code == 200
+    body = response.json()
+    assert body["national_line"] == {"name": "National emergency number", "number": "112"}  # FR-14
+    assert body["pharmacies_24h"] == []
+    assert body["disclaimer"] == DISCLAIMER  # FR-26
+
+
+async def test_all_seven_groups_are_returned_in_the_fixed_order_even_when_empty(
+    client: AsyncClient, clock: None
+) -> None:
+    body = await get_emergency(client)
+    assert [entry["category"]["slug"] for entry in body["groups"]] == GROUP_SLUGS  # FR-15, decision A1
+    assert [entry["category"]["name"] for entry in body["groups"]] == [
+        "Ambulance", "Fire", "Police", "24-hour emergency units", "Roadside assistance", "Security",
+        "Blood banks",
+    ]
+    assert all(entry["contacts"] == [] for entry in body["groups"])
+
+
+async def test_a_contact_is_in_its_own_group_with_the_listing_summary_shape(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    verified = TUESDAY_10_00_IN_LAGOS - timedelta(days=2)
+    await add_listing(
+        session, "Enugu Ambulance Unit", category_slug="ambulance", area="Ogui", phone="+2340000000555",
+        is_24_hours=True, last_verified_at=verified, next_check_due=verified + timedelta(days=14),
+    )
+    await session.commit()
+    body = await get_emergency(client)
+    assert contact_names(body, "ambulance") == ["Enugu Ambulance Unit"]
+    assert contact_names(body, "fire") == []
+    contact = group(body, "ambulance")["contacts"][0]
+    assert contact["primary_phone"] == "+2340000000555"  # FR-16
+    assert contact["area"] == "Ogui"
+    assert contact["last_verified_at"] == "2026-10-04T09:00:00Z"
+    assert contact["verification_due"] is False
+    assert contact["distance_km"] is None  # no location sent
+    assert contact["is_open_now"] is True  # a 24-hour listing (decision A4)
+    assert contact["hours_note"] is None  # 24 hours: nothing changes
+
+
+async def test_contacts_are_nearest_first_with_a_location_and_by_name_without(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    await add_listing(session, "Zeta Police Post", category_slug="police", latitude=6.4510, longitude=7.5090)
+    await add_listing(session, "Alpha Police Post", category_slug="police", latitude=6.5500, longitude=7.6000)
+    await session.commit()
+    nearest_first = await get_emergency(client, lat=MY_LATITUDE, lng=MY_LONGITUDE)
+    assert contact_names(nearest_first, "police") == ["Zeta Police Post", "Alpha Police Post"]
+    assert group(nearest_first, "police")["contacts"][0]["distance_km"] == 0.2
+    by_name = await get_emergency(client)
+    assert contact_names(by_name, "police") == ["Alpha Police Post", "Zeta Police Post"]
+
+
+async def test_the_other_categories_are_not_in_the_groups(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    await add_listing(session, "Some Clinic", category_slug="clinic")
+    await add_listing(session, "Some Hospital", category_slug="hospital")
+    await session.commit()
+    body = await get_emergency(client)
+    assert all(entry["contacts"] == [] for entry in body["groups"])
+
+
+@pytest.mark.parametrize("status", [s for s in ListingStatus if s is not ListingStatus.published])
+async def test_a_listing_that_is_not_published_is_never_returned(
+    client: AsyncClient, session: AsyncSession, clock: None, status: ListingStatus
+) -> None:
+    await add_listing(session, "Hidden Ambulance", category_slug="ambulance", status=status)
+    await add_listing(session, "Hidden Pharmacy", is_24_hours=True, status=status)
+    await session.commit()
+    body = await get_emergency(client)
+    assert contact_names(body, "ambulance") == []
+    assert body["pharmacies_24h"] == []
+
+
+async def test_an_overdue_contact_is_still_shown_with_verification_due(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    await add_listing(
+        session, "Old Fire Station", category_slug="fire",
+        last_verified_at=TUESDAY_10_00_IN_LAGOS - timedelta(days=20),
+        next_check_due=TUESDAY_10_00_IN_LAGOS - timedelta(days=6),
+    )
+    await session.commit()
+    body = await get_emergency(client)
+    assert group(body, "fire")["contacts"][0]["verification_due"] is True  # FR-08, trust rule 2
+
+
+async def test_a_contact_reported_not_working_by_two_people_is_left_out(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    flagged = await add_listing(session, "Flagged Security Firm", category_slug="security")
+    await add_listing(session, "Fine Security Firm", category_slug="security")
+    two_days_ago = TUESDAY_10_00_IN_LAGOS - timedelta(days=2)
+    await add_report(session, flagged, "reporter-one", created_at=two_days_ago)
+    await add_report(session, flagged, "reporter-two", created_at=two_days_ago)
+    await session.commit()
+    body = await get_emergency(client)
+    assert contact_names(body, "security") == ["Fine Security Firm"]  # FR-22, decision A2
+
+
+async def test_no_item_is_sponsored_even_when_a_listing_is_featured(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    featured_until = TUESDAY_10_00_IN_LAGOS + timedelta(days=10)
+    await add_listing(session, "Featured Ambulance", category_slug="ambulance", featured_until=featured_until)
+    await add_listing(session, "Featured Pharmacy", is_24_hours=True, featured_until=featured_until)
+    await session.commit()
+    body = await get_emergency(client)
+    assert contact_names(body, "ambulance") == ["Featured Ambulance"]
+    assert [item["name"] for item in body["pharmacies_24h"]] == ["Featured Pharmacy"]
+    everything = [c for entry in body["groups"] for c in entry["contacts"]] + body["pharmacies_24h"]
+    assert everything and all(item["sponsored"] is False for item in everything)  # FR-19
+
+
+async def test_pharmacies_24h_are_only_confirmed_24_hour_pharmacies_nearest_first(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    await add_listing(session, "Far Night Pharmacy", is_24_hours=True, latitude=6.60, longitude=7.70)
+    await add_listing(session, "Near Night Pharmacy", is_24_hours=True, latitude=6.4510, longitude=7.5090)
+    await add_listing(session, "Day Pharmacy", is_24_hours=False)
+    await add_listing(session, "24h Clinic", category_slug="clinic", is_24_hours=True)
+    await session.commit()
+    body = await get_emergency(client, lat=MY_LATITUDE, lng=MY_LONGITUDE)
+    nearest_first = [item["name"] for item in body["pharmacies_24h"]]
+    assert nearest_first == ["Near Night Pharmacy", "Far Night Pharmacy"]  # FR-25
+    assert body["pharmacies_24h"][1]["distance_km"] > 10  # decision A3: no distance limit
+
+
+async def test_pharmacies_24h_stop_at_ten(client: AsyncClient, session: AsyncSession, clock: None) -> None:
+    for number in range(12):
+        await add_listing(session, f"Night Pharmacy {number:02d}", is_24_hours=True)
+    await session.commit()
+    body = await get_emergency(client)
+    assert len(body["pharmacies_24h"]) == 10
+    assert body["pharmacies_24h"][0]["name"] == "Night Pharmacy 00"
+
+
+@pytest.mark.parametrize(
+    "params", [{"lat": 6.45}, {"lng": 7.5}, {"lat": 91, "lng": 7.5}, {"lat": 6.4, "lng": 181}]
+)
+async def test_a_half_or_impossible_location_is_422(
+    client: AsyncClient, clock: None, params: dict
+) -> None:
+    response = await client.get("/emergency", params=params)
+    assert response.status_code == 422
+
+
+async def test_the_number_of_queries_does_not_grow_with_the_number_of_contacts(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    from sqlalchemy import event
+
+    counter = {"statements": 0}
+
+    def count(*_arguments: object) -> None:
+        counter["statements"] += 1
+
+    async def statements_for_one_request() -> int:
+        counter["statements"] = 0
+        event.listen(session.bind.sync_engine, "before_cursor_execute", count)
+        try:
+            await get_emergency(client)
+        finally:
+            event.remove(session.bind.sync_engine, "before_cursor_execute", count)
+        return counter["statements"]
+
+    await add_listing(session, "One Ambulance", category_slug="ambulance")
+    await session.commit()
+    few = await statements_for_one_request()
+    for number in range(8):
+        await add_listing(
+            session, f"More Contact {number}", category_slug=GROUP_SLUGS[number % 7], is_24_hours=True
+        )
+        await add_listing(session, f"More Pharmacy {number}", is_24_hours=True)
+    await session.commit()
+    many = await statements_for_one_request()
+    assert many == few
