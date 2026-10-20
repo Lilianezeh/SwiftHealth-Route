@@ -22,34 +22,42 @@ FR-36 to FR-38, FR-41, FR-42, NFR-06, NFR-07) in every commit and test; `git bra
 ## Tasks
 
 ### Task 0: Spec
-- [ ] This folder, the api-spec text and the ui-spec text.
+- [x] This folder, the api-spec text and the ui-spec text (`647790a`).
 
 ### Task 1: the service catalogue and `/meta` (tests first)
-- [ ] The catalogue (alphabetical, canonical spelling), the same-service matching, the default map centre.
+- [x] The catalogue (alphabetical, canonical spelling), the same-service matching, the default map centre (`b60b1c9`).
 
 ### Task 2: staff read: `GET /listings`, `GET /listings/id/{id}` (tests first)
-- [ ] Filters, roles, the staff detail with `map_pin_is_default`.
+- [x] Filters, roles, the staff detail with `map_pin_is_default` (`2b09a6f`).
 
 ### Task 3: create and edit: `POST /listings`, `PATCH /listings/{id}` (tests first)
-- [ ] Validation, slug, audit per field, ownership.
+- [x] Validation, slug, audit per field, ownership (`9114b83`, `d7cd677`).
 
 ### Task 4: checks and status moves (tests first)
-- [ ] Checks and history, submit, publish, hide, reopen, the failed-check rule and the alert.
+- [x] Checks and history, submit, publish, hide, reopen, the failed-check rule and the alert (`ffee546`).
 
 ### Task 5: `POST /uploads/sign` (tests first)
-- [ ] Signature, 503 without a key, the folder rule.
+- [x] Signature, 503 without a key, the folder rule (`4f991c8`).
 
 ### Task 6: `POST /facility-submissions` (tests first)
-- [ ] Draft, audit-only contact details, rate limit.
+- [x] Draft, audit-only contact details, rate limit (`fe66e26`).
 
 ### Task 7: staff accounts: `/admin/users` (tests first)
-- [ ] List, create, edit, link a provider, the rules.
+- [x] List, create, edit, link a provider, the rules (`be6edd9`).
 
 ### Task 8: the staff session, the gate, the login screen and `/admin` (tests first)
+- [x] `d697119`
 ### Task 9: the listings list (tests first)
+- [x] `81dc833`
 ### Task 10: the listing editor (tests first)
+- [x] `274001b`, `afd4ff9`
 ### Task 11: the verification log and the status buttons (tests first)
+- [x] `67a7744` (the status buttons are in the editor, Task 10)
 ### Task 12: the staff accounts screen (tests first)
+- [x] `ec93d43`
 ### Task 13: the "List your facility" form (tests first)
+- [x] `ff6d845`
 ### Task 14: real-browser checks at 320, 360, 768 and 1024 px
+- [x] `staff.spec.ts`, `facility.spec.ts` and `tests/helpers/browserApi.ts`, in the wrap-up commit
 ### Task 15: Wrap-up (suites, docs, draft PR with base `feature/reports`)
+- [x] The PR number is in `LOG.md`, "Unattended run".
