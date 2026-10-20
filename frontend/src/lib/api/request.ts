@@ -10,7 +10,11 @@ import { PUBLIC_API_URL } from "@/lib/api/client";
 
 /** The API answered with an error status (404, 422, 500...). */
 export class ApiError extends Error {
-  constructor(public readonly status: number) {
+  /** `detail` is the API's own sentence when it sent one (the staff screens show it), else null. */
+  constructor(
+    public readonly status: number,
+    public readonly detail: string | null = null,
+  ) {
     super(`The API answered with status ${status}.`);
     this.name = "ApiError";
   }
@@ -45,12 +49,26 @@ export type RequestOptions = {
   signal?: AbortSignal; // lets the caller cancel
   slowAfterMs?: number;
   timeoutMs?: number;
-  body?: unknown; // sent as JSON with a POST (the report form); without it the call is a GET
+  body?: unknown; // sent as JSON; with a body the call is a POST unless `method` says otherwise
+  method?: "GET" | "POST" | "PATCH"; // a POST with no body is the staff status buttons
+  token?: string; // the staff session's token, sent as `Authorization: Bearer ...` and never in an address
 };
 
+/** The `detail` sentence of an error answer, if the API sent one as text. */
+async function readDetail(response: Response): Promise<string | null> {
+  try {
+    const body: unknown = await response.json();
+    const detail = (body as { detail?: unknown } | null)?.detail;
+    return typeof detail === "string" ? detail : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { onSlow, signal, slowAfterMs = WAKING_NOTICE_MS, timeoutMs = REQUEST_TIMEOUT_MS, body } = options;
+  const { onSlow, signal, slowAfterMs = WAKING_NOTICE_MS, timeoutMs = REQUEST_TIMEOUT_MS, body, token } = options;
   const hasBody = body !== undefined;
+  const method = options.method ?? (hasBody ? "POST" : "GET");
   if (signal?.aborted) throw new RequestCancelledError();
 
   const controller = new AbortController();
@@ -65,12 +83,17 @@ export async function requestJson<T>(path: string, options: RequestOptions = {})
 
   try {
     const response = await fetch(`${PUBLIC_API_URL}${path}`, {
-      ...(hasBody ? { method: "POST", body: JSON.stringify(body) } : {}),
-      headers: { Accept: "application/json", ...(hasBody ? { "Content-Type": "application/json" } : {}) },
-      credentials: "omit", // the public API needs no cookies
+      ...(method === "GET" ? {} : { method }),
+      ...(hasBody ? { body: JSON.stringify(body) } : {}),
+      headers: {
+        Accept: "application/json",
+        ...(hasBody ? { "Content-Type": "application/json" } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: "omit", // the API needs no cookies: the staff token travels in the header
       signal: controller.signal,
     });
-    if (!response.ok) throw new ApiError(response.status);
+    if (!response.ok) throw new ApiError(response.status, await readDetail(response));
     return (await response.json()) as T;
   } catch (error) {
     if (error instanceof ApiError) throw error;

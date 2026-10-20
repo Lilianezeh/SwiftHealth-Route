@@ -92,6 +92,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/",
         "/about",
         "/admin",
+        "/admin/login", // phase 10, the staff login
         "/blood",
         "/contact",
         "/emergency",
