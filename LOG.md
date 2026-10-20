@@ -11,7 +11,12 @@ of the table, from the top; after each merge, change the base of the next one to
 | Order | Phase | PR | Branch (base) | Preview | Check on your phone | Assumed decisions |
 | --- | --- | --- | --- | --- | --- | --- |
 | 0 | Step A: CORS for deploy previews | #24, merged 2026-10-17 | `fix/cors-netlify-previews` (main) | | Previews can call the API | |
-| 1 | 7 SwiftRescue | PR_7 | `feature/swiftrescue` (main) | PREVIEW_7 | `/emergency`: 112 first and red; Call 112; Share emergency list opens WhatsApp with the text; Share my location asks, then offers WhatsApp or SMS; after one visit, airplane mode and reload still shows the page and the saved contacts. Production has no real emergency contacts yet, so the preview shows the "still adding" line | A1 to A10 in `specs/2026-10-17-swiftrescue/requirements.md` |
+| 1 | 7 SwiftRescue | #25 | `feature/swiftrescue` (main) | https://deploy-preview-25--swifthealth-ng.netlify.app (talks to the production API: the emergency data shows only after the merge, see the note below) | `/emergency`: 112 first and red; Call 112; Share emergency list opens WhatsApp with the text; Share my location asks, then offers WhatsApp or SMS; after one visit, airplane mode and reload still shows the page and the saved contacts. Production has no real emergency contacts yet, so the preview shows the "still adding" line | A1 to A10 in `specs/2026-10-17-swiftrescue/requirements.md` |
+
+**Note on previews:** a Netlify preview calls the production API. A phase with a new endpoint therefore shows an error on its preview until that
+phase is merged and Render has redeployed (the pages say so and keep 112 and the other static parts). To see a phase fully before merging, run
+its branch locally (`git switch <branch>`, `docker compose up --build`). Because the phases are stacked, merge in table order and check
+production after each merge.
 
 ## To do later
 
