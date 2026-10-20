@@ -146,7 +146,7 @@ describe("step 2: the code", () => {
     await userEvent.type(screen.getByLabelText("6-digit code"), "482913");
     await userEvent.click(screen.getByRole("button", { name: "Log in" }));
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/listings"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin"));
     expect(calls[1]).toEqual({ path: "/auth/verify-code", body: { challenge_token: "challenge.jwt", code: "482913" } });
     expect(readStaffSession()?.token).toBe("access.jwt");
     expect(readStaffSession()?.user.role).toBe("editor");
@@ -155,8 +155,8 @@ describe("step 2: the code", () => {
 
   it.each([
     ["verifier", "/admin/listings?mine=true"],
-    ["editor", "/admin/listings"],
-    ["admin", "/admin/listings"],
+    ["editor", "/admin"],
+    ["admin", "/admin"],
     ["provider", "/provider"],
   ] as const)("sends a %s to %s", async (role, address) => {
     stubAuth({ verify: () => tokenFor(role) });

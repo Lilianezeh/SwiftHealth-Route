@@ -6,10 +6,11 @@ import type { StaffRole } from "@/types/staff";
 /** "review" is the dashboard, the report queue and the re-checks: the work of an editor (phase 11). */
 export type StaffArea = "listings" | "staff" | "review";
 
+/** Where a role starts: the dashboard for an editor and an admin, their own drafts for a verifier. */
 export function homeAddressFor(role: StaffRole): string {
   if (role === "verifier") return "/admin/listings?mine=true";
   if (role === "provider") return "/provider";
-  return "/admin/listings";
+  return "/admin";
 }
 
 export function canOpen(role: StaffRole, area: StaffArea): boolean {

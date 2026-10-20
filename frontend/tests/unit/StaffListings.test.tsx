@@ -46,7 +46,7 @@ function stubStaffApi(handler: (params: URLSearchParams) => Response = () => jso
   return { requests, lists: () => requests.filter((request) => request.url.pathname === "/listings") };
 }
 
-async function openPage(search: { mine?: string } = {}) {
+async function openPage(search: { mine?: string; status?: string } = {}) {
   render(await AdminListingsPage({ searchParams: Promise.resolve(search) }));
 }
 
@@ -116,6 +116,24 @@ describe("the staff listings screen", () => {
 
     expect(screen.getByRole("checkbox", { name: "Only mine" })).toBeChecked();
     expect(lists()[0].url.searchParams.get("mine")).toBe("true");
+  });
+
+  it("starts with the status of the address (where the dashboard cards lead) and ignores a status that does not exist", async () => {
+    const { lists } = stubStaffApi();
+    await openPage({ status: "pending_review" });
+    await screen.findByText("No listings match.");
+
+    expect(screen.getByLabelText("Status")).toHaveValue("pending_review");
+    expect(lists()[0].url.searchParams.get("status")).toBe("pending_review");
+  });
+
+  it("asks for every status when the address names one that does not exist", async () => {
+    const { lists } = stubStaffApi();
+    await openPage({ status: "nonsense" });
+    await screen.findByText("No listings match.");
+
+    expect(screen.getByLabelText("Status")).toHaveValue("");
+    expect(lists()[0].url.searchParams.has("status")).toBe(false);
   });
 
   it("filters by status, category, area, text and 'Only mine', and starts again from the first page", async () => {

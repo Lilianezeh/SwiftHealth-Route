@@ -69,8 +69,8 @@ describe("the staff session", () => {
 describe("where each role starts, and what each may open (decision C11)", () => {
   it.each([
     ["verifier", "/admin/listings?mine=true"],
-    ["editor", "/admin/listings"],
-    ["admin", "/admin/listings"],
+    ["editor", "/admin"],
+    ["admin", "/admin"],
     ["provider", "/provider"],
   ] as const)("%s starts at %s", (role, address) => {
     expect(homeAddressFor(role)).toBe(address);
@@ -80,6 +80,8 @@ describe("where each role starts, and what each may open (decision C11)", () => 
     for (const role of ["verifier", "editor", "admin"] as const) expect(canOpen(role, "listings")).toBe(true);
     expect(canOpen("provider", "listings")).toBe(false);
     expect(canOpen("admin", "staff")).toBe(true);
+    for (const role of ["editor", "admin"] as const) expect(canOpen(role, "review")).toBe(true); // dashboard, reports, re-checks
+    for (const role of ["verifier", "provider"] as const) expect(canOpen(role, "review")).toBe(false);
     for (const role of ["verifier", "editor", "provider"] as const) expect(canOpen(role, "staff")).toBe(false);
   });
 });
