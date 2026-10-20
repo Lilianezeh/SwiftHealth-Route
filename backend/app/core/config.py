@@ -36,7 +36,9 @@ class Settings(BaseSettings):
     # Proxies in front of the API that append to X-Forwarded-For. Not yet checked on Render (see LOG.md).
     trusted_proxy_count: int = Field(default=1, ge=1)
     paystack_secret_key: str = ""
-    cloudinary_url: str = ""
+    cloudinary_url: str = ""  # cloudinary://key:secret@cloud_name; empty means photo upload is not set up
+    # An upload preset made in the Cloudinary account (images only, at most 5 MB). Empty: none is sent.
+    cloudinary_upload_preset: str = ""
     resend_api_key: str = ""  # empty means no email is sent (the staff alert of FR-22 is only logged)
     resend_from_email: str = ""  # a sender on a domain verified in Resend; empty: no email
     termii_api_key: str = ""  # empty means local dev: the login code is logged instead of sent
