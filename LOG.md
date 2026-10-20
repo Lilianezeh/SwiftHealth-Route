@@ -23,6 +23,24 @@ production after each merge.
 
 ## To do later
 
+### The Render database expires about 2026-11-07: free options compared (written 2026-10-20, nothing in production was changed)
+What the database holds today is **demo data only**, so nothing real is lost if it lapses. Facts below come from the providers' own pages, read on
+2026-10-20 (links at the end); prices and limits change, so confirm them on the day you decide.
+
+| Option | Cost | Limits that matter to us | Effort and risk |
+| --- | --- | --- | --- |
+| **A. Do nothing special: let it lapse and make a new free Render database** | $0 | Free Render Postgres expires 30 days after creation, then 14 days to upgrade, then it is deleted; 1 GB; **no backups**; one free database per workspace. | About 10 minutes: create it from `render.yaml`, set `DATABASE_URL`, redeploy (the demo step seeds again). The API is down meanwhile. Repeats every 30 days. Fine for demo data, **not for real data**. |
+| **B. Move to Neon Free** | $0 | 1 GB storage, 100 compute-hours a month, **no expiry stated**, compute suspends after 5 minutes idle (a cold start on top of the API's own), instant restore only for the last 6 hours, 1 manual snapshot. | About 1 hour: new project, `pg_trgm` and the migrations, change `DATABASE_URL` on Render by hand. Another company holds the data; the region (Frankfurt like Render's?) and the Postgres version (we use 18) must be confirmed. No daily backups beyond 6 hours. |
+| **C. Move to Supabase Free** | $0 | 500 MB, **pauses after 7 days idle** (a pilot with few visitors would pause), no automatic backups, 2 active projects. | Similar to B, but the pausing makes the site fail for a whole week of silence. Not recommended. |
+| **D. Upgrade the Render database to the cheapest paid plan** | about $7 a month (a third-party figure; **confirm on render.com/pricing**) plus $0.30 per GB beyond the included storage | Same platform and region as the API, no expiry, Render's docs say paid databases get **point-in-time recovery**; the retention window needs confirming. | 5 minutes in the dashboard, **no code change**. This is a paid action: only you can do it. |
+
+**Recommendation.** Until launch, choose **A** (or do nothing and accept a short outage): the data is demo data and it costs nothing. **Before real
+data goes in (the launch), choose D**: it is the only option here with backups that Render itself keeps, it needs no code change and no new company
+holds the data, and the daily backups of NFR-09 then rest on Render's recovery, plus our own `pg_dump` script and tested restore from phase 14b.
+Choose **B** only if you need to stay free beyond launch, and then add our `pg_dump` script as a nightly job somewhere free (cron on your laptop is not enough).
+Whatever you choose, run the restore test of phase 14b first. Sources: <https://render.com/docs/free>, <https://neon.com/docs/introduction/plans>,
+<https://supabase.com/pricing>, <https://render.com/docs/postgresql-refresh> (the $7 figure is from a third-party guide, not Render's pricing page).
+
 Open reminders. Each says when it is due. Remove a line once it is done.
 
 ### Pre-launch checklist
