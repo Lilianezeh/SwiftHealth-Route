@@ -1,9 +1,12 @@
 from datetime import datetime
 
+from sqlalchemy import func
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import AuditEntry
+
+PAYMENT_ACTION = "payment"  # the audit action of a confirmed Paystack payment (FR-46)
 
 
 async def add_entry(
@@ -28,6 +31,26 @@ async def add_entry(
     session.add(entry)
     await session.flush()
     return entry
+
+
+async def lock_reference(session: AsyncSession, reference: str) -> None:
+    """Waits for a Postgres advisory lock on this reference, held until the transaction ends (FR-46).
+
+    Two webhooks for the same payment that arrive together then take turns, so the second one sees the first
+    one's audit entry and does nothing.
+    """
+    await session.exec(select(func.pg_advisory_xact_lock(func.hashtext(reference))))
+
+
+async def find_payment(session: AsyncSession, reference: str) -> AuditEntry | None:
+    """The audit entry of the payment with this Paystack reference, or None if it was not applied (yet)."""
+    query = (
+        select(AuditEntry)
+        .where(AuditEntry.action == PAYMENT_ACTION, AuditEntry.reference == reference)
+        .order_by(col(AuditEntry.id))
+        .limit(1)
+    )
+    return (await session.exec(query)).first()
 
 
 async def latest_new_value(session: AsyncSession, listing_id: int, action: str) -> str | None:
