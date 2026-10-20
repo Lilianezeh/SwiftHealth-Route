@@ -44,8 +44,13 @@ def distance_in_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 
 
 def to_summary(
-    candidate: SearchCandidate, distance: float | None, is_open_now: bool, moment: datetime
+    candidate: SearchCandidate,
+    distance: float | None,
+    is_open_now: bool,
+    moment: datetime,
+    sponsored: bool = False,
 ) -> ListingSummary:
+    """Only `search_listings` passes `sponsored=True`: no other list is ever sponsored (FR-19)."""
     listing = candidate.listing
     return ListingSummary(
         id=listing.id,
@@ -62,7 +67,7 @@ def to_summary(
         primary_phone=candidate.primary_phone,
         last_verified_at=listing.last_verified_at,
         verification_due=is_verification_due(listing.next_check_due, moment),
-        sponsored=False,  # the sponsored slot is roadmap phase 12c
+        sponsored=sponsored,
         # Worked out here, after paging, so only the 20 results at most that are returned pay for it.
         hours_note=hours_note(candidate.opening_hours, listing.is_24_hours, moment),
     )
@@ -100,8 +105,36 @@ async def search_listings(session: AsyncSession, params: SearchParams, moment: d
     results.sort(key=lambda result: (
         result[1] if result[1] is not None else 0, result[0].listing.name, result[0].listing.id
     ))
+    # The sponsored slot (FR-45): one featured listing goes first. It is taken out of its normal place,
+    # so it is not repeated lower down, and the total does not change. Paging then works on the whole list.
+    sponsored_id = None
+    sponsored_result = first_sponsorable(results, moment)
+    if sponsored_result is not None:
+        sponsored_id = sponsored_result[0].listing.id
+        results.remove(sponsored_result)
+        results.insert(0, sponsored_result)
     page = results[params.offset:params.offset + params.limit]
     return SearchResponse(
-        items=[to_summary(candidate, distance, is_open, moment) for candidate, distance, is_open in page],
+        items=[
+            to_summary(candidate, distance, is_open, moment, sponsored=candidate.listing.id == sponsored_id)
+            for candidate, distance, is_open in page
+        ],
         total=len(results),
     )
+
+
+def first_sponsorable(
+    results: list[tuple[SearchCandidate, float | None, bool]], moment: datetime
+) -> tuple[SearchCandidate, float | None, bool] | None:
+    """The first result, in the normal order, that may take the sponsored slot, or None (decision I11).
+
+    It needs a featured period that has not ended (`featured_until` after `moment`) and a category that
+    is not an emergency one: SwiftRescue never shows sponsored placement (FR-19). The results here already
+    match every filter and the radius, and are published and not flagged.
+    """
+    for result in results:
+        candidate = result[0]
+        featured_until = candidate.listing.featured_until
+        if featured_until is not None and featured_until > moment and not candidate.category.is_emergency:
+            return result
+    return None

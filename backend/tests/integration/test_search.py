@@ -307,15 +307,16 @@ async def test_q_with_odd_characters_returns_200_and_keeps_the_data(
     assert names(await search(client)) == ["Ogui Road Pharmacy"]  # the table is intact
 
 
-async def test_sponsored_is_false_on_every_item(
+async def test_sponsored_is_false_on_every_item_when_nothing_is_featured(
     client: AsyncClient, session: AsyncSession, clock: list[datetime]
 ) -> None:
-    await add_listing(session, "Zulu Pharmacy", featured_until=TUESDAY_10_00_IN_LAGOS + timedelta(days=10))
+    await add_listing(session, "Zulu Pharmacy")
     await add_listing(session, "Alpha Pharmacy")
     await session.commit()
     body = await search(client)
-    assert names(body) == ["Alpha Pharmacy", "Zulu Pharmacy"]  # phase 12c adds the sponsored slot, not this
+    assert names(body) == ["Alpha Pharmacy", "Zulu Pharmacy"]
     assert [item["sponsored"] for item in body["items"]] == [False, False]
+    # The sponsored slot itself (phase 12, FR-45) is tested in test_search_sponsored.py.
 
 
 async def test_the_response_never_shows_internal_fields(
