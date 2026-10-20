@@ -316,7 +316,10 @@ US-13. Feature folder for 13b and 13c: [requirements](2026-10-20-info-pages/requ
 - 13b: About, How we verify, Privacy policy, Terms of use, Contact us (FR-23)
 - 13c: accessibility and speed pass (NFR-01, NFR-10)
 
-### Phase 14: Launch readiness. Next
+### Phase 14: Launch readiness. 14a, 14b and 14d built, 14c a proposal (2026-10-20); draft PR stacked on phase 13
+Feature folder: [requirements](2026-10-20-launch-readiness/requirements.md), [plan](2026-10-20-launch-readiness/plan.md), [validation](2026-10-20-launch-readiness/validation.md);
+documents: [release checklist](2026-10-20-launch-readiness/release-checklist.md), [backup runbook](2026-10-20-launch-readiness/runbook-backups.md),
+[analytics proposal](2026-10-20-launch-readiness/analytics-proposal.md). Nothing paid or irreversible was done; 14c needs the owner's choice (a table or a tool).
 - 14a: CSV import and export (FR-39, FR-40, both Should)
 - 14b: daily backups and a tested restore (NFR-09)
 - 14c: anonymous analytics events (see "Analytics" in [prd.md](prd.md#analytics))

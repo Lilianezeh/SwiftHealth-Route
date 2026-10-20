@@ -16,18 +16,18 @@ NFR-06, NFR-07) in every commit and test; `git branch --show-current` before eve
 ## Tasks
 
 ### Task 0: Spec
-- [ ] This folder, api-spec section 11 and ui-spec 3.9.
+- [x] This folder, api-spec section 11 and ui-spec 3.9 (`64c523c`).
 ### Task 1: `POST /admin/import` (tests first)
-- [ ] Parse, validate, create drafts, report rows.
+- [x] Parse, validate, create drafts, report rows (`6e1235a`).
 ### Task 2: `GET /admin/export` (tests first)
-- [ ] Both types, formula protection.
+- [x] Both types, formula protection (`6e1235a`).
 ### Task 3: the import and export screen (tests first)
-- [ ] File, result, downloads.
+- [x] File, result, downloads (`8b57654`; the real-browser spec in the wrap-up commit).
 ### Task 4: backups and the tested restore
-- [ ] Scripts, the restore test run, the runbook.
+- [x] Scripts, the restore test run, the runbook (`df75263`, `runbook-backups.md`). Added: `python -m app.bootstrap_admin`, the first admin of a new database (found missing; same commit).
 ### Task 5: the analytics proposal
-- [ ] The three options and a recommendation.
+- [x] The three options and a recommendation (`analytics-proposal.md`).
 ### Task 6: the release checklist
-- [ ] Every criterion with evidence, the owner's actions, the merge order.
+- [x] Every criterion with evidence, the owner's actions, the merge order (`release-checklist.md`).
 ### Task 7: Wrap-up
-- [ ] Suites, docs, draft PR (base `feature/info-pages`).
+- [x] Suites, docs, draft PR (base `feature/info-pages`); the number is in `LOG.md`, "Unattended run". The comparison of the free Render databases (`971d5bd`, `LOG.md`) is also in this branch.
