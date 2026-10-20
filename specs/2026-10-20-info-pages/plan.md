@@ -19,19 +19,19 @@ NFR-07, NFR-13, NFR-01, NFR-10, NFR-12, US-13) in every commit and test; `git br
 ## Tasks
 
 ### Task 0: Spec
-- [ ] This folder and ui-spec 2.10.
+- [x] This folder and ui-spec 2.10 (`d450176`).
 
 ### Task 1: the shared layout (tests first)
-- [ ] `InfoPage` and `DraftNotice`.
+- [x] `InfoPage` and `DraftNotice` (`f2d9739`).
 
 ### Task 2: the five pages (tests first)
-- [ ] About, How we verify, Privacy, Terms, Contact.
+- [x] About, How we verify, Privacy, Terms, Contact (`f2d9739`).
 
 ### Task 3: the pass (tests first)
-- [ ] Skip link, titles and descriptions, robots and sitemap, noindex for staff pages.
+- [x] Skip link, titles and descriptions, robots and sitemap, noindex for staff pages (`63ea256`).
 
 ### Task 4: real-browser checks at 320, 360, 768 and 1024 px
-- [ ] Layout, keyboard, skip link.
+- [x] Layout, keyboard, skip link (`info-pages.spec.ts`, in the wrap-up commit).
 
 ### Task 5: Wrap-up
-- [ ] Suites, docs, draft PR (base `feature/staff-screens`).
+- [x] Suites, docs, draft PR (base `feature/staff-screens`); the number is in `LOG.md`, "Unattended run".
