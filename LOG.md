@@ -53,6 +53,12 @@ Things the owner must do before real visitors use the site.
   no address until `contactEmail` in `frontend/src/config/site.ts` is set. Also: the Privacy sentence "your phone number is deleted when the report
   is closed" is true only once the reports queue of phase 11 is merged; and the page must say what the anonymous analytics of phase 14c collect
   when they are switched on. Details: `specs/2026-10-20-info-pages/requirements.md`, decisions D1 and D2.
+- [ ] **Payments: lawyer wording and the Paystack steps (FR-44)** (unattended run, 2026-10-20). Phase 12 takes Paystack **test** payments only; the code
+  refuses a live key. Before any real payment: (1) Privacy and Terms need your lawyer's wording about payments (they say nothing about them, because
+  that is legal text); (2) on Render set `PAYSTACK_SECRET_KEY` to a test key and `FEATURED_PRICE_NAIRA` to the real price; (3) in the Paystack **test**
+  dashboard set the webhook URL to `<Render address>/payments/webhook`; (4) pay once with a Paystack test card and read `/provider/payment-complete`;
+  (5) a live key would need a new decision from you and a code change. The Paystack calls were tested with a mock transport only.
+  Details: `specs/2026-10-20-providers-payments/requirements.md`.
 - [ ] **Read the WhatsApp brand terms (NFR-13)** (owner, 2026-10-15). Not read yet. The WhatsApp button uses the owner's downloaded WhatsApp glyph, only
   scaled (<https://www.whatsappbrand.com/>, which redirects to Meta's brand resource page). Read the live terms, check that the button's look
   (white button, dark green border, the glyph) and the words in `specs/2026-10-13-listing-page/requirements.md` D2 and the comments in
