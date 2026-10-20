@@ -298,8 +298,9 @@ list is a fixed catalogue in code; the facility form's contact details go in a s
 - 10d: "List your facility" form and submissions arriving as drafts (FR-37)
 - 10e: admin manages staff accounts and roles (FR-41)
 
-### Phase 11: Reports queue, re-checks and dashboard. Next
-US-11, US-12.
+### Phase 11: Reports queue, re-checks and dashboard. Built (2026-10-20), draft PR stacked on phase 8, waiting for the owner's check
+US-11, US-12. Feature folder: [requirements](2026-10-20-reports-queue/requirements.md), [plan](2026-10-20-reports-queue/plan.md), [validation](2026-10-20-reports-queue/validation.md).
+Assumed owner decisions H1 to H8 are in the requirements (H1: no "assign"; H4: the nightly job has no schedule yet).
 - 11a: reports queue (FR-35)
 - 11b: nightly re-check job and automatic hide on failed re-check (FR-33, FR-36)
 - 11c: dashboard (FR-34)

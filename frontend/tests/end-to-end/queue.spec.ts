@@ -72,6 +72,9 @@ for (const { width, height } of WIDTHS) {
       const box = await surface.boundingBox();
       expect(box?.width ?? 0).toBeGreaterThan(200);
       await expect(page.locator("main .recharts-bar-rectangle").first()).toBeAttached();
+      // The bars take the colour of the design token (green for passed), not a default or black.
+      const barFill = await page.locator("main .recharts-bar-rectangle path").first().evaluate((bar) => getComputedStyle(bar).fill);
+      expect(barFill).toBe("rgb(20, 122, 72)");
 
       await page.getByText("Show the numbers").click();
       await expect(page.getByRole("row")).toHaveCount(31);

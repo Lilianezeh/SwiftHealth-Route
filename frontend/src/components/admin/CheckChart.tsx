@@ -10,8 +10,9 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 
 import { formatNoticeDate } from "@/lib/formatters/dates";
 import type { DashboardStats } from "@/types/staff";
 
-const PASSED_COLOUR = "#147a48"; // the token --color-open
-const FAILED_COLOUR = "#b3261e"; // the token --color-emergency
+// The design tokens (src/styles/globals.css), so no colour is written by hand here.
+const PASSED_COLOUR = "var(--color-open)";
+const FAILED_COLOUR = "var(--color-emergency)";
 const CHART_HEIGHT = 240;
 
 type CheckChartProps = { days: DashboardStats["checks_last_30_days"] };
@@ -27,11 +28,11 @@ export function CheckChart({ days }: CheckChartProps) {
       </h2>
       <ul className="flex flex-wrap gap-x-6 gap-y-1 text-base text-ink">
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-3 rounded-sm" style={{ backgroundColor: PASSED_COLOUR }} />
+          <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-open" />
           Passed
         </li>
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-3 rounded-sm" style={{ backgroundColor: FAILED_COLOUR }} />
+          <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-emergency" />
           Failed
         </li>
       </ul>
