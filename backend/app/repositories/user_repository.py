@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlmodel import select
+from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import User
@@ -30,3 +30,13 @@ async def create(
     session.add(user)
     await session.flush()
     return user
+
+
+async def list_active_with_roles(session: AsyncSession, roles: set[Role]) -> list[User]:
+    """The active users with one of the roles, oldest first. Tells staff of a flagged listing (FR-22)."""
+    query = (
+        select(User)
+        .where(col(User.is_active).is_(True), col(User.role).in_(roles))
+        .order_by(col(User.id))
+    )
+    return list((await session.exec(query)).all())

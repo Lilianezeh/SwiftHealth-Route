@@ -8,7 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_session
-from app.core.rate_limit import RateLimiter, get_client_ip, login_limiter, verify_code_limiter
+from app.core.rate_limit import RateLimiter, get_client_ip, login_limiter, report_limiter, verify_code_limiter
 from app.core.security import InvalidTokenError
 from app.models import Listing, User
 from app.models.base import Role
@@ -16,7 +16,7 @@ from app.services import access_service, auth_service
 
 __all__ = [
     "get_current_moment", "get_current_user", "get_session", "login_rate_limit", "require_listing_access",
-    "require_role", "verify_code_rate_limit",
+    "report_rate_limit", "require_role", "verify_code_rate_limit",
 ]
 
 STAFF_ROLES = {Role.verifier, Role.editor, Role.admin}
@@ -76,7 +76,9 @@ async def require_listing_access(
         raise HTTPException(status.HTTP_403_FORBIDDEN, NO_PERMISSION_MESSAGE) from None
 
 
-def build_rate_limit_dependency(limiter: RateLimiter) -> Callable[[Request], Awaitable[None]]:
+def build_rate_limit_dependency(
+    limiter: RateLimiter, detail: str = "Too many attempts. Try again in a few minutes."
+) -> Callable[[Request], Awaitable[None]]:
     """Makes a FastAPI dependency that answers 429 when the client is over the limit (FR-30, NFR-06).
 
     It waits for nothing, but it is `async def` on purpose (the documented exception in decision 11): FastAPI
@@ -89,7 +91,7 @@ def build_rate_limit_dependency(limiter: RateLimiter) -> Callable[[Request], Awa
         if not limiter.allow(client_ip):
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Too many attempts. Try again in a few minutes.",
+                detail=detail,
             )
 
     return check_rate_limit
@@ -97,3 +99,6 @@ def build_rate_limit_dependency(limiter: RateLimiter) -> Callable[[Request], Awa
 
 login_rate_limit = build_rate_limit_dependency(login_limiter)
 verify_code_rate_limit = build_rate_limit_dependency(verify_code_limiter)
+report_rate_limit = build_rate_limit_dependency(
+    report_limiter, "You've sent several reports. Please try again later."
+)

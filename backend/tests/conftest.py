@@ -17,7 +17,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 import app.models  # noqa: F401  (registers all 9 tables)
 from app.core.config import settings
 from app.core.database import get_session
-from app.core.rate_limit import login_limiter, verify_code_limiter
+from app.core.rate_limit import login_limiter, report_limiter, verify_code_limiter
 from app.core.security import hash_password
 from app.main import app
 from app.models import User
@@ -85,6 +85,7 @@ def reset_rate_limiters() -> None:
     """Every test starts with empty rate-limit counters, so one test cannot block another."""
     login_limiter.reset()
     verify_code_limiter.reset()
+    report_limiter.reset()
 
 
 @pytest.fixture
