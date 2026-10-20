@@ -7,6 +7,7 @@ from collections.abc import Iterable, Sequence
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import BLOOD_GROUPS, settings
+from app.core.service_catalogue import catalogue_for_meta
 from app.core.service_names import normalise_service_name
 from app.models.base import ReportReason
 from app.repositories import category_repository, service_repository
@@ -45,4 +46,5 @@ async def get_meta(session: AsyncSession) -> MetaResponse:
         services=choose_service_names(service_names, BLOOD_GROUPS),
         blood_groups=list(BLOOD_GROUPS),
         report_reasons=[reason.value for reason in ReportReason],
+        service_catalogue=catalogue_for_meta(),
     )
