@@ -326,7 +326,8 @@ FR-37. **API:** `POST /facility-submissions`, `GET /meta`.
 Form: facility name, category, area, address, phone, contact name, contact email, notes. **Success:** "Thanks. We'll verify your facility before it's listed."
 
 ### 2.10 Information pages
-`/about`, `/how-we-verify`, `/privacy`, `/terms`, `/contact` (FR-23). Static content. Privacy explains NDPA handling (minimal data, reporter phone deleted after resolution, location never stored).
+`/about`, `/how-we-verify`, `/privacy`, `/terms`, `/contact` (FR-23). Static server pages, no script (feature `specs/2026-10-20-info-pages/`, decisions D1 to D7). One `h1` each ("About", "How we verify", "Privacy policy", "Terms of use", "Contact us") and `h2` sections in plain sentences, 16 px or larger, one column at most 42 rem wide. Privacy and Terms start with the notice "This page describes how SwiftHealth Route works today. It has not yet been reviewed by a lawyer." and are **statements of what the product does** (minimal data, the reporter's phone optional and deleted when the report is closed, a shared location never stored, no selling of personal data; directory only, no medical advice, SwiftRescue does not dispatch, fees are estimates), with no legal claim. Contact shows an email link only when `siteConfig.contactEmail` is set, otherwise it says the address is being set up and points to Report a problem, List your facility and SwiftRescue; it never shows a phone number.
+**Skip link and titles (phase 13c).** On every page the first focusable element is "Skip to main content" (`href="#main"`, hidden until focused, 48 px high, the `main` has `id="main"`). Page titles use the template `"<Page> | SwiftHealth Route"`; every public page has a title and a description; `/admin/*` and `/provider/*` are `noindex`. `robots.txt` and `sitemap.xml` come from `app/robots.ts` and `app/sitemap.ts`.
 
 ---
 
