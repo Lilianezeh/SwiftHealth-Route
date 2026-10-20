@@ -27,7 +27,7 @@ last commit of the run). "Done" means built and tested here; nothing below is sw
 | 10 Staff and List your facility | US-10, FR-30 to FR-32, FR-36 (failed check), FR-37, FR-38, FR-41, FR-42 | PR #27 |
 | 13 Information pages | FR-23, NFR-12 | PR #28 |
 | 14 Launch readiness | FR-39, FR-40 (Should), NFR-09 (tested restore) | this PR |
-| 8 Blood | US-15, US-16, FR-27 to FR-29 | later PR of this run |
+| 8 Blood | US-15, US-16, FR-27 to FR-29 (FR-29 guidance text waits for the medical advisor) | PR of branch `feature/blood` |
 | 11 Reports queue and dashboard | US-11, US-12, FR-33 (nightly job), FR-34, FR-35, FR-36 (nightly hide) | later PR of this run |
 | 12 Providers and featured | FR-43 to FR-46 | later PR of this run |
 
