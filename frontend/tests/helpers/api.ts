@@ -26,6 +26,7 @@ export const META: MetaResponse = {
   services: ["Consultation", "X-ray"],
   blood_groups: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
   report_reasons: ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"],
+  service_catalogue: ["Blood bank", "Consultation", "Malaria test", "X-ray"],
 };
 
 export function listing(overrides: Partial<ListingSummary> = {}): ListingSummary {
