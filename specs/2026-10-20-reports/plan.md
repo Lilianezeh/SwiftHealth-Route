@@ -19,22 +19,22 @@ NFR-06, NFR-07, FR-38) in every commit and test; `git branch --show-current` bef
 ## Tasks
 
 ### Task 0: Spec
-- [ ] This folder, api-spec "POST /reports", ui-spec 2.8.
+- [x] This folder, api-spec "POST /reports", ui-spec 2.8 (`f99467f`).
 
 ### Task 1: phone normalisation and the rate limit (tests first)
-- [ ] `normalise_nigerian_phone`; `report_limiter`.
+- [x] `normalise_nigerian_phone`; `report_limiter` (`d34604c`, one commit with Tasks 2 and 3, because the endpoint tests need all three).
 
 ### Task 2: `POST /reports` and the flag (tests first)
-- [ ] Create, validate, key, count, flag, audit.
+- [x] Create, validate, key, count, flag, audit (`d34604c`).
 
 ### Task 3: staff alerts (tests first)
-- [ ] Resend integration, recipients, background send, no personal data.
+- [x] Resend integration, recipients, background send, no personal data (`d34604c`).
 
 ### Task 4: the report form (tests first)
-- [ ] Page, form, states, 422 and 429 messages.
+- [x] Page, form, states, 422 and 429 messages (`8f15969`).
 
 ### Task 5: the links and real-browser checks
-- [ ] Contact card link, listing link by slug; Playwright at 320, 360, 768, 1024 px.
+- [x] Contact card link, listing link by slug (`8f15969`); Playwright at 320, 360, 768, 1024 px (`reports.spec.ts`, in the wrap-up commit).
 
 ### Task 6: Wrap-up
-- [ ] Full suites, docs, draft PR (base `feature/swiftrescue`).
+- [x] Full suites, docs, draft PR (base `feature/swiftrescue`); the PR number is in `LOG.md`, "Unattended run".
