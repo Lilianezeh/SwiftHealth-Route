@@ -2,6 +2,17 @@
 
 One entry per day. Keep it short and honest.
 
+## Unattended run (started 2026-10-17): phases, pull requests and what to check
+
+The owner asked for all remaining phases in one run, as stacked draft pull requests, each branching from the one before. Merge them in the order
+of the table, from the top; after each merge, change the base of the next one to `main` (GitHub offers it). `Assumed decisions` point to the
+"Assumed owner decisions" table of each phase's `requirements.md`: overrule any of them by telling me.
+
+| Order | Phase | PR | Branch (base) | Preview | Check on your phone | Assumed decisions |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 | Step A: CORS for deploy previews | #24, merged 2026-10-17 | `fix/cors-netlify-previews` (main) | | Previews can call the API | |
+| 1 | 7 SwiftRescue | PR_7 | `feature/swiftrescue` (main) | PREVIEW_7 | `/emergency`: 112 first and red; Call 112; Share emergency list opens WhatsApp with the text; Share my location asks, then offers WhatsApp or SMS; after one visit, airplane mode and reload still shows the page and the saved contacts. Production has no real emergency contacts yet, so the preview shows the "still adding" line | A1 to A10 in `specs/2026-10-17-swiftrescue/requirements.md` |
+
 ## To do later
 
 Open reminders. Each says when it is due. Remove a line once it is done.

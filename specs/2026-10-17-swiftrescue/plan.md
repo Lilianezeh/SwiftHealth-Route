@@ -29,25 +29,25 @@ push to `main`. The pull request stays a draft until the merge checklist in [val
 ## Tasks
 
 ### Task 0: Spec
-- [ ] This folder, the api-spec text of `GET /emergency` (all groups every time, `hours_note` filled) and the ui-spec 2.5. Commit `docs(specs): SwiftRescue spec (US-04, US-09, US-14, FR-14 to FR-19, FR-24 to FR-26)`.
+- [x] This folder, the api-spec text of `GET /emergency` (all groups every time, `hours_note` filled) and the ui-spec 2.5 (`6c6859b`, `35987a4`). The first commit of the branch (`4fb91be`) records the production results of PR #23.
 
 ### Task 1: `GET /emergency` (7a, 7e data) (tests first)
-- [ ] Tests (names in validation.md) fail first; then the schema, the repository parameter, the service and the route.
+- [x] Tests (names in validation.md) fail first; then the schema, the repository parameter, the service and the route (`d5042c5`).
 
 ### Task 2: Frontend data layer
-- [ ] Tests first for the share texts, the links, the offline copy (no position or distance inside) and the hook (success, network failure with and without a saved copy, API error).
+- [x] (`9a4ea18`) Tests first for the share texts, the links, the offline copy (no position or distance inside) and the hook (success, network failure with and without a saved copy, API error).
 
 ### Task 3: The page (7b, 7e)
-- [ ] Tests first: the 112 card first and static, groups in order, empty groups hidden, the pharmacies section, the disclaimer always visible, no sponsored text, 48 px targets.
+- [x] (`fde142a`) Tests first: the 112 card first and static, groups in order, empty groups hidden, the pharmacies section, the disclaimer always visible, no sponsored text, 48 px targets.
 
 ### Task 4: Sharing (7c)
-- [ ] Tests first: the list text, the two links, the location flow (permission, error, denied), nothing stored.
+- [x] (`015ec5b`) Tests first: the list text, the two links, the location flow (permission, error, denied), nothing stored.
 
 ### Task 5: Offline (7d)
-- [ ] Tests first for the service worker functions (what it keeps, what it never keeps), the registration, and the offline notice. Real browser: visit, go offline, reload.
+- [x] (`d884f5b`) Tests first for the service worker functions (what it keeps, what it never keeps), the registration, and the offline notice. Real browser: visit, go offline, reload.
 
 ### Task 6: Installable icons, real-browser checks at 320, 360, 768 and 1024 px
-- [ ] Icons and manifest; the Playwright spec.
+- [x] Icons and manifest (`0e076c2`); the Playwright spec, 20 checks at four widths plus the offline check (`27c80d6`).
 
 ### Task 7: Wrap-up
-- [ ] Full suites, lint, typecheck, build; roadmap, LOG.md and validation.md; draft pull request (base `main`).
+- [x] Full suites, lint, typecheck, build; roadmap, `LOG.md` and `validation.md`; draft pull request (base `main`). The commit and the PR number are in `LOG.md`, "Unattended run".

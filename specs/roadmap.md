@@ -263,8 +263,10 @@ folder and a go-ahead on its plan; the full list of the owner's points, the prop
 - On `/find`, the "Near you" cards never show the same place twice: if the closest open pharmacy is also the closest open 24-hour place, the second
   card shows the next closest different 24-hour place, or, when there is none, one card carries both labels. With a test (`LOG.md`, item 10).
 
-### Phase 7: SwiftRescue, the emergency section. Next
-US-04, US-09, US-14.
+### Phase 7: SwiftRescue, the emergency section. Built (2026-10-20), draft PR waiting for the owner's phone check
+US-04, US-09, US-14. Feature folder: [requirements](2026-10-17-swiftrescue/requirements.md), [plan](2026-10-17-swiftrescue/plan.md),
+[validation](2026-10-17-swiftrescue/validation.md). Built in the unattended run of 2026-10-17 (decisions A1 to A10 in the requirements are
+assumed owner decisions). The phase also adds installable app icons.
 - 7a: `GET /emergency`
 - 7b: page with 112 first and grouped contacts (FR-14, FR-15, FR-16, FR-19, FR-26)
 - 7c: share the emergency list and share my location (FR-18, FR-24)
