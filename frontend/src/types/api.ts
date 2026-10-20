@@ -82,3 +82,16 @@ export type MetaResponse = {
   report_reasons: string[];
   service_catalogue: string[]; // the names staff may pick for a listing (phase 10, decision C1)
 };
+
+/** One item of GET /blood/banks (api-spec): a summary plus the blood groups and the date they were confirmed (FR-27). */
+export type BloodBank = ListingSummary & {
+  blood_groups: string[]; // in the order A+, A-, B+, B-, AB+, AB-, O+, O-
+  blood_groups_confirmed_at: string | null; // "YYYY-MM-DD"
+  stock_note: string;
+};
+
+/** One item of GET /blood/donation-centres: a summary plus the week of donation hours (FR-28). */
+export type DonationCentre = ListingSummary & { donation_hours: OpeningHoursRead[] };
+
+export type BloodBankList = { items: BloodBank[]; total: number };
+export type DonationCentreList = { items: DonationCentre[]; total: number };

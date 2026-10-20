@@ -22,7 +22,7 @@ describe("sitemap.xml", () => {
 
   it("lists the static public pages on the production address", () => {
     expect(entries.map((entry) => entry.url).sort()).toEqual(
-      ["", "/find", "/emergency", "/about", "/how-we-verify", "/privacy", "/terms", "/contact", "/list-your-facility"]
+      ["", "/find", "/emergency", "/blood", "/blood/donate", "/about", "/how-we-verify", "/privacy", "/terms", "/contact", "/list-your-facility"]
         .map((path) => `${siteConfig.siteUrl}${path}`)
         .sort(),
     );
