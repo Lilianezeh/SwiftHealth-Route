@@ -125,6 +125,14 @@ async def find_candidates(
         .where(and_(*conditions))
     )
     rows = (await session.exec(query)).all()
+    return await candidates_from_rows(session, rows)
+
+
+async def candidates_from_rows(
+    session: AsyncSession, rows: Sequence[tuple[Listing, Category]]
+) -> list[SearchCandidate]:
+    """Adds each listing's primary phone and opening hours (two queries, however many listings).
+    Also used by the staff list, so a staff row and a search result are built the same way."""
     listing_ids = [listing.id for listing, _ in rows]
     primary_phones = await _primary_phones(session, listing_ids)
     hours_by_listing = await _opening_hours(session, listing_ids)
