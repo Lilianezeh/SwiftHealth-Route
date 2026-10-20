@@ -157,7 +157,7 @@ def service_rows(services: list[ServiceInput]) -> list[Service]:
 
 
 async def create_listing(session: AsyncSession, user: User, payload: ListingCreate, moment: datetime) -> int:
-    """Creates a draft owned by `user` (FR-31) with its phones, hours and services, and a `create` audit entry."""
+    """Creates a draft owned by `user` (FR-31): its phones, hours, services and a `create` audit entry."""
     category = await category_repository.get_by_slug(session, payload.category)
     if category is None:
         raise UnknownCategoryError(payload.category)
