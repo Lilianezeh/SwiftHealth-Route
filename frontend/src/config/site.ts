@@ -11,6 +11,11 @@ export const siteConfig = {
   // The first city. SwiftHealth is for all of Nigeria and starts here. The home page and its page description name no city
   // (owner, 2026-10-12), but the constant stays for other parts of the app; no text may say "Enugu only".
   launchCity: "Enugu",
+  // The address shown on the Contact page. Empty until the owner gives one (never made up); then a mailto link shows. Decision D2 in
+  // specs/2026-10-20-info-pages/requirements.md.
+  contactEmail: "",
+  // The production address, for the sitemap (decision D7). The repo and the Netlify address keep the old name.
+  siteUrl: "https://swifthealth-ng.netlify.app",
   copyrightYear: 2026, // a constant, not the clock: the footer is static and says the year of the site's launch
   // The header bar from tablet width: Find care, then the red SwiftRescue, then For facilities.
   findCareLink: { label: "Find care", href: "/find" },
