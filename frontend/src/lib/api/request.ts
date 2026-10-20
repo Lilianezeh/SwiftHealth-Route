@@ -52,6 +52,8 @@ export type RequestOptions = {
   body?: unknown; // sent as JSON; with a body the call is a POST unless `method` says otherwise
   method?: "GET" | "POST" | "PATCH"; // a POST with no body is the staff status buttons
   token?: string; // the staff session's token, sent as `Authorization: Bearer ...` and never in an address
+  csvBody?: string; // the text of a CSV file, sent as `text/csv` with a POST (the staff import)
+  asText?: boolean; // return the answer as text, not as JSON (the staff CSV export)
 };
 
 /** The `detail` sentence of an error answer, if the API sent one as text. */
@@ -66,9 +68,9 @@ async function readDetail(response: Response): Promise<string | null> {
 }
 
 export async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { onSlow, signal, slowAfterMs = WAKING_NOTICE_MS, timeoutMs = REQUEST_TIMEOUT_MS, body, token } = options;
+  const { onSlow, signal, slowAfterMs = WAKING_NOTICE_MS, timeoutMs = REQUEST_TIMEOUT_MS, body, token, csvBody, asText } = options;
   const hasBody = body !== undefined;
-  const method = options.method ?? (hasBody ? "POST" : "GET");
+  const method = options.method ?? (hasBody || csvBody !== undefined ? "POST" : "GET");
   if (signal?.aborted) throw new RequestCancelledError();
 
   const controller = new AbortController();
@@ -85,16 +87,18 @@ export async function requestJson<T>(path: string, options: RequestOptions = {})
     const response = await fetch(`${PUBLIC_API_URL}${path}`, {
       ...(method === "GET" ? {} : { method }),
       ...(hasBody ? { body: JSON.stringify(body) } : {}),
+      ...(csvBody !== undefined ? { body: csvBody } : {}),
       headers: {
-        Accept: "application/json",
+        Accept: asText ? "text/csv" : "application/json",
         ...(hasBody ? { "Content-Type": "application/json" } : {}),
+        ...(csvBody !== undefined ? { "Content-Type": "text/csv" } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       credentials: "omit", // the API needs no cookies: the staff token travels in the header
       signal: controller.signal,
     });
     if (!response.ok) throw new ApiError(response.status, await readDetail(response));
-    return (await response.json()) as T;
+    return (asText ? await response.text() : await response.json()) as T;
   } catch (error) {
     if (error instanceof ApiError) throw error;
     if (timedOut) throw new ApiTimeoutError();

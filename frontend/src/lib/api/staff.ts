@@ -92,3 +92,15 @@ export function createAdminUser(token: string, input: AdminUserInput, options: O
 export function updateAdminUser(token: string, userId: number, changes: AdminUserChanges, options: Options = {}): Promise<StaffUser> {
   return requestJson<StaffUser>(`/admin/users/${userId}`, { ...options, token, method: "PATCH", body: changes });
 }
+
+export type ImportResult = { created: number; errors: { row: number; detail: string }[] };
+
+/** POST /admin/import: the text of the CSV file as the request body (decision E1 in specs/2026-10-20-launch-readiness/). */
+export function importListingsCsv(token: string, csvText: string, options: Options = {}): Promise<ImportResult> {
+  return requestJson<ImportResult>("/admin/import", { ...options, token, csvBody: csvText });
+}
+
+/** GET /admin/export?type=...: the CSV as text, for the browser to save as a file. */
+export function exportCsv(token: string, type: "listings" | "checks", options: Options = {}): Promise<string> {
+  return requestJson<string>(`/admin/export?type=${type}`, { ...options, token, asText: true });
+}

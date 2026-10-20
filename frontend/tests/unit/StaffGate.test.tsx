@@ -70,12 +70,14 @@ describe("StaffGate", () => {
     await screen.findByText("x");
     expect(screen.getByRole("link", { name: "Listings" })).toHaveAttribute("href", "/admin/listings");
     expect(screen.getByRole("link", { name: "Staff" })).toHaveAttribute("href", "/admin/staff");
+    expect(screen.getByRole("link", { name: "Import and export" })).toHaveAttribute("href", "/admin/import-export");
     first.unmount();
 
     saveStaffSession({ token: "tok", user: user("editor") });
     render(<StaffGate area="listings"><p>y</p></StaffGate>);
     await screen.findByText("y");
     expect(screen.queryByRole("link", { name: "Staff" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Import and export" })).toBeNull();
   });
 
   it("makes every link and button of the bar at least 48 px high", async () => {
