@@ -25,12 +25,14 @@ afterEach(() => {
 });
 
 describe("getMeta", () => {
-  it("returns the five lists", async () => {
+  it("returns the six lists", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(META), { status: 200 })));
 
     const meta = await getMeta();
 
-    expect(Object.keys(meta).sort()).toEqual(["areas", "blood_groups", "categories", "report_reasons", "services"]);
+    expect(Object.keys(meta).sort()).toEqual([
+      "areas", "blood_groups", "categories", "report_reasons", "service_catalogue", "services",
+    ]);
     expect(meta.categories[0]).toEqual({ slug: "pharmacy", name: "Pharmacy", is_emergency: false });
   });
 
