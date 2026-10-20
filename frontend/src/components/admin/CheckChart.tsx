@@ -40,8 +40,8 @@ export function CheckChart({ days }: CheckChartProps) {
         <ResponsiveContainer width="100%" height={CHART_HEIGHT} initialDimension={{ width: 320, height: CHART_HEIGHT }}>
           <BarChart data={bars} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="dayOfMonth" interval="preserveStartEnd" tick={{ fontSize: 14 }} />
-            <YAxis allowDecimals={false} tick={{ fontSize: 14 }} />
+            <XAxis dataKey="dayOfMonth" interval="preserveStartEnd" tick={{ fontSize: 16 }} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 16 }} width={44} />
             <Bar dataKey="passed" stackId="checks" fill={PASSED_COLOUR} isAnimationActive={false} />
             <Bar dataKey="failed" stackId="checks" fill={FAILED_COLOUR} isAnimationActive={false} />
           </BarChart>
