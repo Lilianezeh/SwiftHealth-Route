@@ -241,6 +241,20 @@ async def list_for_staff(
     return [(listing, category) for listing, category in page], total
 
 
+async def find_overdue_published(session: AsyncSession, moment: datetime) -> list[Listing]:
+    """Published listings whose `next_check_due` has passed, by name then id (the nightly job, FR-33)."""
+    query = (
+        select(Listing)
+        .where(
+            Listing.status == ListingStatus.published,
+            col(Listing.next_check_due).is_not(None),
+            col(Listing.next_check_due) < moment,
+        )
+        .order_by(col(Listing.name), col(Listing.id))
+    )
+    return list((await session.exec(query)).all())
+
+
 async def slug_exists(session: AsyncSession, slug: str) -> bool:
     return (await session.exec(select(Listing.id).where(Listing.slug == slug))).first() is not None
 

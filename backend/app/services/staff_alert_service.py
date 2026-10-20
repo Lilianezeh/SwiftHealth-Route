@@ -76,6 +76,47 @@ async def load_failed_check_alert(session: AsyncSession, listing_name: str) -> S
     )
 
 
+MAX_NAMES_IN_EMAIL = 50  # a long list is cut, with "and N more"
+
+
+@dataclass(frozen=True)
+class RecheckSummary:
+    """The nightly job's email: how many listings moved to re-check due, and which (names only, FR-33)."""
+
+    listing_names: list[str]
+    editor_emails: list[str]
+
+
+def build_recheck_summary_texts(listing_names: list[str]) -> tuple[str, str]:
+    """The email subject and body of the nightly job. Names only: nothing about any person."""
+    count = len(listing_names)
+    noun = "listing" if count == 1 else "listings"
+    subject = f"Re-check due: {count} {noun} moved"
+    shown = listing_names[:MAX_NAMES_IN_EMAIL]
+    lines = [f"{count} {noun} passed the check date and moved to re-check due, hidden from the public:", ""]
+    lines += [f"- {name}" for name in shown]
+    if count > len(shown):
+        lines.append(f"- and {count - len(shown)} more")
+    lines += ["", "Open the Re-checks screen to see them. Check each one, then publish it again."]
+    return subject, "\n".join(lines)
+
+
+async def load_recheck_summary(session: AsyncSession, listing_names: list[str]) -> RecheckSummary:
+    """Finds who to tell: every active editor and admin."""
+    staff = await user_repository.list_active_with_roles(session, {Role.editor, Role.admin})
+    return RecheckSummary(listing_names=listing_names, editor_emails=[user.email for user in staff])
+
+
+async def send_recheck_summary(summary: RecheckSummary) -> None:
+    """Sends the nightly email to everyone. One failure never stops the others, and nothing here raises."""
+    subject, body = build_recheck_summary_texts(summary.listing_names)
+    for email in summary.editor_emails:
+        try:
+            await resend.send_email(email, subject, body)
+        except resend.EmailSendError as error:
+            logger.warning("Re-check summary email failed: %s", error)
+
+
 async def send_alerts(alert: StaffAlert) -> None:
     """Sends every message. One failure never stops the others, and nothing here raises."""
     if alert.kind == "failed_check":
