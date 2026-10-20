@@ -233,3 +233,29 @@ async def list_for_staff(
         await session.exec(joined.order_by(col(Listing.name), col(Listing.id)).offset(offset).limit(limit))
     ).all()
     return [(listing, category) for listing, category in page], total
+
+
+async def slug_exists(session: AsyncSession, slug: str) -> bool:
+    return (await session.exec(select(Listing.id).where(Listing.slug == slug))).first() is not None
+
+
+async def replace_children(
+    session: AsyncSession,
+    listing_id: int,
+    *,
+    phones: list[PhoneNumber] | None = None,
+    opening_hours: list[OpeningHours] | None = None,
+    services: list[Service] | None = None,
+) -> None:
+    """Replaces the phones, hours or services of a listing with the new rows. None is left alone.
+
+    The caller commits, so the old rows go and the new ones come in the same transaction.
+    """
+    for model, rows in ((PhoneNumber, phones), (OpeningHours, opening_hours), (Service, services)):
+        if rows is None:
+            continue
+        await session.exec(delete(model).where(col(model.listing_id) == listing_id))
+        for row in rows:
+            row.listing_id = listing_id
+            session.add(row)
+    await session.flush()

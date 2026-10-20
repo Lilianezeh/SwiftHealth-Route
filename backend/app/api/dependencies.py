@@ -15,8 +15,8 @@ from app.models.base import Role
 from app.services import access_service, auth_service
 
 __all__ = [
-    "get_current_moment", "get_current_user", "get_session", "login_rate_limit", "require_listing_access",
-    "report_rate_limit", "require_role", "verify_code_rate_limit",
+    "NO_PERMISSION_MESSAGE", "get_current_moment", "get_current_user", "get_session", "login_rate_limit",
+    "require_listing_access", "report_rate_limit", "require_role", "verify_code_rate_limit",
 ]
 
 STAFF_ROLES = {Role.verifier, Role.editor, Role.admin}
