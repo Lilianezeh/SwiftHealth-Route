@@ -3,7 +3,15 @@
  * the browser (ListingDetailView), because the free API can take about a minute to wake and the hosting gives up on a server page after
  * about 30 seconds. Server rendering for Google waits for the Render upgrade (LOG.md).
  */
+import type { Metadata } from "next";
+
 import { ListingDetailView } from "@/components/listing/ListingDetailView";
+
+// The listing's own name replaces this title in the browser once it has loaded (ListingDetailView).
+export const metadata: Metadata = {
+  title: "Listing",
+  description: "Phone numbers, opening hours, services and directions for a verified health facility.",
+};
 
 export default async function ListingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

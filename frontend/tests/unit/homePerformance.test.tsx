@@ -50,7 +50,8 @@ describe("no page of another address is downloaded early: every link of the home
       </PageFrame>,
     );
 
-    const links = [...container.querySelectorAll("a")];
+    // The skip link ("#main") stays on the same page, so there is nothing to prefetch (phase 13c).
+    const links = [...container.querySelectorAll("a")].filter((link) => !(link.getAttribute("href") ?? "").startsWith("#"));
     expect(links.length).toBeGreaterThanOrEqual(15); // the logo, 2 header links, the hero button, 5 tiles, the owners button, 6 footer links
     for (const link of links) expect(link.getAttribute("data-prefetch"), link.textContent ?? "").toBe("false");
   });

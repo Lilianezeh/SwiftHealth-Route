@@ -1,10 +1,16 @@
 /** Find home. Requirements: FR-01, FR-03, US-01. UI spec 2.2. A server page: only NearYou needs the browser. */
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CategoryShortcuts } from "@/components/search/CategoryShortcuts";
 import { NearYou } from "@/components/search/NearYou";
 import { SearchBox } from "@/components/search/SearchBox";
 import { buttonClasses } from "@/components/ui/buttonStyles";
+
+export const metadata: Metadata = {
+  title: "Find care",
+  description: "Find a hospital, clinic, pharmacy, maternity home or laboratory that is open now, near you.",
+};
 
 export default function FindPage() {
   return (

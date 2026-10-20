@@ -8,14 +8,19 @@ import type { ReactNode } from "react";
 
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SkipLink } from "@/components/layout/SkipLink";
 
 type PageFrameProps = { isHomePage?: boolean; children: ReactNode };
 
 export function PageFrame({ isHomePage = false, children }: PageFrameProps) {
   return (
     <>
+      <SkipLink />
       <SiteHeader isHomePage={isHomePage} />
-      <main>{children}</main>
+      {/* tabIndex -1: the skip link moves focus here, so the next Tab starts inside the page (NFR-10). */}
+      <main id="main" tabIndex={-1} className="outline-none">
+        {children}
+      </main>
       <SiteFooter isHomePage={isHomePage} />
     </>
   );
