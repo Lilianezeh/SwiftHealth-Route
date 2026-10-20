@@ -10,3 +10,6 @@ node_modules/
 *.db
 CLAUDE.local.md
 .claude/settings.local.json
+
+# Database backups (personal data): never committed (scripts/backup-db.sh)
+backups/
