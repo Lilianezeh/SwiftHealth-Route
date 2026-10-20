@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import User, VerificationCheck
+from app.models import Listing, User, VerificationCheck
 from app.models.base import CheckMethod, CheckResult
 
 
@@ -70,3 +70,15 @@ async def newest_passing_check_time(
         VerificationCheck.checked_at >= since,
     )
     return (await session.exec(query)).one()
+
+
+async def list_all_for_export(session: AsyncSession) -> list[tuple[VerificationCheck, str, str]]:
+    """Every check with the listing's name and the staff member's name, oldest first (CSV export)."""
+    query = (
+        select(VerificationCheck, Listing.name, User.name)
+        .join(Listing, col(Listing.id) == VerificationCheck.listing_id)
+        .join(User, col(User.id) == VerificationCheck.staff_id)
+        .order_by(col(VerificationCheck.checked_at), col(VerificationCheck.id))
+    )
+    rows = (await session.exec(query)).all()
+    return [(check, listing_name, staff_name) for check, listing_name, staff_name in rows]

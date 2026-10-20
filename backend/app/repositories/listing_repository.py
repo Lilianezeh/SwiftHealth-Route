@@ -274,3 +274,29 @@ async def mark_primary_phone_working(session: AsyncSession, listing_id: int, mom
         phone.last_working_at = moment
         session.add(phone)
     await session.flush()
+
+
+async def existing_name_area_pairs(session: AsyncSession) -> set[tuple[str, str]]:
+    """The (name, area) of every listing of any status, lower-cased, so an import can skip one that exists."""
+    rows = (await session.exec(select(Listing.name, Listing.area))).all()
+    return {(name.casefold(), area.casefold()) for name, area in rows}
+
+
+async def list_all_with_primary_phone(session: AsyncSession) -> list[tuple[Listing, Category, str | None]]:
+    """Every listing of any status with its category and primary number, by name then id (CSV export)."""
+    rows = (
+        await session.exec(
+            select(Listing, Category)
+            .join(Category, col(Category.id) == Listing.category_id)
+            .order_by(col(Listing.name), col(Listing.id))
+        )
+    ).all()
+    phones = (
+        await session.exec(
+            select(PhoneNumber).where(col(PhoneNumber.is_primary).is_(True)).order_by(col(PhoneNumber.id))
+        )
+    ).all()
+    primary_by_listing: dict[int, str] = {}
+    for phone in phones:
+        primary_by_listing.setdefault(phone.listing_id, phone.number)  # the first primary, like the page
+    return [(listing, category, primary_by_listing.get(listing.id)) for listing, category in rows]
