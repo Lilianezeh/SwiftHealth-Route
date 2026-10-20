@@ -34,7 +34,7 @@ async def get_own_listing(session: AsyncSession, provider: User) -> Listing:
 async def get_own_detail(session: AsyncSession, provider: User, moment: datetime) -> ProviderListing:
     listing = await get_own_listing(session, provider)
     detail = await staff_listing_service.get_staff_detail(session, listing.id, moment)
-    return ProviderListing(**detail.model_dump(), featured_price_naira=settings.featured_price_naira)
+    return ProviderListing(**detail.model_dump(), featured_price_naira=settings.featured_price)
 
 
 async def update_own_listing(
