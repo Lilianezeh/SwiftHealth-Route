@@ -10,8 +10,12 @@ import type {
   CheckInput,
   CheckList,
   CheckRead,
+  DashboardStats,
   ListingInput,
   LoginStarted,
+  ReportItem,
+  ReportList,
+  ReportStatus,
   StaffListingDetail,
   StaffListingList,
   StaffListParams,
@@ -37,6 +41,7 @@ export function listStaffListings(token: string, params: StaffListParams, option
   if (params.area) query.set("area", params.area);
   if (params.q?.trim()) query.set("q", params.q.trim());
   if (params.mine) query.set("mine", "true");
+  if (params.due) query.set("due", params.due);
   query.set("limit", String(params.limit ?? 20));
   query.set("offset", String(params.offset ?? 0));
   return requestJson<StaffListingList>(`/listings?${query.toString()}`, { ...options, token });
@@ -93,7 +98,33 @@ export function updateAdminUser(token: string, userId: number, changes: AdminUse
   return requestJson<StaffUser>(`/admin/users/${userId}`, { ...options, token, method: "PATCH", body: changes });
 }
 
-export type ImportResult = { created: number; errors: { row: number; detail: string }[] };
+/** GET /reports: the staff queue, urgent first (FR-35). */
+export function listReports(
+  token: string,
+  status: ReportStatus,
+  page: { limit: number; offset: number },
+  options: Options = {},
+): Promise<ReportList> {
+  const query = new URLSearchParams({ status, limit: String(page.limit), offset: String(page.offset) });
+  return requestJson<ReportList>(`/reports?${query.toString()}`, { ...options, token });
+}
+
+/** PATCH /reports/{id}: resolve or dismiss. The API deletes the reporter's phone when it closes the report. */
+export function closeReport(
+  token: string,
+  reportId: number,
+  status: "resolved" | "dismissed",
+  options: Options = {},
+): Promise<ReportItem> {
+  return requestJson<ReportItem>(`/reports/${reportId}`, { ...options, token, method: "PATCH", body: { status } });
+}
+
+/** GET /dashboard/stats: every number of the dashboard in one call (FR-34). */
+export function getDashboardStats(token: string, options: Options = {}): Promise<DashboardStats> {
+  return requestJson<DashboardStats>("/dashboard/stats", { ...options, token });
+}
+
+export type ImportResult ={ created: number; errors: { row: number; detail: string }[] };
 
 /** POST /admin/import: the text of the CSV file as the request body (decision E1 in specs/2026-10-20-launch-readiness/). */
 export function importListingsCsv(token: string, csvText: string, options: Options = {}): Promise<ImportResult> {

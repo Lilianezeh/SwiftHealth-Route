@@ -3,7 +3,8 @@
  */
 import type { StaffRole } from "@/types/staff";
 
-export type StaffArea = "listings" | "staff";
+/** "review" is the dashboard, the report queue and the re-checks: the work of an editor (phase 11). */
+export type StaffArea = "listings" | "staff" | "review";
 
 export function homeAddressFor(role: StaffRole): string {
   if (role === "verifier") return "/admin/listings?mine=true";
@@ -13,5 +14,6 @@ export function homeAddressFor(role: StaffRole): string {
 
 export function canOpen(role: StaffRole, area: StaffArea): boolean {
   if (area === "staff") return role === "admin";
+  if (area === "review") return role === "editor" || role === "admin";
   return role === "verifier" || role === "editor" || role === "admin";
 }

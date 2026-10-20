@@ -1,4 +1,5 @@
 /** Types for the staff screens. Must match specs/backend/api-spec.md, sections 4, 5, 9 and 11 and the phase 10 clarifications. */
+import type { ReportReason } from "@/config/reports";
 import type { ListingDetail, ListingSummary } from "@/types/api";
 
 export type StaffRole = "verifier" | "editor" | "admin" | "provider";
@@ -42,6 +43,7 @@ export type StaffListParams = {
   area?: string;
   q?: string;
   mine?: boolean;
+  due?: DueFilter;
   limit?: number;
   offset?: number;
 };
@@ -112,3 +114,32 @@ export type AdminUserChanges = {
   listing_id?: number;
 };
 export type AdminUserList = { items: StaffUser[]; total: number };
+
+export type DueFilter = "overdue" | "this_week";
+
+export type ReportStatus = "open" | "resolved" | "dismissed";
+export type ReportListingRef = { id: number; slug: string; name: string; area: string; status: ListingStatus };
+/** One report of the staff queue (api-spec, "Phase 11 rules" under section 6). */
+export type ReportItem = {
+  id: number;
+  listing: ReportListingRef;
+  reason: ReportReason;
+  comment: string | null;
+  reporter_phone: string | null; // masked: +234******0000
+  created_at: string;
+  status: ReportStatus;
+  urgent: boolean;
+  resolved_at: string | null;
+};
+export type ReportList = { items: ReportItem[]; total: number };
+
+/** The answer of GET /dashboard/stats (api-spec, section 10). */
+export type DashboardStats = {
+  listings_by_status: Record<ListingStatus, number>;
+  rechecks_due_this_week: number;
+  overdue_rechecks: number;
+  open_reports: number;
+  urgent_reports: number;
+  checks_last_30_days: { date: string; passed: number; failed: number }[]; // one per Lagos day, oldest first
+  featured_active: number;
+};
