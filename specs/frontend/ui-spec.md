@@ -313,13 +313,13 @@ FR-28, FR-29, US-16. **API:** `GET /blood/donation-centres`.
 2. Short eligibility guide (content reviewed by the medical advisor, based on National Blood Service Agency guidance): who can usually donate, what to bring, how to prepare. Ends: "The blood bank will confirm if you can donate."
 3. List of donation centres: name, donation hours, Call + Directions.
 
-### 2.8 Report a problem — `/report/[id]`
-FR-20, FR-21, US-08. **API:** `GET /listings/{slug}` (for the name), `POST /reports`.
-1. "Report a problem with **[Listing name]**".
-2. Reason as large radio buttons (from `/meta`).
-3. Optional comment and optional phone ("only if you want us to follow up").
-4. **Send report**. Under 3 taps for the fastest path (reason → send).
-**Success:** "Thank you. We'll check this listing." + back to listing. **429:** "You've sent several reports. Please try again later."
+### 2.8 Report a problem — `/report/[slug]`
+FR-20, FR-21, US-08. Feature: `specs/2026-10-20-reports/` (the address uses the slug, decision B1; it was `[id]`). **API:** `GET /listings/{slug}` (for the name and the id), `GET /meta` (the reasons), `POST /reports`. The listing is read in the browser with the usual states (skeleton, "waking up", error with Retry); an unknown or unpublished slug shows the "Listing not found" page.
+1. `h1` "Report a problem with **[Listing name]**".
+2. Reason as large radio buttons (at least 48 px, the order of `/meta`): "Number not working", "Wrong number", "Facility closed", "Facility moved", "Wrong opening hours", "Something else". None is chosen at first; Send stays disabled until one is.
+3. Optional comment (at most 500 characters, with a counter at 400) and optional phone ("Only if you want us to follow up. We delete it when the report is closed.").
+4. **Send report**. Under 3 taps for the fastest path (reason → send). While sending the button says "Sending…" and cannot be tapped again.
+**Success:** "Thank you. We'll check this listing." + a link back to the listing. **429:** "You've sent several reports. Please try again later." **422 (phone):** "Check the phone number. It should look like 0803 123 4567." Any other failure: "We couldn't send your report. Check your connection and try again." and the form keeps what was typed. No position is read or sent. The "Report a problem" link is also on every SwiftRescue contact card.
 
 ### 2.9 List your facility — `/list-your-facility`
 FR-37. **API:** `POST /facility-submissions`, `GET /meta`.
