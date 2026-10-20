@@ -28,6 +28,17 @@ class StaffAlert:
     listing_name: str
     editor_emails: list[str]
     admin_phones: list[str]
+    kind: str = "flag"  # "flag" (two reporters, FR-22) or "failed_check" (a failed re-check hid it, FR-36)
+
+
+def build_failed_check_texts(listing_name: str) -> tuple[str, str]:
+    """The email subject and body for a published listing that failed a check and was hidden (FR-36)."""
+    subject = f"Failed check, now hidden: {listing_name}"
+    body = (
+        f"{listing_name} failed a check and was hidden from the public. "
+        "Open the listing to read the check, then fix it, re-check it or leave it hidden."
+    )
+    return subject, body
 
 
 def build_alert_texts(listing_name: str) -> tuple[str, str, str]:
@@ -54,9 +65,24 @@ async def load_alert(session: AsyncSession, listing_name: str) -> StaffAlert:
     )
 
 
+async def load_failed_check_alert(session: AsyncSession, listing_name: str) -> StaffAlert:
+    """The editors and admins by email only: a failed check sends no SMS (decision C9)."""
+    staff = await user_repository.list_active_with_roles(session, {Role.editor, Role.admin})
+    return StaffAlert(
+        listing_name=listing_name,
+        editor_emails=[user.email for user in staff],
+        admin_phones=[],
+        kind="failed_check",
+    )
+
+
 async def send_alerts(alert: StaffAlert) -> None:
     """Sends every message. One failure never stops the others, and nothing here raises."""
-    subject, body, sms = build_alert_texts(alert.listing_name)
+    if alert.kind == "failed_check":
+        subject, body = build_failed_check_texts(alert.listing_name)
+        sms = ""
+    else:
+        subject, body, sms = build_alert_texts(alert.listing_name)
     for email in alert.editor_emails:
         try:
             await resend.send_email(email, subject, body)

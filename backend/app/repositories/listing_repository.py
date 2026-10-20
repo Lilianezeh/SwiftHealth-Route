@@ -259,3 +259,18 @@ async def replace_children(
             row.listing_id = listing_id
             session.add(row)
     await session.flush()
+
+
+async def mark_primary_phone_working(session: AsyncSession, listing_id: int, moment: datetime) -> None:
+    """A passing check says the primary number worked at `moment`. Other numbers are left alone (FR-32)."""
+    phones = (
+        await session.exec(
+            select(PhoneNumber).where(
+                PhoneNumber.listing_id == listing_id, col(PhoneNumber.is_primary).is_(True)
+            )
+        )
+    ).all()
+    for phone in phones:
+        phone.last_working_at = moment
+        session.add(phone)
+    await session.flush()
