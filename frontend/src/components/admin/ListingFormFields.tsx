@@ -39,6 +39,8 @@ type ListingFormFieldsProps = {
   submissionDetails: string | null;
   onUseMyLocation: () => void;
   locationMessage: string | null;
+  /** A provider changes only phones, hours, services and the description (FR-43): no Basics, Location or submission details. */
+  providerView?: boolean;
 };
 
 export function ListingFormFields({
@@ -50,6 +52,7 @@ export function ListingFormFields({
   submissionDetails,
   onUseMyLocation,
   locationMessage,
+  providerView = false,
 }: ListingFormFieldsProps) {
   const set = <K extends keyof ListingForm>(key: K, value: ListingForm[K]) => onChange({ ...form, [key]: value });
 
@@ -76,6 +79,8 @@ export function ListingFormFields({
 
   return (
     <fieldset disabled={disabled} className="flex flex-col gap-6 border-0 p-0">
+      {!providerView && (
+        <>
       <section className={SECTION} aria-labelledby="basics-heading">
         <h2 id="basics-heading" className="text-xl font-bold text-forest">Basics</h2>
         <Field id="listing-name" label="Name">
@@ -132,6 +137,8 @@ export function ListingFormFields({
           <p role="status" className="text-base text-ink">{locationMessage}</p>
         )}
       </section>
+        </>
+      )}
 
       <section className={SECTION} aria-labelledby="phones-heading">
         <h2 id="phones-heading" className="text-xl font-bold text-forest">Phones</h2>
@@ -235,7 +242,7 @@ export function ListingFormFields({
         </Field>
       </section>
 
-      {submissionDetails && (
+      {!providerView && submissionDetails && (
         <section className={SECTION} aria-labelledby="submission-heading">
           <h2 id="submission-heading" className="text-xl font-bold text-forest">Submission details</h2>
           <p className="text-base text-ink-soft">From the &ldquo;List your facility&rdquo; form. Staff only: this is never shown to the public.</p>

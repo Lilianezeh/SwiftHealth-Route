@@ -22,6 +22,19 @@ export function StaffBar({ user, onLogout }: StaffBarProps) {
           <span className="font-semibold">{user.name}</span> <span className="text-ink-soft">·</span>{" "}
           <span className="text-ink-soft">{ROLE_LABELS[user.role]}</span>
         </p>
+        {canOpen(user.role, "provider") && (
+          <>
+            <Link href="/provider" prefetch={false} className={LINK_CLASSES}>
+              Dashboard
+            </Link>
+            <Link href="/provider/edit" prefetch={false} className={LINK_CLASSES}>
+              Edit my facility
+            </Link>
+            <Link href="/provider/featured" prefetch={false} className={LINK_CLASSES}>
+              Get featured
+            </Link>
+          </>
+        )}
         {canOpen(user.role, "review") && (
           <>
             <Link href="/admin" prefetch={false} className={LINK_CLASSES}>
