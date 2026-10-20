@@ -76,3 +76,7 @@ verify_code_limiter = RateLimiter(MAX_CALLS, WINDOW)
 REPORT_MAX_CALLS = 5
 REPORT_WINDOW = timedelta(hours=1)
 report_limiter = RateLimiter(REPORT_MAX_CALLS, REPORT_WINDOW)
+# The public "List your facility" form (FR-37, decision C7): 3 submissions per client IP per day.
+SUBMISSION_MAX_CALLS = 3
+SUBMISSION_WINDOW = timedelta(days=1)
+submission_limiter = RateLimiter(SUBMISSION_MAX_CALLS, SUBMISSION_WINDOW)
