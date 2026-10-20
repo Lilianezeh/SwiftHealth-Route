@@ -2,8 +2,8 @@
 Requirements: US-12, FR-35, FR-38, NFR-07.
 Decisions H1 to H3 and H7 in specs/2026-10-20-reports-queue/requirements.md.
 
-Closing a report deletes the reporter's phone and the keyed hash that counted different reporters (NDPA 2023), and
-writes an audit entry that holds neither the phone nor the comment.
+Closing a report deletes the reporter's phone and the keyed hash that counted different reporters
+(NDPA 2023), and writes an audit entry that holds neither the phone nor the comment.
 """
 
 from datetime import datetime
