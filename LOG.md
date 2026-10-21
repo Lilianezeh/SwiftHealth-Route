@@ -25,6 +25,34 @@ phase is merged and Render has redeployed (the pages say so and keep 112 and the
 its branch locally (`git switch <branch>`, `docker compose up --build`). Because the phases are stacked, merge in table order and check
 production after each merge.
 
+### Production results after the merges (2026-10-21)
+
+All nine pull requests (#25 to #29, #30 to #33) are merged **into `main`** (checked: each branch tip is an ancestor of `main`, and each PR's base was
+`main`). #30 was merged too, so its text is in `main` and it needed no closing. Backend CI and Frontend CI are green on `main` at `57f6208`.
+No pull request changed `backend/alembic/`, `backend/app/models/`, `render.yaml` or the Dockerfile: no migration was added, so the start-up
+`alembic upgrade head` of the container had nothing new to run, and nothing was deleted or rewritten.
+
+Checked by read-only requests (GET only; nothing was written, no setting was changed):
+
+| What | Result |
+| --- | --- |
+| API `/health`, `/meta`, `/search`, `/emergency`, `/blood/banks`, `/blood/donation-centres` | 200 (the API was awake, 0.5 to 1.9 s) |
+| API `/reports`, `/dashboard/stats`, `/provider/listing`, `/payments/verify/...` without a token | 401, as they must be |
+| API `/openapi.json` | holds the new routes: `/reports/{report_id}`, `/dashboard/stats`, `/provider/listing`, `/payments/featured`, `/payments/webhook`, `/payments/verify/{reference}`, `/admin/import`, `/admin/export`, `/admin/users`, `/uploads/sign`, `/facility-submissions` |
+| Site pages `/`, `/find`, `/emergency`, `/blood`, `/blood/donate`, `/about`, `/how-we-verify`, `/privacy`, `/terms`, `/contact`, `/list-your-facility`, `/admin/login`, `/robots.txt`, `/sitemap.xml` | 200 |
+| Site pages `/admin`, `/admin/reports`, `/admin/recheck`, `/provider`, `/provider/edit`, `/provider/featured`, `/provider/payment-complete` | 200 (the page loads; the data needs a login) |
+| A Netlify preview address in the CORS header | allowed (`access-control-allow-origin` echoes it) |
+| Data in production | 4 demo listings (none sponsored); **0 blood banks, 0 donation centres, 0 emergency contacts**, 1 pharmacy in the 24-hour list; **no users yet** |
+
+Not checked, because it needs a login or would write data: the staff screens with real data, a report, a payment, the nightly job, the CSV import.
+The empty lists are expected: the blood pages and SwiftRescue show their "none yet" sentences until staff add and publish real facilities.
+
+**Correction to the first-admin step (found while preparing this).** `render.yaml` sets the database `ipAllowList: []` (no outside connections), so the
+`docker compose run ... bootstrap_admin` command in `release-checklist.md` step 3 cannot reach the production database from a laptop. Choose one, and
+tell me which: (a) allow your own IP on the Render database for a few minutes (a Render setting, yours to change), run the command, and remove the
+IP again; or (b) I add a start-up step that runs `python -m app.bootstrap_admin` only when the four `BOOTSTRAP_ADMIN_*` variables are set in Render
+(like the demo-listings step), you set them, let the service restart, and delete them. (b) is a small pull request and keeps the database closed.
+
 ## To do later
 
 ### The Render database expires about 2026-11-07: free options compared (written 2026-10-20, nothing in production was changed)
