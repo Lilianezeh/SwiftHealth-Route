@@ -13,3 +13,6 @@ CLAUDE.local.md
 
 # Database backups (personal data): never committed (scripts/backup-db.sh)
 backups/
+
+# Playwright's results: a run writes them again every time (frontend/.gitignore has the same line)
+test-results/

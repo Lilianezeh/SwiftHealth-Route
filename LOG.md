@@ -25,6 +25,39 @@ phase is merged and Render has redeployed (the pages say so and keep 112 and the
 its branch locally (`git switch <branch>`, `docker compose up --build`). Because the phases are stacked, merge in table order and check
 production after each merge.
 
+### Production results for #25 to #33 (merged 2026-10-21)
+
+All nine pull requests are merged **into `main`** (each PR's base was `main`, and each branch tip is an ancestor of `main`). Backend CI and Frontend
+CI are green on `main` at `57f6208` (the merge of #33). No pull request changed `backend/alembic/`, `backend/app/models/`, `render.yaml` or the
+Dockerfile: no migration was added, so `alembic upgrade head` at start-up had nothing new to run, and nothing was deleted or rewritten.
+
+"Read-only check" means GET requests to the live API and site on 2026-10-21 (nothing written, no setting changed). "Live check on the phone" is
+what Lilian does by hand; it is **pending, Lilian checking on phone** for every row.
+
+| PR | Phase | Merged (UTC) | Read-only check of production | Live check on the phone |
+| --- | --- | --- | --- | --- |
+| #25 | 7 SwiftRescue | 06:11 | `/emergency` page 200; API `/emergency` 200 with the 7 groups, 0 contacts, 1 pharmacy in the 24-hour list | pending, Lilian checking on phone |
+| #26 | 9 Reports | 06:31 | `/report/<slug>` route builds; API `/reports` 401 without a token (the public `POST /reports` was not called: it writes) | pending, Lilian checking on phone |
+| #27 | 10 Staff screens, List your facility | 06:33 | `/admin/login`, `/list-your-facility` 200; API `/listings`, `/admin/users`, `/uploads/sign`, `/facility-submissions` in `/openapi.json` | pending, Lilian checking on phone |
+| #28 | 13 Info pages | 06:34 | `/about`, `/how-we-verify`, `/privacy`, `/terms`, `/contact`, `/robots.txt`, `/sitemap.xml` all 200 | pending, Lilian checking on phone |
+| #29 | 14 Launch readiness | 06:36 | `/admin/import-export` page; API `/admin/import`, `/admin/export` in `/openapi.json` | pending, Lilian checking on phone |
+| #30 | Render database note | 08:02 | docs only, nothing to check | not needed |
+| #31 | 8 Blood | 08:11 | `/blood`, `/blood/donate` 200; API `/blood/banks`, `/blood/donation-centres` 200 with total 0 (no blood banks yet, so the "none found" sentences show) | pending, Lilian checking on phone |
+| #32 | 11 Reports queue, dashboard | 08:12 | `/admin`, `/admin/reports`, `/admin/recheck` 200; API `/dashboard/stats`, `/reports` 401 without a token | pending, Lilian checking on phone (the nightly job was not run) |
+| #33 | 12 Providers, featured (Paystack TEST) | 08:14 | `/provider`, `/provider/edit`, `/provider/featured`, `/provider/payment-complete` 200; API `/provider/listing`, `/payments/verify/...` 401 without a token; `/payments/featured`, `/payments/webhook` in `/openapi.json`; `/search` has 0 sponsored items | pending, Lilian checking on phone (no Paystack key is set yet) |
+
+Also seen: the API answered `/health`, `/meta` and `/search` with 200 in under 2 seconds, and a Netlify preview address is allowed by CORS. Production
+holds 4 demo listings, **no users**, no blood banks, no donation centres and no emergency contacts, so the empty states are what a visitor sees until
+staff add and publish real facilities. The staff screens with data, a report, a payment, the CSV import and the nightly job are **not checked yet**.
+
+**Correction to the first-admin step.** `render.yaml` sets the database `ipAllowList: []` (no outside connections), so the `docker compose run ...
+bootstrap_admin` command in `release-checklist.md` step 3 cannot reach the production database from a laptop. Choose one: (a) allow your own IP on the
+Render database for a few minutes (a Render setting, yours to change), run the command, and remove the IP again; or (b) a small pull request adds a
+start-up step that runs `python -m app.bootstrap_admin` only when the four `BOOTSTRAP_ADMIN_*` variables are set in Render (like the demo-listings
+step), you set them, let the service restart, and delete them. (b) keeps the database closed.
+
+Housekeeping in the same pull request: `test-results/` (Playwright's output, one stray tracked file) is removed from git and ignored.
+
 ## To do later
 
 ### The Render database expires about 2026-11-07: free options compared (written 2026-10-20, nothing in production was changed)
