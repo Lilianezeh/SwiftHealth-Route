@@ -117,6 +117,15 @@ export type AdminUserList = { items: StaffUser[]; total: number };
 
 export type DueFilter = "overdue" | "this_week";
 
+/** The answer of GET and PATCH /provider/listing: the staff detail of the provider's own listing and the monthly price. */
+export type ProviderListing = StaffListingDetail & { featured_price_naira: string }; // "5000.00"
+
+/** The answer of POST /payments/featured: where to pay, on Paystack's page, and the price. */
+export type FeaturedStarted = { authorization_url: string; reference: string; amount_naira: string };
+
+/** The answer of GET /payments/verify/{reference}: `success` once the signed webhook has been applied. */
+export type PaymentVerified = { status: "success" | "pending"; featured_until: string | null };
+
 export type ReportStatus = "open" | "resolved" | "dismissed";
 export type ReportListingRef = { id: number; slug: string; name: string; area: string; status: ListingStatus };
 /** One report of the staff queue (api-spec, "Phase 11 rules" under section 6). */

@@ -241,6 +241,12 @@ async def list_for_staff(
     return [(listing, category) for listing, category in page], total
 
 
+async def get_by_owner_id(session: AsyncSession, owner_id: int) -> Listing | None:
+    """The listing a provider owns (the lowest id if an admin linked more than one), or None."""
+    query = select(Listing).where(Listing.owner_id == owner_id).order_by(col(Listing.id)).limit(1)
+    return (await session.exec(query)).first()
+
+
 async def find_overdue_published(session: AsyncSession, moment: datetime) -> list[Listing]:
     """Published listings whose `next_check_due` has passed, by name then id (the nightly job, FR-33)."""
     query = (

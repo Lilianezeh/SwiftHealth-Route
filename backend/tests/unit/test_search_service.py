@@ -219,14 +219,15 @@ async def test_paging_total_counts_all_matches_before_limit_and_offset(session: 
     assert past_the_end.total == 5
 
 
-async def test_sponsored_is_always_false(session: AsyncSession) -> None:
-    # The sponsored slot is roadmap phase 12c. Until then a featured listing is an ordinary result.
+async def test_a_featured_listing_takes_the_one_sponsored_slot_and_goes_first(session: AsyncSession) -> None:
+    # FR-45, phase 12. The full rules are tested through HTTP in test_search_sponsored.py.
     await add_listing(session, "Zulu Pharmacy", featured_until=NOW_IN_UTC + timedelta(days=10))
     await add_listing(session, "Alpha Pharmacy")
     await session.commit()
     response = await search_listings(session, SearchParams(), NOW_IN_UTC)
-    assert [item.name for item in response.items] == ["Alpha Pharmacy", "Zulu Pharmacy"]
-    assert [item.sponsored for item in response.items] == [False, False]
+    assert [item.name for item in response.items] == ["Zulu Pharmacy", "Alpha Pharmacy"]
+    assert [item.sponsored for item in response.items] == [True, False]
+    assert response.total == 2
 
 
 async def test_primary_phone_is_the_primary_number_in_plus234_format(session: AsyncSession) -> None:

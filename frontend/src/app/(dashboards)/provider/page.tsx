@@ -1,8 +1,12 @@
+/** My facility `/provider` (provider role only). Requirements: FR-43, FR-44. UI spec 4.1. The gate lets only a provider in; the API
+ * checks the role again on every call. */
+import { StaffGate } from "@/components/admin/StaffGate";
+import { ProviderHome } from "@/components/provider/ProviderHome";
+
 export default function ProviderDashboard() {
   return (
-    <section className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="text-2xl font-bold">Your facility</h1>
-      <p className="mt-2">Edit your listing and pay for a featured listing here.</p>
-    </section>
+    <StaffGate area="provider">
+      <ProviderHome />
+    </StaffGate>
   );
 }

@@ -225,12 +225,20 @@ def describe_services(services: list[tuple]) -> str:
 
 
 async def update_listing(
-    session: AsyncSession, user: User, listing: Listing, payload: ListingUpdate, moment: datetime
+    session: AsyncSession,
+    user: User,
+    listing: Listing,
+    payload: ListingUpdate,
+    moment: datetime,
+    *,
+    urgent_recheck_fields: frozenset[str] = frozenset(),
+    recheck_reference: str | None = None,
 ) -> None:
     """Applies the fields that were sent and writes one audit entry per changed field (FR-31, FR-38).
 
     `listing` was loaded and checked by the caller (`access_service`). A value equal to the stored one
-    writes nothing.
+    writes nothing. If a field in `urgent_recheck_fields` really changed (a provider's phones or hours,
+    FR-43), `next_check_due` is set to `moment` and one more audit entry is written, in the same save.
     """
     rows = await listing_repository.get_detail_by_id(session, listing.id)
     changes: list[tuple[str, str | None, str | None]] = []
@@ -309,6 +317,20 @@ async def update_listing(
                 field_changed=field,
                 old_value=old_value,
                 new_value=new_value,
+                changed_at=moment,
+            )
+        if urgent_recheck_fields & {field for field, _old, _new in changes}:
+            old_due = listing.next_check_due
+            listing.next_check_due = moment
+            await audit_repository.add_entry(
+                session,
+                user_id=user.id,
+                listing_id=listing.id,
+                action="update",
+                field_changed="next_check_due",
+                old_value=_text(old_due.isoformat() if old_due else None),
+                new_value=moment.isoformat(),
+                reference=recheck_reference,
                 changed_at=moment,
             )
     await session.commit()

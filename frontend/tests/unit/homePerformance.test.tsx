@@ -112,6 +112,9 @@ describe("the route groups choose the header and the footer, and no address chan
         "/listing/[slug]",
         "/privacy",
         "/provider",
+        "/provider/edit", // phase 12, my facility: change phones, hours, services, description
+        "/provider/featured", // phase 12, start a Paystack test payment
+        "/provider/payment-complete", // phase 12, where Paystack sends the provider back
         "/report/[slug]", // was /report/[id] until phase 9 (decision B1 in specs/2026-10-20-reports/)
         "/search",
         "/terms",

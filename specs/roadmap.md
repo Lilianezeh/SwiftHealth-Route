@@ -305,7 +305,9 @@ Assumed owner decisions H1 to H8 are in the requirements (H1: no "assign"; H4: t
 - 11b: nightly re-check job and automatic hide on failed re-check (FR-33, FR-36)
 - 11c: dashboard (FR-34)
 
-### Phase 12: Providers and featured listings. Next
+### Phase 12: Providers and featured listings. Built (2026-10-20), draft PR stacked on phase 11, waiting for the owner's check (Paystack test mode only)
+Feature folder: [requirements](2026-10-20-providers-payments/requirements.md), [plan](2026-10-20-providers-payments/plan.md), [validation](2026-10-20-providers-payments/validation.md).
+Assumed owner decisions I1 to I13 are in the requirements. **The Paystack calls were tested with a mock transport only: check them once with the Paystack test dashboard.**
 - 12a: provider edits their own listing (FR-43)
 - 12b: Paystack featured payment, verified webhook, audit entry with reference (FR-44, FR-46)
 - 12c: one "Sponsored" listing first in matching search results, never in SwiftRescue (FR-45)
