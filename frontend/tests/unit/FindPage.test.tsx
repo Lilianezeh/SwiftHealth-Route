@@ -3,7 +3,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import BloodPage from "@/app/(public)/blood/page";
 import FindPage from "@/app/(public)/find/page";
 import { resetMetaCache } from "@/lib/api/meta";
 
@@ -87,18 +86,4 @@ describe("/find", () => {
   });
 });
 
-describe("/blood", () => {
-  it("says 'Coming soon' and links back to /find", () => {
-    render(<BloodPage />);
-
-    expect(screen.getByRole("heading", { level: 1, name: "Find blood" })).toBeInTheDocument();
-    expect(screen.getByText(/Coming soon/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to Find" })).toHaveAttribute("href", "/find");
-  });
-
-  it("does not show any blood stock or medical advice", () => {
-    render(<BloodPage />);
-
-    expect(screen.queryByText(/in stock|available now/i)).not.toBeInTheDocument();
-  });
-});
+// The Find blood page itself is tested in BloodPages.test.tsx (phase 8); /find only links to it (the Blood shortcut).

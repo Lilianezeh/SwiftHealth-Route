@@ -273,8 +273,9 @@ assumed owner decisions). The phase also adds installable app icons.
 - 7d: offline cache (FR-17, NFR-03)
 - 7e: nearby 24-hour pharmacies (FR-25)
 
-### Phase 8: Blood. Next
-US-15, US-16.
+### Phase 8: Blood. Built (2026-10-20), draft PR stacked on phase 14, waiting for the owner's check
+US-15, US-16. Feature folder: [requirements](2026-10-20-blood/requirements.md), [plan](2026-10-20-blood/plan.md), [validation](2026-10-20-blood/validation.md).
+Assumed owner decisions F1 to F9 are in the requirements (F3: the donor guidance text is not written, it waits for the medical advisor).
 - 8a: find blood, API and page (FR-27)
 - 8b: donate blood, API and page (FR-28, FR-29)
 

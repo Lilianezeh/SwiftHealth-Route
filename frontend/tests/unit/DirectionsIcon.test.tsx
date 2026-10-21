@@ -75,6 +75,7 @@ describe("the one Directions button, in every place", () => {
     const users = files.filter((file) => file.text.includes("<DirectionsButton")).map((file) => file.path.replace(process.cwd(), ""));
     expect(users.sort()).toEqual(
       [
+        "/src/components/blood/BloodCardParts.tsx", // the blood bank and donation centre cards
         "/src/components/listing/ContactButtons.tsx", // the listing page
         "/src/components/listings/ListingCard.tsx", // the result cards
         "/src/components/search/MapPopup.tsx", // the map popups

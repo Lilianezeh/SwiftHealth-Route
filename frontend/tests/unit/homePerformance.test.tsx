@@ -101,6 +101,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/admin/login", // phase 10, the staff login
         "/admin/staff", // phase 10, the staff accounts
         "/blood",
+        "/blood/donate", // phase 8, donation centres
         "/contact",
         "/emergency",
         "/find",

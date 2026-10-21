@@ -306,12 +306,14 @@ FR-27, US-15. **API:** `GET /blood/banks`, `GET /meta`.
 2. Blood group chips (A+ … O−) and "Any".
 3. List of blood banks, nearest first: name, distance, blood groups (chips), confirmed date, Call + Directions.
 4. Notice on every card: "Stock changes daily; call to confirm before you go."
+**Phase 8 details** (feature `specs/2026-10-20-blood/`, decisions F1 to F9). The tab switch is two links, **Find blood** (`/blood`) and **Donate blood** (`/blood/donate`), the current one marked `aria-current="page"`, each at least 48 px. The chips are buttons (`aria-pressed`, at least 48 px) for "Any", A+, A-, B+, B-, AB+, AB-, O+, O-; choosing one asks for that group (`blood_group`) and the address does not change. The position is asked for only after a tap on "Show blood banks near me" and kept for the tab (the same store as Find); without one the list is A to Z and says so. Each card (an `article`): name (a link to the listing), "Area · 1.4 km", the `OpenNowBadge`, `hours_note`, the group chips ("O+" ...) with "Confirmed 1 Oct 2026" (or nothing when `null`), the notice, **Call**, **Directions**, and "Report a problem" (never a "Sponsored" tag). Standard states: skeleton, "waking up" after 5 s, error with Retry, empty ("No blood banks found. In an emergency, call 112." with a link to SwiftRescue), Load more.
 
 ### 2.7 Donate blood — `/blood/donate`
 FR-28, FR-29, US-16. **API:** `GET /blood/donation-centres`.
 1. Heading "Donate blood" + same tab switch.
 2. Short eligibility guide (content reviewed by the medical advisor, based on National Blood Service Agency guidance): who can usually donate, what to bring, how to prepare. Ends: "The blood bank will confirm if you can donate."
 3. List of donation centres: name, donation hours, Call + Directions.
+**Phase 8 details** (decisions F3, F4, F6, F7, F9). The same two tab links. **The guidance is not written by the developer (F3):** the points come from `config/donorGuidance.ts`, which is empty until the medical advisor supplies reviewed text; while it is empty the page says "Donor guidance is being prepared with our medical advisor." In every case the last sentence of the guidance part is "The blood bank will confirm if you can donate." The centres are cards like the blood banks (name, "Area · distance", the week of hours as a small table of 12-hour times with "Today" marked, Call, Directions, Report a problem), nearest first after the same tap for the position. Empty: "No donation centres are listed yet. Call a blood bank to ask." with a link to Find blood.
 
 ### 2.8 Report a problem — `/report/[slug]`
 FR-20, FR-21, US-08. Feature: `specs/2026-10-20-reports/` (the address uses the slug, decision B1; it was `[id]`). **API:** `GET /listings/{slug}` (for the name and the id), `GET /meta` (the reasons), `POST /reports`. The listing is read in the browser with the usual states (skeleton, "waking up", error with Retry); an unknown or unpublished slug shows the "Listing not found" page.

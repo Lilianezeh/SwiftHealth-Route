@@ -242,6 +242,11 @@ FR-28, US-16. **Query:** `lat`, `lng`, `limit`, `offset`.
 
 Returns published listings with a `Blood donation` service, as `ListingSummary` plus `donation_hours` (their opening hours). Groups needed by a centre are not in the MVP (Phase 3).
 
+**Phase 8 rules for both blood endpoints** (feature `specs/2026-10-20-blood/`, decisions F1 to F5). The answer of each is `{ "items": [...], "total": n }`. The trust rules of section 1 apply (published only, overdue stays with `verification_due: true`) and a listing flagged by FR-22 is left out. Nothing is sponsored (`sponsored: false`). `is_open_now` and `hours_note` are filled as in `/search`. Nearest first with `lat` and `lng` (both or neither, else 422), otherwise by name then id; no distance limit; `limit` 1 to 100 (default 20), `offset` from 0. `blood_group` that is not one of the eight groups of `/meta` is a 422.
+- **Blood banks:** a published listing in the category `blood-bank`, or any published listing that has a service named "Blood bank" or at least one blood group among its services (matched by the same-service rule of `/meta`). `blood_groups` are the listing's services whose name is one of the eight groups (same rule), in the order A+, A-, B+, B-, AB+, AB-, O+, O-; `blood_groups_confirmed_at` is the newest `fee_collected_at` among those rows (`YYYY-MM-DD`, or `null`). With `blood_group`, only listings that offer that group.
+- **Donation centres:** a published listing with a service named "Blood donation" (same rule). `donation_hours` is the 7-entry week of the listing page (`day_of_week` 0 = Monday, `opens_at` and `closes_at` as `HH:MM` or `null`, `is_closed`).
+**Tests:** only published, unflagged listings · a hospital with a "Blood bank" service or a blood group is in, a plain hospital is out · groups in order and spelling-tolerant · the confirmed date · the group filter and its 422 · nearest first and A to Z · paging and total · nothing sponsored · half a location is 422 · the number of queries does not grow with the number of listings.
+
 ### POST /reports
 FR-20 to FR-22, US-08. Report a problem. No login. Rate limited to 5 per IP per hour (429).
 

@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { metadata as rootMetadata } from "@/app/layout";
 import { metadata as dashboardMetadata } from "@/app/(dashboards)/layout";
 import { metadata as bloodMetadata } from "@/app/(public)/blood/page";
+import { metadata as donateMetadata } from "@/app/(public)/blood/donate/page";
 import { metadata as emergencyMetadata } from "@/app/(public)/emergency/page";
 import { metadata as findMetadata } from "@/app/(public)/find/page";
 import { metadata as listMetadata } from "@/app/(public)/list-your-facility/page";
@@ -27,6 +28,7 @@ describe("every public page has its own title and a description", () => {
     ["emergency", emergencyMetadata, "SwiftRescue"],
     ["list your facility", listMetadata, "List your facility"],
     ["blood", bloodMetadata, "Find blood"],
+    ["donate blood", donateMetadata, "Donate blood"],
     ["listing", listingMetadata, "Listing"],
     ["report", reportMetadata, "Report a problem"],
   ] as const)("%s", (_name, metadata, title) => {
