@@ -1,8 +1,7 @@
+/** "List your facility" `/list-your-facility`. Requirements: FR-37, FR-23. UI spec 2.9. A server page holding the form (a client
+ * component); the form's lists come from GET /meta in the browser. */
+import { FacilityForm } from "@/components/facility/FacilityForm";
+
 export default function ListYourFacilityPage() {
-  return (
-    <section className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="text-2xl font-bold">Provider sign-up form</h1>
-      <p className="mt-2">Coming soon.</p>
-    </section>
-  );
+  return <FacilityForm />;
 }

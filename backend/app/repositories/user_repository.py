@@ -40,3 +40,14 @@ async def list_active_with_roles(session: AsyncSession, roles: set[Role]) -> lis
         .order_by(col(User.id))
     )
     return list((await session.exec(query)).all())
+
+
+async def list_all(session: AsyncSession) -> list[User]:
+    """Every user, by id (the admin's staff list)."""
+    return list((await session.exec(select(User).order_by(col(User.id)))).all())
+
+
+async def save(session: AsyncSession, user: User) -> None:
+    """Writes the changes of a user that was loaded from this session. The caller commits."""
+    session.add(user)
+    await session.flush()

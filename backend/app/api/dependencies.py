@@ -8,15 +8,23 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_session
-from app.core.rate_limit import RateLimiter, get_client_ip, login_limiter, report_limiter, verify_code_limiter
+from app.core.rate_limit import (
+    RateLimiter,
+    get_client_ip,
+    login_limiter,
+    report_limiter,
+    submission_limiter,
+    verify_code_limiter,
+)
 from app.core.security import InvalidTokenError
 from app.models import Listing, User
 from app.models.base import Role
 from app.services import access_service, auth_service
 
 __all__ = [
-    "get_current_moment", "get_current_user", "get_session", "login_rate_limit", "require_listing_access",
-    "report_rate_limit", "require_role", "verify_code_rate_limit",
+    "NO_PERMISSION_MESSAGE", "get_current_moment", "get_current_user", "get_session", "login_rate_limit",
+    "require_listing_access", "report_rate_limit", "require_role", "submission_rate_limit",
+    "verify_code_rate_limit",
 ]
 
 STAFF_ROLES = {Role.verifier, Role.editor, Role.admin}
@@ -101,4 +109,7 @@ login_rate_limit = build_rate_limit_dependency(login_limiter)
 verify_code_rate_limit = build_rate_limit_dependency(verify_code_limiter)
 report_rate_limit = build_rate_limit_dependency(
     report_limiter, "You've sent several reports. Please try again later."
+)
+submission_rate_limit = build_rate_limit_dependency(
+    submission_limiter, "You've sent several submissions. Please try again tomorrow."
 )

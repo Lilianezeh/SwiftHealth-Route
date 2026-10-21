@@ -21,3 +21,7 @@ async def create(
     session.add(category)
     await session.flush()
     return category
+
+
+async def get_by_id(session: AsyncSession, category_id: int) -> Category | None:
+    return await session.get(Category, category_id)

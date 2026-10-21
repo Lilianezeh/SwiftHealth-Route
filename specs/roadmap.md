@@ -284,8 +284,10 @@ Assumed owner decisions B1 to B8 are in the requirements (the page is `/report/<
 - 9a: `POST /reports` and the report form (FR-20, FR-21)
 - 9b: automatic urgent flag after 2 "not working" reports in 7 days (FR-22)
 
-### Phase 10: Staff screens and "List your facility". Next
-US-10.
+### Phase 10: Staff screens and "List your facility". Built (2026-10-20), draft PR stacked on phase 9, waiting for the owner's check
+US-10. Feature folder: [requirements](2026-10-20-staff-screens/requirements.md), [plan](2026-10-20-staff-screens/plan.md),
+[validation](2026-10-20-staff-screens/validation.md). Assumed owner decisions C1 to C15 are in the requirements (no new table: the services
+list is a fixed catalogue in code; the facility form's contact details go in a staff-only audit entry, not in the public description).
 - 10a: staff login screen (FR-30, FR-42)
 - 10b: admin listings list and listing editor (FR-31). Services are **picked from a controlled list of service names**,
   not typed, so "X ray" and "Xray" cannot both exist and the `/meta` label is always the same spelling (owner's

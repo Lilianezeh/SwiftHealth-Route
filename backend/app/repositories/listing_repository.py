@@ -56,6 +56,27 @@ async def get_published_detail_by_slug(session: AsyncSession, slug: str) -> List
     if found is None:
         return None
     listing, category = found
+    return await _load_detail_rows(session, listing, category)
+
+
+async def get_detail_by_id(session: AsyncSession, listing_id: int) -> ListingDetailRows | None:
+    """The detail of one listing of any status, for staff. The route decides who may call it."""
+    found = (
+        await session.exec(
+            select(Listing, Category)
+            .join(Category, col(Category.id) == Listing.category_id)
+            .where(Listing.id == listing_id)
+        )
+    ).first()
+    if found is None:
+        return None
+    return await _load_detail_rows(session, found[0], found[1])
+
+
+async def _load_detail_rows(
+    session: AsyncSession, listing: Listing, category: Category
+) -> ListingDetailRows:
+    """The phones, the hours and the services of a listing: three queries, however many rows there are."""
     phones = (
         await session.exec(
             select(PhoneNumber).where(PhoneNumber.listing_id == listing.id).order_by(col(PhoneNumber.id))
@@ -161,3 +182,95 @@ async def add_verification_check(
     session.add(check)
     await session.flush()
     return check
+
+
+async def list_for_staff(
+    session: AsyncSession,
+    *,
+    status: ListingStatus | None,
+    category_slug: str | None,
+    area: str | None,
+    name_contains: str | None,
+    due_after: datetime | None,
+    due_before: datetime | None,
+    created_by: int | None,
+    limit: int,
+    offset: int,
+) -> tuple[list[tuple[Listing, Category]], int]:
+    """One page of listings of every status for the staff list, with the total. Sorted by name, then id.
+
+    `due_before` alone means overdue (the check date has passed); with `due_after` it is a window.
+    """
+    conditions = []
+    if status is not None:
+        conditions.append(Listing.status == status)
+    if category_slug is not None:
+        conditions.append(Category.slug == category_slug)
+    if area is not None:
+        conditions.append(Listing.area == area)
+    if name_contains is not None:
+        escaped = name_contains.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        conditions.append(col(Listing.name).ilike(f"%{escaped}%", escape="\\"))
+    if due_before is not None:
+        conditions.append(col(Listing.next_check_due).is_not(None))
+        conditions.append(col(Listing.next_check_due) < due_before)
+    if due_after is not None:
+        conditions.append(col(Listing.next_check_due) >= due_after)
+    if created_by is not None:
+        conditions.append(Listing.created_by == created_by)
+    joined = (
+        select(Listing, Category).join(Category, col(Category.id) == Listing.category_id).where(*conditions)
+    )
+    total = (
+        await session.exec(
+            select(func.count())
+            .select_from(Listing)
+            .join(Category, col(Category.id) == Listing.category_id)
+            .where(*conditions)
+        )
+    ).one()
+    page = (
+        await session.exec(joined.order_by(col(Listing.name), col(Listing.id)).offset(offset).limit(limit))
+    ).all()
+    return [(listing, category) for listing, category in page], total
+
+
+async def slug_exists(session: AsyncSession, slug: str) -> bool:
+    return (await session.exec(select(Listing.id).where(Listing.slug == slug))).first() is not None
+
+
+async def replace_children(
+    session: AsyncSession,
+    listing_id: int,
+    *,
+    phones: list[PhoneNumber] | None = None,
+    opening_hours: list[OpeningHours] | None = None,
+    services: list[Service] | None = None,
+) -> None:
+    """Replaces the phones, hours or services of a listing with the new rows. None is left alone.
+
+    The caller commits, so the old rows go and the new ones come in the same transaction.
+    """
+    for model, rows in ((PhoneNumber, phones), (OpeningHours, opening_hours), (Service, services)):
+        if rows is None:
+            continue
+        await session.exec(delete(model).where(col(model.listing_id) == listing_id))
+        for row in rows:
+            row.listing_id = listing_id
+            session.add(row)
+    await session.flush()
+
+
+async def mark_primary_phone_working(session: AsyncSession, listing_id: int, moment: datetime) -> None:
+    """A passing check says the primary number worked at `moment`. Other numbers are left alone (FR-32)."""
+    phones = (
+        await session.exec(
+            select(PhoneNumber).where(
+                PhoneNumber.listing_id == listing_id, col(PhoneNumber.is_primary).is_(True)
+            )
+        )
+    ).all()
+    for phone in phones:
+        phone.last_working_at = moment
+        session.add(phone)
+    await session.flush()

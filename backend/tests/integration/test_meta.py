@@ -33,9 +33,20 @@ async def test_meta_needs_no_login(client: AsyncClient) -> None:
     assert response.status_code == 200
 
 
-async def test_meta_has_exactly_the_five_lists(client: AsyncClient) -> None:
+async def test_meta_has_exactly_the_six_lists(client: AsyncClient) -> None:
     body = await get_meta(client)
-    assert set(body) == {"areas", "categories", "services", "blood_groups", "report_reasons"}
+    assert set(body) == {
+        "areas", "categories", "services", "blood_groups", "report_reasons", "service_catalogue",
+    }
+
+
+async def test_meta_service_catalogue_is_the_fixed_list_staff_pick_from(client: AsyncClient) -> None:
+    from app.core.service_catalogue import catalogue_for_meta
+
+    body = await get_meta(client)
+    assert body["service_catalogue"] == catalogue_for_meta()
+    assert not set(body["service_catalogue"]) & set(body["blood_groups"])
+    assert "X-ray" in body["service_catalogue"]
 
 
 async def test_meta_areas_are_the_fixed_list_in_order(client: AsyncClient) -> None:

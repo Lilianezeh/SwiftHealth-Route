@@ -80,4 +80,5 @@ export type MetaResponse = {
   services: string[];
   blood_groups: string[];
   report_reasons: string[];
+  service_catalogue: string[]; // the names staff may pick for a listing (phase 10, decision C1)
 };

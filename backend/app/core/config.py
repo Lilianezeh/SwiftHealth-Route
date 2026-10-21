@@ -9,6 +9,10 @@ DEFAULT_JWT_SECRET ="dev-only-secret"  # public: only for local development, nev
 DEFAULT_REPORTER_KEY_SECRET = "dev-only-reporter-key-secret"  # public: only for local development
 # An HS256 key should be at least 32 bytes (RFC 7518 section 3.2). The reporter-key HMAC has the same minimum.
 MINIMUM_SECRET_BYTES = 32
+# The map pin of a draft that came from "List your facility" (FR-37): the form cannot give a position
+# and a listing cannot have none. The centre of the pilot city; a verifier sets the real pin (decision C5
+# in specs/2026-10-20-staff-screens/requirements.md). It is only a point on the map, not a city name.
+DEFAULT_MAP_CENTRE: tuple[float, float] = (6.4584, 7.5464)  # latitude, longitude
 # Netlify builds each pull request at https://deploy-preview-<number>--swifthealth-ng.netlify.app.
 # The API lets exactly those addresses call it, so a preview works without listing every number in
 # CORS_ORIGINS (NFR-06). The whole address must match: https, digits only, this site's name, no port.
@@ -32,7 +36,9 @@ class Settings(BaseSettings):
     # Proxies in front of the API that append to X-Forwarded-For. Not yet checked on Render (see LOG.md).
     trusted_proxy_count: int = Field(default=1, ge=1)
     paystack_secret_key: str = ""
-    cloudinary_url: str = ""
+    cloudinary_url: str = ""  # cloudinary://key:secret@cloud_name; empty means photo upload is not set up
+    # An upload preset made in the Cloudinary account (images only, at most 5 MB). Empty: none is sent.
+    cloudinary_upload_preset: str = ""
     resend_api_key: str = ""  # empty means no email is sent (the staff alert of FR-22 is only logged)
     resend_from_email: str = ""  # a sender on a domain verified in Resend; empty: no email
     termii_api_key: str = ""  # empty means local dev: the login code is logged instead of sent

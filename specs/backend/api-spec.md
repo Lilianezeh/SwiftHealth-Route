@@ -153,9 +153,13 @@ Lists for filters and forms.
   "categories": [ { "slug": "pharmacy", "name": "Pharmacy", "is_emergency": false } ],
   "services": ["Consultation", "Malaria test", "X-ray"],
   "blood_groups": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
-  "report_reasons": ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"]
+  "report_reasons": ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"],
+  "service_catalogue": ["Antenatal care", "Blood bank", "Consultation", "X-ray"]
 }
 ```
+`service_catalogue` is the fixed list of service names that staff may pick for a listing (phase 10, decision C1 in
+`specs/2026-10-20-staff-screens/requirements.md`): a list in `core/service_catalogue.py`, in alphabetical order, with the blood groups
+left out (they come from `blood_groups`). It is different from `services`, which are the names in use on published listings.
 `areas` keep the order of the fixed list in `core/config.py`. `categories` are all rows of the categories table, sorted by
 `id`. Every database has all 12 categories of the seed (the five everyday ones and the seven emergency ones, FR-01 and FR-15): an
 idempotent data migration adds any that are missing, so production does not depend on which demo listings it has
@@ -265,7 +269,7 @@ FR-37. "List your facility" form. No login. Rate limited to 3 per IP per day.
 ```
 **Response 201:** `{ "message": "Thanks. Our team will verify your facility before it is listed." }`
 
-**Rules:** creates a `draft` listing (no `created_by`) with the submitted details; contact details go in `description` for the verifier. Writes an audit entry.
+**Rules:** creates a `draft` listing (no `created_by`, no `description`) with the submitted name, category, area, address and phone (stored as the primary number). `facility_name` 2 to 120 characters, `address` 3 to 200, `notes` at most 500; `category` must be an everyday category (not an emergency one) else 422; `area` must be in `/meta` areas; `phone` is required and must be a Nigerian number (422); `contact_email` is checked with a simple pattern. The map pin is the centre of the pilot city (`DEFAULT_MAP_CENTRE` in `core/config.py`), because a listing cannot have no position; the verifier sets the real pin. **The contact name, email and notes are never put in `description`** (it is public once the listing is published, and they are personal data, NDPA): they are written in an audit entry (`submission`, field `contact`) that only staff can read. A second audit entry `create` is written with no user. 3 submissions per client IP per day, in memory (429 "You've sent several submissions. Please try again tomorrow."). **Tests:** creates a draft with no created_by, the pin is the default, the contact details are not in the listing's description and not in any public answer, an emergency category is 422, a bad phone or email is 422, the fourth submission is 429.
 
 ---
 
@@ -364,6 +368,16 @@ Editor, admin. `hidden` → `draft`, so it can be re-verified.
 
 **Tests:** verifier cannot publish · verifier cannot edit another verifier's draft · submit without checks → 400 · failed check hides a published listing · every change writes an audit entry.
 
+### Phase 10 clarifications for section 5 (feature `specs/2026-10-20-staff-screens/`, decisions C1 to C13)
+
+- **Staff shapes.** A staff list item is a `ListingSummary` plus `status`, `next_check_due` and `created_by`. A staff detail (`GET /listings/id/{id}`, and the answer of POST and PATCH) is a `ListingDetail` plus `status`, `next_check_due`, `owner_id`, `created_by`, `featured_until`, `map_pin_is_default` (true while the pin is `DEFAULT_MAP_CENTRE`, so the editor can warn) and `submission_details` (the text of the `submission` audit entry of a "List your facility" draft, else `null`). `ListingDetail.opening_hours` is the 7-entry week as for the public page.
+- **`GET /listings`** (staff): `status`, `category` (slug), `area`, `q` (name contains, ignoring case), `due`, `mine` (listings created by the caller), `limit`, `offset`; sorted by name then id; `due=overdue` means `next_check_due` in the past, `this_week` means within the next 7 days (phase 11 builds the screen that uses `due`). Any staff role may read; a provider gets 403.
+- **`POST /listings`:** `category` must be an existing slug (422), `area` one of `/meta` areas (422), exactly one primary phone (422), phones are normalised to `+234…` (422 if not a Nigerian number), every service `name` must be in `service_catalogue` (422; the stored name is the catalogue's spelling), fee minimum not above fee maximum (422), `latitude` and `longitude` in range (422), at most one opening-hours row per day (422); `opens_at` and `closes_at` are `HH:MM`, both given unless `is_closed`.
+- **`PATCH /listings/{id}`:** the same rules for what is sent. The audit entries: one per changed scalar field (`field_changed`, `old_value`, `new_value`), and one per replaced list (`phones`, `opening_hours`, `services`) with the old and new list as short text. Nothing changed, nothing written. A verifier may edit only a draft they created; the rule is `access_service.ensure_can_edit_listing`.
+- **Checks.** Any staff role may log a check on any listing and read its history (decision C3). `person_reached` and `notes` are at most 200 and 1000 characters; `photo_url` is accepted only as an `https://res.cloudinary.com/` address (422). `GET /listings/{id}/checks` answers `{ "items": [...], "total": n }`. The history item holds `id`, `method`, `result`, `person_reached`, `notes`, `photo_url`, `checked_at`, `staff_id` and `staff_name`. Audit action `check`. A failed check of a published listing hides it, writes an audit entry (`hide`, reference `failed re-check`) and tells the editors by the best-effort alert of phase 9 (FR-36, decision C9).
+- **Moves.** `submit`: draft to pending review, by a verifier on their own draft, an editor or an admin, with a passing call and a passing visit. `publish`: pending review or re-check due to published; editor or admin; a passing check in the last 14 days; sets `last_verified_at` to the newest passing check and `next_check_due` to now plus the category's `recheck_days`. `hide`: any status to hidden; editor or admin; `reason` is required (1 to 200 characters); the reason is kept in the audit entry's `reference` (decision C4). `reopen`: hidden to draft; editor or admin. A move that is not in the table of the PRD, or a role that may not do it, is 400 or 403 (an impossible move is 400, a wrong role is 403). The answer of each move is the staff detail.
+- **`POST /uploads/sign`:** `folder` must be `entrances` (422). The answer is as above. Without `CLOUDINARY_URL` it answers 503 `{ "detail": "Photo upload is not set up." }`. The signature is the SHA-1 hex of the signed parameters sorted by name and written as `name=value` joined with `&`, followed directly by the API secret (Cloudinary's documented rule); the signed parameters are `folder`, `timestamp` and, only when `CLOUDINARY_UPLOAD_PRESET` is set, `upload_preset` (which is then also in the answer). The secret is never returned or logged.
+
 ---
 
 ## 6. Staff: reports
@@ -452,6 +466,7 @@ FR-41. Admin only.
 - **POST request:** `{ "name": "...", "email": "...", "phone": "...", "role": "verifier", "password": "..." }` → 201 `UserRead`. Duplicate email → 409. Password at least 10 characters.
 - **PATCH:** `name`, `phone`, `role`, `is_active`, `password` (all optional). An admin cannot deactivate themselves (400).
 - Providers are linked to a listing by setting that listing's `owner_id` via `PATCH /admin/users/{user_id}` with `{ "listing_id": 12 }`.
+- **Phase 10 clarifications (decision C10):** `GET /admin/users` answers `{ "items": [UserRead], "total": n }`, by id. `phone` is normalised to `+234…` (422 if it is not a Nigerian number); `email` is lower-cased and checked with a simple pattern (422); `name` 1 to 100 characters. Every role of `Role` may be created. `listing_id` is only allowed for a user whose role is `provider` (422 otherwise), must be an existing listing (404) and sets that listing's `owner_id`; a listing already owned by another user is a 409. `password` is hashed like the login password (in a thread pool) and never returned. A role change or deactivation applies on the user's next request (the role is read from the database). Every create or change writes an audit entry (`user_create`, `user_update`; no listing, `field_changed` is the field, never the password: the entry says only "changed"). All answers need the admin role (403 for others). **Tests:** a verifier and an editor get 403 · duplicate email 409 · short password 422 · an admin cannot deactivate themselves (400) · a deactivated user is blocked on the next request · linking a provider sets `owner_id` · the password hash is never in an answer or an audit entry.
 
 ### POST /admin/import
 FR-39. Admin only. `multipart/form-data` with a CSV file.

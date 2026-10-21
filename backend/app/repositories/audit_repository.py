@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import AuditEntry
@@ -27,3 +28,13 @@ async def add_entry(
     session.add(entry)
     await session.flush()
     return entry
+
+
+async def latest_new_value(session: AsyncSession, listing_id: int, action: str) -> str | None:
+    """The `new_value` of the newest entry of this action for a listing, or None (decision C6)."""
+    query = (
+        select(AuditEntry.new_value)
+        .where(AuditEntry.listing_id == listing_id, AuditEntry.action == action)
+        .order_by(col(AuditEntry.id).desc())
+    )
+    return (await session.exec(query)).first()

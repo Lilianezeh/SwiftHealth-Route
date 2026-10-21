@@ -14,3 +14,4 @@ class MetaResponse(BaseModel):
     services: list[str]
     blood_groups: list[str]
     report_reasons: list[str]
+    service_catalogue: list[str]  # the names staff may pick for a listing (phase 10, decision C1)
