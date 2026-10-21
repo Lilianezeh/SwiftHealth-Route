@@ -1,7 +1,7 @@
 /** Helpers for component tests: a fake API behind `fetch`, a fake phone position, and sample listings. */
 import { vi } from "vitest";
 
-import type { ListingSummary, MetaResponse } from "@/types/api";
+import type { EmergencyResponse, ListingSummary, MetaResponse } from "@/types/api";
 
 export const AREAS = ["GRA", "New Haven", "Ogui"];
 
@@ -57,12 +57,19 @@ export function json(body: unknown, status = 200): Response {
 type SearchHandler = (parameters: URLSearchParams, signal?: AbortSignal) => Response | Promise<Response>;
 
 /** Puts a fake API behind fetch. Returns the list of addresses that were asked for. */
-export function stubApi(handlers: { meta?: () => Response | Promise<Response>; search?: SearchHandler }) {
+export function stubApi(handlers: {
+  meta?: () => Response | Promise<Response>;
+  search?: SearchHandler;
+  emergency?: SearchHandler;
+}) {
   const requests: URL[] = [];
   const fetchStub = vi.fn(async (address: string, init?: RequestInit) => {
     const url = new URL(address);
     requests.push(url);
     if (url.pathname === "/meta") return (handlers.meta ?? (() => json(META)))();
+    if (url.pathname === "/emergency") {
+      return (handlers.emergency ?? (() => json(emergencyResponse())))(url.searchParams, init?.signal ?? undefined);
+    }
     if (url.pathname === "/search") {
       return (handlers.search ?? (() => json({ items: [], total: 0 })))(url.searchParams, init?.signal ?? undefined);
     }
@@ -98,4 +105,29 @@ export function manyListings(count: number, firstId = 1): ListingSummary[] {
     const id = firstId + index;
     return listing({ id, slug: `place-${id}`, name: `Place ${id}` });
   });
+}
+
+/** The answer of GET /emergency (api-spec): the seven groups in order, two with a contact, and one 24-hour pharmacy. */
+export function emergencyResponse(overrides: Partial<EmergencyResponse> = {}): EmergencyResponse {
+  const contact = (id: number, name: string, categorySlug: string, categoryName: string, phone: string | null) =>
+    listing({
+      id, slug: `contact-${id}`, name, category: { slug: categorySlug, name: categoryName }, primary_phone: phone,
+      is_24_hours: true, hours_note: null, distance_km: null,
+    });
+  const groupNames: [string, string][] = [
+    ["ambulance", "Ambulance"], ["fire", "Fire"], ["police", "Police"], ["emergency-unit", "24-hour emergency units"],
+    ["roadside-assistance", "Roadside assistance"], ["security", "Security"], ["blood-bank", "Blood banks"],
+  ];
+  const contacts: Record<string, ListingSummary[]> = {
+    ambulance: [contact(101, "Demo Ambulance One", "ambulance", "Ambulance", "+2340000000101")],
+    police: [contact(102, "Demo Police Post", "police", "Police", "+2340000000102")],
+  };
+  return {
+    national_line: { name: "National emergency number", number: "112" },
+    groups: groupNames.map(([slug, name]) => ({ category: { slug, name }, contacts: contacts[slug] ?? [] })),
+    pharmacies_24h: [listing({ id: 201, slug: "night-pharmacy", name: "Demo Night Pharmacy", is_24_hours: true, hours_note: null })],
+    disclaimer:
+      "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112.",
+    ...overrides,
+  };
 }

@@ -118,8 +118,14 @@ describe("the photo files in the repository", () => {
     walk(join(FRONTEND, "public"));
 
     // The listing page's WhatsApp button uses the owner's WhatsApp glyph, only scaled to 72 x 72 (whatsappGlyph.test.ts): a PNG with
-    // transparency, a few kilobytes. It is the one exception; any other PNG or JPG, such as a photo original, is still refused.
-    expect(found).toEqual([join("public", "images", "brand", "whatsapp-glyph-72.png")]);
+    // transparency, a few kilobytes. The two app icons of the manifest (public/icons/, made from the logo pin by
+    // scripts/make-app-icons.mjs, tests/unit/appIcons.test.ts) are the other exception: Chrome needs PNG icons to offer "Install".
+    // Any other PNG or JPG, such as a photo original, is still refused.
+    expect(found.sort()).toEqual([
+      join("public", "icons", "icon-192.png"),
+      join("public", "icons", "icon-512.png"),
+      join("public", "images", "brand", "whatsapp-glyph-72.png"),
+    ]);
   });
 
   it("keep the full-size originals out of git: image-sources/ is ignored by frontend/.gitignore", () => {

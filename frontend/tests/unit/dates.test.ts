@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { formatVerified } from "@/lib/formatters/dates";
+import { formatNoticeDate, formatVerified } from "@/lib/formatters/dates";
 
 const NOW = new Date("2026-10-09T12:00:00Z");
 
@@ -30,5 +30,19 @@ describe("formatVerified", () => {
 
   it("does not throw on text that is not a date", () => {
     expect(formatVerified("not a date", NOW)).toBe("Not yet verified");
+  });
+});
+
+describe("formatNoticeDate (the date in the offline notice of SwiftRescue, FR-17)", () => {
+  it("writes the day, the short month and the year in Lagos time", () => {
+    expect(formatNoticeDate("2026-10-17T10:00:00Z")).toBe("17 Oct 2026");
+  });
+
+  it("uses the Lagos date, not the UTC one (23:30 UTC is already the next day in Lagos)", () => {
+    expect(formatNoticeDate("2026-10-17T23:30:00Z")).toBe("18 Oct 2026");
+  });
+
+  it("does not throw on text that is not a date", () => {
+    expect(formatNoticeDate("not a date")).toBe("an earlier visit");
   });
 });
