@@ -39,9 +39,15 @@ Each is outside the code. **I changed none of them.**
 2. **Render, by hand** (the Blueprint is on manual sync): `RESEND_API_KEY` and `RESEND_FROM_EMAIL` (staff alerts), `CLOUDINARY_URL` and `CLOUDINARY_UPLOAD_PRESET`
    (photos; create the upload preset in Cloudinary: images only, at most 5 MB), the Termii variables (`TERMII_API_KEY`, `TERMII_BASE_URL`, `TERMII_SENDER_ID`,
    `TERMII_CHANNEL`) after the DND route is activated and the sender ID approved, and later the Paystack keys (phase 12).
-3. **Create the first admin.** A new production database has no users. Run `python -m app.bootstrap_admin` with the four `BOOTSTRAP_ADMIN_*` variables set
-   (name, email, phone that can receive SMS, a password of at least 10 characters). On a machine with Docker: `docker compose run --rm -e DATABASE_URL=<the production
-   address> -e BOOTSTRAP_ADMIN_NAME=... backend python -m app.bootstrap_admin`. Then log in at `/admin/login` and add the rest in `/admin/staff`.
+3. **Create the first admin** (a new production database has no users). The production database allows no outside connections, so the service makes the admin itself
+   when it starts, only if you ask ([specs/2026-10-21-bootstrap-admin-at-startup/](../2026-10-21-bootstrap-admin-at-startup/requirements.md)):
+   1. In the Render dashboard, open the `swifthealth-api` service, then **Environment**, and add four variables (type the password there and nowhere else):
+      `BOOTSTRAP_ADMIN_NAME`, `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PHONE` (a Nigerian number that can receive SMS) and `BOOTSTRAP_ADMIN_PASSWORD` (at least 10 characters).
+   2. Save. Render restarts the service (or choose **Manual Deploy**, then **Deploy latest commit**).
+   3. Open the service **Logs** and look for one line: `first admin created`. (`admin already exists` means this email is already a user; `first admin not created: ...`
+      names the variable to fix; the log never shows the password.)
+   4. **Delete all four variables** in Render and save (the service restarts once more and does nothing). Do not leave the password there.
+   5. Log in at `/admin/login` (with no Termii key the 6-digit code is written in the same Logs) and add the rest of the staff in `/admin/staff`.
 4. **Upgrade the Render database** before real data goes in (comparison in `LOG.md`), and check that Render keeps backups; run `scripts/test-backup-restore.sh` monthly.
 5. **Add the real emergency contacts and facilities** (staff screens and the CSV import: `/admin/import-export`), verify them, publish them.
 6. **The demo cleanup**, once real listings exist: set `REMOVE_DEMO_LISTINGS=true` in Render (it is in the dashboard as `false`), redeploy, confirm

@@ -51,10 +51,10 @@ holds 4 demo listings, **no users**, no blood banks, no donation centres and no 
 staff add and publish real facilities. The staff screens with data, a report, a payment, the CSV import and the nightly job are **not checked yet**.
 
 **Correction to the first-admin step.** `render.yaml` sets the database `ipAllowList: []` (no outside connections), so the `docker compose run ...
-bootstrap_admin` command in `release-checklist.md` step 3 cannot reach the production database from a laptop. Choose one: (a) allow your own IP on the
-Render database for a few minutes (a Render setting, yours to change), run the command, and remove the IP again; or (b) a small pull request adds a
-start-up step that runs `python -m app.bootstrap_admin` only when the four `BOOTSTRAP_ADMIN_*` variables are set in Render (like the demo-listings
-step), you set them, let the service restart, and delete them. (b) keeps the database closed.
+bootstrap_admin` command in `release-checklist.md` step 3 could not reach the production database from a laptop. **Decided 2026-10-21: option (b).**
+The container now runs `python -m app.bootstrap_admin --at-startup` before the API, only when the four `BOOTSTRAP_ADMIN_*` variables are set in
+Render (like the demo-listings step). You set them, let the service restart, read `first admin created` in the Render logs, and delete them. The
+new steps are in `release-checklist.md` step 3; the feature folder is `specs/2026-10-21-bootstrap-admin-at-startup/`.
 
 Housekeeping in the same pull request: `test-results/` (Playwright's output, one stray tracked file) is removed from git and ignored.
 
