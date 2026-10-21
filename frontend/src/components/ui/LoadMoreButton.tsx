@@ -1,4 +1,5 @@
-/** "Load more" under a blood list, and the sentence when the next page failed. Requirements: FR-27, FR-28, NFR-07. */
+/** "Load more" under a list that comes in pages (blood lists, staff queues), and the sentence when the next page failed.
+ * Requirements: FR-27, FR-28, FR-35, NFR-07. */
 import { buttonClasses } from "@/components/ui/buttonStyles";
 
 type LoadMoreButtonProps = { hasMore: boolean; isLoading: boolean; failed: boolean; onLoadMore: () => void };

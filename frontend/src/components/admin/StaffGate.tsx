@@ -86,7 +86,7 @@ export function StaffGate({ area, children }: StaffGateProps) {
             prefetch={false}
             className="inline-flex min-h-12 items-center text-base font-semibold text-forest underline underline-offset-4"
           >
-            Go to your listings
+            Go to your start page
           </Link>
         </section>
       </StaffContext.Provider>

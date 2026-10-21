@@ -8,8 +8,8 @@ import { useCallback } from "react";
 
 import { BloodListStatus } from "@/components/blood/BloodListStatus";
 import { DonationCentreCard } from "@/components/blood/DonationCentreCard";
-import { LoadMoreButton } from "@/components/blood/LoadMoreButton";
 import { NearMePrompt } from "@/components/blood/NearMePrompt";
+import { LoadMoreButton } from "@/components/ui/LoadMoreButton";
 import { useLocation } from "@/hooks/useLocation";
 import { usePagedList } from "@/hooks/usePagedList";
 import { getDonationCentres } from "@/lib/api/blood";

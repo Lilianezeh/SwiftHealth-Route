@@ -19,11 +19,11 @@ const FIELD_CLASSES = "min-h-12 rounded-xl border border-line bg-white px-3 text
 const SEARCH_DELAY_MS = 300;
 const STATUSES = Object.keys(STATUS_LABELS) as ListingStatus[];
 
-type StaffListingsProps = { initialMine: boolean };
+type StaffListingsProps = { initialMine: boolean; initialStatus?: ListingStatus | "" };
 
-export function StaffListings({ initialMine }: StaffListingsProps) {
+export function StaffListings({ initialMine, initialStatus = "" }: StaffListingsProps) {
   const { meta } = useMeta();
-  const [status, setStatus] = useState<ListingStatus | "">("");
+  const [status, setStatus] = useState<ListingStatus | "">(initialStatus);
   const [category, setCategory] = useState("");
   const [area, setArea] = useState("");
   const [typed, setTyped] = useState("");

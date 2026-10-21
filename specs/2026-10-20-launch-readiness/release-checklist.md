@@ -28,7 +28,7 @@ last commit of the run). "Done" means built and tested here; nothing below is sw
 | 13 Information pages | FR-23, NFR-12 | PR #28 |
 | 14 Launch readiness | FR-39, FR-40 (Should), NFR-09 (tested restore) | this PR |
 | 8 Blood | US-15, US-16, FR-27 to FR-29 (FR-29 guidance text waits for the medical advisor) | PR of branch `feature/blood` |
-| 11 Reports queue and dashboard | US-11, US-12, FR-33 (nightly job), FR-34, FR-35, FR-36 (nightly hide) | later PR of this run |
+| 11 Reports queue and dashboard | US-11, US-12, FR-33 (nightly job), FR-34, FR-35, FR-36 (nightly hide); "assign" of FR-35 not built (H1); the nightly job has no schedule yet (H4) | PR of branch `feature/reports-queue-dashboard` |
 | 12 Providers and featured | FR-43 to FR-46 | later PR of this run |
 
 ## The owner's actions, in order

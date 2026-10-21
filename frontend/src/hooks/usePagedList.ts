@@ -1,7 +1,7 @@
 "use client";
 
-/** Loads a list that comes in pages (the blood banks, the donation centres), with the time limits of the UI spec.
- * Requirements: US-15, US-16, FR-27, FR-28, NFR-07. UI spec "Standard states".
+/** Loads a list that comes in pages (the blood banks, the donation centres, the staff report queue and re-checks), with the
+ * time limits of the UI spec. Requirements: US-15, US-16, US-11, US-12, FR-27, FR-28, FR-35, NFR-07. UI spec "Standard states".
  *
  * - "loading", then "slow" after 5 seconds (the page says the service is waking up), then "error" after 45 seconds.
  * - A new `key` (a new blood group, a new position) or Retry cancels the request in flight; an old answer never replaces a newer one.
@@ -68,6 +68,14 @@ export function usePagedList<Item extends { id: number }>(key: string, fetchPage
 
   const retry = useCallback(() => setAttempt((current) => current + 1), []);
 
+  /** Takes one item out of the list (a report that was just closed) without asking the API again. */
+  const remove = useCallback((id: number) => {
+    setState((current) => {
+      if (!current.items.some((item) => item.id === id)) return current;
+      return { ...current, items: current.items.filter((item) => item.id !== id), total: Math.max(0, current.total - 1) };
+    });
+  }, []);
+
   const loadedCount = state.items.length;
   const canLoadMore = state.status === "ready" && !state.isLoadingMore;
   const loadMore = useCallback(() => {
@@ -91,5 +99,5 @@ export function usePagedList<Item extends { id: number }>(key: string, fetchPage
       });
   }, [canLoadMore, loadedCount]);
 
-  return { ...state, hasMore: state.status === "ready" && loadedCount < state.total, retry, loadMore };
+  return { ...state, hasMore: state.status === "ready" && loadedCount < state.total, retry, loadMore, remove };
 }

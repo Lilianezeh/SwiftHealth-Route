@@ -61,7 +61,7 @@ describe("StaffGate", () => {
 
     expect(await screen.findByText("Your role cannot open this page.")).toBeInTheDocument();
     expect(screen.queryByText("Staff accounts")).toBeNull();
-    expect(screen.getByRole("link", { name: "Go to your listings" })).toHaveAttribute("href", "/admin/listings?mine=true");
+    expect(screen.getByRole("link", { name: "Go to your start page" })).toHaveAttribute("href", "/admin/listings?mine=true");
   });
 
   it("shows only the links a role can use: Listings for staff, Staff for the admin only", async () => {

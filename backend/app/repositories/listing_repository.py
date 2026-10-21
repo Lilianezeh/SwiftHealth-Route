@@ -19,6 +19,9 @@ from app.models import (
 from app.models.base import CheckMethod, CheckResult, ListingStatus
 from app.repositories.search_repository import flagged_listing_ids
 
+# Only these listings are a re-check job; a draft, a pending or a hidden one is not (decision H6).
+RECHECK_STATUSES = (ListingStatus.published, ListingStatus.recheck_due)
+
 
 @dataclass
 class ListingDetailRows:
@@ -199,11 +202,14 @@ async def list_for_staff(
 ) -> tuple[list[tuple[Listing, Category]], int]:
     """One page of listings of every status for the staff list, with the total. Sorted by name, then id.
 
-    `due_before` alone means overdue (the check date has passed); with `due_after` it is a window.
+    `due_before` alone means overdue (the check date has passed); with `due_after` it is a window. Either
+    one counts only the listings of RECHECK_STATUSES, so the list agrees with the dashboard numbers.
     """
     conditions = []
     if status is not None:
         conditions.append(Listing.status == status)
+    if due_before is not None or due_after is not None:
+        conditions.append(col(Listing.status).in_(RECHECK_STATUSES))
     if category_slug is not None:
         conditions.append(Category.slug == category_slug)
     if area is not None:
@@ -233,6 +239,20 @@ async def list_for_staff(
         await session.exec(joined.order_by(col(Listing.name), col(Listing.id)).offset(offset).limit(limit))
     ).all()
     return [(listing, category) for listing, category in page], total
+
+
+async def find_overdue_published(session: AsyncSession, moment: datetime) -> list[Listing]:
+    """Published listings whose `next_check_due` has passed, by name then id (the nightly job, FR-33)."""
+    query = (
+        select(Listing)
+        .where(
+            Listing.status == ListingStatus.published,
+            col(Listing.next_check_due).is_not(None),
+            col(Listing.next_check_due) < moment,
+        )
+        .order_by(col(Listing.name), col(Listing.id))
+    )
+    return list((await session.exec(query)).all())
 
 
 async def slug_exists(session: AsyncSession, slug: str) -> bool:

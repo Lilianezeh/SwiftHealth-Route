@@ -99,6 +99,8 @@ describe("the route groups choose the header and the footer, and no address chan
         "/admin/listings/[id]/checks", // phase 10, its verification log
         "/admin/listings/new", // phase 10, a new listing
         "/admin/login", // phase 10, the staff login
+        "/admin/recheck", // phase 11, listings past or near their check date
+        "/admin/reports", // phase 11, the report queue
         "/admin/staff", // phase 10, the staff accounts
         "/blood",
         "/blood/donate", // phase 8, donation centres
