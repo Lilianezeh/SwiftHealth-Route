@@ -113,14 +113,14 @@ describe("a listing that is there", () => {
     expect(screen.getByRole("img", { name: "Entrance of Night Pharmacy A" })).toBeInTheDocument();
   });
 
-  it("shows the disclaimer of the API, the report link to /report/<id>, and the share buttons", async () => {
+  it("shows the disclaimer of the API, the report link to /report/<slug> (FR-20), and the share buttons", async () => {
     const listing = makeListing();
     answerWith(200, listing);
     render(<ListingDetailView slug="night-pharmacy-a" />);
     await screen.findByRole("heading", { level: 1 });
 
     expect(screen.getByText(listing.disclaimer)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Report a problem with this listing" })).toHaveAttribute("href", "/report/12");
+    expect(screen.getByRole("link", { name: "Report a problem with this listing" })).toHaveAttribute("href", "/report/night-pharmacy-a");
     expect(screen.getByRole("link", { name: /Share via WhatsApp/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copy link" })).toBeInTheDocument();
   });

@@ -101,7 +101,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/listing/[slug]",
         "/privacy",
         "/provider",
-        "/report/[id]",
+        "/report/[slug]", // was /report/[id] until phase 9 (decision B1 in specs/2026-10-20-reports/)
         "/search",
         "/terms",
       ].sort(),

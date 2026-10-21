@@ -45,10 +45,12 @@ export type RequestOptions = {
   signal?: AbortSignal; // lets the caller cancel
   slowAfterMs?: number;
   timeoutMs?: number;
+  body?: unknown; // sent as JSON with a POST (the report form); without it the call is a GET
 };
 
 export async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { onSlow, signal, slowAfterMs = WAKING_NOTICE_MS, timeoutMs = REQUEST_TIMEOUT_MS } = options;
+  const { onSlow, signal, slowAfterMs = WAKING_NOTICE_MS, timeoutMs = REQUEST_TIMEOUT_MS, body } = options;
+  const hasBody = body !== undefined;
   if (signal?.aborted) throw new RequestCancelledError();
 
   const controller = new AbortController();
@@ -63,7 +65,8 @@ export async function requestJson<T>(path: string, options: RequestOptions = {})
 
   try {
     const response = await fetch(`${PUBLIC_API_URL}${path}`, {
-      headers: { Accept: "application/json" },
+      ...(hasBody ? { method: "POST", body: JSON.stringify(body) } : {}),
+      headers: { Accept: "application/json", ...(hasBody ? { "Content-Type": "application/json" } : {}) },
       credentials: "omit", // the public API needs no cookies
       signal: controller.signal,
     });

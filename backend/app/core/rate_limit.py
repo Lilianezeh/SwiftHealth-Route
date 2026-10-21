@@ -72,3 +72,7 @@ def get_client_ip(request: Request, trusted_proxy_count: int) -> str:
 # api/dependencies.py, because answering 429 is HTTP work.
 login_limiter = RateLimiter(MAX_CALLS, WINDOW)
 verify_code_limiter = RateLimiter(MAX_CALLS, WINDOW)
+# The public report form (NFR-06, api-spec "POST /reports"): 5 reports per client IP per hour.
+REPORT_MAX_CALLS = 5
+REPORT_WINDOW = timedelta(hours=1)
+report_limiter = RateLimiter(REPORT_MAX_CALLS, REPORT_WINDOW)

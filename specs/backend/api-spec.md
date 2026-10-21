@@ -249,9 +249,9 @@ FR-20 to FR-22, US-08. Report a problem. No login. Rate limited to 5 per IP per 
 
 **Response 201:** `{ "id": 88, "message": "Thank you. We will check this listing." }`
 
-**Rules:** `listing_id` must be published (else 404). The report stores `reporter_key`: the keyed hash `hash_reporter_key` of the normalised phone if given, else of the client IP (never the raw IP). If this makes 2+ `not_working` reports from different reporters (different `reporter_key`) within 7 days, set the listing to `recheck_due`, write an audit entry, and email editors (Resend) and SMS the admin (Termii).
+**Rules:** `listing_id` must be published (else 404, the same answer as for an unknown id). `reason` is one of the `/meta` `report_reasons` (else 422). `comment` is at most 500 characters (blank counts as none). `reporter_phone` is normalised to `+234…` and stored; a value that is not a Nigerian number is a 422. The report stores `reporter_key`: the keyed hash `hash_reporter_key` of the normalised phone if given, else of the client IP (never the raw IP). If this makes 2+ `not_working` reports from different reporters (different `reporter_key`) within 7 days, set the listing to `recheck_due` and `next_check_due` to now, write an audit entry (no user, action `flag`, field `status`, old `published`, new `recheck_due`, reference `auto-flag`), and tell the staff in the background: an email to every active editor and admin (Resend) and an SMS to every active admin with a phone (Termii). The messages hold the listing name only, never the comment or the reporter. A failed email or SMS never fails the report. With no Resend or Termii key nothing is sent (logged without personal data). The rate limit is 5 reports per client IP per hour, in memory.
 
-**Tests:** creates report · auto-flag after second report · rate limit returns 429.
+**Tests:** creates report · reporter key is a hash, not the phone or IP · auto-flag after second report from a different reporter, not from the same one · an unpublished or unknown listing is 404 · bad reason, long comment, bad phone are 422 · the staff alert holds no personal data · rate limit returns 429.
 
 ### POST /facility-submissions
 FR-37. "List your facility" form. No login. Rate limited to 3 per IP per day.

@@ -124,6 +124,17 @@ describe("the contacts", () => {
     expect(call.className).toMatch(/\bmin-h-\[50px\]/); // at least 48 px
   });
 
+  it("gives every contact a 'Report a problem' link to its report page, at least 48 px high (FR-20)", async () => {
+    stubApi({});
+    render(<EmergencyPage />);
+
+    const link = await screen.findByRole("link", { name: "Report a problem with Demo Ambulance One" });
+
+    expect(link).toHaveAttribute("href", "/report/contact-101");
+    expect(link.className).toMatch(/\bmin-h-12\b/);
+    expect(link).toHaveTextContent("Report a problem");
+  });
+
   it("shows no Call button for a contact with no number, and no distance without a position", async () => {
     const response = emergencyResponse();
     response.groups[0].contacts[0].primary_phone = null;

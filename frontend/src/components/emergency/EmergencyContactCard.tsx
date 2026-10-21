@@ -25,6 +25,14 @@ export function EmergencyContactCard({ contact, now }: EmergencyContactCardProps
         <VerifiedDate lastVerifiedAt={contact.last_verified_at} verificationDue={contact.verification_due} now={now} />
       </div>
       {contact.primary_phone && <CallButton phone={contact.primary_phone} facilityName={contact.name} />}
+      <Link
+        href={`/report/${contact.slug}`}
+        prefetch={false}
+        aria-label={`Report a problem with ${contact.name}`}
+        className="inline-flex min-h-12 items-center text-base font-semibold text-forest underline underline-offset-4"
+      >
+        Report a problem
+      </Link>
     </article>
   );
 }

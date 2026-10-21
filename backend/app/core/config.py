@@ -33,7 +33,8 @@ class Settings(BaseSettings):
     trusted_proxy_count: int = Field(default=1, ge=1)
     paystack_secret_key: str = ""
     cloudinary_url: str = ""
-    resend_api_key: str = ""
+    resend_api_key: str = ""  # empty means no email is sent (the staff alert of FR-22 is only logged)
+    resend_from_email: str = ""  # a sender on a domain verified in Resend; empty: no email
     termii_api_key: str = ""  # empty means local dev: the login code is logged instead of sent
     termii_base_url: str = ""  # per account, from the Termii dashboard; needed only when a key is set
     termii_sender_id: str = "SwiftHealth"

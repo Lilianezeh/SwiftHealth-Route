@@ -103,7 +103,7 @@ export function ListingDetailView({ slug }: ListingDetailViewProps) {
         </h2>
         <ShareButtons slug={listing.slug} facilityName={listing.name} />
         <Link
-          href={`/report/${listing.id}`}
+          href={`/report/${listing.slug}`}
           prefetch={false}
           className="inline-flex min-h-12 items-center text-base font-semibold text-forest underline underline-offset-4"
         >

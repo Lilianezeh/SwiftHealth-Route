@@ -278,8 +278,9 @@ US-15, US-16.
 - 8a: find blood, API and page (FR-27)
 - 8b: donate blood, API and page (FR-28, FR-29)
 
-### Phase 9: Reports. Next
-US-08.
+### Phase 9: Reports. Built (2026-10-20), draft PR stacked on phase 7, waiting for the owner's check
+US-08. Feature folder: [requirements](2026-10-20-reports/requirements.md), [plan](2026-10-20-reports/plan.md), [validation](2026-10-20-reports/validation.md).
+Assumed owner decisions B1 to B8 are in the requirements (the page is `/report/<slug>`, not `/report/<id>`).
 - 9a: `POST /reports` and the report form (FR-20, FR-21)
 - 9b: automatic urgent flag after 2 "not working" reports in 7 days (FR-22)
 
