@@ -4,7 +4,8 @@ import { siteConfig } from "@/config/site";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: siteConfig.name,
+  // "Page | SwiftHealth Route" for every page that has its own title; the home page keeps the plain name (decision D6).
+  title: { default: siteConfig.name, template: `%s | ${siteConfig.name}` },
   description: `${siteConfig.name}: ${siteConfig.tagline}. Verified listings and one-tap calling.`,
 };
 

@@ -308,8 +308,9 @@ US-11, US-12.
 - 12b: Paystack featured payment, verified webhook, audit entry with reference (FR-44, FR-46)
 - 12c: one "Sponsored" listing first in matching search results, never in SwiftRescue (FR-45)
 
-### Phase 13: Landing page, information pages and polish. Next
-US-13.
+### Phase 13: Landing page, information pages and polish. 13b and 13c built (2026-10-20), draft PR stacked on phase 10, waiting for the owner's reading of the legal pages
+US-13. Feature folder for 13b and 13c: [requirements](2026-10-20-info-pages/requirements.md), [plan](2026-10-20-info-pages/plan.md),
+[validation](2026-10-20-info-pages/validation.md). Privacy and Terms are plain statements with a "not reviewed by a lawyer" notice (decision D1).
 - 13a: landing page. **Pulled forward by the owner (2026-10-11): in progress, see "Home page redesign" below** (branch
   `feature/home-redesign`)
 - 13b: About, How we verify, Privacy policy, Terms of use, Contact us (FR-23)

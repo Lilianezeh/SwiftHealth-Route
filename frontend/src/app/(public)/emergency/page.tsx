@@ -2,9 +2,16 @@
  * UI spec 2.5. Feature: specs/2026-10-17-swiftrescue/. A static page: 112 and the sentence of FR-26 are in the HTML, so they
  * show at once and work offline. The contacts come from the API in the browser (EmergencyContent).
  */
+import type { Metadata } from "next";
+
 import { EmergencyContent } from "@/components/emergency/EmergencyContent";
 import { NationalLineCard } from "@/components/emergency/NationalLineCard";
 import { RegisterServiceWorker } from "@/components/emergency/RegisterServiceWorker";
+
+export const metadata: Metadata = {
+  title: "SwiftRescue",
+  description: "Emergency contacts in one place, 112 first. SwiftRescue does not dispatch or guarantee an emergency response.",
+};
 
 export default function EmergencyPage() {
   return (

@@ -43,7 +43,8 @@ describe("the brand config (src/config/brand.ts)", () => {
 describe("the name on screen and in the metadata", () => {
   it("is the site name, the page title, the description and the manifest names", () => {
     expect(siteConfig.name).toBe("SwiftHealth Route");
-    expect(metadata.title).toBe("SwiftHealth Route");
+    // The home page's own title is the plain name; every other page's title gets the template (phase 13c, decision D6).
+    expect(metadata.title).toEqual({ default: "SwiftHealth Route", template: "%s | SwiftHealth Route" });
     expect(String(metadata.description)).toContain("SwiftHealth Route");
     expect(manifest().name).toBe("SwiftHealth Route");
     expect(manifest().short_name).toBe("SwiftHealth Route");

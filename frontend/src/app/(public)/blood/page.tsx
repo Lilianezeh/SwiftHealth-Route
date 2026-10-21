@@ -1,7 +1,13 @@
 /** Find blood: a "Coming soon" page until phase 8, so the Blood shortcut on /find does not lead nowhere. FR-27, FR-01. */
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { buttonClasses } from "@/components/ui/buttonStyles";
+
+export const metadata: Metadata = {
+  title: "Find blood",
+  description: "Blood bank search is coming. Until then, SwiftRescue lists the blood banks we have verified.",
+};
 
 export default function BloodPage() {
   return (

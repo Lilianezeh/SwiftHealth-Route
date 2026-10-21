@@ -4,10 +4,16 @@
  * The h1 is written by SearchResults, because its words depend on the chosen type in the address (D3 of specs/2026-10-15-find-by-type/).
  * Until then the page shows a grey bar of the same height (and "Loading results" for screen readers), never the words "Search results".
  */
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { ResultsSkeleton } from "@/components/search/ResultsSkeleton";
 import { SearchResults } from "@/components/search/SearchResults";
+
+export const metadata: Metadata = {
+  title: "Search", // the page's own h1 is written by SearchResults
+  description: "Hospitals, clinics, pharmacies, maternity homes and laboratories near you, open now, nearest first.",
+};
 
 function WaitingForTheAddress() {
   return (
