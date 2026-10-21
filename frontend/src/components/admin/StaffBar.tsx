@@ -32,6 +32,11 @@ export function StaffBar({ user, onLogout }: StaffBarProps) {
             Staff
           </Link>
         )}
+        {canOpen(user.role, "staff") && (
+          <Link href="/admin/import-export" prefetch={false} className={LINK_CLASSES}>
+            Import and export
+          </Link>
+        )}
         <button type="button" onClick={onLogout} className={`${LINK_CLASSES} ml-auto`}>
           Log out
         </button>

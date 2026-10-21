@@ -2,8 +2,10 @@
 services/admin_user_service.py. See specs/backend/api-spec.md, section 11 (admin only)."""
 
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from pydantic import BaseModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.api.dependencies import get_current_moment, get_session, require_role
@@ -11,7 +13,7 @@ from app.models import User
 from app.models.base import Role
 from app.schemas.admin_user import AdminUserCreate, AdminUserList, AdminUserUpdate
 from app.schemas.auth import UserRead
-from app.services import admin_user_service
+from app.services import admin_user_service, csv_export_service, csv_import_service
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -72,3 +74,59 @@ async def update_user(
         raise HTTPException(
             status.HTTP_409_CONFLICT, "This listing already belongs to another user."
         ) from None
+
+
+class ImportRowError(BaseModel):
+    row: int
+    detail: str
+
+
+class ImportResponse(BaseModel):
+    created: int
+    errors: list[ImportRowError]
+
+
+@router.post(
+    "/import",
+    response_model=ImportResponse,
+    summary="Admin: import listings from a CSV (the request body is the CSV text)",
+    responses={
+        413: {"description": "The file is over 1 MB."},
+        415: {"description": "The Content-Type is not text/csv."},
+        422: {"description": "The file cannot be read: a column is missing, over 500 rows, or not UTF-8."},
+    },
+)
+async def import_listings(
+    request: Request,
+    admin: User = Depends(require_role(Role.admin)),
+    moment: datetime = Depends(get_current_moment),
+    session: AsyncSession = Depends(get_session),
+) -> ImportResponse:
+    if not request.headers.get("content-type", "").lower().startswith("text/csv"):
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Send the file as text/csv.")
+    body = await request.body()
+    if len(body) > csv_import_service.MAX_BYTES:
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "The file is over 1 MB.")
+    try:
+        text = body.decode("utf-8")
+        result = await csv_import_service.import_listings(session, admin, text, moment)
+    except UnicodeDecodeError:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "The file must be UTF-8 text.") from None
+    except csv_import_service.CsvFileError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from None
+    errors = [ImportRowError(row=error.row, detail=error.detail) for error in result.errors]
+    return ImportResponse(created=result.created, errors=errors)
+
+
+@router.get("/export", summary="Admin: export listings or verification checks as CSV")
+async def export_csv(
+    type: Annotated[csv_export_service.ExportType, Query(description="listings or checks")],  # noqa: A002 (the api-spec name)
+    _admin: User = Depends(require_role(Role.admin)),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    text = await csv_export_service.export_csv(session, type)
+    return Response(
+        content=text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{type.value}.csv"'},
+    )

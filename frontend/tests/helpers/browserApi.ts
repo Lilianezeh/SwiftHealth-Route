@@ -29,7 +29,8 @@ export async function fakeApi(page: Page, answer: (request: FakeRequest) => Fake
       method: request.method(),
       path: url.pathname,
       search: url.search,
-      body: request.postData() ? JSON.parse(request.postData() as string) : undefined,
+      // A JSON body is parsed; a CSV body (the import) stays text.
+      body: request.postData() ? (request.headers()["content-type"]?.includes("json") ? JSON.parse(request.postData() as string) : request.postData()) : undefined,
       authorization: request.headers()["authorization"],
     };
     seen.push(fake);

@@ -15,6 +15,7 @@ of the table, from the top; after each merge, change the base of the next one to
 | 2 | 9 Reports | #26 | `feature/reports` (`feature/swiftrescue`) | https://deploy-preview-26--swifthealth-ng.netlify.app (if Netlify builds previews for a PR whose base is not `main`; after #25 is merged and the base is changed to `main` it will) | A listing page, "Report a problem with this listing", pick a reason, Send: "Thank you. We'll check this listing."; try a bad phone number; the "Report a problem" link on SwiftRescue contacts. Needs the merge for the API part. Staff alerts need `RESEND_API_KEY` and the new `RESEND_FROM_EMAIL` on Render (not set: nothing is sent) | B1 to B8 in `specs/2026-10-20-reports/requirements.md` |
 | 3 | 10 Staff screens and List your facility | #27 | `feature/staff-screens` (`feature/reports`) | https://deploy-preview-27--swifthealth-ng.netlify.app (only if Netlify builds previews for a PR whose base is not `main`) | `/list-your-facility`: send the form; `/admin/login`: log in with a staff account (code in the API log without a Termii key), add a draft, log a call and a visit, submit, publish as an editor, find it in the search; as admin add a user in `/admin/staff`; a verifier cannot publish or edit another's draft. Photos and SMS need their keys | C1 to C15 in `specs/2026-10-20-staff-screens/requirements.md` |
 | 4 | 13 Information pages and polish | #28 | `feature/info-pages` (`feature/staff-screens`) | https://deploy-preview-28--swifthealth-ng.netlify.app (only if Netlify builds previews for a PR whose base is not `main`; the static pages need no API) | Open About, How we verify, Privacy, Terms and Contact from the footer and read every sentence (tell me what is wrong); press Tab on any page: "Skip to main content" shows first. **Decide:** who reviews Privacy and Terms, and what contact address to show | D1 to D7 in `specs/2026-10-20-info-pages/requirements.md` (D1: the legal pages are statements, not legal text) |
+| 5 | 14 Launch readiness | #29 (and **#30**, a one-line-of-work PR to `main` with only the Render database comparison, so you can read it early) | `feature/launch-readiness` (`feature/info-pages`) | https://deploy-preview-29--swifthealth-ng.netlify.app (only if Netlify builds previews for a PR whose base is not `main`) | As admin open `/admin/import-export`: import a small CSV (the columns are on the page), download both CSVs and open them in a spreadsheet (a name starting with `=` must show as text). Read `release-checklist.md`, `runbook-backups.md` and `analytics-proposal.md` and **choose the analytics option**. This PR also holds the Render database comparison (read it before 1 November) | E1 to E6 in `specs/2026-10-20-launch-readiness/requirements.md` |
 
 **Note on previews:** a Netlify preview calls the production API. A phase with a new endpoint therefore shows an error on its preview until that
 phase is merged and Render has redeployed (the pages say so and keep 112 and the other static parts). To see a phase fully before merging, run
@@ -22,6 +23,24 @@ its branch locally (`git switch <branch>`, `docker compose up --build`). Because
 production after each merge.
 
 ## To do later
+
+### The Render database expires about 2026-11-07: free options compared (written 2026-10-20, nothing in production was changed)
+What the database holds today is **demo data only**, so nothing real is lost if it lapses. Facts below come from the providers' own pages, read on
+2026-10-20 (links at the end); prices and limits change, so confirm them on the day you decide.
+
+| Option | Cost | Limits that matter to us | Effort and risk |
+| --- | --- | --- | --- |
+| **A. Do nothing special: let it lapse and make a new free Render database** | $0 | Free Render Postgres expires 30 days after creation, then 14 days to upgrade, then it is deleted; 1 GB; **no backups**; one free database per workspace. | About 10 minutes: create it from `render.yaml`, set `DATABASE_URL`, redeploy (the demo step seeds again). The API is down meanwhile. Repeats every 30 days. Fine for demo data, **not for real data**. |
+| **B. Move to Neon Free** | $0 | 1 GB storage, 100 compute-hours a month, **no expiry stated**, compute suspends after 5 minutes idle (a cold start on top of the API's own), instant restore only for the last 6 hours, 1 manual snapshot. | About 1 hour: new project, `pg_trgm` and the migrations, change `DATABASE_URL` on Render by hand. Another company holds the data; the region (Frankfurt like Render's?) and the Postgres version (we use 18) must be confirmed. No daily backups beyond 6 hours. |
+| **C. Move to Supabase Free** | $0 | 500 MB, **pauses after 7 days idle** (a pilot with few visitors would pause), no automatic backups, 2 active projects. | Similar to B, but the pausing makes the site fail for a whole week of silence. Not recommended. |
+| **D. Upgrade the Render database to the cheapest paid plan** | about $7 a month (a third-party figure; **confirm on render.com/pricing**) plus $0.30 per GB beyond the included storage | Same platform and region as the API, no expiry, Render's docs say paid databases get **point-in-time recovery**; the retention window needs confirming. | 5 minutes in the dashboard, **no code change**. This is a paid action: only you can do it. |
+
+**Recommendation.** Until launch, choose **A** (or do nothing and accept a short outage): the data is demo data and it costs nothing. **Before real
+data goes in (the launch), choose D**: it is the only option here with backups that Render itself keeps, it needs no code change and no new company
+holds the data, and the daily backups of NFR-09 then rest on Render's recovery, plus our own `pg_dump` script and tested restore from phase 14b.
+Choose **B** only if you need to stay free beyond launch, and then add our `pg_dump` script as a nightly job somewhere free (cron on your laptop is not enough).
+Whatever you choose, run the restore test of phase 14b first. Sources: <https://render.com/docs/free>, <https://neon.com/docs/introduction/plans>,
+<https://supabase.com/pricing>, <https://render.com/docs/postgresql-refresh> (the $7 figure is from a third-party guide, not Render's pricing page).
 
 Open reminders. Each says when it is due. Remove a line once it is done.
 
