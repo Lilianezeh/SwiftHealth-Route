@@ -128,5 +128,83 @@ for (const { width, height } of WIDTHS) {
       await expect(page.getByRole("article").first()).toBeVisible({ timeout: 60_000 });
       await allIsInsideTheScreen(page, width);
     });
+
+    test("with no network and a saved copy: the notice with the date, the saved banks, 48 px targets, nothing wider than the screen", async ({ page }) => {
+      // A saved copy as the page itself writes it, and an API that cannot be reached. (The development server has no service worker,
+      // so this checks the layout and the logic; the reload with the network off is the production-build test below.)
+      const savedBank = (id: number, name: string, groups: string[]) => ({
+        id, slug: `bank-${id}`, name, category: { slug: "blood-bank", name: "Blood bank" }, area: "Ogui", address: "1 Fictional Road, Ogui, Enugu",
+        latitude: 6.45, longitude: 7.5, primary_phone: "+2340000000012", last_verified_at: new Date().toISOString(), verification_due: false,
+        blood_groups: groups, blood_groups_confirmed_at: "2026-10-01", stock_note: "Stock changes daily; call to confirm before you go.",
+      });
+      const copy = {
+        savedAt: "2026-10-22T10:00:00.000Z",
+        banks: [savedBank(1, "Demo Blood Bank Number 1 With A Long Name", ["A+", "B+", "O+", "O-"]), savedBank(2, "Demo Blood Bank Number 2", ["O+"])],
+      };
+      await page.addInitScript((value) => window.localStorage.setItem("swiftrescue-saved-blood-banks", JSON.stringify(value)), copy);
+      await page.route("http://localhost:8000/**", (route) => route.abort("internetdisconnected"));
+      await page.goto("/blood", { waitUntil: "load" });
+
+      await expect(page.getByText("Offline — showing saved blood banks from 22 Oct 2026")).toBeVisible({ timeout: 60_000 });
+
+      await expect(page.getByRole("article")).toHaveCount(2);
+      await expect(page.getByRole("button", { name: "Show blood banks near me" })).toHaveCount(0);
+      await expect(page.getByText(/\bkm\b|Open now|Report a problem/)).toHaveCount(0);
+      await expect(page.getByRole("link", { name: /^Call/ }).first()).toHaveAttribute("href", "tel:+2340000000012");
+      await allIsInsideTheScreen(page, width);
+      await targetsAndTextAreBigEnough(page);
+
+      await page.getByRole("button", { name: "O-" }).click();
+      await expect(page.getByRole("article")).toHaveCount(1);
+      await page.getByRole("button", { name: "AB+" }).click();
+      await expect(page.getByText("No saved blood bank lists AB+.", { exact: false })).toBeVisible();
+      await allIsInsideTheScreen(page, width);
+    });
   });
 }
+
+test.describe("Find blood offline (a production build only)", () => {
+  test.skip(!process.env.OFFLINE_CHECK, "needs a production build: set OFFLINE_CHECK=1 and BASE_URL to `next start`");
+  test.use({ viewport: { width: 360, height: 740 } });
+
+  test("after one visit the page and the saved blood banks open with no network, with the date saved", async ({ page, context }) => {
+    // The API only allows the site's own address (CORS). A test server on another port gets the allowance added here.
+    const siteOrigin = new URL(process.env.BASE_URL ?? "http://localhost:3000").origin;
+    let networkIsOff = false;
+    await page.route("http://localhost:8000/**", async (route) => {
+      if (networkIsOff) return route.abort("internetdisconnected");
+      const response = await route.fetch();
+      await route.fulfill({ response, headers: { ...response.headers(), "access-control-allow-origin": siteOrigin } });
+    });
+    await page.goto("/blood", { waitUntil: "load" });
+    await expect(page.getByRole("article").first()).toBeVisible({ timeout: 60_000 });
+    const namesOnline = await page.getByRole("article").locator("h3").allInnerTexts();
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+    });
+    // The worker keeps the page and the files the first visit loaded; the page keeps the blood banks in the browser.
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(async () => {
+            const names = await caches.keys();
+            const cache = names.length ? await caches.open(names[0]) : null;
+            const kept = cache ? await cache.keys() : [];
+            const hasCopy = window.localStorage.getItem("swiftrescue-saved-blood-banks") !== null;
+            return hasCopy && kept.some((request) => new URL(request.url).pathname === "/blood") && kept.length > 3;
+          }),
+        { timeout: 30_000 },
+      )
+      .toBe(true);
+
+    networkIsOff = true;
+    await context.setOffline(true);
+    await page.reload({ waitUntil: "load" });
+
+    await expect(page.getByRole("heading", { level: 1, name: "Find blood" })).toBeVisible();
+    await expect(page.getByText(/^Offline — showing saved blood banks from \d{1,2} \w{3,4} \d{4}$/)).toBeVisible({ timeout: 20_000 });
+    expect(await page.getByRole("article").locator("h3").allInnerTexts()).toEqual(namesOnline);
+    await expect(page.getByRole("link", { name: /^Call/ }).first()).toHaveAttribute("href", /^tel:\+234/);
+    await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  });
+});
