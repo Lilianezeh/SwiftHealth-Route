@@ -1,4 +1,4 @@
-"""Response of GET /emergency (FR-14 to FR-19, FR-25, FR-26). See specs/backend/api-spec.md."""
+"""Response of GET /emergency (FR-14 to FR-19, FR-26). See specs/backend/api-spec.md."""
 from pydantic import BaseModel
 
 from app.schemas.listing import CategorySummary, ListingSummary
@@ -17,5 +17,4 @@ class EmergencyGroup(BaseModel):
 class EmergencyResponse(BaseModel):
     national_line: NationalLine
     groups: list[EmergencyGroup]  # always the seven groups, in the order of FR-15
-    pharmacies_24h: list[ListingSummary]
     disclaimer: str

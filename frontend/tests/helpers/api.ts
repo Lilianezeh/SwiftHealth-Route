@@ -108,7 +108,7 @@ export function manyListings(count: number, firstId = 1): ListingSummary[] {
   });
 }
 
-/** The answer of GET /emergency (api-spec): the seven groups in order, two with a contact, and one 24-hour pharmacy. */
+/** The answer of GET /emergency (api-spec): the seven groups in order, two with a contact. (No pharmacy list: FR-25 was removed on 2026-10-22.) */
 export function emergencyResponse(overrides: Partial<EmergencyResponse> = {}): EmergencyResponse {
   const contact = (id: number, name: string, categorySlug: string, categoryName: string, phone: string | null) =>
     listing({
@@ -126,7 +126,6 @@ export function emergencyResponse(overrides: Partial<EmergencyResponse> = {}): E
   return {
     national_line: { name: "National emergency number", number: "112" },
     groups: groupNames.map(([slug, name]) => ({ category: { slug, name }, contacts: contacts[slug] ?? [] })),
-    pharmacies_24h: [listing({ id: 201, slug: "night-pharmacy", name: "Demo Night Pharmacy", is_24_hours: true, hours_note: null })],
     disclaimer:
       "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112.",
     ...overrides,

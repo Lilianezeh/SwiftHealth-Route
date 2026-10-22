@@ -98,7 +98,7 @@ Sixteen stories define the MVP; each has a test that tells us when it is done.
 | FR-18 | "Share emergency list" sends a plain-text list of numbers via WhatsApp or SMS | Must |
 | FR-19 | No paid or sponsored placement is ever shown in the Emergency section | Must |
 | FR-24 | "Share my location" button: gets the phone's position (with permission) and sends a Google Maps link via WhatsApp or SMS; the location is never stored by SwiftHealth | Must |
-| FR-25 | Emergency section shows nearby 24-hour pharmacies (listings with is\_24\_hours confirmed on site), nearest first | Must |
+| FR-25 | ~~Emergency section shows nearby 24-hour pharmacies (listings with is\_24\_hours confirmed on site), nearest first~~ **Removed 2026-10-22 (owner):** pharmacies are not part of SwiftRescue; they stay findable through search and Find by type (`/search?category=pharmacy`, `is_24_hours`) | Removed |
 | FR-26 | SwiftRescue (emergency) page shows: "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112." | Must |
 | FR-27 | Find blood: lists blood banks and hospitals with blood bank services, nearest first, with blood groups they usually supply (stored as services, with the date confirmed), hours, Call and Directions, and the note "Stock changes daily; call to confirm before you go" | Must |
 | FR-28 | Donate blood: lists blood banks and centres that accept donors, with donation hours, Call and Directions | Must |

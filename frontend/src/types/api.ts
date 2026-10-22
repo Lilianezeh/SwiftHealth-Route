@@ -60,11 +60,11 @@ export type ListingDetail = ListingSummary & {
 /** One group of GET /emergency (api-spec). `contacts` may be empty: the page hides an empty group. */
 export type EmergencyGroup = { category: CategorySummary; contacts: ListingSummary[] };
 
-/** The answer of GET /emergency (api-spec): 112 first, seven groups in order, the 24-hour pharmacies, and the FR-26 sentence. */
+/** The answer of GET /emergency (api-spec): 112 first, seven groups in order, and the FR-26 sentence. An older API also sent
+ * `pharmacies_24h` (FR-25, removed 2026-10-22): the page ignores it if it is still there. */
 export type EmergencyResponse = {
   national_line: { name: string; number: string };
   groups: EmergencyGroup[];
-  pharmacies_24h: ListingSummary[];
   disclaimer: string;
 };
 
