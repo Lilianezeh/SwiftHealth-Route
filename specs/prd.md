@@ -92,7 +92,7 @@ Sixteen stories define the MVP; each has a test that tells us when it is done.
 | ID | Requirement | Priority |
 | --- | --- | --- |
 | FR-14 | 112 national emergency line shown first and always | Must |
-| FR-15 | Contacts grouped: Ambulance, Fire, Police, 24-hour emergency units, Roadside assistance, Security, Blood banks | Must |
+| FR-15 | Contacts grouped: Ambulance, Fire, Police, 24-hour emergency units, Roadside assistance, Security. ~~Blood banks~~ **Blood banks removed from this list 2026-10-22 (owner):** they are listed only on Find blood (FR-27); SwiftRescue has a "Need blood urgently?" link card to it | Must |
 | FR-16 | Each contact shows name, area, distance (if location allowed), Call button and last-verified date | Must |
 | FR-17 | The Emergency page is cached for offline use after the first visit | Must |
 | FR-18 | "Share emergency list" sends a plain-text list of numbers via WhatsApp or SMS | Must |
