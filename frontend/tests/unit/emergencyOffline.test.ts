@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { OFFLINE_COPY_KEY, readOfflineCopy, saveOfflineCopy } from "@/lib/emergency/offlineCopy";
 
-import { emergencyResponse, listing } from "../helpers/api";
+import { emergencyResponse, listing, oldEmergencyResponse } from "../helpers/api";
 
 const SAVED_AT = new Date("2026-10-17T10:00:00Z");
 
@@ -49,6 +49,29 @@ describe("the offline copy", () => {
     expect(stored).not.toContain("pharmacies_24h");
     expect(stored).not.toContain("Demo Night Pharmacy");
     expect(readOfflineCopy()?.response.groups[0].contacts[0].name).toBe("Demo Ambulance One");
+  });
+
+  it("holds no blood bank group: not from an older API's answer (decision M1)", () => {
+    saveOfflineCopy(oldEmergencyResponse(), SAVED_AT);
+
+    const stored = window.localStorage.getItem(OFFLINE_COPY_KEY) ?? "";
+    expect(stored).not.toContain("blood-bank");
+    expect(stored).not.toContain("Demo Blood Bank");
+    expect(readOfflineCopy()?.response.groups.map((group) => group.category.slug)).toEqual([
+      "ambulance", "fire", "police", "emergency-unit", "roadside-assistance", "security",
+    ]);
+  });
+
+  it("still reads a copy saved before that, which has a Blood banks group, and hands on no blood bank", () => {
+    const savedBefore = { savedAt: "2026-10-17T10:00:00.000Z", response: oldEmergencyResponse() };
+    window.localStorage.setItem(OFFLINE_COPY_KEY, JSON.stringify(savedBefore));
+
+    const copy = readOfflineCopy();
+
+    expect(copy?.savedAt).toBe("2026-10-17T10:00:00.000Z");
+    expect(copy?.response.groups.map((group) => group.category.slug)).not.toContain("blood-bank");
+    expect(JSON.stringify(copy)).not.toContain("Demo Blood Bank");
+    expect(copy?.response.groups[0].contacts[0].name).toBe("Demo Ambulance One");
   });
 
   it("still reads a copy saved before the change, which has the pharmacy list, and hands on no pharmacies", () => {

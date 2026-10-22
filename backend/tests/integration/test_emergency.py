@@ -20,8 +20,8 @@ pytestmark = pytest.mark.anyio
 TUESDAY_10_00_IN_LAGOS = datetime(2026, 10, 6, 9, 0, tzinfo=timezone.utc)
 MY_LATITUDE, MY_LONGITUDE = 6.4500, 7.5080
 GROUP_SLUGS = [
-    "ambulance", "fire", "police", "emergency-unit", "roadside-assistance", "security", "blood-bank",
-]
+    "ambulance", "fire", "police", "emergency-unit", "roadside-assistance", "security",
+]  # no blood-bank group since 2026-10-22: blood banks are listed only by /blood (decision M1)
 DISCLAIMER = (
     "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency "
     "response. In danger, call 112."
@@ -60,16 +60,33 @@ async def test_emergency_needs_no_login_and_112_is_there_with_an_empty_database(
     assert body["disclaimer"] == DISCLAIMER  # FR-26
 
 
-async def test_all_seven_groups_are_returned_in_the_fixed_order_even_when_empty(
+async def test_all_six_groups_are_returned_in_the_fixed_order_even_when_empty(
     client: AsyncClient, clock: None
 ) -> None:
     body = await get_emergency(client)
     assert [entry["category"]["slug"] for entry in body["groups"]] == GROUP_SLUGS  # FR-15, decision A1
     assert [entry["category"]["name"] for entry in body["groups"]] == [
         "Ambulance", "Fire", "Police", "24-hour emergency units", "Roadside assistance", "Security",
-        "Blood banks",
     ]
     assert all(entry["contacts"] == [] for entry in body["groups"])
+
+
+async def test_a_blood_bank_is_nowhere_in_the_answer_it_is_listed_by_blood_banks_only(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    """Decision M1 (2026-10-22): `/blood` is the only list of blood banks; SwiftRescue links to it."""
+    await add_listing(session, "Central Blood Bank", category_slug="blood-bank", area="Ogui")
+    await add_listing(session, "Fine Ambulance", category_slug="ambulance")
+    await session.commit()
+
+    response = await client.get("/emergency", params={"lat": MY_LATITUDE, "lng": MY_LONGITUDE})
+    blood = await client.get("/blood/banks")
+
+    body = response.json()
+    assert "blood-bank" not in [entry["category"]["slug"] for entry in body["groups"]]
+    assert "Central Blood Bank" not in response.text
+    assert contact_names(body, "ambulance") == ["Fine Ambulance"]  # the other groups are not affected
+    assert [item["name"] for item in blood.json()["items"]] == ["Central Blood Bank"]  # still found on /blood
 
 
 async def test_a_contact_is_in_its_own_group_with_the_listing_summary_shape(
@@ -214,9 +231,8 @@ async def test_the_number_of_queries_does_not_grow_with_the_number_of_contacts(
     await session.commit()
     few = await statements_for_one_request()
     for number in range(8):
-        await add_listing(
-            session, f"More Contact {number}", category_slug=GROUP_SLUGS[number % 7], is_24_hours=True
-        )
+        slug = GROUP_SLUGS[number % len(GROUP_SLUGS)]
+        await add_listing(session, f"More Contact {number}", category_slug=slug, is_24_hours=True)
         await add_listing(session, f"More Pharmacy {number}", is_24_hours=True)
     await session.commit()
     many = await statements_for_one_request()

@@ -7,6 +7,7 @@
  */
 import { BloodLinkCard } from "@/components/emergency/BloodLinkCard";
 import { EmergencyContactCard } from "@/components/emergency/EmergencyContactCard";
+import { usedGroups } from "@/lib/emergency/groups";
 import type { EmergencyGroup, EmergencyResponse, ListingSummary } from "@/types/api";
 
 type EmergencyGroupsProps = { response: EmergencyResponse; now?: Date };
@@ -25,20 +26,21 @@ function neverSponsored(listing: ListingSummary): ListingSummary {
 /** Ambulance and Fire first (empty or not), then the other groups that have a contact, in the order of the answer. */
 function groupsToDraw(response: EmergencyResponse): EmergencyGroup[] {
   const alwaysSlugs: string[] = ALWAYS_SHOWN.map((group) => group.slug);
+  const answered = usedGroups(response.groups);
   const first = ALWAYS_SHOWN.map(
     (always) =>
-      response.groups.find((group) => group.category.slug === always.slug) ?? {
+      answered.find((group) => group.category.slug === always.slug) ?? {
         category: { slug: always.slug, name: always.name },
         contacts: [],
       },
   );
-  const others = response.groups.filter((group) => !alwaysSlugs.includes(group.category.slug) && group.contacts.length > 0);
+  const others = answered.filter((group) => !alwaysSlugs.includes(group.category.slug) && group.contacts.length > 0);
   return [...first, ...others];
 }
 
 export function EmergencyGroups({ response, now }: EmergencyGroupsProps) {
   const groups = groupsToDraw(response);
-  const nothingYet = response.groups.every((group) => group.contacts.length === 0);
+  const nothingYet = usedGroups(response.groups).every((group) => group.contacts.length === 0);
 
   return (
     <div className="flex flex-col gap-8">
