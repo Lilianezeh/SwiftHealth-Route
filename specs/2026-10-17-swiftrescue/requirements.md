@@ -46,7 +46,7 @@ Made by Claude Code in the unattended run of 2026-10-17. Each says what I picked
 
 | # | Decision I made | Alternative |
 | --- | --- | --- |
-| A1 | The API returns **all seven groups every time**, in order, some with an empty `contacts` list. The page hides empty groups and, when every group is empty, says "We are still adding verified contacts. In danger, call 112." | Leave empty groups out of the answer |
+| A1 | The API returns **all seven groups every time**, in order, some with an empty `contacts` list. The page hides empty groups and, when every group is empty, says "We are still adding verified contacts. In danger, call 112." **Changed 2026-10-22 (owner): Ambulance and Fire are always shown, even when empty; see `specs/2026-10-22-swiftrescue-order/`.** | Leave empty groups out of the answer |
 | A2 | A listing that FR-22 flags is **left out** of SwiftRescue, as it is in search (the report flow moves it to `recheck_due` anyway). | Keep it with a warning, because in an emergency a maybe-working number may beat none |
 | A3 | `pharmacies_24h` has **no distance limit**: nearest ten, or the first ten by name without a position. | A 10 km limit like search |
 | A4 | `GET /emergency` fills `hours_note` and `is_open_now` like search (the api-spec said "null until built"). | Keep `null` |
