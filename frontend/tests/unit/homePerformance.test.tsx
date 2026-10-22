@@ -51,9 +51,8 @@ describe("no page of another address is downloaded early: every link of the home
     );
 
     // The skip link ("#main") stays on the same page, so there is nothing to prefetch (phase 13c).
-    // The hero's credit goes to another site (a plain link, nothing to prefetch).
-    const links = [...container.querySelectorAll("a")].filter((link) => /^\//.test(link.getAttribute("href") ?? ""));
-    expect(links.length).toBeGreaterThanOrEqual(18); // the logo, 2 header links, the hero link, 3 cards, 5 tiles, the owners button, 6 footer links
+    const links = [...container.querySelectorAll("a")].filter((link) => !(link.getAttribute("href") ?? "").startsWith("#"));
+    expect(links.length).toBeGreaterThanOrEqual(15); // the logo, 2 header links, the hero button, 5 tiles, the owners button, 6 footer links
     for (const link of links) expect(link.getAttribute("data-prefetch"), link.textContent ?? "").toBe("false");
   });
 
@@ -79,12 +78,10 @@ describe("the header and the footer are server components (R44)", () => {
     expect(readSource("components/layout/MobileMenu.tsx")).toMatch(/^"use client";/); // the one client part of the header
   });
 
-  it("sends no JavaScript from the home page's own components either, except the hero slider (owner, 2026-10-22)", () => {
+  it("sends no JavaScript from the home page's own components either", () => {
     const folder = join(process.cwd(), "src", "components", "home");
     for (const file of readdirSync(folder)) {
-      const source = readFileSync(join(folder, file), "utf8");
-      if (file === "HeroSlider.tsx") expect(source, file).toMatch(/^"use client";/); // the one client part: photos, Pause and dots
-      else expect(source, file).not.toMatch(/["']use client["']/);
+      expect(readFileSync(join(folder, file), "utf8"), file).not.toMatch(/["']use client["']/);
     }
   });
 });

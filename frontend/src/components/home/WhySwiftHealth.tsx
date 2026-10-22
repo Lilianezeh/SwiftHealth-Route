@@ -15,8 +15,8 @@ export function WhySwiftHealth() {
   const { heading, items } = HOME_WORDS.why;
 
   return (
-    <section aria-labelledby="why-heading" className="reveal on-dark bg-forest text-white">
-      <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+    <section aria-labelledby="why-heading" className="on-dark bg-forest text-white">
+      <div className="mx-auto max-w-6xl px-4 py-12">
         <h2 id="why-heading" className="text-2xl font-bold text-white">
           {heading}
         </h2>

@@ -8,8 +8,8 @@ export function Overview() {
   const { heading, text } = HOME_WORDS.overview;
 
   return (
-    <section aria-labelledby="overview-heading" className="reveal bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+    <section aria-labelledby="overview-heading" className="bg-white">
+      <div className="mx-auto max-w-6xl px-4 py-12">
         <h2 id="overview-heading" className="text-2xl font-bold text-forest">
           {heading}
         </h2>

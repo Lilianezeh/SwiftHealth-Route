@@ -47,28 +47,3 @@ body {
 .on-dark :focus-visible {
   outline-color: var(--color-paper);
 }
-
-/* The gentle fade-in of the parts of the home page below the hero (specs/2026-10-22-home-photos/, part 3). CSS only, no script: each part
-   rises 12 px and fades in as it scrolls into view. It is inside both guards, so a visitor who asks for reduced motion, and a browser that
-   does not know scroll-driven animations (they are shown at once), never has a hidden part. Only opacity and transform change, so
-   nothing moves the layout. A part that is already on screen when the page opens is shown in its final state. */
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .reveal {
-      animation: reveal-in linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 35%;
-    }
-
-    @keyframes reveal-in {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-  }
-}

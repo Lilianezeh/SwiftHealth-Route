@@ -14,7 +14,6 @@ import { metadata } from "@/app/layout";
 import Home, { metadata as homeMetadata } from "@/app/(home)/page";
 import { FacilityOwners } from "@/components/home/FacilityOwners";
 import { PageFrame } from "@/components/layout/PageFrame";
-import { HERO_SLIDES } from "@/config/heroPhotos";
 import { HOME_PHOTOS, HOME_WORDS } from "@/config/home";
 import { siteConfig } from "@/config/site";
 
@@ -175,8 +174,7 @@ describe("the whole page", () => {
     const copy = container.cloneNode(true) as HTMLElement;
     copy.querySelectorAll('[aria-hidden="true"]').forEach((element) => element.remove()); // the step numbers
     // "24-hour services" (the owner's words of 2026-10-15) names a kind of service; it is not a statistic.
-    // "112" is the national emergency number (the SwiftRescue card says "with 112 first"); it is not a statistic either.
-    const text = (copy.textContent ?? "").replace(String(siteConfig.copyrightYear), "").replaceAll("24-hour", "").replaceAll("112", "");
+    const text = (copy.textContent ?? "").replace(String(siteConfig.copyrightYear), "").replaceAll("24-hour", "");
 
     expect(text).not.toContain("%");
     expect(text).not.toMatch(/\d/);
@@ -188,22 +186,23 @@ describe("the whole page", () => {
     expect(container.querySelectorAll("blockquote, q")).toHaveLength(0);
   });
 
-  it("has one outside link on the page: the fixed 'Designed by Magnific' credit of the hero (owner, 2026-10-22); the Unsplash photo has none", () => {
+  it("has no outside link anywhere on the page, and no photo credit", () => {
     const { container } = renderWholePage();
 
-    const outside = [...container.querySelectorAll('a[href^="http"], a[target="_blank"]')];
-
-    expect(outside.map((link) => link.getAttribute("href"))).toEqual(["https://www.magnific.com"]);
-    expect(container.textContent?.toLowerCase()).not.toMatch(/unsplash/);
-    expect(container.textContent?.match(/magnific/gi)).toHaveLength(1);
+    expect(container.querySelectorAll('a[href^="http"], a[target="_blank"]')).toHaveLength(0);
+    expect(container.textContent?.toLowerCase()).not.toMatch(/magnific|unsplash/);
   });
 
-  it("has the hero's first photo and the owner photo at first, each with alt text, a width and a height (the other slides come later)", () => {
+  it("has two images only, the hero and the owner photo, each with alt text, a width and a height", () => {
     const { container } = renderWholePage();
 
     const images = [...container.querySelectorAll("img")];
 
-    expect(images.map((image) => image.getAttribute("src"))).toEqual([HERO_SLIDES[0].wideSrc, HOME_PHOTOS.owner.src]);
+    expect(images.map((image) => image.getAttribute("src"))).toEqual([
+      "/images/home/hero3.webp",
+      "/images/home/hero4-portrait.webp",
+    ]);
+    expect(images.map((image) => image.getAttribute("src"))).toEqual([HOME_PHOTOS.hero.src, HOME_PHOTOS.owner.src]);
     for (const image of images) {
       expect(image.getAttribute("alt")?.length, image.getAttribute("src") ?? "").toBeGreaterThan(10);
       expect(Number(image.getAttribute("width"))).toBeGreaterThan(0);
@@ -211,12 +210,12 @@ describe("the whole page", () => {
     }
   });
 
-  it("loads only the hero's first photo at once: the owner photo is lazy", () => {
+  it("loads only the hero at once: the owner photo is lazy", () => {
     const { container } = renderWholePage();
 
     const eager = [...container.querySelectorAll("img")].filter((image) => image.getAttribute("loading") !== "lazy");
 
-    expect(eager.map((image) => image.getAttribute("src"))).toEqual([HERO_SLIDES[0].wideSrc]);
+    expect(eager.map((image) => image.getAttribute("src"))).toEqual([HOME_PHOTOS.hero.src]);
   });
 
   it("uses the red emergency colour once: the SwiftRescue button of the header", () => {
@@ -277,6 +276,5 @@ describe("the whole page", () => {
 
     expect(targets("Find care near me")).toBe("/find");
     expect(targets("List your facility")).toBe("/list-your-facility");
-    expect(within(main).getByRole("search")).toHaveAttribute("action", "/search");
   });
 });
