@@ -1,15 +1,15 @@
-/** The emergency contacts in their groups, a link to the blood pages, and the 24-hour pharmacies last. Requirements: FR-15, FR-16, FR-19,
- * FR-25, NFR-10. UI spec 2.5, points 5 to 7; decisions K1 to K3 in specs/2026-10-22-swiftrescue-order/requirements.md.
+/** The emergency contacts in their groups, and a link to the blood pages after them. Requirements: FR-15, FR-16, FR-19, NFR-10.
+ * UI spec 2.5, points 5 and 6; decisions K1 to K3 and K6 in specs/2026-10-22-swiftrescue-order/requirements.md (no pharmacies here:
+ * FR-25 was removed on 2026-10-22).
  * Ambulance and Fire are always drawn first, even with no contact, and then say "No contacts added yet. In danger, call 112." Every
  * other group is not drawn when it has no contact. Every card gets `sponsored: false` here, so the page can never show a sponsored tag
  * (FR-19), whatever an answer holds.
  */
 import { BloodLinkCard } from "@/components/emergency/BloodLinkCard";
 import { EmergencyContactCard } from "@/components/emergency/EmergencyContactCard";
-import { ListingCard } from "@/components/listings/ListingCard";
 import type { EmergencyGroup, EmergencyResponse, ListingSummary } from "@/types/api";
 
-type EmergencyGroupsProps = { response: EmergencyResponse; hasPosition: boolean; now?: Date };
+type EmergencyGroupsProps = { response: EmergencyResponse; now?: Date };
 
 // Always shown, first, in this order. The names are the page's own, for an answer (an old saved copy) that lacks the group.
 const ALWAYS_SHOWN = [
@@ -36,10 +36,9 @@ function groupsToDraw(response: EmergencyResponse): EmergencyGroup[] {
   return [...first, ...others];
 }
 
-export function EmergencyGroups({ response, hasPosition, now }: EmergencyGroupsProps) {
+export function EmergencyGroups({ response, now }: EmergencyGroupsProps) {
   const groups = groupsToDraw(response);
-  const pharmacies = response.pharmacies_24h.map(neverSponsored);
-  const nothingYet = response.groups.every((group) => group.contacts.length === 0) && pharmacies.length === 0;
+  const nothingYet = response.groups.every((group) => group.contacts.length === 0);
 
   return (
     <div className="flex flex-col gap-8">
@@ -61,16 +60,6 @@ export function EmergencyGroups({ response, hasPosition, now }: EmergencyGroupsP
         </section>
       ))}
       <BloodLinkCard />
-      {pharmacies.length > 0 && (
-        <section aria-labelledby="pharmacies-24h-heading" className="flex flex-col gap-3">
-          <h2 id="pharmacies-24h-heading" className="text-2xl font-bold text-forest">
-            {hasPosition ? "24-hour pharmacies nearby" : "24-hour pharmacies"}
-          </h2>
-          {pharmacies.map((pharmacy) => (
-            <ListingCard key={pharmacy.id} listing={pharmacy} now={now} />
-          ))}
-        </section>
-      )}
     </div>
   );
 }

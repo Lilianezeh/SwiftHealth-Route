@@ -48,7 +48,8 @@ for (const { width, height } of WIDTHS) {
       await expect(page.getByText(/does not dispatch or guarantee an emergency response/)).toBeVisible();
 
       await expect(page.getByRole("heading", { level: 2, name: "Ambulance" })).toBeVisible({ timeout: 60_000 });
-      await expect(page.getByRole("heading", { level: 2, name: "24-hour pharmacies" })).toBeVisible();
+      await expect(page.getByRole("link", { name: /Need blood urgently\?/ })).toBeVisible();
+      await expect(page.getByText(/pharmac/i)).toHaveCount(0); // FR-25 was removed on 2026-10-22
       const firstCard = page.getByRole("article").first();
       await expect(firstCard.getByRole("link", { name: /^Call / })).toBeVisible();
 
@@ -76,8 +77,9 @@ for (const { width, height } of WIDTHS) {
       expect(text).not.toContain("featured");
     });
 
-    test("Ambulance and Fire are shown first even when empty, the blood card follows the groups, the pharmacies are last", async ({ page }) => {
+    test("Ambulance and Fire are shown first even when empty, and the blood card is the last thing after the groups", async ({ page }) => {
       const emptyGroup = (slug: string, name: string) => ({ category: { slug, name }, contacts: [] });
+      // An older API still sends the pharmacy list; the page must ignore it.
       const pharmacy = {
         id: 201, slug: "demo-night-pharmacy", name: "Demo Night Pharmacy", category: { slug: "pharmacy", name: "Pharmacy" }, area: "Ogui",
         address: "1 Example Road", latitude: 6.45, longitude: 7.5, distance_km: null, is_open_now: true, is_24_hours: true,
@@ -108,10 +110,10 @@ for (const { width, height } of WIDTHS) {
       const fire = await page.getByRole("heading", { level: 2, name: "Fire" }).boundingBox();
       const blood = page.getByRole("link", { name: /Need blood urgently\?/ });
       const bloodBox = await blood.boundingBox();
-      const pharmacies = await page.getByRole("heading", { level: 2, name: "24-hour pharmacies" }).boundingBox();
       expect(ambulance!.y).toBeLessThan(fire!.y);
       expect(fire!.y).toBeLessThan(bloodBox!.y);
-      expect(bloodBox!.y).toBeLessThan(pharmacies!.y);
+      await expect(page.getByText(/pharmac/i)).toHaveCount(0); // the old list in the answer is ignored
+      expect(await blood.evaluate((link) => link.parentElement?.lastElementChild === link)).toBe(true); // nothing comes after the card
       await expect(blood).toHaveAttribute("href", "/blood");
       expect(bloodBox!.height).toBeGreaterThanOrEqual(47.5);
       expect(await blood.locator("svg").count()).toBe(0); // no icon, no cross
@@ -225,5 +227,7 @@ test.describe("SwiftRescue offline (a production build only)", () => {
     await expect(page.getByText(/^Offline — showing saved contacts from/)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("heading", { level: 2, name: "Ambulance" })).toBeVisible();
     await expect(page.getByRole("link", { name: /^Call / }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /Need blood urgently\?/ })).toHaveAttribute("href", "/blood"); // the card works from the saved copy
+    await expect(page.getByText(/pharmac/i)).toHaveCount(0);
   });
 });

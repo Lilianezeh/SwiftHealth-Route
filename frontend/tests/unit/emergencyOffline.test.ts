@@ -27,14 +27,42 @@ describe("the offline copy", () => {
   it("holds no distance, whatever the answer held", () => {
     const withDistances = emergencyResponse();
     withDistances.groups[0].contacts[0].distance_km = 1.4;
-    withDistances.pharmacies_24h[0].distance_km = 0.3;
+    withDistances.groups[2].contacts[0].distance_km = 0.3;
 
     saveOfflineCopy(withDistances, SAVED_AT);
 
     const stored = window.localStorage.getItem(OFFLINE_COPY_KEY) ?? "";
     expect(stored).not.toMatch(/"distance_km":\s*[0-9]/);
     expect(readOfflineCopy()?.response.groups[0].contacts[0].distance_km).toBeNull();
-    expect(readOfflineCopy()?.response.pharmacies_24h[0].distance_km).toBeNull();
+    expect(readOfflineCopy()?.response.groups[2].contacts[0].distance_km).toBeNull();
+  });
+
+  it("holds no pharmacies: not from a new answer, and not from an old API's answer that still has the list (K6)", () => {
+    const oldAnswer = {
+      ...emergencyResponse(),
+      pharmacies_24h: [listing({ id: 201, name: "Demo Night Pharmacy", distance_km: 0.3 })],
+    };
+
+    saveOfflineCopy(oldAnswer, SAVED_AT);
+
+    const stored = window.localStorage.getItem(OFFLINE_COPY_KEY) ?? "";
+    expect(stored).not.toContain("pharmacies_24h");
+    expect(stored).not.toContain("Demo Night Pharmacy");
+    expect(readOfflineCopy()?.response.groups[0].contacts[0].name).toBe("Demo Ambulance One");
+  });
+
+  it("still reads a copy saved before the change, which has the pharmacy list, and hands on no pharmacies", () => {
+    const savedBefore = {
+      savedAt: "2026-10-17T10:00:00.000Z",
+      response: { ...emergencyResponse(), pharmacies_24h: [listing({ id: 201, name: "Demo Night Pharmacy" })] },
+    };
+    window.localStorage.setItem(OFFLINE_COPY_KEY, JSON.stringify(savedBefore));
+
+    const copy = readOfflineCopy();
+
+    expect(copy?.savedAt).toBe("2026-10-17T10:00:00.000Z");
+    expect(copy?.response.groups[0].contacts[0].name).toBe("Demo Ambulance One");
+    expect(copy?.response).not.toHaveProperty("pharmacies_24h");
   });
 
   it("puts the contacts in the order of a request without a position: by name, then id", () => {

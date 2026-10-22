@@ -1,6 +1,6 @@
 "use client";
 
-/** Loads SwiftRescue's contacts in the browser. Requirements: FR-14 to FR-17, FR-25, NFR-03, NFR-07. UI spec 2.5.
+/** Loads SwiftRescue's contacts in the browser. Requirements: FR-14 to FR-17, NFR-03, NFR-07. UI spec 2.5.
  *
  * - The first request has no position. Its answer is saved for offline use and shown at once (decision A5).
  * - If there is a position, a second request adds the distances and replaces the list on screen. If it fails, the first answer stays.

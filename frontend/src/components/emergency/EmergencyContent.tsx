@@ -1,6 +1,6 @@
 "use client";
 
-/** Everything on SwiftRescue that comes from the API, with its states. Requirements: FR-14 to FR-17, FR-25, NFR-03, NFR-07.
+/** Everything on SwiftRescue that comes from the API, with its states. Requirements: FR-14 to FR-17, NFR-03, NFR-07.
  * UI spec 2.5 and "Standard states". The 112 card above it is static and does not wait for this.
  * Distances need the position the visitor allowed on another page, or one they allow here by tapping the button; it is never
  * asked for when the page loads.
@@ -68,7 +68,7 @@ export function EmergencyContent() {
       )}
 
       {response && (status === "ready" || status === "offline") && (
-        <EmergencyGroups response={response} hasPosition={position !== null && status === "ready"} />
+        <EmergencyGroups response={response} />
       )}
     </div>
   );
