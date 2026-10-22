@@ -294,8 +294,6 @@ async def test_a_featured_listing_is_not_sponsored_on_its_own_page_or_in_the_eme
     emergency = (await client.get("/emergency")).json()
 
     assert page["sponsored"] is False
-    every_item = [item for group in emergency["groups"] for item in group["contacts"]] + emergency[
-        "pharmacies_24h"
-    ]
+    every_item = [item for group in emergency["groups"] for item in group["contacts"]]
     assert every_item  # the featured ambulance is in the list ...
     assert all(item["sponsored"] is False for item in every_item)  # ... and not sponsored

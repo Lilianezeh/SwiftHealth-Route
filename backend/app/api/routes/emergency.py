@@ -1,4 +1,4 @@
-"""SwiftRescue: emergency contacts grouped by category, 112 first (FR-14 to FR-19, FR-25, FR-26).
+"""SwiftRescue: emergency contacts grouped by category, 112 first (FR-14 to FR-19, FR-26).
 HTTP only: the rules are in services/emergency_service.py. Contract: specs/backend/api-spec.md."""
 from datetime import datetime
 from typing import Annotated

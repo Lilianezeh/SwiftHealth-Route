@@ -1,5 +1,6 @@
-"""SwiftRescue: the national line, the emergency contacts in groups and the 24-hour pharmacies.
-Requirements: FR-14 to FR-19, FR-25, FR-26.
+"""SwiftRescue: the national line and the emergency contacts in groups.
+Requirements: FR-14 to FR-19, FR-26. (FR-25, the 24-hour pharmacies, was removed on 2026-10-22: decision K6
+in specs/2026-10-22-swiftrescue-order/. Pharmacies are found with /search.)
 
 It reuses the rules of search_service (trust rules, distance, open now, the FR-22 exclusion) and never
 marks anything as sponsored (FR-19). Decisions A1 to A4 in specs/2026-10-17-swiftrescue/requirements.md.
@@ -39,8 +40,6 @@ GROUPS: tuple[tuple[str, str], ...] = (
     ("security", "Security"),
     ("blood-bank", "Blood banks"),
 )
-PHARMACY_SLUG = "pharmacy"
-MAX_PHARMACIES = 10  # FR-25
 
 
 def summaries_in_order(
@@ -88,9 +87,6 @@ async def get_emergency(
         is_24_hours=False,
         **shared_filters,
     )
-    pharmacies = await search_repository.find_candidates(
-        session, category_slug=PHARMACY_SLUG, is_24_hours=True, **shared_filters
-    )
 
     groups = [
         EmergencyGroup(
@@ -104,6 +100,5 @@ async def get_emergency(
     return EmergencyResponse(
         national_line=NATIONAL_LINE,
         groups=groups,
-        pharmacies_24h=summaries_in_order(pharmacies, location, moment)[:MAX_PHARMACIES],
         disclaimer=DISCLAIMER,
     )

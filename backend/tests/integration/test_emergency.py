@@ -56,7 +56,7 @@ async def test_emergency_needs_no_login_and_112_is_there_with_an_empty_database(
     assert response.status_code == 200
     body = response.json()
     assert body["national_line"] == {"name": "National emergency number", "number": "112"}  # FR-14
-    assert body["pharmacies_24h"] == []
+    assert set(body) == {"national_line", "groups", "disclaimer"}  # no pharmacy list since 2026-10-22 (K6)
     assert body["disclaimer"] == DISCLAIMER  # FR-26
 
 
@@ -122,11 +122,9 @@ async def test_a_listing_that_is_not_published_is_never_returned(
     client: AsyncClient, session: AsyncSession, clock: None, status: ListingStatus
 ) -> None:
     await add_listing(session, "Hidden Ambulance", category_slug="ambulance", status=status)
-    await add_listing(session, "Hidden Pharmacy", is_24_hours=True, status=status)
     await session.commit()
     body = await get_emergency(client)
     assert contact_names(body, "ambulance") == []
-    assert body["pharmacies_24h"] == []
 
 
 async def test_an_overdue_contact_is_still_shown_with_verification_due(
@@ -160,36 +158,27 @@ async def test_no_item_is_sponsored_even_when_a_listing_is_featured(
 ) -> None:
     featured_until = TUESDAY_10_00_IN_LAGOS + timedelta(days=10)
     await add_listing(session, "Featured Ambulance", category_slug="ambulance", featured_until=featured_until)
-    await add_listing(session, "Featured Pharmacy", is_24_hours=True, featured_until=featured_until)
     await session.commit()
     body = await get_emergency(client)
     assert contact_names(body, "ambulance") == ["Featured Ambulance"]
-    assert [item["name"] for item in body["pharmacies_24h"]] == ["Featured Pharmacy"]
-    everything = [c for entry in body["groups"] for c in entry["contacts"]] + body["pharmacies_24h"]
+    everything = [c for entry in body["groups"] for c in entry["contacts"]]
     assert everything and all(item["sponsored"] is False for item in everything)  # FR-19
 
 
-async def test_pharmacies_24h_are_only_confirmed_24_hour_pharmacies_nearest_first(
+async def test_there_are_no_pharmacies_in_the_answer_not_even_a_confirmed_24_hour_one(
     client: AsyncClient, session: AsyncSession, clock: None
 ) -> None:
-    await add_listing(session, "Far Night Pharmacy", is_24_hours=True, latitude=6.60, longitude=7.70)
-    await add_listing(session, "Near Night Pharmacy", is_24_hours=True, latitude=6.4510, longitude=7.5090)
-    await add_listing(session, "Day Pharmacy", is_24_hours=False)
+    """FR-25 was removed on 2026-10-22 (decision K6): SwiftRescue has contacts only."""
+    await add_listing(session, "Night Pharmacy", is_24_hours=True, latitude=6.4510, longitude=7.5090)
     await add_listing(session, "24h Clinic", category_slug="clinic", is_24_hours=True)
     await session.commit()
-    body = await get_emergency(client, lat=MY_LATITUDE, lng=MY_LONGITUDE)
-    nearest_first = [item["name"] for item in body["pharmacies_24h"]]
-    assert nearest_first == ["Near Night Pharmacy", "Far Night Pharmacy"]  # FR-25
-    assert body["pharmacies_24h"][1]["distance_km"] > 10  # decision A3: no distance limit
 
+    response = await client.get("/emergency", params={"lat": MY_LATITUDE, "lng": MY_LONGITUDE})
 
-async def test_pharmacies_24h_stop_at_ten(client: AsyncClient, session: AsyncSession, clock: None) -> None:
-    for number in range(12):
-        await add_listing(session, f"Night Pharmacy {number:02d}", is_24_hours=True)
-    await session.commit()
-    body = await get_emergency(client)
-    assert len(body["pharmacies_24h"]) == 10
-    assert body["pharmacies_24h"][0]["name"] == "Night Pharmacy 00"
+    body = response.json()
+    assert "pharmacies_24h" not in body
+    assert "Night Pharmacy" not in response.text
+    assert all(entry["contacts"] == [] for entry in body["groups"])  # a pharmacy is not in any group
 
 
 @pytest.mark.parametrize(

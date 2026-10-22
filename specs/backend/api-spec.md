@@ -208,7 +208,7 @@ FR-09 to FR-13, FR-47, US-06, US-07, FR-22. **Path:** `slug` (exact match; no qu
 **Tests:** published returns 200 with every field · draft, pending, hidden, `recheck_due` and unknown slug return 404 · 7 opening-hours entries (missing day closed, past-midnight row) · primary phone first · `is_whatsapp` per phone (false unless set) · fees as 2-decimal strings, a null fee stays null · overdue listing has `verification_due: true` and is still returned · 2 different reporters in 7 days set `recently_reported_not_working` and the listing is still returned · 1 reporter, an old report, a resolved report, and 2 reports from the same reporter do not · `hours_note` and `is_open_now` agree with `/search` · none of the internal fields appear · the number of database queries does not grow with the number of phones or services.
 
 ### GET /emergency
-FR-14 to FR-19, FR-25, FR-26. The SwiftRescue page data.
+FR-14 to FR-19, FR-26. The SwiftRescue page data. (FR-25, the 24-hour pharmacies, was removed from SwiftRescue on 2026-10-22 by the owner: the answer has no `pharmacies_24h` any more; pharmacies are found with `/search` and Find by type. Decision K6 in `specs/2026-10-22-swiftrescue-order/`.)
 
 **Query:** `lat`, `lng` (optional).
 
@@ -219,14 +219,13 @@ FR-14 to FR-19, FR-25, FR-26. The SwiftRescue page data.
   "groups": [
     { "category": { "slug": "ambulance", "name": "Ambulance" }, "contacts": [ListingSummary] }
   ],
-  "pharmacies_24h": [ListingSummary],
   "disclaimer": "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112."
 }
 ```
 
-**Rules:** `groups` always has all seven groups, in this order (category slugs): Ambulance `ambulance`, Fire `fire`, Police `police`, 24-hour emergency units `emergency-unit`, Roadside assistance `roadside-assistance`, Security `security`, Blood banks `blood-bank`. A group with no contact has `"contacts": []` (the page hides it). Within a group, nearest first if a location is given, otherwise by name (then id). No sponsored placement anywhere: every item has `sponsored: false`, even a listing with `featured_until` in the future (FR-19). `pharmacies_24h` = published pharmacies with `is_24_hours = true`, nearest first (by name without a location), max 10, with no distance limit. The trust rules of section 1 apply (published only, overdue ones stay with `verification_due: true`) and a listing flagged by FR-22 is left out, as in `/search`. `is_open_now` and `hours_note` are filled as in `/search`. `lat` and `lng` come together or not at all (else 422) and are never logged (NFR-07). `national_line` is a constant of the API, so `112` is present even with an empty database.
+**Rules:** `groups` always has all seven groups, in this order (category slugs): Ambulance `ambulance`, Fire `fire`, Police `police`, 24-hour emergency units `emergency-unit`, Roadside assistance `roadside-assistance`, Security `security`, Blood banks `blood-bank`. A group with no contact has `"contacts": []` (the page hides it). Within a group, nearest first if a location is given, otherwise by name (then id). No sponsored placement anywhere: every item has `sponsored: false`, even a listing with `featured_until` in the future (FR-19). The answer has no pharmacy list (no `pharmacies_24h` key). The trust rules of section 1 apply (published only, overdue ones stay with `verification_due: true`) and a listing flagged by FR-22 is left out, as in `/search`. `is_open_now` and `hours_note` are filled as in `/search`. `lat` and `lng` come together or not at all (else 422) and are never logged (NFR-07). `national_line` is a constant of the API, so `112` is present even with an empty database.
 
-**Tests:** 112 always present · all seven groups in order, empty ones as `[]` · nearest first with a location, by name without · no `sponsored: true` anywhere, even for a featured listing · only confirmed 24-hour pharmacies, max 10 · draft, hidden and flagged listings left out · `lat` without `lng` is a 422.
+**Tests:** 112 always present · all seven groups in order, empty ones as `[]` · nearest first with a location, by name without · no `sponsored: true` anywhere, even for a featured listing · no `pharmacies_24h` key, and a 24-hour pharmacy is nowhere in the answer · draft, hidden and flagged listings left out · `lat` without `lng` is a 422.
 
 ### GET /blood/banks
 FR-27, US-15. **Query:** `blood_group` (optional, one of `/meta` blood groups), `lat`, `lng`, `limit`, `offset`.
