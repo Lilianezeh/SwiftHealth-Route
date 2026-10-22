@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** A chosen type on the results page: the heading, the chip and the typed type words.
  * Requirements: US-01, US-05, FR-04, FR-05, NFR-04, NFR-07, NFR-10. Spec: specs/2026-10-15-find-by-type/requirements.md D2 to D5
- * (the owner's points 3 and 11, and the headings of 2026-10-15). Tests for the banner (D6) are in TypeBanner.test.tsx.
+ * (the owner's points 3 and 11, and the headings of 2026-10-15). The page has no pictures (SearchNoPictures.test.tsx).
  */
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
