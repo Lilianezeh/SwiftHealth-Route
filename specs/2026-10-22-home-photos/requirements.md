@@ -47,8 +47,8 @@ under a dark-blue overlay); the old home photos `hero3` and `hero4` "need no cre
 
 ### 2. Hero slider on the home page
 - **Eight photos** (see the table; the owner chose eight), full width, behind the hero. They **crossfade slowly: each stays about 6 seconds, the fade takes 1.5 seconds** (CSS `opacity` transition, no library).
-- **A dark-blue overlay** keeps the text readable: the `pine-dark` token (`#134F6A`) at **85% under the text block** (left), fading to 30% on the right, and a band of 80% across the top 6 rem for the header's white links. On a phone and tablet (under 1024 px) the photo is a band at the top and the text sits below it on the solid blue gradient, so the text never lies on a photo there.
-  Computed contrast of white text on the worst case (a pure white photo under 80%): **5.07:1**; under 85%: **5.85:1** (AA needs 4.5:1). A test recomputes this from the tokens.
+- **A dark-blue overlay** keeps the text readable: the `pine-dark` token (`#134F6A`) at **80% under the text block** (left; the owner found 85% "heavy and grey" on 2026-10-12), fading to 30% on the right, and a band of 80% across the top 6 rem for the header's white links. On a phone and tablet (under 1024 px) the photo is a band at the top and the text sits below it on the solid blue gradient, so the text never lies on a photo there.
+  Computed contrast of white text on the worst case (a pure white photo under 80%): **5.26:1** (AA needs 4.5:1). A test recomputes this from the tokens.
 - **Fixed while the photos change:** the heading (the `h1`), the line, the search box, the "Find care near me" link, and the header with the red SwiftRescue button (the only SwiftRescue button; none in the hero). Only the photos change.
 - **Controls:** a visible **Pause/Play** button (48 px, with a text label, `aria-pressed`) and **dots** (one button per photo, 48 px tap area, `aria-current` on the shown one, each named "Show photo 3 of 8: <short name>"). Tapping a dot shows that photo and restarts its 6 seconds.
   The slider **stops when the tab is hidden** (`document.visibilityState`) and restarts when it is shown; it also stops while the visitor has paused.
@@ -106,7 +106,7 @@ A photo that is replaced later needs a new file name (`/images/*` is cached for 
 | # | Decision I made | Alternative |
 | --- | --- | --- |
 | P1 | Eight photos (the owner's choice and order). | Fewer or more |
-| P2 | Overlay: `pine-dark` 85% under the text, 30% on the right, 80% band under the header; no new colour. | A flat 70% overlay (less photo) |
+| P2 | Overlay: `pine-dark` 80% under the text, 30% on the right, 80% band under the header; no new colour. | A flat 70% overlay (less photo) |
 | P3 | Timing: 6 s per photo, 1.5 s fade. | Other numbers |
 | P4 | The first slide is `hero-laboratory`: the lightest, cleanest photo, a face, no text. | `hero-stethoscope-capsules` (no people) |
 | P5 | The slider's photos are added to the page **one ahead of their turn**, after the load event and when idle; with JavaScript off the visitor sees the first photo only (still, with the credit). | Preload all eight |

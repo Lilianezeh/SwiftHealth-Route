@@ -1,9 +1,8 @@
-/** The photos and the words of the home page. Requirements: US-13, NFR-01, NFR-10. UI spec 2.1 (the words are the owner's).
- * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8, 15 and 19, and revisions R1 to R17 of 2026-10-12). The page has two
- * photos, the hero (hero3.jpg) and the owner photo (hero4.jpg), both Unsplash photos, and a smaller version of the hero for
- * phones. The files are made by
- * scripts/optimize-home-images.mjs and tested by tests/unit/homeImages.test.ts, which checks that `width` and `height` are the
- * real pixel size of each file.
+/** The photo and the words of the home page. Requirements: US-13, NFR-01, NFR-10. UI spec 2.1 (the words are the owner's).
+ * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8, 15 and 19, and revisions R1 to R17 of 2026-10-12). This file keeps the owner
+ * photo (hero4.jpg, an Unsplash photo); the hero's eight photos are in config/heroPhotos.ts (specs/2026-10-22-home-photos/). The file is
+ * made by scripts/optimize-home-images.mjs and tested by tests/unit/homeImages.test.ts, which checks that `width` and `height` are the
+ * real pixel size of the file.
  *
  * Alt text was written after looking at each converted photo: short, factual, no medical claim. The owner reviews it on the
  * preview. No text of the home page names a city (R6): the first city stays in `siteConfig.launchCity` for other parts of the app.
@@ -20,19 +19,6 @@ export type HomePhoto = {
 const FOLDER = "/images/home";
 
 export const HOME_PHOTOS = {
-  // The hero: one photo, in two sizes. A phone gets the small one (specs, decision 19), so both say the same thing.
-  hero: {
-    src: `${FOLDER}/hero3.webp`,
-    width: 1200,
-    height: 1200,
-    alt: "A stethoscope and a blood pressure gauge lying on white sheets.",
-  },
-  heroPhone: {
-    src: `${FOLDER}/hero3-phone.webp`,
-    width: 640,
-    height: 640,
-    alt: "A stethoscope and a blood pressure gauge lying on white sheets.",
-  },
   // For facility owners: a portrait photo, shown whole.
   owner: {
     src: `${FOLDER}/hero4-portrait.webp`,
@@ -59,9 +45,18 @@ export const HOME_WORDS = {
   hero: {
     heading: "Find care that's open now, near you.",
     line: "Verified hospitals, clinics, pharmacies and labs, with phone numbers, opening hours and directions.",
+    searchLabel: "Search by name",
+    searchPlaceholder: "Hospital, clinic, pharmacy or lab",
+    searchButton: "Search",
     findCare: "Find care near me",
     note: "Free to use · No sign-up needed",
   },
+  // The three feature cards under the hero: real pages only (specs/2026-10-22-home-photos/, part 3).
+  cards: [
+    { href: "/find", title: "Find care", text: "Search hospitals, clinics, pharmacies and labs near you." },
+    { href: "/emergency", title: `${brand.emergencyName} emergency numbers`, text: "Ambulance, fire and police contacts, with 112 first." },
+    { href: "/blood", title: "Find blood", text: "Find blood banks and the blood groups they list." },
+  ],
   overview: {
     heading: `What is ${brand.name}?`,
     text: `${brand.name} is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes, pharmacies and laboratories near you, see which are open right now, and call or get directions in one tap. Our team checks every listing before it goes live and re-checks it regularly.`,

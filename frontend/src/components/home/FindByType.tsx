@@ -19,8 +19,8 @@ const TILE_ICONS: Record<(typeof HOME_CATEGORIES)[number]["slug"], LucideIcon> =
 
 export function FindByType() {
   return (
-    <section aria-labelledby="find-by-type-heading">
-      <div className="mx-auto max-w-6xl px-4 py-12">
+    <section aria-labelledby="find-by-type-heading" className="reveal">
+      <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
         <h2 id="find-by-type-heading" className="text-2xl font-bold text-forest">
           {HOME_WORDS.findByType.heading}
         </h2>

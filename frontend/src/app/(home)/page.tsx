@@ -6,6 +6,7 @@
 import type { Metadata } from "next";
 
 import { FacilityOwners } from "@/components/home/FacilityOwners";
+import { FeatureCards } from "@/components/home/FeatureCards";
 import { FindByType } from "@/components/home/FindByType";
 import { HomeHero } from "@/components/home/HomeHero";
 import { Overview } from "@/components/home/Overview";
@@ -19,6 +20,7 @@ export default function Home() {
   return (
     <>
       <HomeHero />
+      <FeatureCards />
       <Overview />
       <WhySwiftHealth />
       <FindByType />

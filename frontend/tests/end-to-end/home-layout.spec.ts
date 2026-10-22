@@ -175,23 +175,27 @@ test("is still fine with a heading much wider than usual (another font): it wrap
 // What the home page downloads (R46). The "no other page's code" check is only meaningful against a production build
 // (`npm run build && npm start`): the development server does not prefetch.
 test.describe("what the home page downloads", () => {
+  // The slider (specs/2026-10-22-home-photos/): the first photo at once, the second one step ahead after the page has loaded; never more than
+  // two in the first moments, and always the size for the screen (the 640 px files on a phone, the 1280 px files from 768 px).
   const HERO_FILES = [
-    { width: 375, height: 667, file: "hero3-phone.webp" }, // a phone: the small file
-    { width: 768, height: 1024, file: "hero3.webp" }, // from 768 px: the big file
+    { width: 375, height: 667, size: "640" },
+    { width: 768, height: 1024, size: "1280" },
   ];
 
-  for (const { width, height, file } of HERO_FILES) {
-    test(`at ${width} px it requests one hero photo only: ${file}`, async ({ page }) => {
+  for (const { width, height, size } of HERO_FILES) {
+    test(`at ${width} px it requests the first hero photo, then at most the second, and only the ${size} px files`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       const heroRequests: string[] = [];
       page.on("request", (request) => {
-        const name = /\/images\/home\/(hero3[^/?]*\.webp)/.exec(request.url())?.[1];
+        const name = /\/images\/hero\/(hero-[^/?]*\.webp)/.exec(request.url())?.[1];
         if (name) heroRequests.push(name);
       });
       await page.goto("/", { waitUntil: "load" });
-      await page.waitForTimeout(1500); // a late second request would show up here
+      await page.waitForTimeout(1500); // the second photo is added about 0.2 s after the load; a third would show up here
 
-      expect(heroRequests).toEqual([file]);
+      expect(heroRequests[0]).toBe(`hero-laboratory-${size}.webp`);
+      expect(heroRequests.length).toBeLessThanOrEqual(2);
+      for (const name of heroRequests) expect(name).toMatch(new RegExp(`-${size}\\.webp$`));
     });
   }
 
@@ -199,7 +203,7 @@ test.describe("what the home page downloads", () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/", { waitUntil: "load" });
 
-    const hero = page.locator("picture img");
+    const hero = page.locator("[data-slide] img").first();
     await expect(hero).toHaveAttribute("loading", "eager");
     await expect(hero).toHaveAttribute("fetchpriority", "high");
     const portrait = page.locator('img[src*="hero4-portrait"]');
