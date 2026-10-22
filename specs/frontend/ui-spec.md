@@ -128,22 +128,19 @@ the old outline with "the problem", "how we verify" and "pricing" are gone: the 
 
 **Rules for the whole page.** Phone first, from 320 px, no sideways scrolling. Blue palette (tokens only) and the system fonts.
 **Red is only for SwiftRescue and emergencies**: on this page it appears once, in the header's SwiftRescue button (which is on every
-page). **No statistics, no testimonials** (the old "No slideshow, no animation" is replaced on 2026-10-22 by the hero photo slider and the gentle fade-in of
-the revision below). Text is 16 px or larger everywhere, "small" lines included.
+page). **No statistics, no testimonials** (the old "No slideshow, no animation" is replaced on 2026-10-22, as a proposal, by the gentle movement of the photos of
+the revision below; the hero stays still). Text is 16 px or larger everywhere, "small" lines included.
 Every photo is a `next/image` (or its `getImageProps` for the hero `<picture>`) with fixed `width` and `height`, `unoptimized`
 (the files are final) and alt text; the hero loads at once and the other photo loads lazily. **No text of the page, and no
 page description, names a city**: the home page does not say where SwiftHealth is live (owner, 2026-10-12). One `h1` (the hero
 heading); each following part has an `h2`.
 
-**Revision of 2026-10-22: hero photo slider and a livelier page** (owner's brief and answers; feature `specs/2026-10-22-home-photos/`, which has the reasons and the photo table). **Where this block and the hero text below disagree, this block wins.**
-- *Photos:* the single `hero3` photo is replaced by a **slider of eight photos** (`public/images/hero/hero-<name>-640.webp` for phones, `-1280.webp` for larger screens; the order, file names, alt texts and dot names are in `src/config/heroPhotos.ts`). Each shows about **6 s**, the fade between two takes **1.5 s** (CSS `opacity` only, no library). `hero3.webp` and `hero3-phone.webp` are deleted; `hero4-portrait.webp` stays in "For facility owners".
-- *Layout:* **under 1024 px** the photos are a **band at the top of the hero** (straight bottom edge, the header's dark veil over its top, a light blue tint over the rest) and the heading, search box and links are **below it on the blue gradient**. **From 1024 px** the photo fills the whole hero and a `pine-dark` overlay (80% under the text on the left, fading to 30% on the right; 5.26:1 for white on a pure white photo) keeps the text at 4.5:1 or better.
-- *Fixed (never part of the slide change):* the `h1`, the line, the **search form** (a plain `GET` form to `/search`, field `q`, a visible label, a 48 px **Search** button), the "Find care near me" link (to `/find`), the small line, and the header. **SwiftRescue stays in the header only.**
-- *Controls:* **Pause/Play** (text button, 48 px, `aria-pressed`) and **dots** (one button per photo, 48 px high, named "Show photo 3 of 8: <short name>", `aria-current` on the shown one), after the text of the hero. A dot shows its photo and restarts the 6 s. The slider **stops while the tab is hidden**.
-- *Reduce motion:* **one still photo, no timer, no fade; Pause and the dots are hidden.**
-- *Credit:* one **fixed** "Designed by Magnific" link to `https://www.magnific.com` (new tab, `rel="noopener noreferrer"`), 16 px, in the lower right corner of the photo, the same on every slide.
-- *Speed:* only the first photo is in the page and loads at once (`fetchpriority="high"`; a phone gets the 640 px file); the others are added one ahead of their turn after the page has loaded.
-- *Below the hero:* a row of three **feature cards** (Find care → `/find`, SwiftRescue → `/emergency`, Find blood → `/blood`), then the parts below; one card style, one spacing rhythm (`py-12`, `md:py-16`); each part below the first screen **fades in** as it scrolls into view (CSS `animation-timeline: view()` in `@supports`, inside `prefers-reduced-motion: no-preference`; no JavaScript, nothing happens in other browsers).
+**Revision of 2026-10-22 (proposal, not built): photos in the sections below the hero** (owner's change of plan; feature `specs/2026-10-22-home-photos/`, which has the reasons, the photo table and the open questions). **The hero is not changed** by this revision: parts 1 and 2 below stay as they are. The hero slider that was first planned was dropped.
+- *Order of the parts:* header, hero, Overview (with the `hero` photo), Why, **How we verify (new: `hero2` and `hero3`)**, Find by type (a row of four photos above the tiles: `clinic`, `pharmacy`, `laboratory`, `maternity`; the tiles stay without photos), **SwiftRescue (new: `ambulance` and `fire`, a blue button to `/emergency`, never red)**, For facility owners (`owner` instead of the `hero4` portrait), footer. An optional slow photo strip above the owners part, only if the owner asks.
+- *Photos:* plain lazy `<img>` with fixed `width`, `height` and `aspect-ratio`, WebP under 50 kB (800 × 533) or 25 kB (480 × 320), honest alt text, below the fold only; nothing is downloaded before the visitor scrolls near it.
+- *Movement:* each photo fades and slides 24 px into place once, when it scrolls into view (CSS `transition` on `opacity` and `transform`, one small `IntersectionObserver` component, no library). Without JavaScript the photos are simply shown. **With reduce motion: no movement at all.** The text of the sections does not move.
+- *Credit:* one "Designed by Magnific" link (16 px, 48 px tap area, new tab) in each section that shows Magnific photos; none in the hero.
+- *Old rule replaced:* "No slideshow, no animation" gives way to the movement above (and the optional strip, with a visible Pause button that also stops when the tab is hidden).
 
 **Parts, top to bottom** (the words below are the exact text):
 1. **Header** — see "Layout" above. On this page it is transparent and sits on top of the hero.
