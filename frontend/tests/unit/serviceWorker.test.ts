@@ -85,6 +85,7 @@ describe("what the worker may keep", () => {
 
   it.each([
     `${ORIGIN}/emergency`,
+    `${ORIGIN}/blood`, // Find blood works offline too (feature blood-offline, N1)
     `${ORIGIN}/_next/static/chunks/main-abc123.js`,
     `${ORIGIN}/_next/static/css/app.css`,
   ])("keeps %s", (address) => {
@@ -101,6 +102,11 @@ describe("what the worker may keep", () => {
     ["https://swifthealth-api.onrender.com/emergency", "the API (another origin)"],
     ["https://swifthealth-api.onrender.com/emergency?lat=6.4&lng=7.5", "the API with a position"],
     [`${ORIGIN}/emergency/other`, "a page under the emergency path"],
+    [`${ORIGIN}/blood/donate`, "Donate blood (not kept, N1)"],
+    [`${ORIGIN}/blood?lat=6.45&lng=7.5`, "Find blood with a position in the address"],
+    [`${ORIGIN}/blood?blood_group=O%2B`, "Find blood with a query"],
+    [`${ORIGIN}/blood/`, "a page under the blood path"],
+    ["https://swifthealth-api.onrender.com/blood/banks?lat=6.4&lng=7.5", "the blood bank answers of the API (another origin)"],
     [`${ORIGIN}/_next/data/build/emergency.json`, "Next's data files"],
     ["not an address", "text that is not an address"],
   ])("never keeps %s (%s)", (address) => {
@@ -134,6 +140,25 @@ describe("the fetch handler", () => {
     const response = await sendRequest(worker, `${ORIGIN}/emergency`, { mode: "navigate" });
 
     expect(await response?.text()).toBe("saved page");
+  });
+
+  it("serves Find blood from the network and keeps a copy, and from the kept copy when the network fails", async () => {
+    const online = loadWorker();
+    const first = await sendRequest(online, `${ORIGIN}/blood`, { mode: "navigate" });
+    expect(await first?.text()).toBe(`network:${ORIGIN}/blood`);
+    expect(online.stores.get("swiftrescue-v1")?.has(`${ORIGIN}/blood`)).toBe(true);
+
+    const offline = loadWorker({ cachedUrls: { [`${ORIGIN}/blood`]: "saved blood page" }, networkWorks: false });
+    const second = await sendRequest(offline, `${ORIGIN}/blood`, { mode: "navigate" });
+    expect(await second?.text()).toBe("saved blood page");
+  });
+
+  it("leaves Donate blood and a Find blood address with a query to the browser", async () => {
+    const worker = loadWorker();
+
+    expect(await sendRequest(worker, `${ORIGIN}/blood/donate`, { mode: "navigate" })).toBeNull();
+    expect(await sendRequest(worker, `${ORIGIN}/blood?lat=6.45&lng=7.5`, { mode: "navigate" })).toBeNull();
+    expect(worker.fetchCalls).toEqual([]);
   });
 
   it("with no network and nothing kept, lets the failure through", async () => {
@@ -182,6 +207,8 @@ describe("the message from the page: keep what you loaded on the first visit", (
         type: "keep-urls",
         urls: [
           `${ORIGIN}/emergency`,
+          `${ORIGIN}/blood`,
+          `${ORIGIN}/blood/donate`,
           `${ORIGIN}/_next/static/chunks/main-abc123.js`,
           "https://swifthealth-api.onrender.com/emergency?lat=6.4&lng=7.5",
           `${ORIGIN}/search?lat=6.4&lng=7.5`,
@@ -194,6 +221,7 @@ describe("the message from the page: keep what you loaded on the first visit", (
 
     expect([...(worker.stores.get("swiftrescue-v1")?.keys() ?? [])].sort()).toEqual([
       `${ORIGIN}/_next/static/chunks/main-abc123.js`,
+      `${ORIGIN}/blood`,
       `${ORIGIN}/emergency`,
     ]);
   });

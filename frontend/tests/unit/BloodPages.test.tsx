@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import DonateBloodPage from "@/app/(public)/blood/donate/page";
 import BloodPage from "@/app/(public)/blood/page";
 import { DONOR_GUIDANCE } from "@/config/donorGuidance";
+import { BLOOD_COPY_KEY, readBloodCopy, saveBloodCopy } from "@/lib/blood/offlineCopy";
 import { savePosition } from "@/lib/location/locationStore";
 
 import { json, neverAnswers, stubGeolocation } from "../helpers/api";
@@ -144,7 +145,10 @@ describe("Find blood", () => {
 
     const card = await screen.findByRole("article");
 
-    expect(Object.fromEntries(banks().at(-1)?.searchParams ?? [])).toMatchObject({ lat: "6.452", lng: "7.51" });
+    // The list on screen asks with the position, once (the copy for offline use is a separate quiet request without it).
+    const withPosition = banks().filter((request) => request.searchParams.has("lat"));
+    expect(withPosition).toHaveLength(1);
+    expect(Object.fromEntries(withPosition[0].searchParams)).toMatchObject({ lat: "6.452", lng: "7.51" });
     expect(card).toHaveTextContent("Blood bank · Ogui · 1.4 km");
     expect(screen.getByText("1 blood bank, nearest first")).toBeInTheDocument();
     expect(window.location.search).toBe(""); // never in the address
@@ -321,6 +325,278 @@ describe("Donate blood", () => {
     await userEvent.click(screen.getByRole("button", { name: "Load more" }));
 
     await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(22));
+  });
+});
+
+const NETWORK_DOWN: Handler = () => {
+  throw new TypeError("Failed to fetch");
+};
+const SAVED_AT = new Date("2026-10-22T10:00:00Z");
+const OFFLINE_NOTICE = "Offline — showing saved blood banks from 22 Oct 2026";
+
+function savedBanks() {
+  saveBloodCopy(
+    [
+      bloodBank({ id: 28, slug: "central", name: "Demo Blood Bank Central", blood_groups: ["A+", "O+"] }),
+      bloodBank({ id: 29, slug: "north", name: "Demo Blood Bank North", area: "Abakpa Nike", blood_groups: ["B+", "O-"], primary_phone: "+2340000000029" }),
+    ],
+    SAVED_AT,
+  );
+}
+
+describe("saving the list for offline use (decision N2)", () => {
+  it("saves the list that loaded with no position and no group, from that same answer, with no extra request", async () => {
+    const { banks } = stubBlood({ banks: () => json({ items: [bloodBank()], total: 1 }) });
+    render(<BloodPage />);
+
+    await screen.findByRole("article");
+
+    expect(banks()).toHaveLength(1);
+    expect(readBloodCopy()?.banks.map((bank) => bank.name)).toEqual(["Demo Blood Bank Central"]);
+  });
+
+  it("with a position asks once more, quietly, with no position and no group and the most banks, and saves that: no distance in it", async () => {
+    savePosition({ latitude: 6.432, longitude: 7.499 }); // not the place of the blood bank, so a leak of the position would show
+    const { banks } = stubBlood({
+      banks: (parameters) => json({ items: [bloodBank({ distance_km: parameters.has("lat") ? 1.4 : null })], total: 1 }),
+    });
+    render(<BloodPage />);
+
+    await screen.findByRole("article");
+    await waitFor(() => expect(readBloodCopy()).not.toBeNull());
+
+    const [shown, quiet] = banks();
+    expect(shown.searchParams.get("lat")).toBe("6.432");
+    expect(quiet.searchParams.has("lat")).toBe(false);
+    expect(quiet.searchParams.has("lng")).toBe(false);
+    expect(quiet.searchParams.has("blood_group")).toBe(false);
+    expect(quiet.searchParams.get("limit")).toBe("100");
+    const stored = window.localStorage.getItem(BLOOD_COPY_KEY) ?? "";
+    expect(stored).not.toContain("distance_km");
+    expect(stored).not.toContain("6.432");
+    expect(stored).not.toContain("7.499");
+    expect(window.location.search).toBe(""); // and the position is still in no address
+  });
+
+  it("makes the copy once per visit: choosing a group afterwards asks for the list only", async () => {
+    const { banks } = stubBlood({ banks: () => json({ items: [bloodBank()], total: 1 }) });
+    render(<BloodPage />);
+    await screen.findByRole("article");
+    expect(banks()).toHaveLength(1);
+
+    await userEvent.click(screen.getByRole("button", { name: "O+" }));
+    await waitFor(() => expect(banks()).toHaveLength(2));
+    await userEvent.click(screen.getByRole("button", { name: "Any" }));
+    await waitFor(() => expect(banks()).toHaveLength(3));
+
+    // 3 = the first list, the O+ list, the Any list again: no extra request for the copy, it was saved the first time.
+    expect(banks().every((request) => request.searchParams.get("limit") === "20")).toBe(true);
+  });
+
+  it("saves nothing when the list is empty, so a good copy is not lost", async () => {
+    savedBanks();
+    stubBlood({ banks: () => json({ items: [], total: 0 }) });
+    render(<BloodPage />);
+
+    await screen.findByText("No blood banks found. In an emergency, call 112.");
+
+    expect(readBloodCopy()?.banks).toHaveLength(2);
+  });
+
+  it("saves nothing when the request fails", async () => {
+    stubBlood({ banks: () => json({ detail: "x" }, 500) });
+    render(<BloodPage />);
+
+    await screen.findByRole("button", { name: "Retry" });
+
+    expect(readBloodCopy()).toBeNull();
+  });
+});
+
+describe("Find blood with no network (decisions N3 to N5)", () => {
+  it("shows the saved banks under the notice with the date, and the Call link of each", async () => {
+    savedBanks();
+    stubBlood({ banks: NETWORK_DOWN });
+    render(<BloodPage />);
+
+    const notice = await screen.findByText(OFFLINE_NOTICE);
+
+    expect(notice.closest("[role=status]")).not.toBeNull();
+    const cards = screen.getAllByRole("article");
+    expect(cards.map((card) => within(card).getByRole("heading", { level: 3 }).textContent)).toEqual([
+      "Demo Blood Bank Central",
+      "Demo Blood Bank North",
+    ]);
+    expect(within(cards[1]).getByRole("link", { name: /^Call/ })).toHaveAttribute("href", "tel:+2340000000029");
+    expect(within(cards[1]).getByRole("list", { name: "Blood groups" }).textContent).toBe("B+O-");
+    expect(cards[0]).toHaveTextContent("Confirmed 1 Oct 2026");
+    expect(cards[0]).toHaveTextContent("Stock changes daily; call to confirm before you go.");
+    expect(screen.getByText("2 saved blood banks, A to Z")).toBeInTheDocument();
+  });
+
+  it("puts the notice directly under the group chips, before the first bank, in 16 px text", async () => {
+    savedBanks();
+    stubBlood({ banks: NETWORK_DOWN });
+    render(<BloodPage />);
+
+    const notice = await screen.findByText(OFFLINE_NOTICE);
+    const chips = screen.getByRole("group", { name: "Blood group" });
+    const first = screen.getAllByRole("article")[0];
+
+    expect(chips.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(notice.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(notice.className).toMatch(/\btext-base\b/);
+    expect(notice.className).not.toMatch(/text-(xs|sm)\b/);
+  });
+
+  it("leaves out what needs the network: near me, distances, Load more, Report a problem, and the open or closed badge", async () => {
+    savedBanks();
+    stubBlood({ banks: NETWORK_DOWN });
+    const { container } = render(<BloodPage />);
+
+    await screen.findByText(OFFLINE_NOTICE);
+
+    expect(screen.queryByRole("button", { name: "Show blood banks near me" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Load more" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Report a problem/ })).toBeNull();
+    expect(container.textContent).not.toMatch(/\bkm\b|Open now|Closed|Closes/);
+  });
+
+  it("keeps the two tab links, and Directions as a link", async () => {
+    savedBanks();
+    stubBlood({ banks: NETWORK_DOWN });
+    render(<BloodPage />);
+
+    await screen.findByText(OFFLINE_NOTICE);
+
+    expect(within(screen.getByRole("navigation", { name: "Blood" })).getAllByRole("link")).toHaveLength(2);
+    expect(within(screen.getAllByRole("article")[0]).getByRole("link", { name: /^Directions/ })).toBeInTheDocument();
+  });
+
+  it("filters the saved list with the group chips, and says so when no saved bank lists the group", async () => {
+    savedBanks();
+    stubBlood({ banks: NETWORK_DOWN });
+    render(<BloodPage />);
+    await screen.findByText(OFFLINE_NOTICE);
+
+    await userEvent.click(screen.getByRole("button", { name: "O-" }));
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(screen.getByRole("heading", { level: 3 })).toHaveTextContent("Demo Blood Bank North");
+    expect(screen.getByRole("button", { name: "O-" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("1 saved blood bank, A to Z")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "AB+" }));
+    expect(screen.queryByRole("article")).toBeNull();
+    expect(screen.getByText("No saved blood bank lists AB+. Connect to see the latest list. In an emergency, call 112.")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Any" }));
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+    expect(screen.getByText(OFFLINE_NOTICE)).toBeInTheDocument(); // still offline
+  });
+
+  it("does not ask the browser for the position or ask the network again for the chips", async () => {
+    savedBanks();
+    const { banks } = stubBlood({ banks: NETWORK_DOWN });
+    render(<BloodPage />);
+    await screen.findByText(OFFLINE_NOTICE);
+    const asked = banks().length;
+
+    await userEvent.click(screen.getByRole("button", { name: "O+" }));
+
+    expect(banks()).toHaveLength(asked); // the chips work on the saved list
+  });
+
+  it("shows the saved banks after a timeout too (a network that never answers)", async () => {
+    savedBanks();
+    vi.useFakeTimers();
+    stubBlood({ banks: neverAnswers });
+    render(<BloodPage />);
+
+    await act(async () => {
+      vi.advanceTimersByTime(45_000);
+    });
+
+    expect(screen.getByText(OFFLINE_NOTICE)).toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+  });
+
+  it("shows the standard error with Retry, not old data, when the API answers with an error (decision N5)", async () => {
+    savedBanks();
+    stubBlood({ banks: () => json({ detail: "x" }, 500) });
+    render(<BloodPage />);
+
+    expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByText(OFFLINE_NOTICE)).toBeNull();
+    expect(screen.queryByRole("article")).toBeNull();
+  });
+
+  it("shows the standard error with Retry when there is no network and no saved copy", async () => {
+    stubBlood({ banks: NETWORK_DOWN });
+    render(<BloodPage />);
+
+    expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByText(/Offline/)).toBeNull();
+  });
+
+  it("shows the standard error when the saved copy is damaged", async () => {
+    window.localStorage.setItem(BLOOD_COPY_KEY, "{not json");
+    stubBlood({ banks: NETWORK_DOWN });
+    render(<BloodPage />);
+
+    expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
+  it("has a 'Try again' button of 48 px, and the live list comes back when the network is back", async () => {
+    savedBanks();
+    let attempts = 0;
+    stubBlood({ banks: () => (++attempts === 1 ? NETWORK_DOWN(new URLSearchParams()) : json({ items: [bloodBank({ name: "Fresh Blood Bank" })], total: 1 })) });
+    render(<BloodPage />);
+    await screen.findByText(OFFLINE_NOTICE);
+    const tryAgain = screen.getByRole("button", { name: "Try again" });
+    expect(tryAgain.className).toMatch(/min-h-\[50px\]|min-h-12/);
+
+    await userEvent.click(tryAgain);
+
+    await waitFor(() => expect(screen.queryByText(OFFLINE_NOTICE)).toBeNull());
+    expect(await screen.findByRole("heading", { level: 3, name: "Fresh Blood Bank" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  it("stays offline, with the notice, when Try again finds the network still down", async () => {
+    savedBanks();
+    stubBlood({ banks: NETWORK_DOWN });
+    render(<BloodPage />);
+    await screen.findByText(OFFLINE_NOTICE);
+
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByText(OFFLINE_NOTICE)).toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+  });
+
+  it("does not show the offline notice when the network works", async () => {
+    savedBanks();
+    stubBlood({ banks: () => json({ items: [bloodBank()], total: 1 }) });
+    render(<BloodPage />);
+
+    await screen.findByRole("article");
+
+    expect(screen.queryByText(/Offline/)).toBeNull();
+  });
+
+  it("never shows 'Sponsored', and Donate blood has no offline mode (decision N1)", async () => {
+    savedBanks();
+    stubBlood({ banks: NETWORK_DOWN, centres: NETWORK_DOWN });
+    const { container, unmount } = render(<BloodPage />);
+    await screen.findByText(OFFLINE_NOTICE);
+    expect(container.textContent).not.toContain("Sponsored");
+    unmount();
+
+    render(<DonateBloodPage />);
+
+    expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByText(/Offline/)).toBeNull();
   });
 });
 

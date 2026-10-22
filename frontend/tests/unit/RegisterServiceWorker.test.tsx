@@ -7,7 +7,7 @@ import { render, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import EmergencyPage from "@/app/(public)/emergency/page";
-import { RegisterServiceWorker } from "@/components/emergency/RegisterServiceWorker";
+import { RegisterServiceWorker } from "@/components/offline/RegisterServiceWorker";
 
 import { stubApi } from "../helpers/api";
 import { readSource } from "../helpers/source";
@@ -85,8 +85,26 @@ describe("RegisterServiceWorker", () => {
     stubApi({});
 
     expect(readSource("app/(public)/emergency/page.tsx")).toMatch(/RegisterServiceWorker/);
-    expect(readSource("components/emergency/RegisterServiceWorker.tsx")).toMatch(/["']use client["']/);
+    expect(readSource("components/offline/RegisterServiceWorker.tsx")).toMatch(/["']use client["']/);
     render(<EmergencyPage />); // renders without a service worker
+  });
+
+  it("tells the worker the address of the page it is on: /blood on Find blood", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const { postMessage } = stubServiceWorker();
+    vi.spyOn(performance, "getEntriesByType").mockReturnValue([] as unknown as PerformanceEntryList);
+
+    render(<RegisterServiceWorker pagePath="/blood" />);
+
+    await waitFor(() => expect(postMessage).toHaveBeenCalledTimes(1));
+    const message = postMessage.mock.calls[0][0] as { urls: string[] };
+    expect(message.urls).toContain(`${window.location.origin}/blood`);
+    expect(message.urls).not.toContain(`${window.location.origin}/emergency`);
+  });
+
+  it("is on the Find blood page too, and only on pages that can be kept", () => {
+    expect(readSource("app/(public)/blood/page.tsx")).toMatch(/<RegisterServiceWorker pagePath="\/blood" \/>/);
+    expect(readSource("app/(public)/blood/donate/page.tsx")).not.toMatch(/RegisterServiceWorker/); // N1: Donate blood is not kept
   });
 });
 
