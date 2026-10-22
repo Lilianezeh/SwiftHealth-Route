@@ -76,6 +76,7 @@ describe("the one Directions button, in every place", () => {
     expect(users.sort()).toEqual(
       [
         "/src/components/blood/BloodCardParts.tsx", // the blood bank and donation centre cards
+        "/src/components/blood/SavedBloodBankCard.tsx", // the saved blood bank card, shown offline
         "/src/components/listing/ContactButtons.tsx", // the listing page
         "/src/components/listings/ListingCard.tsx", // the result cards
         "/src/components/search/MapPopup.tsx", // the map popups

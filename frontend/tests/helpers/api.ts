@@ -108,7 +108,21 @@ export function manyListings(count: number, firstId = 1): ListingSummary[] {
   });
 }
 
-/** The answer of GET /emergency (api-spec): the seven groups in order, two with a contact. (No pharmacy list: FR-25 was removed on 2026-10-22.) */
+/** An older API's answer: the same as `emergencyResponse` plus the "Blood banks" group (with one blood bank) that the API sent until
+ * 2026-10-22, and the pharmacy list it sent until then. The page, the saved copy and the shared list must ignore both. */
+export function oldEmergencyResponse(): EmergencyResponse {
+  const answer = emergencyResponse();
+  answer.groups.push({
+    category: { slug: "blood-bank", name: "Blood banks" },
+    contacts: [
+      listing({ id: 301, slug: "demo-blood-bank", name: "Demo Blood Bank", category: { slug: "blood-bank", name: "Blood bank" }, primary_phone: "+2340000000301" }),
+    ],
+  });
+  return { ...answer, pharmacies_24h: [listing({ id: 201, name: "Demo Night Pharmacy" })] } as EmergencyResponse;
+}
+
+/** The answer of GET /emergency (api-spec): the six groups in order, two with a contact. (No pharmacy list since FR-25 was removed and no
+ * blood bank group: both on 2026-10-22.) */
 export function emergencyResponse(overrides: Partial<EmergencyResponse> = {}): EmergencyResponse {
   const contact = (id: number, name: string, categorySlug: string, categoryName: string, phone: string | null) =>
     listing({
@@ -117,7 +131,7 @@ export function emergencyResponse(overrides: Partial<EmergencyResponse> = {}): E
     });
   const groupNames: [string, string][] = [
     ["ambulance", "Ambulance"], ["fire", "Fire"], ["police", "Police"], ["emergency-unit", "24-hour emergency units"],
-    ["roadside-assistance", "Roadside assistance"], ["security", "Security"], ["blood-bank", "Blood banks"],
+    ["roadside-assistance", "Roadside assistance"], ["security", "Security"],
   ];
   const contacts: Record<string, ListingSummary[]> = {
     ambulance: [contact(101, "Demo Ambulance One", "ambulance", "Ambulance", "+2340000000101")],
