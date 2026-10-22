@@ -5,6 +5,8 @@ how we know it is done is in [validation.md](validation.md). Branch: `feature/sw
 without waiting for the owner between phases (the owner's instruction of 2026-10-17); every decision I had to make alone is
 listed in "Assumed owner decisions" so the owner can overrule it.
 
+> **Changed on 2026-10-22 (owner):** the groups, their headings, which ones are always shown, and three new groups are now in `specs/2026-10-22-swiftrescue-groups/` (FR-15). Where this file lists seven groups, that feature wins.
+
 ## Requirements
 
 [prd.md](../prd.md): **US-04** (emergency button on every page, already done), **US-09** (share the list on WhatsApp), **US-14**
