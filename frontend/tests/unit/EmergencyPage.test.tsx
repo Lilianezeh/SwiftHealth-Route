@@ -105,9 +105,9 @@ describe("the contacts", () => {
 
     const headings = screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent);
     expect(headings.indexOf("Ambulance")).toBeLessThan(headings.indexOf("Police"));
-    expect(headings).not.toContain("Blood banks"); // an empty group other than Ambulance and Fire stays hidden
-    expect(headings).not.toContain("Security");
-    expect(headings).not.toContain("Roadside assistance");
+    expect(headings).not.toContain("Blood banks"); // there is no blood bank group
+    expect(headings).not.toContain("Security"); // an empty group that is not one of the five always shown stays hidden
+    expect(headings).not.toContain("Disaster and flooding");
   });
 
   it("shows for each contact its name as a link to the listing, its area, the verified date and a Call button", async () => {
@@ -189,13 +189,14 @@ function groupHeadings(): string[] {
   return headings.slice(headings.indexOf("Ambulance"));
 }
 
-describe("Ambulance and Fire are always shown, first, even when empty (decision K1)", () => {
+// K1 was Ambulance and Fire; since 2026-10-22 five groups are always shown (specs/2026-10-22-swiftrescue-groups/, tested in EmergencyGroupsList.test.tsx).
+describe("Ambulance and Fire service are always shown, first, even when empty (decision K1)", () => {
   it("shows both headings with 'No contacts added yet. In danger, call 112.' when both are empty", async () => {
     stubApi({ emergency: () => json(emptyResponse(["police"])) });
     render(<EmergencyPage />);
 
     const ambulance = await screen.findByRole("heading", { level: 2, name: "Ambulance" });
-    const fire = screen.getByRole("heading", { level: 2, name: "Fire" });
+    const fire = screen.getByRole("heading", { level: 2, name: "Fire service" });
 
     for (const heading of [ambulance, fire]) {
       const section = heading.closest("section") as HTMLElement;
@@ -212,9 +213,11 @@ describe("Ambulance and Fire are always shown, first, even when empty (decision 
     stubApi({ emergency: () => json(response) });
     render(<EmergencyPage />);
 
-    await screen.findByRole("heading", { level: 2, name: "Fire" });
+    await screen.findByRole("heading", { level: 2, name: "Fire service" });
 
-    expect(groupHeadings().slice(0, 4)).toEqual(["Ambulance", "Fire", "Police", "Security"]);
+    expect(groupHeadings()).toEqual([
+      "Ambulance", "Fire service", "Police", "Hospital emergency (24 hours)", "Road accidents", "Security",
+    ]);
   });
 
   it("shows the contacts of a group that has some, and not the empty text", async () => {
@@ -222,7 +225,7 @@ describe("Ambulance and Fire are always shown, first, even when empty (decision 
     render(<EmergencyPage />);
 
     const ambulance = (await screen.findByRole("heading", { level: 2, name: "Ambulance" })).closest("section") as HTMLElement;
-    const fire = screen.getByRole("heading", { level: 2, name: "Fire" }).closest("section") as HTMLElement;
+    const fire = screen.getByRole("heading", { level: 2, name: "Fire service" }).closest("section") as HTMLElement;
 
     expect(within(ambulance).getAllByRole("article")).toHaveLength(1);
     expect(within(ambulance).queryByText(EMPTY_TEXT)).toBeNull();
@@ -236,11 +239,11 @@ describe("Ambulance and Fire are always shown, first, even when empty (decision 
     await screen.findByRole("heading", { level: 2, name: "Ambulance" });
 
     const headings = screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent);
-    expect(headings).toEqual(expect.arrayContaining(["Ambulance", "Fire"]));
-    for (const hidden of ["Police", "24-hour emergency units", "Roadside assistance", "Security", "Blood banks"]) {
+    expect(headings).toEqual(expect.arrayContaining(["Ambulance", "Fire service"]));
+    for (const hidden of ["Security", "Disaster and flooding", "Sexual and gender-based violence support", "Blood banks"]) {
       expect(headings).not.toContain(hidden);
     }
-    expect(screen.getAllByText(EMPTY_TEXT)).toHaveLength(2);
+    expect(screen.getAllByText(EMPTY_TEXT)).toHaveLength(5);
   });
 
   it("still draws both when an old saved answer lacks them", async () => {
@@ -251,8 +254,8 @@ describe("Ambulance and Fire are always shown, first, even when empty (decision 
 
     await screen.findByRole("heading", { level: 2, name: "Ambulance" });
 
-    expect(groupHeadings().slice(0, 2)).toEqual(["Ambulance", "Fire"]);
-    expect(screen.getAllByText(EMPTY_TEXT)).toHaveLength(2);
+    expect(groupHeadings().slice(0, 2)).toEqual(["Ambulance", "Fire service"]);
+    expect(screen.getAllByText(EMPTY_TEXT)).toHaveLength(4); // the two it lacks, and Hospital emergency and Road accidents (Police has a contact)
   });
 
   it("keeps the 'still adding' sentence above the two empty groups when everything is empty (decision K2)", async () => {
@@ -264,7 +267,7 @@ describe("Ambulance and Fire are always shown, first, even when empty (decision 
     const ambulance = screen.getByRole("heading", { level: 2, name: "Ambulance" });
 
     expect(sentence.compareDocumentPosition(ambulance) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getAllByText(EMPTY_TEXT)).toHaveLength(2);
+    expect(screen.getAllByText(EMPTY_TEXT)).toHaveLength(5);
   });
 
   it("shows the empty text in 16 px text, not smaller, and 112 stays the first thing after the heading", async () => {

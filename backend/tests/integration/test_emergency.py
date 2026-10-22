@@ -21,7 +21,14 @@ TUESDAY_10_00_IN_LAGOS = datetime(2026, 10, 6, 9, 0, tzinfo=timezone.utc)
 MY_LATITUDE, MY_LONGITUDE = 6.4500, 7.5080
 GROUP_SLUGS = [
     "ambulance", "fire", "police", "emergency-unit", "roadside-assistance", "security",
-]  # no blood-bank group since 2026-10-22: blood banks are listed only by /blood (decision M1)
+    "disaster-flooding", "gbv-support", "mental-health-crisis",
+]
+# No blood-bank group since 2026-10-22: blood banks are listed only by /blood (decision M1).
+# The last three groups: specs/2026-10-22-swiftrescue-groups/.
+GROUP_HEADINGS = [
+    "Ambulance", "Fire service", "Police", "Hospital emergency (24 hours)", "Road accidents", "Security",
+    "Disaster and flooding", "Sexual and gender-based violence support", "Mental health crisis support",
+]
 DISCLAIMER = (
     "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency "
     "response. In danger, call 112."
@@ -60,15 +67,43 @@ async def test_emergency_needs_no_login_and_112_is_there_with_an_empty_database(
     assert body["disclaimer"] == DISCLAIMER  # FR-26
 
 
-async def test_all_six_groups_are_returned_in_the_fixed_order_even_when_empty(
+async def test_all_nine_groups_are_returned_in_the_fixed_order_with_the_new_headings_even_when_empty(
     client: AsyncClient, clock: None
 ) -> None:
     body = await get_emergency(client)
     assert [entry["category"]["slug"] for entry in body["groups"]] == GROUP_SLUGS  # FR-15, decision A1
-    assert [entry["category"]["name"] for entry in body["groups"]] == [
-        "Ambulance", "Fire", "Police", "24-hour emergency units", "Roadside assistance", "Security",
-    ]
+    assert [entry["category"]["name"] for entry in body["groups"]] == GROUP_HEADINGS
     assert all(entry["contacts"] == [] for entry in body["groups"])
+
+
+async def test_a_published_contact_in_each_of_the_nine_categories_is_in_its_own_group(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    # The contacts exist only in this test's own database; the seed and the migration add none
+    # (owner, 2026-10-22).
+    for position, slug in enumerate(GROUP_SLUGS):
+        await add_listing(session, f"Test Contact {position}", category_slug=slug, area="Ogui")
+
+    body = await get_emergency(client)
+
+    for position, slug in enumerate(GROUP_SLUGS):
+        assert contact_names(body, slug) == [f"Test Contact {position}"], slug
+
+
+async def test_a_draft_contact_in_a_new_group_is_left_out(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    await add_listing(
+        session, "Draft Flood Desk", category_slug="disaster-flooding", status=ListingStatus.draft
+    )
+    await add_listing(
+        session, "Hidden Support Line", category_slug="gbv-support", status=ListingStatus.hidden
+    )
+
+    body = await get_emergency(client)
+
+    assert contact_names(body, "disaster-flooding") == []
+    assert contact_names(body, "gbv-support") == []
 
 
 async def test_a_blood_bank_is_nowhere_in_the_answer_it_is_listed_by_blood_banks_only(

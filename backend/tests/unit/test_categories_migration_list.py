@@ -11,19 +11,35 @@ from alembic.config import Config
 from alembic.script import ScriptDirectory
 
 from seed.seed_data import CATEGORIES
-from tests.revision_loader import BACKEND_FOLDER, load_revision, revision_file
+from tests.revision_loader import (
+    BACKEND_FOLDER,
+    SWIFTRESCUE_GROUPS_REVISION_FILE_PATTERN,
+    load_revision,
+    revision_file,
+)
 
 LAST_REVISION_BEFORE_THIS_ONE = "82a902495666"
 
 
-def test_migration_list_equals_the_seed_categories() -> None:
-    migration_rows = [tuple(row) for row in load_revision().CATEGORIES]
+def test_migration_list_plus_the_later_revision_equals_the_seed_categories() -> None:
+    # This old revision keeps its own 12 rows with the names of its day. The SwiftRescue groups revision
+    # (2026-10-22) then renames three and appends three, so the seed must equal: the old rows, with
+    # those renames, followed by the new rows.
+    later = load_revision(SWIFTRESCUE_GROUPS_REVISION_FILE_PATTERN)
+    new_names = {slug: new_name for slug, _old, new_name in later.RENAMES}
+    migrated_rows = [
+        (slug, new_names.get(slug, name), emergency, days)
+        for slug, name, emergency, days in load_revision().CATEGORIES
+    ]
+    migrated_rows += [
+        (slug, name, emergency, days) for name, slug, emergency, days in later.NEW_CATEGORIES
+    ]
     seed_rows = [
         (category.slug, category.name, category.is_emergency, category.recheck_days)
         for category in CATEGORIES
     ]
 
-    assert migration_rows == seed_rows  # same rows, same order (the order decides the ids in a new database)
+    assert migrated_rows == seed_rows  # same rows, same order (the order decides the ids in a new database)
 
 
 def test_migration_has_twelve_different_slugs() -> None:

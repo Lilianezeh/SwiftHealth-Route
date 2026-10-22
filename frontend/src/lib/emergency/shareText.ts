@@ -4,7 +4,7 @@
  * The list text holds names and numbers only: no distance and no position. The location message holds the exact position the
  * visitor chose to send; it goes to the app they pick and is never stored or sent to our API.
  */
-import { usedGroups } from "@/lib/emergency/groups";
+import { groupsInOrder } from "@/lib/emergency/groups";
 import { formatPhoneForReading } from "@/lib/formatters/phone";
 import type { EmergencyResponse } from "@/types/api";
 
@@ -14,7 +14,7 @@ const CLOSING_LINE = "In danger, call 112.";
 /** A plain-text list: 112 first, then each group that has a contact with a number, then the page address. */
 export function buildEmergencyListText(response: EmergencyResponse | null, pageAddress: string): string {
   const lines = [TITLE, "National emergency number: 112"];
-  for (const group of usedGroups(response?.groups ?? [])) {
+  for (const group of groupsInOrder(response?.groups ?? [])) {
     const contacts = group.contacts.filter((contact) => contact.primary_phone !== null);
     if (contacts.length === 0) continue;
     lines.push("", group.category.name);

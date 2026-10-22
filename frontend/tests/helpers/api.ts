@@ -16,12 +16,15 @@ export const META: MetaResponse = {
     { slug: "hospital", name: "Hospital", is_emergency: false },
     { slug: "maternity", name: "Maternity", is_emergency: false },
     { slug: "ambulance", name: "Ambulance", is_emergency: true },
-    { slug: "fire", name: "Fire", is_emergency: true },
+    { slug: "fire", name: "Fire service", is_emergency: true },
     { slug: "police", name: "Police", is_emergency: true },
-    { slug: "emergency-unit", name: "24-hour emergency unit", is_emergency: true },
-    { slug: "roadside-assistance", name: "Roadside assistance", is_emergency: true },
+    { slug: "emergency-unit", name: "Hospital emergency (24 hours)", is_emergency: true },
+    { slug: "roadside-assistance", name: "Road accidents", is_emergency: true },
     { slug: "security", name: "Security", is_emergency: true },
     { slug: "blood-bank", name: "Blood bank", is_emergency: true },
+    { slug: "disaster-flooding", name: "Disaster and flooding", is_emergency: true },
+    { slug: "gbv-support", name: "Sexual and gender-based violence support", is_emergency: true },
+    { slug: "mental-health-crisis", name: "Mental health crisis support", is_emergency: true },
   ],
   services: ["Consultation", "X-ray"],
   blood_groups: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
@@ -121,7 +124,24 @@ export function oldEmergencyResponse(): EmergencyResponse {
   return { ...answer, pharmacies_24h: [listing({ id: 201, name: "Demo Night Pharmacy" })] } as EmergencyResponse;
 }
 
-/** The answer of GET /emergency (api-spec): the six groups in order, two with a contact. (No pharmacy list since FR-25 was removed and no
+/** The answer of GET /emergency before the groups change of 2026-10-22 (and the saved copy of that time): six groups with the old headings,
+ * three of them with a contact. The page must show the new headings for it, from the slugs (specs/2026-10-22-swiftrescue-groups/). */
+export function emergencyResponseWithOldHeadings(): EmergencyResponse {
+  const answer = emergencyResponse();
+  const oldHeadings: Record<string, string> = {
+    fire: "Fire", "emergency-unit": "24-hour emergency units", "roadside-assistance": "Roadside assistance",
+  };
+  answer.groups = answer.groups
+    .filter((group) => !["disaster-flooding", "gbv-support", "mental-health-crisis"].includes(group.category.slug))
+    .map((group) => ({ ...group, category: { ...group.category, name: oldHeadings[group.category.slug] ?? group.category.name } }));
+  const emergencyUnit = answer.groups.find((group) => group.category.slug === "emergency-unit");
+  emergencyUnit?.contacts.push(
+    listing({ id: 103, slug: "contact-103", name: "Demo Trauma Unit", category: { slug: "emergency-unit", name: "24-hour emergency unit" }, primary_phone: "+2340000000103" }),
+  );
+  return answer;
+}
+
+/** The answer of GET /emergency (api-spec): the nine groups in order, two with a contact. (No pharmacy list since FR-25 was removed and no
  * blood bank group: both on 2026-10-22.) */
 export function emergencyResponse(overrides: Partial<EmergencyResponse> = {}): EmergencyResponse {
   const contact = (id: number, name: string, categorySlug: string, categoryName: string, phone: string | null) =>
@@ -130,8 +150,9 @@ export function emergencyResponse(overrides: Partial<EmergencyResponse> = {}): E
       is_24_hours: true, hours_note: null, distance_km: null,
     });
   const groupNames: [string, string][] = [
-    ["ambulance", "Ambulance"], ["fire", "Fire"], ["police", "Police"], ["emergency-unit", "24-hour emergency units"],
-    ["roadside-assistance", "Roadside assistance"], ["security", "Security"],
+    ["ambulance", "Ambulance"], ["fire", "Fire service"], ["police", "Police"], ["emergency-unit", "Hospital emergency (24 hours)"],
+    ["roadside-assistance", "Road accidents"], ["security", "Security"], ["disaster-flooding", "Disaster and flooding"],
+    ["gbv-support", "Sexual and gender-based violence support"], ["mental-health-crisis", "Mental health crisis support"],
   ];
   const contacts: Record<string, ListingSummary[]> = {
     ambulance: [contact(101, "Demo Ambulance One", "ambulance", "Ambulance", "+2340000000101")],

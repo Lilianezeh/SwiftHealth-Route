@@ -1,45 +1,26 @@
 /** The emergency contacts in their groups, and a link to the blood pages after them. Requirements: FR-15, FR-16, FR-19, NFR-10.
  * UI spec 2.5, points 5 and 6; decisions K1 to K3 and K6 in specs/2026-10-22-swiftrescue-order/requirements.md (no pharmacies here:
  * FR-25 was removed on 2026-10-22).
- * Ambulance and Fire are always drawn first, even with no contact, and then say "No contacts added yet. In danger, call 112." Every
- * other group is not drawn when it has no contact. Every card gets `sponsored: false` here, so the page can never show a sponsored tag
- * (FR-19), whatever an answer holds.
+ * Ambulance, Fire service, Police, Hospital emergency (24 hours) and Road accidents are always drawn first, even with no contact, and then
+ * say "No contacts added yet. In danger, call 112." Every other group (Security and the three of 2026-10-22) is not drawn when it has no
+ * contact. The groups, their headings and their order are in lib/emergency/groups.ts (specs/2026-10-22-swiftrescue-groups/). Every card
+ * gets `sponsored: false` here, so the page can never show a sponsored tag (FR-19), whatever an answer holds.
  */
 import { BloodLinkCard } from "@/components/emergency/BloodLinkCard";
 import { EmergencyContactCard } from "@/components/emergency/EmergencyContactCard";
-import { usedGroups } from "@/lib/emergency/groups";
-import type { EmergencyGroup, EmergencyResponse, ListingSummary } from "@/types/api";
+import { groupsToDraw, usedGroups } from "@/lib/emergency/groups";
+import type { EmergencyResponse, ListingSummary } from "@/types/api";
 
 type EmergencyGroupsProps = { response: EmergencyResponse; now?: Date };
 
-// Always shown, first, in this order. The names are the page's own, for an answer (an old saved copy) that lacks the group.
-const ALWAYS_SHOWN = [
-  { slug: "ambulance", name: "Ambulance" },
-  { slug: "fire", name: "Fire" },
-] as const;
 const NO_CONTACTS = "No contacts added yet. In danger, call 112.";
 
 function neverSponsored(listing: ListingSummary): ListingSummary {
   return { ...listing, sponsored: false };
 }
 
-/** Ambulance and Fire first (empty or not), then the other groups that have a contact, in the order of the answer. */
-function groupsToDraw(response: EmergencyResponse): EmergencyGroup[] {
-  const alwaysSlugs: string[] = ALWAYS_SHOWN.map((group) => group.slug);
-  const answered = usedGroups(response.groups);
-  const first = ALWAYS_SHOWN.map(
-    (always) =>
-      answered.find((group) => group.category.slug === always.slug) ?? {
-        category: { slug: always.slug, name: always.name },
-        contacts: [],
-      },
-  );
-  const others = answered.filter((group) => !alwaysSlugs.includes(group.category.slug) && group.contacts.length > 0);
-  return [...first, ...others];
-}
-
 export function EmergencyGroups({ response, now }: EmergencyGroupsProps) {
-  const groups = groupsToDraw(response);
+  const groups = groupsToDraw(response.groups);
   const nothingYet = usedGroups(response.groups).every((group) => group.contacts.length === 0);
 
   return (

@@ -157,7 +157,11 @@ def test_the_revision_follows_the_categories_revision_and_is_the_only_head() -> 
     config.set_main_option("path_separator", "os")  # silences Alembic's warning about the old default
 
     assert module.down_revision == LAST_REVISION_BEFORE_THIS_ONE
-    assert ScriptDirectory.from_config(config).get_heads() == [module.revision]
+    scripts = ScriptDirectory.from_config(config)
+    # It was the only head when it was written; later revisions follow it (the SwiftRescue groups one of
+    # 2026-10-22), so the check is now "one head" and "this revision is in the chain".
+    assert len(scripts.get_heads()) == 1
+    assert module.revision in [script.revision for script in scripts.walk_revisions()]
 
 
 def test_the_revision_uses_alembic_operations_only_and_names_only_phone_numbers() -> None:

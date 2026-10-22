@@ -59,6 +59,7 @@ describe("the offline copy", () => {
     expect(stored).not.toContain("Demo Blood Bank");
     expect(readOfflineCopy()?.response.groups.map((group) => group.category.slug)).toEqual([
       "ambulance", "fire", "police", "emergency-unit", "roadside-assistance", "security",
+      "disaster-flooding", "gbv-support", "mental-health-crisis",
     ]);
   });
 
