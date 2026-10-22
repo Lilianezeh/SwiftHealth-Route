@@ -15,6 +15,6 @@ Requirements: [requirements.md](requirements.md). Rules: tests first, IDs (FR-15
 ### Task 0: Spec
 - [x] This folder, FR-15, api-spec and ui-spec.
 ### Task 1: the API (tests first)
-- [ ] Six groups; a blood bank is nowhere in `GET /emergency`.
+- [x] Six groups; a blood bank is nowhere in `GET /emergency`.
 ### Task 2: the page, the saved copy and the shared list (tests first)
-- [ ] A `blood-bank` group from an older API or saved copy is ignored; the card stays; browser checks at 320, 360, 768 and 1024 px.
+- [x] A `blood-bank` group from an older API or saved copy is ignored; the card stays; browser checks at 320, 360, 768 and 1024 px.

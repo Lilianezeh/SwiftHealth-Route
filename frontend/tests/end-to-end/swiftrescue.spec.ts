@@ -50,6 +50,7 @@ for (const { width, height } of WIDTHS) {
       await expect(page.getByRole("heading", { level: 2, name: "Ambulance" })).toBeVisible({ timeout: 60_000 });
       await expect(page.getByRole("link", { name: /Need blood urgently\?/ })).toBeVisible();
       await expect(page.getByText(/pharmac/i)).toHaveCount(0); // FR-25 was removed on 2026-10-22
+      await expect(page.getByRole("heading", { name: /blood/i })).toHaveCount(0); // blood banks are on /blood only
       const firstCard = page.getByRole("article").first();
       await expect(firstCard.getByRole("link", { name: /^Call / })).toBeVisible();
 
@@ -93,7 +94,9 @@ for (const { width, height } of WIDTHS) {
                 groups: [
                   emptyGroup("ambulance", "Ambulance"), emptyGroup("fire", "Fire"), emptyGroup("police", "Police"),
                   emptyGroup("emergency-unit", "24-hour emergency units"), emptyGroup("roadside-assistance", "Roadside assistance"),
-                  emptyGroup("security", "Security"), emptyGroup("blood-bank", "Blood banks"),
+                  emptyGroup("security", "Security"),
+                  // An older API also sent this group; the page must ignore it (blood banks are listed on /blood only).
+                  { category: { slug: "blood-bank", name: "Blood banks" }, contacts: [{ ...pharmacy, id: 301, slug: "demo-blood-bank", name: "Demo Blood Bank", category: { slug: "blood-bank", name: "Blood bank" } }] },
                 ],
                 pharmacies_24h: [pharmacy],
                 disclaimer: "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112.",
@@ -113,6 +116,8 @@ for (const { width, height } of WIDTHS) {
       expect(ambulance!.y).toBeLessThan(fire!.y);
       expect(fire!.y).toBeLessThan(bloodBox!.y);
       await expect(page.getByText(/pharmac/i)).toHaveCount(0); // the old list in the answer is ignored
+      await expect(page.getByRole("heading", { name: "Blood banks" })).toHaveCount(0); // and so is the old blood bank group
+      await expect(page.getByText("Demo Blood Bank")).toHaveCount(0);
       expect(await blood.evaluate((link) => link.parentElement?.lastElementChild === link)).toBe(true); // nothing comes after the card
       await expect(blood).toHaveAttribute("href", "/blood");
       expect(bloodBox!.height).toBeGreaterThanOrEqual(47.5);
