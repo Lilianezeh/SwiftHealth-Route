@@ -88,6 +88,8 @@ describe("what the worker may keep", () => {
     `${ORIGIN}/blood`, // Find blood works offline too (feature blood-offline, N1)
     `${ORIGIN}/_next/static/chunks/main-abc123.js`,
     `${ORIGIN}/_next/static/css/app.css`,
+    `${ORIGIN}/images/emergency/ambulance.webp`, // the two SwiftRescue photos (home-photos feature, part 6)
+    `${ORIGIN}/images/emergency/fire.webp`,
   ])("keeps %s", (address) => {
     expect(isKeepableUrl(address)).toBe(true);
   });
@@ -108,6 +110,13 @@ describe("what the worker may keep", () => {
     [`${ORIGIN}/blood/`, "a page under the blood path"],
     ["https://swifthealth-api.onrender.com/blood/banks?lat=6.4&lng=7.5", "the blood bank answers of the API (another origin)"],
     [`${ORIGIN}/_next/data/build/emergency.json`, "Next's data files"],
+    [`${ORIGIN}/images/emergency/other.webp`, "any other file of the emergency image folder"],
+    [`${ORIGIN}/images/emergency/`, "the emergency image folder"],
+    [`${ORIGIN}/images/emergency/ambulance.webp?lat=6.4&lng=7.5`, "a photo with a position in the address"],
+    [`${ORIGIN}/images/emergency/ambulance.webp?x=1`, "a photo with a query"],
+    [`${ORIGIN}/images/sections/laboratory-800.webp`, "a photo of the home page (not needed offline)"],
+    [`${ORIGIN}/images/home/hero3.webp`, "the hero photo"],
+    ["https://example.com/images/emergency/fire.webp", "the same path on another site"],
     ["not an address", "text that is not an address"],
   ])("never keeps %s (%s)", (address) => {
     expect(isKeepableUrl(address)).toBe(false);
@@ -186,6 +195,20 @@ describe("the fetch handler", () => {
     expect(worker.fetchCalls).toEqual([]);
   });
 
+  it("serves a SwiftRescue photo from the kept copy first (cache first), and keeps one it did not have yet", async () => {
+    const kept = `${ORIGIN}/images/emergency/ambulance.webp`;
+    const fresh = `${ORIGIN}/images/emergency/fire.webp`;
+    const worker = loadWorker({ cachedUrls: { [kept]: "kept photo" } });
+
+    const fromCopy = await sendRequest(worker, kept);
+    expect(await fromCopy?.text()).toBe("kept photo");
+    expect(worker.fetchCalls).toEqual([]);
+
+    const fromNetwork = await sendRequest(worker, fresh);
+    expect(await fromNetwork?.text()).toBe(`network:${fresh}`);
+    expect(worker.stores.get("swiftrescue-v1")?.has(fresh)).toBe(true);
+  });
+
   it("fetches a static file it does not have yet, and keeps it", async () => {
     const address = `${ORIGIN}/_next/static/chunks/new-def456.js`;
     const worker = loadWorker();
@@ -210,6 +233,8 @@ describe("the message from the page: keep what you loaded on the first visit", (
           `${ORIGIN}/blood`,
           `${ORIGIN}/blood/donate`,
           `${ORIGIN}/_next/static/chunks/main-abc123.js`,
+          `${ORIGIN}/images/emergency/fire.webp`,
+          `${ORIGIN}/images/sections/laboratory-800.webp`,
           "https://swifthealth-api.onrender.com/emergency?lat=6.4&lng=7.5",
           `${ORIGIN}/search?lat=6.4&lng=7.5`,
           42,
@@ -223,6 +248,7 @@ describe("the message from the page: keep what you loaded on the first visit", (
       `${ORIGIN}/_next/static/chunks/main-abc123.js`,
       `${ORIGIN}/blood`,
       `${ORIGIN}/emergency`,
+      `${ORIGIN}/images/emergency/fire.webp`,
     ]);
   });
 
