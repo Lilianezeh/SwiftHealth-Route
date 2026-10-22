@@ -1,6 +1,14 @@
 # SwiftRescue groups: new names, five always shown, three new groups: requirements
 
-**Status: proposal. Nothing is built. Waiting for the owner's "yes" and the answers in "Questions for the owner".**
+**Status: approved by the owner on 2026-10-22 ("Yes, with these answers"). Nothing is built. I wait until the owner says the #39 changes are in `main`; then I update this branch from `main`, edit the shared specs (plan task 0b) and build, tests first.**
+
+## The owner's answers (2026-10-22), which win over the proposal where they differ
+
+1. **The category rows are renamed too**, display names only: `fire` "Fire" → **"Fire service"**, `emergency-unit` "24-hour emergency unit" → **"Hospital emergency (24 hours)"**, `roadside-assistance` "Roadside assistance" → **"Road accidents"**. **Ids and slugs stay.** The **downgrade restores the old names.** No deletes. (This replaces "the rows keep their old names" below: the migration is "additive + three display-name updates", not additive only, by the owner's decision.)
+2. The order of the optional groups is OK (Security, then the three new ones). 3. The three slugs are OK. 4. A 14-day re-check is OK for all of them.
+5. **Merge order:** #39 first, then this feature, then the home-photos work. The owner is opening a new pull request from `feature/blood-only-on-blood-page` into `main` (the first #39 was merged into `feature/swiftrescue-order` by mistake). #38 will be closed (the login link moves to the header in the accounts work); #40 will be merged.
+
+**How the rename works (same revision as the three new rows):** for each of the three slugs, `UPDATE categories SET name = :new WHERE slug = :slug AND name = :old` (only a row that still has the old name is touched, so a name that staff already changed by hand is never overwritten; running it twice changes nothing; the `id`, `slug`, `is_emergency`, `recheck_days` and every listing that points to the row are untouched). `downgrade` runs the reverse updates (`new` → `old`, same guard) and **deletes nothing**, not even the three new rows (reference data; if a listing already uses one, removing it would orphan it). The seed uses the new names, so a fresh database has them from the start.
 How we build it: [plan.md](plan.md). Branch: `feature/swiftrescue-groups`, from `main` (which has #37; #39 is still open, see "Merge order"). Owner's request of 2026-10-22.
 Requirement IDs: FR-14, FR-15 (changes), FR-16, FR-17, FR-18, FR-19, FR-26, NFR-03, NFR-10, US-04, US-09, US-14.
 
@@ -48,7 +56,7 @@ Then the "Need blood urgently?" card (unchanged). An empty always-shown group sh
 | Sexual and gender-based violence support | `gbv-support` | true | 14 |
 | Mental health crisis support | `mental-health-crisis` | true | 14 |
 
-  Emergency contacts are re-checked every 14 days (FR-33). The names are the headings. **No table is added, merged or removed (still the 9 tables); no column changes; no row is updated or deleted; `downgrade` does nothing** (reference data is safe to keep), like the earlier category migration. Safe to run twice.
+  Emergency contacts are re-checked every 14 days (FR-33). The names are the headings. **No table is added, merged or removed (still the 9 tables); no column changes; no row is deleted.** The same revision also renames the display names of three existing rows (see "The owner's answers", point 1). `downgrade` restores those three names and deletes nothing. Safe to run twice.
 - **The seed** (`backend/seed/seed_data.py`) gets the same three category rows, **and no listing, no phone number** for them. Its existing fictional demo contacts stay as they are. (The test that keeps the seed and the migration list in step is extended to the new revision.)
 - The three new categories are `is_emergency`, so they are **not** in the Filters sheet, `/search` still finds their listings by their exact slug in the address, a "List your facility" submission cannot choose them (as for every emergency category), and **staff can pick them in the listing editor** (the editor lists all categories from `GET /meta`; to be checked by a test).
 
