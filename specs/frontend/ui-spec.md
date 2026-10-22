@@ -128,11 +128,22 @@ the old outline with "the problem", "how we verify" and "pricing" are gone: the 
 
 **Rules for the whole page.** Phone first, from 320 px, no sideways scrolling. Blue palette (tokens only) and the system fonts.
 **Red is only for SwiftRescue and emergencies**: on this page it appears once, in the header's SwiftRescue button (which is on every
-page). No slideshow, no animation, no statistics, no testimonials. Text is 16 px or larger everywhere, "small" lines included.
+page). **No statistics, no testimonials** (the old "No slideshow, no animation" is replaced on 2026-10-22 by the hero photo slider and the gentle fade-in of
+the revision below). Text is 16 px or larger everywhere, "small" lines included.
 Every photo is a `next/image` (or its `getImageProps` for the hero `<picture>`) with fixed `width` and `height`, `unoptimized`
 (the files are final) and alt text; the hero loads at once and the other photo loads lazily. **No text of the page, and no
 page description, names a city**: the home page does not say where SwiftHealth is live (owner, 2026-10-12). One `h1` (the hero
 heading); each following part has an `h2`.
+
+**Revision of 2026-10-22: hero photo slider and a livelier page** (owner's brief and answers; feature `specs/2026-10-22-home-photos/`, which has the reasons and the photo table). **Where this block and the hero text below disagree, this block wins.**
+- *Photos:* the single `hero3` photo is replaced by a **slider of eight photos** (`public/images/hero/hero-<name>-640.webp` for phones, `-1280.webp` for larger screens; the order, file names, alt texts and dot names are in `src/config/heroPhotos.ts`). Each shows about **6 s**, the fade between two takes **1.5 s** (CSS `opacity` only, no library). `hero3.webp` and `hero3-phone.webp` are deleted; `hero4-portrait.webp` stays in "For facility owners".
+- *Layout:* **under 1024 px** the photos are a **band at the top of the hero** (straight bottom edge, the header's dark veil over its top, a light blue tint over the rest) and the heading, search box and links are **below it on the blue gradient**. **From 1024 px** the photo fills the whole hero and a `pine-dark` overlay (85% under the text on the left, fading to 30% on the right) keeps the text at 4.5:1 or better.
+- *Fixed (never part of the slide change):* the `h1`, the line, the **search form** (a plain `GET` form to `/search`, field `q`, a visible label, a 48 px **Search** button), the "Find care near me" link (to `/find`), the small line, and the header. **SwiftRescue stays in the header only.**
+- *Controls:* **Pause/Play** (text button, 48 px, `aria-pressed`) and **dots** (one button per photo, 48 px high, named "Show photo 3 of 8: <short name>", `aria-current` on the shown one), after the text of the hero. A dot shows its photo and restarts the 6 s. The slider **stops while the tab is hidden**.
+- *Reduce motion:* **one still photo, no timer, no fade; Pause and the dots are hidden.**
+- *Credit:* one **fixed** "Designed by Magnific" link to `https://www.magnific.com` (new tab, `rel="noopener noreferrer"`), 16 px, in the lower right corner of the photo, the same on every slide.
+- *Speed:* only the first photo is in the page and loads at once (`fetchpriority="high"`; a phone gets the 640 px file); the others are added one ahead of their turn after the page has loaded.
+- *Below the hero:* a row of three **feature cards** (Find care → `/find`, SwiftRescue → `/emergency`, Find blood → `/blood`), then the parts below; one card style, one spacing rhythm (`py-12`, `md:py-16`); each part below the first screen **fades in** as it scrolls into view (CSS `animation-timeline: view()` in `@supports`, inside `prefers-reduced-motion: no-preference`; no JavaScript, nothing happens in other browsers).
 
 **Parts, top to bottom** (the words below are the exact text):
 1. **Header** — see "Layout" above. On this page it is transparent and sits on top of the hero.
@@ -217,6 +228,7 @@ FR-04 to FR-08, US-01, US-05. **API:** `GET /search`, `GET /meta`.
 5. "Load more" button (pagination, 20 at a time; page state, not in the address).
 **URL holds all filters** (`/search?category=pharmacy&open_now=true`) so results can be shared, but **never the position** (`lat`, `lng`): it is read from `sessionStorage`. Applying filters replaces the address without adding history entries. A shared link opens with the filters set and, for the receiver, no position. The address may also hold `view=map` (see "Map view"); it is not a filter.
 **States:** skeleton cards while loading; after 5 seconds "The service is waking up. This can take up to a minute."; error with Retry after 45 seconds or on an error answer.
+**No pictures (owner, 2026-10-22; feature `specs/2026-10-22-home-photos/`):** this page, with or without a type, has no photo, illustration or "Designed by Magnific" credit. The type banners that `specs/2026-10-15-find-by-type/` added are removed. Icons of buttons and cards stay.
 **Heading and chip (owner, 2026-10-14 and 2026-10-15; feature `specs/2026-10-15-find-by-type/` D2 to D5).** The chosen type is the `category` in the address. The `h1` is
 **"Search results"** with no type; with one of the five types it is **"Hospitals / Clinics / Maternity homes / Pharmacies / Laboratories"** followed by **" in <Area>"** when an `area`
 is in the address, else **" near you"** when there is a position, else nothing (for example "Pharmacies in Ogui", "Pharmacies near you", "Pharmacies"). While the address is being read a grey
@@ -295,6 +307,7 @@ FR-14 to FR-19, FR-24 to FR-26, US-04, US-09, US-14, NFR-03. **API:** `GET /emer
 4. **Share emergency list** (`ShareEmergencyList`): links **Share on WhatsApp** and **Share by SMS** with a plain-text list (112 first, then each group with the name and the number in the reading format, then the page address).
 5. Groups in API order (Ambulance, Fire, Police, 24-hour emergency units, Roadside assistance, Security, Blood banks), a group with no contact hidden, each a list of compact `EmergencyContactCard`s: name (a link to the listing), "Area · 1.4 km" (no distance without a position), `VerifiedDate`, and a **Call** button (none without a number), 48 px at least. When every group is empty: "We are still adding verified contacts. In danger, call 112."
 6. **24-hour pharmacies nearby**: up to 10 `ListingCard`s, nearest first with a position; a heading "24-hour pharmacies" without one.
+**Photos (owner, 2026-10-22; not built yet, waiting for #37, #39 and #40 to be merged):** a small lazy header image (WebP, 8:3, fixed box, under 40 kB) inside the Ambulance and the Fire group, each with the fixed "Designed by Magnific" credit; 112 and Call 112 never wait for them; kept in the offline copy by the worker; a quiet panel when one cannot load. Details: `specs/2026-10-22-home-photos/requirements.md`, part 4.
 **States:** skeleton while loading (the 112 card, the sentence and the share links are already there); after 5 s "The service is waking up. This can take up to a minute."; on a network failure with a saved copy: the saved list with the notice "Offline — showing saved contacts from 17 Oct 2026" (the date it was saved); no saved copy: the standard error with Retry, and 112 stays on top.
 **Rules:** no sponsored content and no word "Sponsored"; no search box; one tap to call anything; no medical advice.
 **Position and the saved copy:** the list is first requested **without** a position and the answer is saved (`localStorage`, key `swiftrescue-saved-contacts`) with the date. When the visitor has allowed a position (the one the other pages keep for the tab), a second request with `lat` and `lng` adds the distances and replaces the list on screen. The saved copy never holds a position or a distance.

@@ -1,6 +1,6 @@
 # Home photos: plan
 
-**Status: proposal, not started.** Requirements: [requirements.md](requirements.md). Rules: tests first, one commit per task, IDs (US-13, US-01, US-04, FR-14, FR-17, NFR-01, NFR-03, NFR-10, NFR-13) in commits and tests; `git branch --show-current` before every commit and push; draft PR.
+**Status: approved 2026-10-22; building tasks 0 to 3, 5 and 6 now. Task 4 (SwiftRescue photos) waits until #37, #39 and #40 are merged** (they change `EmergencyGroups.tsx` and `sw.js`). Eight slides, not nine. Requirements: [requirements.md](requirements.md). Rules: tests first, one commit per task, IDs (US-13, US-01, US-04, FR-14, FR-17, NFR-01, NFR-03, NFR-10, NFR-13) in commits and tests; `git branch --show-current` before every commit and push; draft PR.
 
 ## Files
 
@@ -21,8 +21,8 @@
 ## Tasks
 
 ### Task 0: Spec and the photos
-- [ ] After the owner's "yes" and answers: rewrite ui-spec 2.1, 2.3 (no pictures), 2.5 (the photos); note it in the find-by-type spec.
-- [ ] Move the originals to `source-photos/` (ignored); the script; the finished WebP files (sizes checked by a test: 640 px ≤ 40 kB, 1280 px ≤ 100 kB, SwiftRescue ≤ 40 kB, real pixel sizes equal to the config).
+- [x] After the owner's "yes" and answers: ui-spec 2.1 (revision block), 2.3 (no pictures), 2.5 (the photos, waiting) rewritten; note in the find-by-type spec.
+- [x] Originals moved to `source-photos/` (ignored); the script; the sixteen finished WebP files (640 × 900 ≤ 40 kB, 1280 × 800 ≤ 100 kB). The test of the sizes comes with task 2.
 ### Task 1: no pictures on search (tests first)
 - [ ] Red tests: `/search` and `/search?category=clinic|pharmacy|laboratory` have no `img`, `picture`, `figure`, no credit; the heading, chip and results are unchanged. Then remove the banner code, config, files and script; the old banner tests are replaced by this one.
 ### Task 2: the slider (tests first)
