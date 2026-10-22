@@ -20,7 +20,14 @@ pytestmark = pytest.mark.anyio
 TUESDAY_10_00_IN_LAGOS = datetime(2026, 10, 6, 9, 0, tzinfo=timezone.utc)
 MY_LATITUDE, MY_LONGITUDE = 6.4500, 7.5080
 GROUP_SLUGS = [
-    "ambulance", "fire", "police", "emergency-unit", "roadside-assistance", "security", "blood-bank",
+    "ambulance", "fire", "police", "emergency-unit", "roadside-assistance", "security",
+    "disaster-flooding", "gbv-support", "mental-health-crisis",
+]
+# No blood-bank group since 2026-10-22: blood banks are listed only by /blood (decision M1).
+# The last three groups: specs/2026-10-22-swiftrescue-groups/.
+GROUP_HEADINGS = [
+    "Ambulance", "Fire service", "Police", "Hospital emergency (24 hours)", "Road accidents", "Security",
+    "Disaster and flooding", "Sexual and gender-based violence support", "Mental health crisis support",
 ]
 DISCLAIMER = (
     "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency "
@@ -56,20 +63,65 @@ async def test_emergency_needs_no_login_and_112_is_there_with_an_empty_database(
     assert response.status_code == 200
     body = response.json()
     assert body["national_line"] == {"name": "National emergency number", "number": "112"}  # FR-14
-    assert body["pharmacies_24h"] == []
+    assert set(body) == {"national_line", "groups", "disclaimer"}  # no pharmacy list since 2026-10-22 (K6)
     assert body["disclaimer"] == DISCLAIMER  # FR-26
 
 
-async def test_all_seven_groups_are_returned_in_the_fixed_order_even_when_empty(
+async def test_all_nine_groups_are_returned_in_the_fixed_order_with_the_new_headings_even_when_empty(
     client: AsyncClient, clock: None
 ) -> None:
     body = await get_emergency(client)
     assert [entry["category"]["slug"] for entry in body["groups"]] == GROUP_SLUGS  # FR-15, decision A1
-    assert [entry["category"]["name"] for entry in body["groups"]] == [
-        "Ambulance", "Fire", "Police", "24-hour emergency units", "Roadside assistance", "Security",
-        "Blood banks",
-    ]
+    assert [entry["category"]["name"] for entry in body["groups"]] == GROUP_HEADINGS
     assert all(entry["contacts"] == [] for entry in body["groups"])
+
+
+async def test_a_published_contact_in_each_of_the_nine_categories_is_in_its_own_group(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    # The contacts exist only in this test's own database; the seed and the migration add none
+    # (owner, 2026-10-22).
+    for position, slug in enumerate(GROUP_SLUGS):
+        await add_listing(session, f"Test Contact {position}", category_slug=slug, area="Ogui")
+
+    body = await get_emergency(client)
+
+    for position, slug in enumerate(GROUP_SLUGS):
+        assert contact_names(body, slug) == [f"Test Contact {position}"], slug
+
+
+async def test_a_draft_contact_in_a_new_group_is_left_out(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    await add_listing(
+        session, "Draft Flood Desk", category_slug="disaster-flooding", status=ListingStatus.draft
+    )
+    await add_listing(
+        session, "Hidden Support Line", category_slug="gbv-support", status=ListingStatus.hidden
+    )
+
+    body = await get_emergency(client)
+
+    assert contact_names(body, "disaster-flooding") == []
+    assert contact_names(body, "gbv-support") == []
+
+
+async def test_a_blood_bank_is_nowhere_in_the_answer_it_is_listed_by_blood_banks_only(
+    client: AsyncClient, session: AsyncSession, clock: None
+) -> None:
+    """Decision M1 (2026-10-22): `/blood` is the only list of blood banks; SwiftRescue links to it."""
+    await add_listing(session, "Central Blood Bank", category_slug="blood-bank", area="Ogui")
+    await add_listing(session, "Fine Ambulance", category_slug="ambulance")
+    await session.commit()
+
+    response = await client.get("/emergency", params={"lat": MY_LATITUDE, "lng": MY_LONGITUDE})
+    blood = await client.get("/blood/banks")
+
+    body = response.json()
+    assert "blood-bank" not in [entry["category"]["slug"] for entry in body["groups"]]
+    assert "Central Blood Bank" not in response.text
+    assert contact_names(body, "ambulance") == ["Fine Ambulance"]  # the other groups are not affected
+    assert [item["name"] for item in blood.json()["items"]] == ["Central Blood Bank"]  # still found on /blood
 
 
 async def test_a_contact_is_in_its_own_group_with_the_listing_summary_shape(
@@ -122,11 +174,9 @@ async def test_a_listing_that_is_not_published_is_never_returned(
     client: AsyncClient, session: AsyncSession, clock: None, status: ListingStatus
 ) -> None:
     await add_listing(session, "Hidden Ambulance", category_slug="ambulance", status=status)
-    await add_listing(session, "Hidden Pharmacy", is_24_hours=True, status=status)
     await session.commit()
     body = await get_emergency(client)
     assert contact_names(body, "ambulance") == []
-    assert body["pharmacies_24h"] == []
 
 
 async def test_an_overdue_contact_is_still_shown_with_verification_due(
@@ -160,36 +210,27 @@ async def test_no_item_is_sponsored_even_when_a_listing_is_featured(
 ) -> None:
     featured_until = TUESDAY_10_00_IN_LAGOS + timedelta(days=10)
     await add_listing(session, "Featured Ambulance", category_slug="ambulance", featured_until=featured_until)
-    await add_listing(session, "Featured Pharmacy", is_24_hours=True, featured_until=featured_until)
     await session.commit()
     body = await get_emergency(client)
     assert contact_names(body, "ambulance") == ["Featured Ambulance"]
-    assert [item["name"] for item in body["pharmacies_24h"]] == ["Featured Pharmacy"]
-    everything = [c for entry in body["groups"] for c in entry["contacts"]] + body["pharmacies_24h"]
+    everything = [c for entry in body["groups"] for c in entry["contacts"]]
     assert everything and all(item["sponsored"] is False for item in everything)  # FR-19
 
 
-async def test_pharmacies_24h_are_only_confirmed_24_hour_pharmacies_nearest_first(
+async def test_there_are_no_pharmacies_in_the_answer_not_even_a_confirmed_24_hour_one(
     client: AsyncClient, session: AsyncSession, clock: None
 ) -> None:
-    await add_listing(session, "Far Night Pharmacy", is_24_hours=True, latitude=6.60, longitude=7.70)
-    await add_listing(session, "Near Night Pharmacy", is_24_hours=True, latitude=6.4510, longitude=7.5090)
-    await add_listing(session, "Day Pharmacy", is_24_hours=False)
+    """FR-25 was removed on 2026-10-22 (decision K6): SwiftRescue has contacts only."""
+    await add_listing(session, "Night Pharmacy", is_24_hours=True, latitude=6.4510, longitude=7.5090)
     await add_listing(session, "24h Clinic", category_slug="clinic", is_24_hours=True)
     await session.commit()
-    body = await get_emergency(client, lat=MY_LATITUDE, lng=MY_LONGITUDE)
-    nearest_first = [item["name"] for item in body["pharmacies_24h"]]
-    assert nearest_first == ["Near Night Pharmacy", "Far Night Pharmacy"]  # FR-25
-    assert body["pharmacies_24h"][1]["distance_km"] > 10  # decision A3: no distance limit
 
+    response = await client.get("/emergency", params={"lat": MY_LATITUDE, "lng": MY_LONGITUDE})
 
-async def test_pharmacies_24h_stop_at_ten(client: AsyncClient, session: AsyncSession, clock: None) -> None:
-    for number in range(12):
-        await add_listing(session, f"Night Pharmacy {number:02d}", is_24_hours=True)
-    await session.commit()
-    body = await get_emergency(client)
-    assert len(body["pharmacies_24h"]) == 10
-    assert body["pharmacies_24h"][0]["name"] == "Night Pharmacy 00"
+    body = response.json()
+    assert "pharmacies_24h" not in body
+    assert "Night Pharmacy" not in response.text
+    assert all(entry["contacts"] == [] for entry in body["groups"])  # a pharmacy is not in any group
 
 
 @pytest.mark.parametrize(
@@ -225,9 +266,8 @@ async def test_the_number_of_queries_does_not_grow_with_the_number_of_contacts(
     await session.commit()
     few = await statements_for_one_request()
     for number in range(8):
-        await add_listing(
-            session, f"More Contact {number}", category_slug=GROUP_SLUGS[number % 7], is_24_hours=True
-        )
+        slug = GROUP_SLUGS[number % len(GROUP_SLUGS)]
+        await add_listing(session, f"More Contact {number}", category_slug=slug, is_24_hours=True)
         await add_listing(session, f"More Pharmacy {number}", is_24_hours=True)
     await session.commit()
     many = await statements_for_one_request()

@@ -4,6 +4,7 @@
  * distance, so it says nothing about where the visitor is. It is in `localStorage` (it must outlive the tab, unlike the position)
  * under one key. Every function copes with a storage that throws (private mode): the page then simply has no copy.
  */
+import { usedGroups } from "@/lib/emergency/groups";
 import type { EmergencyResponse, ListingSummary } from "@/types/api";
 
 export const OFFLINE_COPY_KEY = "swiftrescue-saved-contacts";
@@ -20,12 +21,13 @@ function withoutDistance(contacts: ListingSummary[]): ListingSummary[] {
 }
 
 export function saveOfflineCopy(response: EmergencyResponse, savedAt: Date = new Date()): void {
+  // The fields are named one by one, so a field this page does not use (the pharmacy list of an older API, FR-25) is never kept.
   const copy: OfflineCopy = {
     savedAt: savedAt.toISOString(),
     response: {
-      ...response,
-      groups: response.groups.map((group) => ({ ...group, contacts: withoutDistance(group.contacts) })),
-      pharmacies_24h: withoutDistance(response.pharmacies_24h),
+      national_line: response.national_line,
+      groups: usedGroups(response.groups).map((group) => ({ ...group, contacts: withoutDistance(group.contacts) })),
+      disclaimer: response.disclaimer,
     },
   };
   try {
@@ -38,11 +40,7 @@ export function saveOfflineCopy(response: EmergencyResponse, savedAt: Date = new
 function looksLikeAnEmergencyResponse(value: unknown): value is EmergencyResponse {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Partial<EmergencyResponse>;
-  return (
-    typeof candidate.national_line?.number === "string" &&
-    Array.isArray(candidate.groups) &&
-    Array.isArray(candidate.pharmacies_24h)
-  );
+  return typeof candidate.national_line?.number === "string" && Array.isArray(candidate.groups);
 }
 
 /** The saved copy, or null if there is none or it is damaged. */
@@ -54,7 +52,15 @@ export function readOfflineCopy(): OfflineCopy | null {
     if (typeof value !== "object" || value === null) return null;
     const { savedAt, response } = value as Partial<OfflineCopy>;
     if (typeof savedAt !== "string" || !looksLikeAnEmergencyResponse(response)) return null;
-    return { savedAt, response };
+    // A copy saved before FR-25 was removed still holds the pharmacy list: only the known fields are handed on.
+    return {
+      savedAt,
+      response: {
+        national_line: response.national_line,
+        groups: usedGroups(response.groups),
+        disclaimer: response.disclaimer,
+      },
+    };
   } catch {
     return null;
   }

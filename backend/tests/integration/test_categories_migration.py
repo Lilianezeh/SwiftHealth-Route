@@ -11,13 +11,14 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.repositories import category_repository
 from app.services import meta_service
-from seed.seed_data import CATEGORIES
 from tests.factories import add_listing
-from tests.revision_loader import run_downgrade, run_upgrade
+from tests.revision_loader import load_revision, run_downgrade, run_upgrade
 
 pytestmark = pytest.mark.anyio
 
-SEED_SLUGS = [category.slug for category in CATEGORIES]
+# The 12 categories this old revision writes. (The seed has three more since the SwiftRescue groups
+# revision of 2026-10-22; that one is tested in test_swiftrescue_groups_migration.py.)
+SEED_SLUGS = [row[0] for row in load_revision().CATEGORIES]
 
 
 async def snapshot(session: AsyncSession) -> list[tuple]:

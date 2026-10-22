@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { PAGE_SIZE } from "@/config/search";
-import { RequestCancelledError, type RequestOptions } from "@/lib/api/request";
+import { ApiNetworkError, ApiTimeoutError, RequestCancelledError, type RequestOptions } from "@/lib/api/request";
 import type { Page } from "@/lib/api/search";
 
 export type PagedListStatus = "loading" | "slow" | "ready" | "error";
@@ -26,10 +26,11 @@ type ListState<Item> = {
   total: number;
   isLoadingMore: boolean;
   loadMoreFailed: boolean;
+  failure: "network" | "answer" | null; // why the first page failed: no network (or a timeout), or an error answer of the API
 };
 
 function loadingState<Item>(): ListState<Item> {
-  return { status: "loading", items: [], total: 0, isLoadingMore: false, loadMoreFailed: false };
+  return { status: "loading", items: [], total: 0, isLoadingMore: false, loadMoreFailed: false, failure: null };
 }
 
 export function usePagedList<Item extends { id: number }>(key: string, fetchPage: FetchPage<Item>, enabled: boolean) {
@@ -58,7 +59,9 @@ export function usePagedList<Item extends { id: number }>(key: string, fetchPage
       })
       .catch((error: unknown) => {
         if (error instanceof RequestCancelledError || controller.signal.aborted) return;
-        setState({ ...loadingState<Item>(), status: "error" });
+        // A network failure or a timeout is "network" (a saved copy may be shown); an error answer of the API is "answer".
+        const failure = error instanceof ApiNetworkError || error instanceof ApiTimeoutError ? "network" : "answer";
+        setState({ ...loadingState<Item>(), status: "error", failure });
       });
     return () => {
       controller.abort();

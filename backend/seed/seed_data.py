@@ -113,12 +113,18 @@ CATEGORIES = (
     CategorySeed("maternity", "Maternity", False),
     CategorySeed("laboratory", "Laboratory", False),
     CategorySeed("ambulance", "Ambulance", True),
-    CategorySeed("fire", "Fire", True),
+    CategorySeed("fire", "Fire service", True),
     CategorySeed("police", "Police", True),
-    CategorySeed("emergency-unit", "24-hour emergency unit", True),
-    CategorySeed("roadside-assistance", "Roadside assistance", True),
+    CategorySeed("emergency-unit", "Hospital emergency (24 hours)", True),
+    CategorySeed("roadside-assistance", "Road accidents", True),
     CategorySeed("security", "Security", True),
     CategorySeed("blood-bank", "Blood bank", True),
+    # SwiftRescue groups of 2026-10-22 (specs/2026-10-22-swiftrescue-groups/). No demo contact and no
+    # phone number for them: staff add verified contacts later. The same three rows are added to a live
+    # database by the revision c3d71e9b5a20.
+    CategorySeed("disaster-flooding", "Disaster and flooding", True),
+    CategorySeed("gbv-support", "Sexual and gender-based violence support", True),
+    CategorySeed("mental-health-crisis", "Mental health crisis support", True),
 )
 EMERGENCY_CATEGORY_SLUGS = {category.slug for category in CATEGORIES if category.is_emergency}
 

@@ -20,6 +20,8 @@ BACKEND_FOLDER = Path(__file__).resolve().parents[1]
 VERSIONS_FOLDER = BACKEND_FOLDER / "alembic" / "versions"
 REVISION_FILE_PATTERN = "*_all_spec_categories.py"
 WHATSAPP_REVISION_FILE_PATTERN = "*_phone_is_whatsapp.py"
+# Feature specs/2026-10-22-swiftrescue-groups/
+SWIFTRESCUE_GROUPS_REVISION_FILE_PATTERN = "*_swiftrescue_more_groups.py"
 
 
 def revision_file(pattern: str = REVISION_FILE_PATTERN) -> Path:

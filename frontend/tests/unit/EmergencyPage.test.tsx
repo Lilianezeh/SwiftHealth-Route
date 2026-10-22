@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import EmergencyPage from "@/app/(public)/emergency/page";
 import { savePosition } from "@/lib/location/locationStore";
 
-import { emergencyResponse, json, listing, neverAnswers, stubApi } from "../helpers/api";
+import { emergencyResponse, json, listing, neverAnswers, oldEmergencyResponse, stubApi } from "../helpers/api";
 import { readSource } from "../helpers/source";
 
 const SENTENCE =
@@ -105,8 +105,9 @@ describe("the contacts", () => {
 
     const headings = screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent);
     expect(headings.indexOf("Ambulance")).toBeLessThan(headings.indexOf("Police"));
-    expect(headings).not.toContain("Fire");
-    expect(headings).not.toContain("Blood banks");
+    expect(headings).not.toContain("Blood banks"); // there is no blood bank group
+    expect(headings).not.toContain("Security"); // an empty group that is not one of the five always shown stays hidden
+    expect(headings).not.toContain("Disaster and flooding");
   });
 
   it("shows for each contact its name as a link to the listing, its area, the verified date and a Call button", async () => {
@@ -164,7 +165,6 @@ describe("the contacts", () => {
   it("says so when every group is empty, with 112 still on the page", async () => {
     const response = emergencyResponse();
     response.groups.forEach((group) => (group.contacts = []));
-    response.pharmacies_24h = [];
     stubApi({ emergency: () => json(response) });
     render(<EmergencyPage />);
 
@@ -173,34 +173,249 @@ describe("the contacts", () => {
   });
 });
 
-describe("the 24-hour pharmacies", () => {
-  it("are a section of listing cards with Call and Directions", async () => {
+const EMPTY_TEXT = "No contacts added yet. In danger, call 112.";
+
+function emptyResponse(keep: string[] = []) {
+  const response = emergencyResponse();
+  response.groups.forEach((group) => {
+    if (!keep.includes(group.category.slug)) group.contacts = [];
+  });
+  return response;
+}
+
+/** The h2 headings from Ambulance on: the groups (the blood card is a link, not a heading; the static h2s above are left out). */
+function groupHeadings(): string[] {
+  const headings = screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent ?? "");
+  return headings.slice(headings.indexOf("Ambulance"));
+}
+
+// K1 was Ambulance and Fire; since 2026-10-22 five groups are always shown (specs/2026-10-22-swiftrescue-groups/, tested in EmergencyGroupsList.test.tsx).
+describe("Ambulance and Fire service are always shown, first, even when empty (decision K1)", () => {
+  it("shows both headings with 'No contacts added yet. In danger, call 112.' when both are empty", async () => {
+    stubApi({ emergency: () => json(emptyResponse(["police"])) });
+    render(<EmergencyPage />);
+
+    const ambulance = await screen.findByRole("heading", { level: 2, name: "Ambulance" });
+    const fire = screen.getByRole("heading", { level: 2, name: "Fire service" });
+
+    for (const heading of [ambulance, fire]) {
+      const section = heading.closest("section") as HTMLElement;
+      expect(within(section).getByText(EMPTY_TEXT)).toBeInTheDocument();
+      expect(within(section).queryAllByRole("article")).toHaveLength(0);
+    }
+  });
+
+  it("puts Ambulance and Fire before every other group, then the others in the API order", async () => {
+    const response = emptyResponse(["police"]);
+    response.groups.find((group) => group.category.slug === "security")?.contacts.push(
+      listing({ id: 401, slug: "demo-security", name: "Demo Security", category: { slug: "security", name: "Security" } }),
+    );
+    stubApi({ emergency: () => json(response) });
+    render(<EmergencyPage />);
+
+    await screen.findByRole("heading", { level: 2, name: "Fire service" });
+
+    expect(groupHeadings()).toEqual([
+      "Ambulance", "Fire service", "Police", "Hospital emergency (24 hours)", "Road accidents", "Security",
+    ]);
+  });
+
+  it("shows the contacts of a group that has some, and not the empty text", async () => {
     stubApi({});
     render(<EmergencyPage />);
 
-    const heading = await screen.findByRole("heading", { level: 2, name: "24-hour pharmacies" });
-    const card = within(heading.closest("section") as HTMLElement).getByRole("article");
-    expect(within(card).getByRole("link", { name: "Demo Night Pharmacy" })).toBeInTheDocument();
-    expect(within(card).getByRole("link", { name: /^Call/ })).toBeInTheDocument();
-    expect(within(card).getByRole("link", { name: /^Directions/ })).toBeInTheDocument();
+    const ambulance = (await screen.findByRole("heading", { level: 2, name: "Ambulance" })).closest("section") as HTMLElement;
+    const fire = screen.getByRole("heading", { level: 2, name: "Fire service" }).closest("section") as HTMLElement;
+
+    expect(within(ambulance).getAllByRole("article")).toHaveLength(1);
+    expect(within(ambulance).queryByText(EMPTY_TEXT)).toBeNull();
+    expect(within(fire).getByText(EMPTY_TEXT)).toBeInTheDocument(); // the stub has an ambulance but no fire contact
   });
 
-  it("are called 'nearby' once there is a position", async () => {
-    savePosition({ latitude: 6.452, longitude: 7.51 });
-    stubApi({});
+  it("keeps hiding every other empty group", async () => {
+    stubApi({ emergency: () => json(emptyResponse()) });
     render(<EmergencyPage />);
 
-    expect(await screen.findByRole("heading", { level: 2, name: "24-hour pharmacies nearby" })).toBeInTheDocument();
+    await screen.findByRole("heading", { level: 2, name: "Ambulance" });
+
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent);
+    expect(headings).toEqual(expect.arrayContaining(["Ambulance", "Fire service"]));
+    for (const hidden of ["Security", "Disaster and flooding", "Sexual and gender-based violence support", "Blood banks"]) {
+      expect(headings).not.toContain(hidden);
+    }
+    expect(screen.getAllByText(EMPTY_TEXT)).toHaveLength(5);
   });
 
-  it("are left out when the answer has none", async () => {
+  it("still draws both when an old saved answer lacks them", async () => {
     const response = emergencyResponse();
-    response.pharmacies_24h = [];
+    response.groups = response.groups.filter((group) => !["ambulance", "fire"].includes(group.category.slug));
     stubApi({ emergency: () => json(response) });
     render(<EmergencyPage />);
 
     await screen.findByRole("heading", { level: 2, name: "Ambulance" });
-    expect(screen.queryByRole("heading", { name: /24-hour pharmacies/ })).toBeNull();
+
+    expect(groupHeadings().slice(0, 2)).toEqual(["Ambulance", "Fire service"]);
+    expect(screen.getAllByText(EMPTY_TEXT)).toHaveLength(4); // the two it lacks, and Hospital emergency and Road accidents (Police has a contact)
+  });
+
+  it("keeps the 'still adding' sentence above the two empty groups when everything is empty (decision K2)", async () => {
+    const response = emptyResponse();
+    stubApi({ emergency: () => json(response) });
+    render(<EmergencyPage />);
+
+    const sentence = await screen.findByText("We are still adding verified contacts. In danger, call 112.");
+    const ambulance = screen.getByRole("heading", { level: 2, name: "Ambulance" });
+
+    expect(sentence.compareDocumentPosition(ambulance) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByText(EMPTY_TEXT)).toHaveLength(5);
+  });
+
+  it("shows the empty text in 16 px text, not smaller, and 112 stays the first thing after the heading", async () => {
+    stubApi({ emergency: () => json(emptyResponse()) });
+    render(<EmergencyPage />);
+
+    const empty = (await screen.findAllByText(EMPTY_TEXT))[0];
+
+    expect(empty.className).toMatch(/\btext-base\b/);
+    expect(empty.className).not.toMatch(/text-(xs|sm)\b/);
+    const links = screen.getAllByRole("link");
+    expect(links[0]).toHaveAccessibleName("Call 112");
+  });
+});
+
+describe("the blood link card (decision K3)", () => {
+  it("is a link to /blood with the heading and the line, after the groups, and the last thing in the list", async () => {
+    stubApi({});
+    render(<EmergencyPage />);
+
+    const link = await screen.findByRole("link", { name: /Need blood urgently\?/ });
+
+    expect(link).toHaveAttribute("href", "/blood");
+    expect(link).toHaveTextContent("Need blood urgently?");
+    expect(link).toHaveTextContent("Find blood banks and the blood groups they list.");
+    const lastGroup = screen.getByRole("heading", { level: 2, name: "Police" });
+    expect(lastGroup.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(link.parentElement?.lastElementChild).toBe(link); // nothing comes after it
+  });
+
+  it("is the only blood on the page: blood banks are listed on /blood, not here (decision M1)", async () => {
+    stubApi({});
+    const { container } = render(<EmergencyPage />);
+
+    await screen.findByRole("link", { name: /Need blood urgently\?/ });
+
+    expect(screen.queryByRole("heading", { name: /blood/i })).toBeNull(); // no "Blood banks" group
+    expect(container.textContent).not.toContain("Demo Blood Bank");
+  });
+
+  it("ignores a Blood banks group that an older API still sends, even with a blood bank in it", async () => {
+    stubApi({ emergency: () => json(oldEmergencyResponse()) });
+    const { container } = render(<EmergencyPage />);
+
+    const link = await screen.findByRole("link", { name: /Need blood urgently\?/ });
+
+    expect(screen.queryByRole("heading", { name: "Blood banks" })).toBeNull();
+    expect(container.textContent).not.toContain("Demo Blood Bank");
+    expect(link).toHaveAttribute("href", "/blood"); // the way to blood is the card
+  });
+
+  it("does not count an ignored Blood banks group as 'something to show': with every other group empty the sentence stays", async () => {
+    const answer = oldEmergencyResponse();
+    answer.groups.forEach((group) => {
+      if (group.category.slug !== "blood-bank") group.contacts = [];
+    });
+    stubApi({ emergency: () => json(answer) });
+    render(<EmergencyPage />);
+
+    expect(await screen.findByText("We are still adding verified contacts. In danger, call 112.")).toBeInTheDocument();
+    expect(screen.queryByText("Demo Blood Bank")).toBeNull();
+  });
+
+  it("is shown when every group is empty too", async () => {
+    stubApi({ emergency: () => json(emptyResponse()) });
+    render(<EmergencyPage />);
+
+    expect(await screen.findByRole("link", { name: /Need blood urgently\?/ })).toHaveAttribute("href", "/blood");
+  });
+
+  it("is at least 48 px high, uses 16 px text or more, and has no icon, no cross and nothing red", async () => {
+    stubApi({});
+    render(<EmergencyPage />);
+
+    const link = await screen.findByRole("link", { name: /Need blood urgently\?/ });
+
+    expect(link.className).toMatch(/min-h-12|min-h-\[50px\]|min-h-14|min-h-16/);
+    expect(link.querySelector("svg")).toBeNull();
+    expect(link.textContent).not.toMatch(/[✚✛✜✙+➕⚕✝†]/u);
+    expect(link.outerHTML).not.toMatch(/emergency|red-|rose-|#b3261e/);
+    for (const element of [link, ...Array.from(link.querySelectorAll("*"))]) {
+      expect(element.className, element.outerHTML).not.toMatch(/text-(xs|sm)\b/);
+    }
+    expect(link.textContent).not.toMatch(/Sponsored|Featured/);
+  });
+
+  it("is shown from a saved copy too (offline), because the link works once the connection is back", async () => {
+    const first = stubApi({});
+    const { unmount } = render(<EmergencyPage />);
+    await screen.findByRole("heading", { level: 2, name: "Ambulance" });
+    unmount();
+    first.fetchStub.mockImplementation(async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    render(<EmergencyPage />);
+
+    expect(await screen.findByText(/Offline — showing saved contacts/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Need blood urgently\?/ })).toHaveAttribute("href", "/blood");
+  });
+});
+
+describe("there are no 24-hour pharmacies on SwiftRescue (FR-25 removed, decision K6)", () => {
+  /** An answer from an old API: the list the API used to send. The page must ignore it. */
+  function oldAnswerWithPharmacies() {
+    return {
+      ...emergencyResponse(),
+      pharmacies_24h: [listing({ id: 201, slug: "night-pharmacy", name: "Demo Night Pharmacy", is_24_hours: true })],
+    };
+  }
+
+  it("has no pharmacy section, heading or card", async () => {
+    stubApi({});
+    const { container } = render(<EmergencyPage />);
+
+    await screen.findByRole("heading", { level: 2, name: "Ambulance" });
+
+    expect(screen.queryByRole("heading", { name: /pharmac/i })).toBeNull();
+    expect(container.textContent).not.toMatch(/pharmac/i);
+  });
+
+  it("ignores the list when an old API still sends it", async () => {
+    stubApi({ emergency: () => json(oldAnswerWithPharmacies()) });
+    const { container } = render(<EmergencyPage />);
+
+    await screen.findByRole("heading", { level: 2, name: "Ambulance" });
+
+    expect(screen.queryByRole("heading", { name: /pharmac/i })).toBeNull();
+    expect(container.textContent).not.toContain("Demo Night Pharmacy");
+  });
+
+  it("does not count a pharmacy list as 'something to show': with every group empty the sentence is still there", async () => {
+    const answer = oldAnswerWithPharmacies();
+    answer.groups.forEach((group) => (group.contacts = []));
+    stubApi({ emergency: () => json(answer) });
+    render(<EmergencyPage />);
+
+    expect(await screen.findByText("We are still adding verified contacts. In danger, call 112.")).toBeInTheDocument();
+    expect(screen.queryByText("Demo Night Pharmacy")).toBeNull();
+  });
+
+  it("is not kept in the browser either: a position does not bring a 'nearby' section", async () => {
+    savePosition({ latitude: 6.452, longitude: 7.51 });
+    stubApi({});
+    const { container } = render(<EmergencyPage />);
+
+    await screen.findByRole("heading", { level: 2, name: "Ambulance" });
+
+    expect(container.textContent).not.toMatch(/nearby/i);
   });
 });
 
@@ -208,11 +423,10 @@ describe("no sponsored content (FR-19)", () => {
   it("shows no 'Sponsored' or 'Featured' even if the API ever sent sponsored: true", async () => {
     const response = emergencyResponse();
     response.groups[0].contacts[0].sponsored = true;
-    response.pharmacies_24h[0] = listing({ id: 202, name: "Sponsored Night Pharmacy", sponsored: true });
     stubApi({ emergency: () => json(response) });
     const { container } = render(<EmergencyPage />);
 
-    await screen.findByRole("heading", { level: 2, name: "24-hour pharmacies" });
+    await screen.findByRole("heading", { level: 2, name: "Ambulance" });
 
     expect(container.textContent).not.toMatch(/\bfeatured\b/i);
     expect(screen.queryByText(/^Sponsored$/)).toBeNull();

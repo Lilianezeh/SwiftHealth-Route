@@ -6,6 +6,8 @@
  */
 import { expect, test, type Page, type Request } from "@playwright/test";
 
+import { fakeApi } from "../helpers/browserApi";
+
 const WIDTHS = [
   { width: 320, height: 640 },
   { width: 360, height: 740 },
@@ -46,7 +48,9 @@ for (const { width, height } of WIDTHS) {
       await expect(page.getByText(/does not dispatch or guarantee an emergency response/)).toBeVisible();
 
       await expect(page.getByRole("heading", { level: 2, name: "Ambulance" })).toBeVisible({ timeout: 60_000 });
-      await expect(page.getByRole("heading", { level: 2, name: "24-hour pharmacies" })).toBeVisible();
+      await expect(page.getByRole("link", { name: /Need blood urgently\?/ })).toBeVisible();
+      await expect(page.getByText(/pharmac/i)).toHaveCount(0); // FR-25 was removed on 2026-10-22
+      await expect(page.getByRole("heading", { name: /blood/i })).toHaveCount(0); // blood banks are on /blood only
       const firstCard = page.getByRole("article").first();
       await expect(firstCard.getByRole("link", { name: /^Call / })).toBeVisible();
 
@@ -72,6 +76,101 @@ for (const { width, height } of WIDTHS) {
       const text = (await page.locator("main").innerText()).toLowerCase();
       expect(text).not.toContain("sponsored");
       expect(text).not.toContain("featured");
+    });
+
+    test("the five always-shown groups come first even when empty, with the new headings, and the blood card is last", async ({ page }) => {
+      const emptyGroup = (slug: string, name: string) => ({ category: { slug, name }, contacts: [] });
+      // An older API still sends the pharmacy list; the page must ignore it.
+      const pharmacy = {
+        id: 201, slug: "demo-night-pharmacy", name: "Demo Night Pharmacy", category: { slug: "pharmacy", name: "Pharmacy" }, area: "Ogui",
+        address: "1 Example Road", latitude: 6.45, longitude: 7.5, distance_km: null, is_open_now: true, is_24_hours: true,
+        primary_phone: "+2340000000201", last_verified_at: new Date().toISOString(), verification_due: false, sponsored: false, hours_note: null,
+      };
+      await fakeApi(page, (request) =>
+        request.path === "/emergency"
+          ? {
+              body: {
+                national_line: { name: "National emergency number", number: "112" },
+                groups: [
+                  // The old headings of an API that is not redeployed yet: the page shows its own new ones, by slug.
+                  emptyGroup("ambulance", "Ambulance"), emptyGroup("fire", "Fire"), emptyGroup("police", "Police"),
+                  emptyGroup("emergency-unit", "24-hour emergency units"), emptyGroup("roadside-assistance", "Roadside assistance"),
+                  emptyGroup("security", "Security"),
+                  // An older API also sent this group; the page must ignore it (blood banks are listed on /blood only).
+                  { category: { slug: "blood-bank", name: "Blood banks" }, contacts: [{ ...pharmacy, id: 301, slug: "demo-blood-bank", name: "Demo Blood Bank", category: { slug: "blood-bank", name: "Blood bank" } }] },
+                ],
+                pharmacies_24h: [pharmacy],
+                disclaimer: "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112.",
+              },
+            }
+          : null,
+      );
+      await open(page);
+      await expect(page.getByRole("heading", { level: 2, name: "Ambulance" })).toBeVisible({ timeout: 60_000 });
+
+      await expect(page.getByText("No contacts added yet. In danger, call 112.")).toHaveCount(5);
+      await expect(page.getByRole("heading", { level: 2, name: "Security" })).toHaveCount(0); // the other empty groups stay hidden
+      await expect(page.getByRole("heading", { level: 2, name: "Disaster and flooding" })).toHaveCount(0);
+      await expect(page.getByRole("heading", { level: 2, name: "Fire", exact: true })).toHaveCount(0); // the old headings are not shown
+      await expect(page.getByRole("heading", { level: 2, name: "Roadside assistance" })).toHaveCount(0);
+      const headingNames = ["Ambulance", "Fire service", "Police", "Hospital emergency (24 hours)", "Road accidents"];
+      const tops: number[] = [];
+      for (const name of headingNames) tops.push((await page.getByRole("heading", { level: 2, name }).boundingBox())!.y);
+      expect([...tops].sort((first, second) => first - second)).toEqual(tops); // in this order, top to bottom
+      const blood = page.getByRole("link", { name: /Need blood urgently\?/ });
+      const bloodBox = await blood.boundingBox();
+      expect(tops.at(-1)!).toBeLessThan(bloodBox!.y);
+      await expect(page.getByText(/pharmac/i)).toHaveCount(0); // the old list in the answer is ignored
+      await expect(page.getByRole("heading", { name: "Blood banks" })).toHaveCount(0); // and so is the old blood bank group
+      await expect(page.getByText("Demo Blood Bank")).toHaveCount(0);
+      expect(await blood.evaluate((link) => link.parentElement?.lastElementChild === link)).toBe(true); // nothing comes after the card
+      await expect(blood).toHaveAttribute("href", "/blood");
+      expect(bloodBox!.height).toBeGreaterThanOrEqual(47.5);
+      expect(await blood.locator("svg").count()).toBe(0); // no icon, no cross
+      const bloodTextSizes = await blood.evaluate((link) => [link, ...link.querySelectorAll("*")].map((element) => parseFloat(getComputedStyle(element).fontSize)));
+      expect(Math.min(...bloodTextSizes)).toBeGreaterThanOrEqual(16);
+      expect(await blood.evaluate((link) => getComputedStyle(link).backgroundColor)).not.toMatch(/rgb\(179, 38, 30\)/); // not the red of 112
+      await allIsInsideTheScreen(page, width);
+    });
+
+    test("the new groups show only with a contact, the long heading wraps inside the screen, and the shared list uses it", async ({ page }) => {
+      // Test contacts that exist only in this fake answer: the feature adds no contact and no phone number of its own.
+      const contact = (id: number, slug: string, name: string, heading: string) => ({
+        id, slug: `test-${slug}`, name, category: { slug, name: heading }, area: "Ogui", address: "1 Example Road", latitude: 6.45,
+        longitude: 7.5, distance_km: null, is_open_now: true, is_24_hours: true, primary_phone: `+23400000009${id}`,
+        last_verified_at: new Date().toISOString(), verification_due: false, sponsored: false, hours_note: null,
+      });
+      const group = (slug: string, heading: string, contacts: ReturnType<typeof contact>[] = []) => ({ category: { slug, name: heading }, contacts });
+      await fakeApi(page, (request) =>
+        request.path === "/emergency"
+          ? {
+              body: {
+                national_line: { name: "National emergency number", number: "112" },
+                groups: [
+                  group("ambulance", "Ambulance"), group("fire", "Fire service"), group("police", "Police"),
+                  group("emergency-unit", "Hospital emergency (24 hours)"), group("roadside-assistance", "Road accidents"),
+                  group("security", "Security"), group("disaster-flooding", "Disaster and flooding"),
+                  group("gbv-support", "Sexual and gender-based violence support", [contact(11, "gbv-support", "Test Support Centre", "Sexual and gender-based violence support")]),
+                  group("mental-health-crisis", "Mental health crisis support", [contact(12, "mental-health-crisis", "Test Crisis Line", "Mental health crisis support")]),
+                ],
+                disclaimer: "SwiftRescue connects you to emergency contacts; it does not dispatch or guarantee an emergency response. In danger, call 112.",
+              },
+            }
+          : null,
+      );
+      await open(page);
+      const longHeading = page.getByRole("heading", { level: 2, name: "Sexual and gender-based violence support" });
+      await expect(longHeading).toBeVisible({ timeout: 60_000 });
+
+      await expect(page.getByRole("heading", { level: 2, name: "Mental health crisis support" })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 2, name: "Disaster and flooding" })).toHaveCount(0); // empty: hidden
+      await expect(page.getByRole("heading", { level: 2, name: "Security" })).toHaveCount(0);
+      const box = (await longHeading.boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(-0.5);
+      expect(box.x + box.width).toBeLessThanOrEqual(width + 0.5); // wraps, never clipped
+      const href = (await page.getByRole("link", { name: "Share on WhatsApp" }).getAttribute("href"))!;
+      expect(decodeURIComponent(href)).toContain("Mental health crisis support\nTest Crisis Line:");
+      await allIsInsideTheScreen(page, width);
     });
 
     test("Share emergency list: WhatsApp and SMS links with the list, 112 first", async ({ page }) => {
@@ -178,5 +277,7 @@ test.describe("SwiftRescue offline (a production build only)", () => {
     await expect(page.getByText(/^Offline — showing saved contacts from/)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("heading", { level: 2, name: "Ambulance" })).toBeVisible();
     await expect(page.getByRole("link", { name: /^Call / }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /Need blood urgently\?/ })).toHaveAttribute("href", "/blood"); // the card works from the saved copy
+    await expect(page.getByText(/pharmac/i)).toHaveCount(0);
   });
 });

@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 
 import { EmergencyContent } from "@/components/emergency/EmergencyContent";
 import { NationalLineCard } from "@/components/emergency/NationalLineCard";
-import { RegisterServiceWorker } from "@/components/emergency/RegisterServiceWorker";
+import { RegisterServiceWorker } from "@/components/offline/RegisterServiceWorker";
 
 export const metadata: Metadata = {
   title: "SwiftRescue",

@@ -5,6 +5,8 @@ how we know it is done is in [validation.md](validation.md). Branch: `feature/sw
 without waiting for the owner between phases (the owner's instruction of 2026-10-17); every decision I had to make alone is
 listed in "Assumed owner decisions" so the owner can overrule it.
 
+> **Changed on 2026-10-22 (owner):** the groups, their headings, which ones are always shown, and three new groups are now in `specs/2026-10-22-swiftrescue-groups/` (FR-15). Where this file lists seven groups, that feature wins.
+
 ## Requirements
 
 [prd.md](../prd.md): **US-04** (emergency button on every page, already done), **US-09** (share the list on WhatsApp), **US-14**
@@ -46,9 +48,9 @@ Made by Claude Code in the unattended run of 2026-10-17. Each says what I picked
 
 | # | Decision I made | Alternative |
 | --- | --- | --- |
-| A1 | The API returns **all seven groups every time**, in order, some with an empty `contacts` list. The page hides empty groups and, when every group is empty, says "We are still adding verified contacts. In danger, call 112." | Leave empty groups out of the answer |
+| A1 | The API returns **all seven groups every time**, in order, some with an empty `contacts` list. The page hides empty groups and, when every group is empty, says "We are still adding verified contacts. In danger, call 112." **Changed 2026-10-22 (owner): Ambulance and Fire are always shown, even when empty; see `specs/2026-10-22-swiftrescue-order/`.** | Leave empty groups out of the answer |
 | A2 | A listing that FR-22 flags is **left out** of SwiftRescue, as it is in search (the report flow moves it to `recheck_due` anyway). | Keep it with a warning, because in an emergency a maybe-working number may beat none |
-| A3 | `pharmacies_24h` has **no distance limit**: nearest ten, or the first ten by name without a position. | A 10 km limit like search |
+| A3 | `pharmacies_24h` has **no distance limit**: nearest ten, or the first ten by name without a position. **Removed 2026-10-22 (owner): FR-25 and `pharmacies_24h` are gone; see `specs/2026-10-22-swiftrescue-order/` (K6).** | A 10 km limit like search |
 | A4 | `GET /emergency` fills `hours_note` and `is_open_now` like search (the api-spec said "null until built"). | Keep `null` |
 | A5 | **Offline copy:** the page keeps the last answer **fetched without a position** in `localStorage` and shows it when the network fails, with "Offline — showing saved contacts from [date]". When there is a position, a second request adds the distances; the saved copy never holds a position or a distance. | Save the answer with distances (it would reveal the neighbourhood), or never save |
 | A6 | **Service worker** `public/sw.js`, scope `/`: network first for `/emergency`, cache first for `/_next/static/` files; on the first visit the page tells it which files it loaded so they are kept at once. It is registered only on `/emergency`. | A library such as Workbox (a new package; CLAUDE.md says ask first) |

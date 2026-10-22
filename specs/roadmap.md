@@ -271,7 +271,8 @@ assumed owner decisions). The phase also adds installable app icons.
 - 7b: page with 112 first and grouped contacts (FR-14, FR-15, FR-16, FR-19, FR-26)
 - 7c: share the emergency list and share my location (FR-18, FR-24)
 - 7d: offline cache (FR-17, NFR-03)
-- 7e: nearby 24-hour pharmacies (FR-25)
+- 7e: nearby 24-hour pharmacies (FR-25). **Removed 2026-10-22 (owner)**: pharmacies are not part of SwiftRescue; see `2026-10-22-swiftrescue-order/`
+- 7f: new group names, five groups always shown, three new groups (FR-15). **Built 2026-10-22, draft PR**: see [`2026-10-22-swiftrescue-groups/`](2026-10-22-swiftrescue-groups/requirements.md)
 
 ### Phase 8: Blood. Built (2026-10-20), draft PR stacked on phase 14, waiting for the owner's check
 US-15, US-16. Feature folder: [requirements](2026-10-20-blood/requirements.md), [plan](2026-10-20-blood/plan.md), [validation](2026-10-20-blood/validation.md).

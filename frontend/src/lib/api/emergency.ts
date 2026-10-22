@@ -1,4 +1,4 @@
-/** GET /emergency from the browser. Requirements: FR-14 to FR-16, FR-25. Contract: api-spec, "GET /emergency".
+/** GET /emergency from the browser. Requirements: FR-14 to FR-16. Contract: api-spec, "GET /emergency".
  *
  * The visitor's position is sent only here, only as `lat` and `lng` together, and only to add distances (never in a page address).
  */

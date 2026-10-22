@@ -1,14 +1,17 @@
-/* The service worker of SwiftRescue. Requirements: FR-17, NFR-03 (the emergency page works offline after one visit), NFR-07.
- * Spec: specs/2026-10-17-swiftrescue/requirements.md, decision A6. Tests: tests/unit/serviceWorker.test.ts.
+/* The service worker of SwiftRescue and Find blood. Requirements: FR-17, NFR-03 (the emergency page and the blood bank page work
+ * offline after one visit), NFR-07.
+ * Spec: specs/2026-10-17-swiftrescue/requirements.md, decision A6; specs/2026-10-22-blood-offline/requirements.md, decision N6.
+ * Tests: tests/unit/serviceWorker.test.ts.
  *
- * It keeps only two kinds of file of this site: the page /emergency and the files under /_next/static/ (scripts and styles).
- * The page is fetched from the network first (so a new version shows at once) and the kept copy is the fallback. The static files
- * are kept first (their names change with every build). It never keeps an answer of the API (another address), a page with a
- * query, or anything with lat or lng: the contacts for offline use are saved by the page itself, without a position.
+ * It keeps only two kinds of file of this site: the pages /emergency and /blood, and the files under /_next/static/ (scripts and
+ * styles). A page is fetched from the network first (so a new version shows at once) and the kept copy is the fallback. The static
+ * files are kept first (their names change with every build). It never keeps an answer of the API (another address), a page with a
+ * query, or anything with lat or lng: the contacts and the blood banks for offline use are saved by the page itself, without a
+ * position.
  */
 const CACHE_NAME = "swiftrescue-v1";
 const CACHE_PREFIX = "swiftrescue-";
-const PAGE_PATH = "/emergency";
+const PAGE_PATHS = ["/emergency", "/blood"];
 const STATIC_PREFIX = "/_next/static/";
 
 /** True for the addresses the worker may keep: this site, no query at all, and the page or a static file. */
@@ -21,7 +24,7 @@ function isKeepableUrl(address) {
   }
   if (url.origin !== self.location.origin) return false;
   if (url.search !== "" || url.searchParams.has("lat") || url.searchParams.has("lng")) return false;
-  return url.pathname === PAGE_PATH || url.pathname.startsWith(STATIC_PREFIX);
+  return PAGE_PATHS.indexOf(url.pathname) !== -1 || url.pathname.startsWith(STATIC_PREFIX);
 }
 
 async function keepCopy(request, response) {
@@ -82,7 +85,7 @@ self.addEventListener("activate", function (event) {
 self.addEventListener("fetch", function (event) {
   const request = event.request;
   if (request.method !== "GET" || !isKeepableUrl(request.url)) return; // the browser handles it as usual
-  const isPage = new URL(request.url).pathname === PAGE_PATH;
+  const isPage = PAGE_PATHS.indexOf(new URL(request.url).pathname) !== -1;
   event.respondWith(isPage ? pageFromNetworkOrCopy(request) : staticFromCopyOrNetwork(request));
 });
 
