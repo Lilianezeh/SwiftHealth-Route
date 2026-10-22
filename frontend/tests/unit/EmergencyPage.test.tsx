@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import EmergencyPage from "@/app/(public)/emergency/page";
 import { savePosition } from "@/lib/location/locationStore";
 
-import { emergencyResponse, json, listing, neverAnswers, stubApi } from "../helpers/api";
+import { emergencyResponse, json, listing, neverAnswers, oldEmergencyResponse, stubApi } from "../helpers/api";
 import { readSource } from "../helpers/source";
 
 const SENTENCE =
@@ -295,17 +295,37 @@ describe("the blood link card (decision K3)", () => {
     expect(link.parentElement?.lastElementChild).toBe(link); // nothing comes after it
   });
 
-  it("is after the Blood banks group when that group has contacts", async () => {
-    const response = emergencyResponse();
-    const bloodGroup = response.groups.find((group) => group.category.slug === "blood-bank");
-    bloodGroup?.contacts.push(listing({ id: 301, slug: "demo-bank", name: "Demo Blood Bank", category: { slug: "blood-bank", name: "Blood bank" } }));
-    stubApi({ emergency: () => json(response) });
-    render(<EmergencyPage />);
+  it("is the only blood on the page: blood banks are listed on /blood, not here (decision M1)", async () => {
+    stubApi({});
+    const { container } = render(<EmergencyPage />);
+
+    await screen.findByRole("link", { name: /Need blood urgently\?/ });
+
+    expect(screen.queryByRole("heading", { name: /blood/i })).toBeNull(); // no "Blood banks" group
+    expect(container.textContent).not.toContain("Demo Blood Bank");
+  });
+
+  it("ignores a Blood banks group that an older API still sends, even with a blood bank in it", async () => {
+    stubApi({ emergency: () => json(oldEmergencyResponse()) });
+    const { container } = render(<EmergencyPage />);
 
     const link = await screen.findByRole("link", { name: /Need blood urgently\?/ });
 
-    const heading = screen.getByRole("heading", { level: 2, name: "Blood banks" });
-    expect(heading.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Blood banks" })).toBeNull();
+    expect(container.textContent).not.toContain("Demo Blood Bank");
+    expect(link).toHaveAttribute("href", "/blood"); // the way to blood is the card
+  });
+
+  it("does not count an ignored Blood banks group as 'something to show': with every other group empty the sentence stays", async () => {
+    const answer = oldEmergencyResponse();
+    answer.groups.forEach((group) => {
+      if (group.category.slug !== "blood-bank") group.contacts = [];
+    });
+    stubApi({ emergency: () => json(answer) });
+    render(<EmergencyPage />);
+
+    expect(await screen.findByText("We are still adding verified contacts. In danger, call 112.")).toBeInTheDocument();
+    expect(screen.queryByText("Demo Blood Bank")).toBeNull();
   });
 
   it("is shown when every group is empty too", async () => {

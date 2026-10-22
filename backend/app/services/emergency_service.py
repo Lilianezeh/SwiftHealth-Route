@@ -38,8 +38,7 @@ GROUPS: tuple[tuple[str, str], ...] = (
     ("emergency-unit", "24-hour emergency units"),
     ("roadside-assistance", "Roadside assistance"),
     ("security", "Security"),
-    ("blood-bank", "Blood banks"),
-)
+)  # no blood bank group since 2026-10-22: GET /blood/banks is the only list of blood banks (decision M1)
 
 
 def summaries_in_order(

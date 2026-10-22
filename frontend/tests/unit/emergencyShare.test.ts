@@ -10,7 +10,7 @@ import {
   whatsappShareLink,
 } from "@/lib/emergency/shareText";
 
-import { emergencyResponse, listing } from "../helpers/api";
+import { emergencyResponse, listing, oldEmergencyResponse } from "../helpers/api";
 
 const PAGE_ADDRESS = "https://swifthealth-ng.netlify.app/emergency";
 
@@ -61,6 +61,14 @@ describe("the emergency list text (FR-18)", () => {
     const text = buildEmergencyListText(emergencyResponse(), PAGE_ADDRESS);
 
     expect(text).not.toMatch(/\bkm\b|lat|lng|maps/i);
+  });
+
+  it("never contains a blood bank, even if an older API still sends the Blood banks group (decision M1)", () => {
+    const text = buildEmergencyListText(oldEmergencyResponse(), PAGE_ADDRESS);
+
+    expect(text).not.toMatch(/blood/i);
+    expect(text).not.toContain("0000000301");
+    expect(text).toContain("Demo Ambulance One"); // the other groups are still in the list
   });
 
   it("never contains a pharmacy, even if an old API still sends the list (FR-25 removed, K6)", () => {
