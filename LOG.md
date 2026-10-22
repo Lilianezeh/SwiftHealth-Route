@@ -580,3 +580,32 @@ Things the owner must do before real visitors use the site.
 - **AI use:** Claude Code wrote the specs first, then the tests and the code; I chose the WhatsApp button's look, the local phone format, "Ask for
   price", the 9 kB target, the Find by type wording and the chip, and I checked the preview on my own phone.
 - **Tomorrow:** the next feature, "Find by type and home page wording" (spec and plan first; branch `feature/find-by-type`).
+
+## Day 10 — 2026-10-22 and 2026-10-23
+- **Built (four pull requests merged, each spec first, tests first, then the code):**
+  - **#37 SwiftRescue order.** Ambulance and Fire are always shown first, with "No contacts added yet. In danger, call 112." when empty. A "Need blood
+    urgently?" link card goes to `/blood`. The 24-hour pharmacies are gone from the page, the API answer (`pharmacies_24h`) and the saved offline copy
+    (FR-25 struck out of the PRD). Pharmacies are still found with search.
+  - **#39 Blood banks only on `/blood`.** `GET /emergency` has six groups and no blood bank group; an older API answer or an older saved copy that still has
+    one is ignored in one place (`lib/emergency/groups.ts`). I merged #39 by mistake into `feature/swiftrescue-order` instead of `main`, so it reached
+    `main` through two more pull requests (#41 and #42); nothing was lost.
+  - **#40 `/blood` works offline after one visit.** The service worker keeps `/emergency` and `/blood`; the page saves the last blood banks (without a
+    position) and shows "Offline — showing saved blood banks from <date>". Checked in a real browser on a production build with the network off.
+  - **#43 SwiftRescue groups.** New headings ("Fire service", "Hospital emergency (24 hours)", "Road accidents"), five groups always shown (Ambulance, Fire
+    service, Police, Hospital emergency, Road accidents), Security and three new groups shown only with a contact (Disaster and flooding, Sexual and
+    gender-based violence support, Mental health crisis support). One additive migration (`c3d71e9b5a20`): three new category rows, and the display names of
+    three rows renamed (guarded, ids and slugs kept; the downgrade restores the names and deletes nothing). No phone number or contact was added: staff add
+    them. The headings are also kept in the frontend by slug, so an old API answer or saved copy shows the new ones. Backend 1409 and frontend 1517 tests
+    passing; real-browser checks 28 of 28; the migration was also run up, down and up on the local PostgreSQL.
+  - **#38 (footer login link) was closed**: the login link moves to the header in the accounts work.
+- **Broke / fixed:** I believed #37 and #38 were merged before they were (GitHub showed them open), so the order of the work was checked against GitHub
+  each time. Pages built on a branch that was not `main` showed stale code in the development container until the branch was switched. The full test
+  suite is slow when the laptop is busy: a few staff-page tests time out in a full run and pass alone, so a failure is re-run alone before it is believed.
+- **Owner's checks (2026-10-23):** production `/emergency` looks right after #43.
+- **Still open:** the Render database expires about 2026-11-07 (see "To do later"); the home page photos (draft PR, `feature/home-photos`).
+- **Learned:** A pull request stacked on another branch must be pointed at `main` before it is merged, or it only joins the other branch. Check what is
+  really in `main` (`git log origin/main`) before saying a change is merged.
+- **AI use:** Claude Code wrote the specs, the tests and the code for all four pull requests and ran the checks; I chose the order of the groups, the new
+  names (also for the database rows), the three new groups, "no phone numbers added by the code", and the merge order, and I checked production.
+- **Tomorrow:** the home page photos in the sections (How we verify and SwiftRescue as new parts, fade and slide on scroll, the two SwiftRescue photos),
+  Lighthouse before and after, then my own Lighthouse run on the preview.
