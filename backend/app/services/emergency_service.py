@@ -33,12 +33,18 @@ DISCLAIMER = (
 # depend on the names of the category rows.
 GROUPS: tuple[tuple[str, str], ...] = (
     ("ambulance", "Ambulance"),
-    ("fire", "Fire"),
+    ("fire", "Fire service"),
     ("police", "Police"),
-    ("emergency-unit", "24-hour emergency units"),
-    ("roadside-assistance", "Roadside assistance"),
+    ("emergency-unit", "Hospital emergency (24 hours)"),
+    ("roadside-assistance", "Road accidents"),
     ("security", "Security"),
-)  # no blood bank group since 2026-10-22: GET /blood/banks is the only list of blood banks (decision M1)
+    ("disaster-flooding", "Disaster and flooding"),
+    ("gbv-support", "Sexual and gender-based violence support"),
+    ("mental-health-crisis", "Mental health crisis support"),
+)
+# No blood bank group since 2026-10-22: GET /blood/banks is the only list of blood banks (decision M1).
+# The page draws the first five always and the other four only with a contact
+# (specs/2026-10-22-swiftrescue-groups/); this list always holds all nine.
 
 
 def summaries_in_order(

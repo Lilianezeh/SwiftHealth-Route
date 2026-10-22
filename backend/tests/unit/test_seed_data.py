@@ -42,6 +42,7 @@ ENUGU_LONGITUDE_RANGE = (7.40, 7.60)
 EXPECTED_CATEGORY_SLUGS = {
     "hospital", "clinic", "pharmacy", "maternity", "laboratory",
     "ambulance", "fire", "police", "emergency-unit", "roadside-assistance", "security", "blood-bank",
+    "disaster-flooding", "gbv-support", "mental-health-crisis",  # SwiftRescue groups of 2026-10-22
 }
 
 
@@ -57,6 +58,27 @@ async def count_rows(session: AsyncSession, model) -> int:
 
 def test_all_spec_categories_are_present():
     assert {category.slug for category in CATEGORIES} == EXPECTED_CATEGORY_SLUGS
+
+
+def test_the_three_new_swiftrescue_groups_are_emergency_categories_with_no_listing_and_no_phone():
+    # Feature specs/2026-10-22-swiftrescue-groups/: staff add verified contacts later; the seed adds
+    # none (owner, point 5).
+    new_slugs_in_order = ["disaster-flooding", "gbv-support", "mental-health-crisis"]
+    new_rows = [category for category in CATEGORIES if category.slug in new_slugs_in_order]
+    assert [category.slug for category in new_rows] == new_slugs_in_order
+    assert [category.name for category in new_rows] == [
+        "Disaster and flooding", "Sexual and gender-based violence support", "Mental health crisis support",
+    ]
+    assert all(category.is_emergency for category in new_rows)
+    assert [category.slug for category in CATEGORIES[-3:]] == new_slugs_in_order
+    assert not [listing for listing in LISTINGS if listing.category_slug in new_slugs_in_order]
+
+
+def test_the_three_renamed_categories_have_their_new_display_names_and_keep_their_slugs():
+    names = {category.slug: category.name for category in CATEGORIES}
+    assert names["fire"] == "Fire service"
+    assert names["emergency-unit"] == "Hospital emergency (24 hours)"
+    assert names["roadside-assistance"] == "Road accidents"
 
 
 def test_emergency_categories_recheck_every_14_days_and_others_every_45():
