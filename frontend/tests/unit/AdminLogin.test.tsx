@@ -23,7 +23,8 @@ describe("/admin/login", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Staff login" })).toBeInTheDocument();
   });
 
-  it("is not in the footer or the header: staff open it by address", () => {
+  it("is linked only from the footer (owner, 2026-10-22), not from the header, the menu or the site settings", () => {
     expect(readSource("config/site.ts")).not.toMatch(/admin/);
+    expect(readSource("components/layout/SiteFooter.tsx")).toContain('href="/admin/login"');
   });
 });

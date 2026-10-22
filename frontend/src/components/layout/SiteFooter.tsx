@@ -1,5 +1,5 @@
-/** Footer on every page: information links and the copyright line.
- * Requirements: US-13, NFR-01, NFR-10. UI spec, "Layout"; revisions R26 (2026-10-12) and R44 (2026-10-13). The year is a constant of
+/** Footer on every page: information links, the small staff and provider login link, and the copyright line.
+ * Requirements: US-13, NFR-01, NFR-10, FR-30 (the login link; owner, 2026-10-22). UI spec, "Layout"; revisions R26 (2026-10-12) and R44 (2026-10-13). The year is a constant of
  * siteConfig. There is no photo credit and no outside link: the Magnific credit was removed on 2026-10-12, when the photos were
  * replaced by two that need none (the owner's statement).
  * The links and the © line are inside the same container as the section headings (max-w-6xl, 16 px at the sides), not at the far
@@ -29,7 +29,17 @@ export function SiteFooter({ isHomePage }: SiteFooterProps) {
             </Link>
           ))}
         </nav>
-        <p className="mt-4 text-ink-soft">
+        {/* The only link to the staff and provider login (owner, 2026-10-22): small, on its own line, never prefetched. */}
+        <p className="mt-2">
+          <Link
+            href="/admin/login"
+            prefetch={false}
+            className="inline-flex min-h-12 items-center text-ink-soft underline underline-offset-4"
+          >
+            Staff and provider login
+          </Link>
+        </p>
+        <p className="mt-2 text-ink-soft">
           © {siteConfig.copyrightYear} {siteConfig.name}
         </p>
       </div>

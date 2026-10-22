@@ -71,6 +71,48 @@ describe("SiteFooter", () => {
     ]);
   });
 
+  it("has a small 'Staff and provider login' link to /admin/login, apart from the six information links", () => {
+    render(<FooterOnPage />);
+
+    const login = screen.getByRole("link", { name: "Staff and provider login" });
+
+    expect(login).toHaveAttribute("href", "/admin/login");
+    const infoLinks = within(screen.getByRole("navigation", { name: "Footer" })).getAllByRole("link");
+    expect(infoLinks).toHaveLength(6); // the login is not one of the information links
+    expect(infoLinks).not.toContain(login);
+    expect(login.className).toMatch(/min-h-12(\s|$)/); // 48 px
+    expect(login.className).toMatch(/\btext-ink-soft\b/); // quiet, but the text is not smaller than 16 px
+    expect(login.className).not.toMatch(/text-(xs|sm)\b/);
+    expect(login.closest("p")?.className).not.toMatch(/text-(xs|sm)\b/);
+  });
+
+  it("puts the login link under the information links and above the © line, on its own line", () => {
+    const { container } = render(<FooterOnPage />);
+
+    const text = container.textContent ?? "";
+    const login = screen.getByRole("link", { name: "Staff and provider login" });
+
+    expect(text.indexOf("List your facility")).toBeLessThan(text.indexOf("Staff and provider login"));
+    expect(text.indexOf("Staff and provider login")).toBeLessThan(text.indexOf("© 2026 SwiftHealth Route"));
+    expect(login.closest("nav")).toBeNull(); // not inside the Footer navigation of the six links
+    expect(text.trim().endsWith("© 2026 SwiftHealth Route")).toBe(true); // the © line is still last
+  });
+
+  it("is on the home page's footer too, and is never prefetched (the staff area is not for visitors)", () => {
+    address.pathname = "/";
+    const { unmount } = render(<FooterOnPage />);
+    expect(screen.getByRole("link", { name: "Staff and provider login" })).toHaveAttribute("href", "/admin/login");
+    unmount();
+
+    expect(readSource("components/layout/SiteFooter.tsx")).toMatch(/href="\/admin\/login"[\s\S]{0,120}prefetch=\{false\}/);
+  });
+
+  it("is the only link to the login on the site: not in the header, the menu or the site settings", () => {
+    for (const file of ["components/layout/SiteHeader.tsx", "components/layout/HeaderNavigation.tsx", "components/layout/MobileMenu.tsx", "config/site.ts"]) {
+      expect(readSource(file), file).not.toMatch(/\/admin|login/i);
+    }
+  });
+
   it("makes the footer links at least 48 px high", () => {
     render(<FooterOnPage />);
 
