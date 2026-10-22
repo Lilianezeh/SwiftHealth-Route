@@ -58,7 +58,8 @@ body {
     transform: translateY(24px);
   }
 
-  .photo-reveal[data-reveal="hidden"],
+  /* The transition belongs to the end state, so the photo is hidden at once (a photo already in view never flashes out and in) and
+     only the change into "revealed" takes 0.8 s. */
   .photo-reveal[data-reveal="revealed"] {
     transition: opacity 800ms ease-out, transform 800ms ease-out;
   }
