@@ -1,6 +1,6 @@
 # Home photos: plan
 
-**Status: proposal (revision 3), not started. Waiting for the owner's "yes" and the answers in requirements.md.** Requirements: [requirements.md](requirements.md). Rules: tests first, one commit per task, IDs (US-13, US-01, US-04, FR-14, FR-17, NFR-01, NFR-03, NFR-10, NFR-13) in commits and tests; `git branch --show-current` before every commit and push; draft PR.
+**Status: approved (revision 3, owner's answers of 2026-10-22 are at the top of requirements.md: no strip, one 800 px file per photo, the credit only under `hero2`). Not started: waiting until the owner says #37 to #40 are merged; then `git merge origin/main` into `feature/home-photos` and build tasks 1 to 6 (task 5 included). The `PhotoStrip` lines below are cancelled.** Requirements: [requirements.md](requirements.md). Rules: tests first, one commit per task, IDs (US-13, US-01, US-04, FR-14, FR-17, NFR-01, NFR-03, NFR-10, NFR-13) in commits and tests; `git branch --show-current` before every commit and push; draft PR.
 
 ## Where the branch stands
 

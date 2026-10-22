@@ -1,6 +1,16 @@
 # Photos in the sections of the home page, SwiftRescue photos, no pictures on search: requirements
 
-**Status: proposal (revision 3, 2026-10-22). Nothing of parts 2 to 4 is built. Waiting for the owner's "yes" and the answers in "Questions for the owner".**
+**Status: approved by the owner on 2026-10-22 ("Yes, with these answers", revision 3). Nothing of parts 2 to 6 is built yet. I wait until the owner says #37 to #40 are merged, then update `feature/home-photos` from `main` and build everything (parts 2 to 6).**
+
+## The owner's answers to the questions below (2026-10-22), which win over the proposal where they differ
+
+1. **Yes:** both new sections, "How we verify" and "SwiftRescue" (blue button, never red).
+2. **Yes:** `maternity` stays in the Find by type row, with the honest alt text.
+3. **`hero3` is Unsplash: the Magnific credit goes directly under `hero2` only, and nothing under `hero3`.** (So the "How we verify" credit sits under the `hero2` photo, not under the pair; on a phone, where the photos are stacked, it is directly under `hero2`. Its words stay "Designed by Magnific".)
+4. **No photo strip.** (It is out of this feature: no `PhotoStrip`, no Pause button.)
+5. **One 800 px file per photo** (no 480 px files for phones). The four Find by type photos therefore are 800 × 533 files too (up to 50 kB each, shown small by CSS), so the budget below is 800 px for all eight section photos: at most about **480 kB** in all, lazily.
+6. **Yes:** `hero4-portrait.webp` is deleted; `owner` replaces it in the owners part.
+7. **The owner merges #37 to #40 first.** I do not build until the owner says they are merged; then I update the branch from `main` and build all parts, including part 6.
 How we build it: [plan.md](plan.md). Branch: `feature/home-photos`. Owner's requests of 2026-10-22 (the first one, then "Change of plan for the home page photos").
 
 ## What changed since the first approved version
