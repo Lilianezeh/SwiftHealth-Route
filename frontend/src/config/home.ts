@@ -1,6 +1,6 @@
 /** The photos and the words of the home page. Requirements: US-13, NFR-01, NFR-10. UI spec 2.1 (the words are the owner's).
- * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8, 15 and 19, and revisions R1 to R17 of 2026-10-12). The page has two
- * photos, the hero (hero3.jpg) and the owner photo (hero4.jpg), both Unsplash photos, and a smaller version of the hero for
+ * Specs: specs/2026-10-11-home-redesign/ (decisions 7, 8, 15 and 19, and revisions R1 to R17 of 2026-10-12). This file keeps one
+ * photo, the hero (hero3.jpg, an Unsplash photo; the owners' portrait hero4 was replaced on 2026-10-22), and a smaller version of the hero for
  * phones. The files are made by
  * scripts/optimize-home-images.mjs and tested by tests/unit/homeImages.test.ts, which checks that `width` and `height` are the
  * real pixel size of each file.
@@ -33,13 +33,8 @@ export const HOME_PHOTOS = {
     height: 640,
     alt: "A stethoscope and a blood pressure gauge lying on white sheets.",
   },
-  // For facility owners: a portrait photo, shown whole.
-  owner: {
-    src: `${FOLDER}/hero4-portrait.webp`,
-    width: 800,
-    height: 1200,
-    alt: "A smiling health worker in glasses and a white coat, with a stethoscope around the neck, holds up a blister pack of pills.",
-  },
+  // The photos of the sections below the hero (and the owners' photo, which replaced the portrait `hero4` on 2026-10-22) are in
+  // config/sectionPhotos.ts.
 } as const satisfies Record<string, HomePhoto>;
 
 /** The five tiles of "Find by type": the label and the category slug of the seed (the search address). The icons are
@@ -68,6 +63,17 @@ export const HOME_WORDS = {
   },
   // The description of the home page (the page head): the Overview's first sentence and the first part of its second one.
   description: `${brand.name} is a healthcare directory built for Nigeria. Find hospitals, clinics, maternity homes, pharmacies and laboratories near you.`,
+  // The two sections added on 2026-10-22 (specs/2026-10-22-home-photos/). Only real facts: the first sentences come from /how-we-verify, and
+  // SwiftRescue promises no response (FR-26). The heading of the SwiftRescue section is brand.emergencyName.
+  verify: {
+    heading: "How we verify",
+    text: "Every listing starts as a draft. Our team checks it with a call and a visit before it goes live, and checks it again on a regular cycle.",
+    link: "How we verify",
+  },
+  rescue: {
+    text: "Emergency contacts for ambulance and fire, with 112 first. In danger, call 112.",
+    button: `Open ${brand.emergencyName}`,
+  },
   findByType: { heading: "Find by type" },
   why: {
     heading: `Why ${brand.name}`,

@@ -21,17 +21,17 @@ const FIRST_QUALITY = 80;
 const LOWEST_QUALITY = 30;
 const QUALITY_STEP = 3;
 
-// One line per file: the original, the WebP to make, its fixed pixel size and its budget in kB. The page has two photos: the
-// hero (the Unsplash photo hero3.jpg since the third revision, 2026-10-12), which also has a smaller version for phones, and the
-// owner photo (hero4.jpg). `crop` is the part of the original to keep, in the original's pixels, before it is resized.
+// One line per file: the original, the WebP to make, its fixed pixel size and its budget in kB. The hero is the one photo made here
+// (the Unsplash photo hero3.jpg since the third revision, 2026-10-12), with a smaller version for phones. `crop` is the part of
+// the original to keep, in the original's pixels, before it is resized.
 // - hero3 (4000 x 6016, portrait) is cut by hand to a square that keeps the head of the stethoscope and the whole gauge.
-// - hero4 (4160 x 6240, portrait) is not cut at all: the owner wants the whole portrait photo, so only its size is reduced.
+// The owners' portrait photo (hero4) was replaced on 2026-10-22; the photos of the sections are made by scripts/optimize-hero-photos.mjs
+// (specs/2026-10-22-home-photos/).
 const HERO_CROP = { left: 0, top: 400, width: 4000, height: 4000 };
 const JOBS = [
   { source: "hero3.jpg", target: "hero3.webp", width: 1200, height: 1200, budgetKb: 150, crop: HERO_CROP },
   // The same photo, smaller, for phones.
   { source: "hero3.jpg", target: "hero3-phone.webp", width: 640, height: 640, budgetKb: 50, crop: HERO_CROP },
-  { source: "hero4.jpg", target: "hero4-portrait.webp", width: 800, height: 1200, budgetKb: 100 },
 ];
 
 async function makeOne({ source, target, width, height, budgetKb, crop }) {

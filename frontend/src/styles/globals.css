@@ -47,3 +47,19 @@ body {
 .on-dark :focus-visible {
   outline-color: var(--color-paper);
 }
+
+/* The gentle fade-and-slide of the photos of the home page sections (specs/2026-10-22-home-photos/, part 3). Reveal.tsx marks a photo
+   data-reveal="hidden" after the script has run (never in the server's HTML, so without scripts every photo is simply shown) and
+   data-reveal="revealed" when 15% of it is in view. A photo rises 24 px and fades in over 0.8 s, once. Only opacity and transform change, so
+   nothing moves the layout. All of it is inside the no-preference guard: a visitor who asks for reduced motion sees no movement at all. */
+@media (prefers-reduced-motion: no-preference) {
+  .photo-reveal[data-reveal="hidden"] {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  .photo-reveal[data-reveal="hidden"],
+  .photo-reveal[data-reveal="revealed"] {
+    transition: opacity 800ms ease-out, transform 800ms ease-out;
+  }
+}

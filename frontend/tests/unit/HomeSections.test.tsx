@@ -297,10 +297,13 @@ describe("the Overview", () => {
     expect(room?.className).not.toMatch(/\bpt-20\b|\bmd:pt-(32|40)\b/);
   });
 
-  it("is plain text: no red, no link, no image, a text size of 16 px or more", () => {
+  it("is plain text with one photo and its credit: no red, no icon, a text size of 16 px or more", () => {
     const { container } = render(<Overview />);
 
-    expect(container.querySelectorAll("a, img, svg")).toHaveLength(0);
+    // The only link is the "Designed by Magnific" credit under the photo (specs/2026-10-22-home-photos/); the only image is that photo.
+    expect(container.querySelectorAll("a")).toHaveLength(1);
+    expect(container.querySelectorAll("img")).toHaveLength(1);
+    expect(container.querySelectorAll("svg")).toHaveLength(0);
     // The owner's text says "emergency contacts" in words; what must not be there is the red colour.
     expect(container.querySelectorAll('[class*="emergency"]')).toHaveLength(0);
     expect(container.querySelector("p")?.className).not.toMatch(/\btext-(xs|sm)\b/);
@@ -337,13 +340,15 @@ describe("find by type", () => {
     );
   });
 
-  it("gives each tile a decorative icon over its label, and no photo", () => {
+  it("gives each tile a decorative icon over its label, and no photo in a tile (the four photos are in a row above the tiles)", () => {
     const { container } = render(<FindByType />);
 
-    expect(container.querySelectorAll("img")).toHaveLength(0);
+    expect(container.querySelectorAll("img")).toHaveLength(4); // the row above the tiles: clinic, pharmacy, laboratory, maternity
     for (const [label] of TILES) {
       const tile = screen.getByRole("link", { name: label });
       expect(tile.querySelector("svg"), label).toHaveAttribute("aria-hidden", "true");
+      expect(tile.querySelector("img"), label).toBeNull();
+      expect(tile.closest("[class*='photo-reveal']"), label).toBeNull();
     }
   });
 

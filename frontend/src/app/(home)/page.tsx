@@ -8,6 +8,8 @@ import type { Metadata } from "next";
 import { FacilityOwners } from "@/components/home/FacilityOwners";
 import { FindByType } from "@/components/home/FindByType";
 import { HomeHero } from "@/components/home/HomeHero";
+import { HomeSwiftRescue } from "@/components/home/HomeSwiftRescue";
+import { HowWeVerify } from "@/components/home/HowWeVerify";
 import { Overview } from "@/components/home/Overview";
 import { WhySwiftHealth } from "@/components/home/WhySwiftHealth";
 import { HOME_WORDS } from "@/config/home";
@@ -21,7 +23,9 @@ export default function Home() {
       <HomeHero />
       <Overview />
       <WhySwiftHealth />
+      <HowWeVerify />
       <FindByType />
+      <HomeSwiftRescue />
       <FacilityOwners />
     </>
   );
