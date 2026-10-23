@@ -10,7 +10,7 @@
  */
 import { useEffect } from "react";
 
-import { EMERGENCY_PHOTOS } from "@/config/sectionPhotos";
+import { EMERGENCY_PHOTOS } from "@/config/sitePhotos";
 
 type RegisterServiceWorkerProps = { pagePath?: "/emergency" | "/blood" };
 

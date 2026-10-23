@@ -10,7 +10,7 @@
  */
 import { useState } from "react";
 
-import { EMERGENCY_PHOTOS, MAGNIFIC_CREDIT, type SitePhoto } from "@/config/sectionPhotos";
+import { EMERGENCY_PHOTOS, MAGNIFIC_CREDIT, type SitePhoto } from "@/config/sitePhotos";
 
 type GroupPhotoProps = { slug: string };
 

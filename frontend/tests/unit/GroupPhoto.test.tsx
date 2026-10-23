@@ -8,7 +8,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import EmergencyPage from "@/app/(public)/emergency/page";
-import { EMERGENCY_PHOTOS, MAGNIFIC_CREDIT } from "@/config/sectionPhotos";
+import { EMERGENCY_PHOTOS, MAGNIFIC_CREDIT } from "@/config/sitePhotos";
 import { OFFLINE_COPY_KEY } from "@/lib/emergency/offlineCopy";
 
 import { emergencyResponse, json, stubApi } from "../helpers/api";
