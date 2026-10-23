@@ -47,3 +47,14 @@ body {
 .on-dark :focus-visible {
   outline-color: var(--color-paper);
 }
+
+/* The section of the home page that holds the background slideshow ("Find by type", specs/2026-10-22-home-photos/) waits until it is near the
+   screen. A browser's own lazy loading starts a download well before an image is on screen (Chrome: about 1250 px), so without this the first
+   photo was asked for at load and slowed the hero on a slow phone (Lighthouse). With content-visibility: auto the browser skips the section's
+   layout and paint until it is near the screen, so its photo is not asked for before that. The remembered size ("auto 720px": the real size after
+   the first draw) keeps the page from jumping. CSS only: a browser that does not know it draws the section at once. The text stays in the page for
+   search, find-in-page and screen readers. */
+.section-lazy {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
+}

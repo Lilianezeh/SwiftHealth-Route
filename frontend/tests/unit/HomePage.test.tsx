@@ -186,17 +186,19 @@ describe("the whole page", () => {
     expect(container.querySelectorAll("blockquote, q")).toHaveLength(0);
   });
 
-  it("has no outside link anywhere on the page, and no photo credit", () => {
+  it("has one outside link: the 'Designed by Magnific' credit of the background slideshow (owner, 2026-10-23); the Unsplash photos need none", () => {
     const { container } = renderWholePage();
 
-    expect(container.querySelectorAll('a[href^="http"], a[target="_blank"]')).toHaveLength(0);
-    expect(container.textContent?.toLowerCase()).not.toMatch(/magnific|unsplash/);
+    const outside = [...container.querySelectorAll('a[href^="http"], a[target="_blank"]')];
+
+    expect(outside.map((link) => link.getAttribute("href"))).toEqual(["https://www.magnific.com"]);
+    expect(container.textContent?.toLowerCase()).not.toMatch(/unsplash/);
   });
 
-  it("has two images only, the hero and the owner photo, each with alt text, a width and a height", () => {
+  it("has the hero and the owner photo, each with alt text, a width and a height, exactly as on main, and the first faint slideshow photo", () => {
     const { container } = renderWholePage();
 
-    const images = [...container.querySelectorAll("img")];
+    const images = [...container.querySelectorAll("img")].filter((image) => !image.closest("[data-backdrop]"));
 
     expect(images.map((image) => image.getAttribute("src"))).toEqual([
       "/images/home/hero3.webp",
@@ -208,9 +210,13 @@ describe("the whole page", () => {
       expect(Number(image.getAttribute("width"))).toBeGreaterThan(0);
       expect(Number(image.getAttribute("height"))).toBeGreaterThan(0);
     }
+    // The slideshow behind Find by type: one photo in the page at first, decorative (no alt text).
+    const backdrop = [...container.querySelectorAll("[data-backdrop] img")];
+    expect(backdrop).toHaveLength(1);
+    expect(backdrop[0]).toHaveAttribute("alt", "");
   });
 
-  it("loads only the hero at once: the owner photo is lazy", () => {
+  it("loads only the hero at once: the owner photo and the slideshow photo are lazy", () => {
     const { container } = renderWholePage();
 
     const eager = [...container.querySelectorAll("img")].filter((image) => image.getAttribute("loading") !== "lazy");

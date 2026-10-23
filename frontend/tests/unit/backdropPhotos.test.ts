@@ -8,14 +8,14 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { BACKDROP_PHOTOS, EMERGENCY_PHOTOS, MAGNIFIC_CREDIT, type SitePhoto } from "@/config/sitePhotos";
+import { BACKDROP_PHOTOS, EMERGENCY_PHOTOS, MAGNIFIC_CREDIT, type BackdropPhoto } from "@/config/sitePhotos";
 
 import { readWebpSize } from "../helpers/webp";
 
 const KILOBYTE = 1000;
 const PUBLIC = join(process.cwd(), "public");
 
-const fileOf = (photo: SitePhoto) => join(PUBLIC, photo.src);
+const fileOf = (photo: BackdropPhoto) => join(PUBLIC, photo.src);
 const emergency = Object.values(EMERGENCY_PHOTOS);
 
 describe("the slideshow photos in the config", () => {

@@ -337,13 +337,14 @@ describe("find by type", () => {
     );
   });
 
-  it("gives each tile a decorative icon over its label, and no photo", () => {
+  it("gives each tile a decorative icon over its label, and no photo in a tile (the faint slideshow is behind the tiles, not in them)", () => {
     const { container } = render(<FindByType />);
 
-    expect(container.querySelectorAll("img")).toHaveLength(0);
+    expect(container.querySelectorAll("img:not([data-backdrop] img)")).toHaveLength(0);
     for (const [label] of TILES) {
       const tile = screen.getByRole("link", { name: label });
       expect(tile.querySelector("svg"), label).toHaveAttribute("aria-hidden", "true");
+      expect(tile.querySelector("img"), label).toBeNull();
     }
   });
 
