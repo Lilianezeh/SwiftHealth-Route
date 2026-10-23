@@ -19,8 +19,10 @@
  * white pill, never on a photo. Each photo has a focus point for a narrow and a wide screen (`object-position`, config/sitePhotos.ts), so a face is
  * never cut in half when the photo is cropped to fill the taller section.
  */
+import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
+import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { BACKDROP_PHOTOS, BACKDROP_STRENGTH, MAGNIFIC_CREDIT } from "@/config/sitePhotos";
 
 const SLIDE_SECONDS = 7; // how long each photo stays
@@ -93,54 +95,61 @@ export function BackdropSlideshow({ children }: BackdropSlideshowProps) {
 
   return (
     <>
+      {/* The frame of the photos. Under 1024 px it is a band at the top of the section, as wide as the section and 3:2 like the photos, so each
+          photo is shown WHOLE (nothing, no face, is cut) and fades out at its bottom edge into the section's tint; the heading and the cards
+          start a little before the end of the band (the negative margin of the content below), so the faces are above them. From 1024 px
+          the frame fills the whole section behind the cards, and each photo is cropped to fill it, around its focus point. */}
       <div
-        data-backdrop=""
+        data-backdrop-frame=""
         aria-hidden="true"
-        style={{ opacity: BACKDROP_STRENGTH }}
-        className="pointer-events-none absolute inset-0 -z-10"
+        className="pointer-events-none relative -z-10 aspect-[3/2] w-full [-webkit-mask-image:linear-gradient(to_bottom,black_60%,transparent)] [mask-image:linear-gradient(to_bottom,black_60%,transparent)] lg:absolute lg:inset-0 lg:aspect-auto lg:[-webkit-mask-image:none] lg:[mask-image:none]"
       >
-        {photosInPage.map((index) => (
-          <div
-            key={BACKDROP_PHOTOS[index].src}
-            data-backdrop-slide=""
-            className={`absolute inset-0 transition-opacity duration-[1500ms] motion-reduce:transition-none ${index === current ? "opacity-100" : "opacity-0"}`}
-          >
-            {/* A plain <img> on purpose: decorative, a fixed size so nothing moves when it loads, and a small file of ours. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={index === 0 ? firstPhoto : undefined}
-              src={BACKDROP_PHOTOS[index].src}
-              alt=""
-              width={BACKDROP_PHOTOS[index].width}
-              height={BACKDROP_PHOTOS[index].height}
-              loading="lazy"
-              decoding="async"
-              onLoad={index === 0 ? () => setFirstLoaded(true) : undefined}
-              style={
-                {
-                  "--focus-narrow": BACKDROP_PHOTOS[index].focus.narrow,
-                  "--focus-wide": BACKDROP_PHOTOS[index].focus.wide,
-                } as CSSProperties
-              }
-              className="h-full w-full object-cover [object-position:var(--focus-narrow)] md:[object-position:var(--focus-wide)]"
-            />
-          </div>
-        ))}
+        <div data-backdrop="" style={{ opacity: BACKDROP_STRENGTH }} className="absolute inset-0">
+          {photosInPage.map((index) => (
+            <div
+              key={BACKDROP_PHOTOS[index].src}
+              data-backdrop-slide=""
+              className={`absolute inset-0 transition-opacity duration-[1500ms] motion-reduce:transition-none ${index === current ? "opacity-100" : "opacity-0"}`}
+            >
+              {/* A plain <img> on purpose: decorative, a fixed size so nothing moves when it loads, and files of ours. A phone and a tablet
+                  take the 800 px file (`sizes` says 800 px under 768 px), a wide screen the 1600 px one. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                ref={index === 0 ? firstPhoto : undefined}
+                src={BACKDROP_PHOTOS[index].src}
+                srcSet={`${BACKDROP_PHOTOS[index].src} ${BACKDROP_PHOTOS[index].width}w, ${BACKDROP_PHOTOS[index].srcLarge} ${BACKDROP_PHOTOS[index].widthLarge}w`}
+                sizes="(max-width: 767px) 800px, 100vw"
+                alt=""
+                width={BACKDROP_PHOTOS[index].width}
+                height={BACKDROP_PHOTOS[index].height}
+                loading="lazy"
+                decoding="async"
+                onLoad={index === 0 ? () => setFirstLoaded(true) : undefined}
+                style={{ "--focus": BACKDROP_PHOTOS[index].focus } as CSSProperties}
+                className="h-full w-full object-cover lg:[object-position:var(--focus)]"
+              />
+            </div>
+          ))}
+        </div>
+        {/* The light brand-blue tint over the photos (the wash). The tiles, the heading's backing, Pause and the credit are white, so every text
+            is on a white surface whatever is under it. */}
+        <div data-backdrop-tint="" className="absolute inset-0 bg-pine-100/40" />
       </div>
 
-      <div className="relative mx-auto w-full max-w-6xl px-4 py-6 md:py-12 lg:py-16">
+      <div className="relative mx-auto w-full max-w-6xl px-4 pb-8 pt-0 -mt-[15%] lg:mt-0 lg:pb-16">
         {children}
         {/* The row of the controls is in the server's HTML from the first paint (its height is kept), so nothing moves when the Pause button
             appears after the script has run. The button says "Pause" or "Play" (its name for a screen reader is "Pause photos" / "Play photos"),
             so that it and the credit fit in one row on a phone. */}
-        <div className="mt-4 flex min-h-12 flex-wrap items-center gap-2 md:mt-6 md:gap-3">
+        <div className="mt-4 flex min-h-12 flex-col items-start gap-2 md:mt-6 md:flex-row md:flex-wrap md:items-center md:gap-3">
           {reducedMotion === false && (
             <button
               type="button"
               onClick={() => setPaused((before) => !before)}
               aria-label={paused ? "Play photos" : "Pause photos"}
-              className="inline-flex min-h-12 items-center rounded-xl border border-line bg-white px-3 text-base font-semibold text-forest md:px-4"
+              className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-line bg-white px-3 text-base font-semibold text-forest md:px-4"
             >
+              <DecorativeIcon icon={paused ? Play : Pause} className="h-5 w-5" />
               {paused ? "Play" : "Pause"}
             </button>
           )}

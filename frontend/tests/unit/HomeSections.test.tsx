@@ -332,9 +332,17 @@ describe("find by type", () => {
     expect(screen.queryByText("Browse by type")).not.toBeInTheDocument();
     expect(readSource("config/home.ts")).not.toContain("Browse by type");
     const links = within(screen.getByRole("list")).getAllByRole("link");
-    expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual(
+    // Each tile is named by its label (aria-labelledby); the line under it (16 px) is its description.
+    expect(links.map((link) => [link.getAttribute("aria-labelledby") && document.getElementById(link.getAttribute("aria-labelledby") as string)?.textContent, link.getAttribute("href")])).toEqual(
       TILES.map(([label, slug]) => [label, `/search?category=${slug}`]),
     );
+    expect(links.map((link) => link.textContent)).toEqual([
+      "HospitalAdmission, surgery and emergency care",
+      "ClinicCheck-ups and everyday treatment",
+      "MaternityAntenatal care and childbirth",
+      "PharmacyMedicines and advice",
+      "LaboratoryTests and results",
+    ]);
   });
 
   it("gives each tile a decorative icon over its label, and no photo in a tile (the faint slideshow is behind the tiles, not in them)", () => {
@@ -352,10 +360,11 @@ describe("find by type", () => {
     const { container } = render(<FindByType />);
 
     for (const [label] of TILES) {
-      expect(screen.getByRole("link", { name: label }).className, label).toMatch(/min-h-(12|14|16|20|24)\b/);
+      expect(screen.getByRole("link", { name: label }).className, label).toMatch(/\bh-\[190px\]/); // 190 px high, far over 48 px
       expect(screen.getByText(label).className).not.toMatch(/\btext-(xs|sm)\b/);
     }
-    expect(container.innerHTML).not.toMatch(/emergency/);
+    // No red: the word "emergency" is in the Hospital line ("Admission, surgery and emergency care"), so the colour classes are what is checked.
+    expect(container.innerHTML).not.toMatch(/\b(bg|text|border|ring)-emergency\b/);
   });
 });
 

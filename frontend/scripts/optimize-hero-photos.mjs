@@ -23,7 +23,9 @@ const BACKDROP_FOLDER = fileURLToPath(new URL("../public/images/backdrop/", impo
 const EMERGENCY_FOLDER = fileURLToPath(new URL("../public/images/emergency/", import.meta.url));
 const KILOBYTE = 1000; // the same "kB" as tests/unit/backdropPhotos.test.ts
 
-const BACKDROP = { width: 960, height: 640, budgetKb: 50 }; // 3:2; drawn faint (18%) behind the cards, so the quality can be low
+// 3:2, two sizes of each slideshow photo (revision 6): 800 px for phones and tablets, 1600 px for wide screens (srcset/sizes in BackdropSlideshow).
+const BACKDROP_SMALL = { width: 800, height: 533, budgetKb: 45 };
+const BACKDROP_LARGE = { width: 1600, height: 1067, budgetKb: 130 };
 const GROUP = { width: 640, height: 240, budgetKb: 40 }; // the small header image of a SwiftRescue group: 8:3
 const FIRST_QUALITY = 78;
 const LOWEST_QUALITY = 30;
@@ -33,8 +35,9 @@ const QUALITY_STEP = 3;
 const BACKDROP_PHOTOS = [
   // clinic (6354 x 4539): the nurse at the left, from above her head.
   { source: "clinic.jpg", name: "nurse-corridor", crop: [0, 100, 6354, 4236] },
-  // hospital (2160 x 3840, a portrait): the doctor's face and the patient in bed, from y = 640 (two faces, the bed).
-  { source: "hospital.jpg", name: "doctor-and-patient", crop: [0, 640, 2160, 1440] },
+  // hospital (2160 x 3840, a portrait): the patient's face and the doctor's coat; from y = 1000 (just below the doctor's chin) so that only the
+  // patient's face is in the frame, high in it, with room under it (the doctor's face cannot fit a 3:2 frame together with the patient's).
+  { source: "hospital.jpg", name: "doctor-and-patient", crop: [0, 1000, 2160, 1440] },
   // maternity (6144 x 3456, 16:9): the doctor and the patient's shoulder.
   { source: "maternity.jpg", name: "consultation", crop: [500, 0, 5184, 3456] },
   // laboratory (6000 x 4000): already 3:2; the woman at the left and the microscope.
@@ -72,7 +75,10 @@ const made = [];
 if (which === "all" || which === "backdrop") {
   await mkdir(BACKDROP_FOLDER, { recursive: true });
   for (const photo of BACKDROP_PHOTOS) {
-    made.push(await makeOne(await upright(photo.source), photo.crop, BACKDROP, BACKDROP_FOLDER, `${photo.name}-${BACKDROP.width}.webp`));
+    const photoPixels = await upright(photo.source);
+    for (const size of [BACKDROP_SMALL, BACKDROP_LARGE]) {
+      made.push(await makeOne(photoPixels, photo.crop, size, BACKDROP_FOLDER, `${photo.name}-${size.width}.webp`));
+    }
   }
 }
 if (which === "all" || which === "emergency") {

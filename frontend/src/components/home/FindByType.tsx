@@ -34,7 +34,7 @@ export function FindByType() {
   return (
     <section
       aria-labelledby="find-by-type-heading"
-      className="section-lazy relative isolate flex min-h-[480px] flex-col justify-center overflow-hidden bg-white md:min-h-[520px] lg:min-h-[560px]"
+      className="section-lazy relative isolate flex flex-col justify-end overflow-hidden bg-pine-50 lg:min-h-[760px]"
     >
       <BackdropSlideshow>
         {/* A soft white backing, like the Pause button and the credit: the heading is on a white surface whatever photo is behind it. */}
@@ -49,16 +49,25 @@ export function FindByType() {
         <ul className="mt-4 grid grid-cols-4 gap-2 md:mt-5 md:grid-cols-6 md:gap-3 lg:grid-cols-5">
           {HOME_CATEGORIES.map((category, position) => (
             <li key={category.slug} className={`col-span-2 lg:col-span-1 ${TILE_PLACE[position]}`}>
-              {/* prefetch={false}: the search page's code (with the map) is not downloaded before a tile is chosen (R43). */}
+              {/* The link is named by its label (aria-labelledby) and described by its line (aria-describedby), so the name of each tile is
+                  still just "Hospital", "Clinic"... prefetch={false}: the search page's code (with the map) is not downloaded before a tile is
+                  chosen (R43). The lift on hover and focus moves only `transform`: the layout never shifts; reduce motion switches it off. */}
               <Link
                 href={`/search?${filtersToQuery({ category: category.slug })}`}
                 prefetch={false}
-                className="flex h-full min-h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-line bg-white p-2 text-center shadow-card hover:border-pine md:min-h-24 md:gap-2 md:p-4"
+                aria-labelledby={`type-name-${category.slug}`}
+                aria-describedby={`type-line-${category.slug}`}
+                className="flex h-[190px] flex-col items-center justify-center gap-1 rounded-2xl border border-line bg-white p-3 text-center shadow-card transition duration-200 hover:-translate-y-1 hover:border-pine hover:shadow-lg focus-visible:-translate-y-1 focus-visible:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-visible:translate-y-0 md:gap-2 md:p-4"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-pine-100 text-forest md:h-12 md:w-12">
-                  <DecorativeIcon icon={TILE_ICONS[category.slug]} className="h-6 w-6" />
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-pine-100 text-forest md:h-16 md:w-16">
+                  <DecorativeIcon icon={TILE_ICONS[category.slug]} className="h-7 w-7 md:h-8 md:w-8" />
                 </span>
-                <span className="text-base font-bold text-forest md:text-lg">{category.label}</span>
+                <span id={`type-name-${category.slug}`} className="text-xl font-bold text-forest">
+                  {category.label}
+                </span>
+                <span id={`type-line-${category.slug}`} className="text-base text-ink-soft">
+                  {category.description}
+                </span>
               </Link>
             </li>
           ))}

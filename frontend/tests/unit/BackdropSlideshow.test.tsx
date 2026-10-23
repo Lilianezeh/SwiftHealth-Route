@@ -96,8 +96,8 @@ describe("the first photo", () => {
     expect(html).toContain(MAGNIFIC_CREDIT.text);
     expect(html).not.toMatch(/Pause|Play/);
     expect(html).toMatch(/loading="lazy"/);
-    expect(html).toMatch(/width="960"/);
-    expect(html).toMatch(/height="640"/);
+    expect(html).toMatch(/width="800"/);
+    expect(html).toMatch(/height="533"/);
   });
 
   it("is decorative: empty alt text, the whole layer hidden from screen readers, never in the tab order", () => {
@@ -106,7 +106,7 @@ describe("the first photo", () => {
     const image = container.querySelector("img") as HTMLImageElement;
     expect(image).toHaveAttribute("alt", "");
     expect(image.closest("[aria-hidden='true']")).not.toBeNull();
-    expect(image.closest("[data-backdrop]")?.className).toMatch(/\bpointer-events-none\b/);
+    expect(image.closest("[data-backdrop-frame]")?.className).toMatch(/\bpointer-events-none\b/);
     expect(screen.queryByRole("img")).toBeNull();
   });
 });
@@ -160,22 +160,48 @@ describe("the other photos", () => {
   it("are all hidden from screen readers and cover the section behind the content, at the strength of the config (45%)", () => {
     const { container } = renderSlideshow();
 
+    const frame = container.querySelector("[data-backdrop-frame]") as HTMLElement;
     const layer = container.querySelector("[data-backdrop]") as HTMLElement;
-    expect(layer.className).toMatch(/\babsolute\b/);
-    expect(layer.className).toMatch(/\binset-0\b/);
-    expect(layer.className).toMatch(/(^|\s)-z-10(\s|$)/); // under the heading, the tiles and the controls
+    expect(frame).toHaveAttribute("aria-hidden", "true");
+    expect(frame.className).toMatch(/\bpointer-events-none\b/);
+    expect(frame.className).toMatch(/(^|\s)-z-10(\s|$)/); // under the heading, the tiles and the controls
+    expect(frame.contains(layer)).toBe(true);
     expect(BACKDROP_STRENGTH).toBe(0.45); // the owner's choice, 2026-10-23
     expect(layer.style.opacity).toBe("0.45");
   });
 
-  it("give each photo a focus point for a narrow and a wide screen, so a face is never cut in half", () => {
+  it("are shown whole in a 3:2 band under 1024 px, with a fade at its bottom edge, and fill the whole section behind the cards from 1024 px", () => {
+    const { container } = renderSlideshow();
+
+    const frame = container.querySelector("[data-backdrop-frame]") as HTMLElement;
+    expect(frame.className).toMatch(/\baspect-\[3\/2\]/); // as wide as the section and 3:2 like the photos: no photo is cropped, no face is cut
+    expect(frame.className).toMatch(/\bw-full\b/);
+    expect(frame.className).toMatch(/\[mask-image:linear-gradient\(to_bottom,black_60%,transparent\)\]/); // it fades into the tint at its bottom edge
+    expect(frame.className).toMatch(/\blg:absolute\b/);
+    expect(frame.className).toMatch(/\blg:inset-0\b/);
+    expect(frame.className).toMatch(/\blg:aspect-auto\b/);
+    expect(frame.className).toMatch(/\blg:\[mask-image:none\]/);
+    expect(container.querySelector("[data-backdrop-tint]")?.className).toMatch(/\bbg-pine-100\/40\b/); // the light brand-blue tint over the photos
+  });
+
+  it("give each photo one focus point for the wide screens, where it is cropped, so a face is never cut in half", () => {
     const { container } = renderSlideshow();
 
     const image = container.querySelector("img") as HTMLImageElement;
-    expect(image.style.getPropertyValue("--focus-narrow")).toBe(BACKDROP_PHOTOS[0].focus.narrow);
-    expect(image.style.getPropertyValue("--focus-wide")).toBe(BACKDROP_PHOTOS[0].focus.wide);
-    expect(image.className).toMatch(/\[object-position:var\(--focus-narrow\)\]/);
-    expect(image.className).toMatch(/\bmd:\[object-position:var\(--focus-wide\)\]/);
+    expect(image.style.getPropertyValue("--focus")).toBe(BACKDROP_PHOTOS[0].focus);
+    expect(image.className).toMatch(/\blg:\[object-position:var\(--focus\)\]/);
+  });
+
+  it("come in two sizes: the 800 px file for phones and tablets, the 1600 px file for wide screens (srcset and sizes), still lazy", () => {
+    const { container } = renderSlideshow();
+
+    const image = container.querySelector("img") as HTMLImageElement;
+    expect(image).toHaveAttribute("src", BACKDROP_PHOTOS[0].src);
+    expect(image.getAttribute("srcset")).toBe(`${BACKDROP_PHOTOS[0].src} 800w, ${BACKDROP_PHOTOS[0].srcLarge} 1600w`);
+    expect(image.getAttribute("sizes")).toBe("(max-width: 767px) 800px, 100vw"); // a phone never takes the large file, whatever its pixel density
+    expect(image).toHaveAttribute("loading", "lazy");
+    expect(image).toHaveAttribute("width", "800");
+    expect(image).toHaveAttribute("height", "533");
   });
 
   it("leave the heading and the tiles alone: they are the very same elements after the photos changed", async () => {
@@ -213,13 +239,17 @@ describe("Pause and Play", () => {
     const pause = screen.getByRole("button", { name: "Pause photos" });
     expect(pause.className).toMatch(/\bmin-h-12\b/);
     expect(pause.textContent).toContain("Pause");
+    expect(pause.querySelector("svg.lucide-pause")).toHaveAttribute("aria-hidden", "true"); // a pause icon, decoration only: the text names the button
     fireEvent.click(pause);
     await pass(SLIDE_MS * 3);
 
     expect(shownIndex(container)).toBe(0);
     expect(screen.queryByRole("button", { name: "Pause photos" })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Play photos" }));
+    const play = screen.getByRole("button", { name: "Play photos" });
+    expect(play.querySelector("svg.lucide-play")).toHaveAttribute("aria-hidden", "true"); // and a play icon while it is paused
+    expect(play.querySelector("svg.lucide-pause")).toBeNull();
+    fireEvent.click(play);
     await pass(SLIDE_MS - 100);
     expect(shownIndex(container)).toBe(0);
     await pass(200);
@@ -334,8 +364,9 @@ describe("the credit", () => {
 });
 
 describe("all text passes WCAG AA, even over the darkest possible photo pixel", () => {
-  // A pure black photo pixel at the chosen strength over the white section background: the worst case under any text that is not on a white surface.
-  const WORST_BACKGROUND = laidOver("#000000", "#ffffff", BACKDROP_STRENGTH);
+  // A pure black photo pixel at the chosen strength over the section's light blue (pine-50), then the light brand-blue tint (pine-100 at 40%) over it:
+  // the worst case under any text that is not on a white surface.
+  const WORST_BACKGROUND = laidOver(tokenColour("pine-100"), laidOver("#000000", tokenColour("pine-50"), BACKDROP_STRENGTH), 0.4);
 
   it("has the heading of Find by type on a soft white backing (bg-white/90) in its own forest colour, at least 4.5:1 on the worst case", () => {
     render(<FindByType />);
@@ -349,11 +380,11 @@ describe("all text passes WCAG AA, even over the darkest possible photo pixel", 
     expect(contrast(tokenColour("forest"), laidOver("#ffffff", WORST_BACKGROUND, backing))).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("has the section on white (the lighter wash) and the tiles on white cards, forest text, at least 4.5:1", () => {
+  it("has the section in the light brand blue (pine-50, with the pine-100 tint over the photos) and the tiles on white cards, forest text, at least 4.5:1", () => {
     const { container } = render(<FindByType />);
 
-    expect(container.querySelector("section")?.className).toMatch(/\bbg-white\b/);
-    expect(container.querySelector("section")?.className).not.toMatch(/\bbg-pine-50\b/);
+    expect(container.querySelector("section")?.className).toMatch(/\bbg-pine-50\b/); // not the grey-white of the first version of revision 5
+    expect(container.querySelector("section")?.className).not.toMatch(/\bbg-white\b/);
     for (const tile of screen.getAllByRole("link", { name: /Hospital|Clinic|Maternity|Pharmacy|Laboratory/ })) {
       expect(tile.className).toMatch(/\bbg-white\b/);
     }
@@ -394,25 +425,76 @@ describe("the section of Find by type", () => {
 describe("the size kept for the section until it is drawn (no layout shift)", () => {
   const css = readSource("styles/globals.css");
 
-  it("is the height the section really has: 480 px on a phone, 520 px on a tablet and 560 px on a laptop (its minimum height)", () => {
-    expect(css).toMatch(/\.section-lazy\s*\{[^}]*contain-intrinsic-size:\s*auto 480px/);
-    expect(css).toMatch(/@media \(max-width: 339px\)\s*\{\s*\.section-lazy\s*\{[^}]*auto 494px/); // the controls wrap in two rows on a very narrow phone
-    expect(css).toMatch(/@media \(min-width: 768px\)\s*\{\s*\.section-lazy\s*\{[^}]*auto 520px/);
-    expect(css).toMatch(/@media \(min-width: 1024px\)\s*\{\s*\.section-lazy\s*\{[^}]*auto 560px/);
+  it("is the height the section really has: 51.67% of the width + 802 px on a phone, + 564 px on a tablet, 760 px on a laptop (measured at 13 widths)", () => {
+    expect(css).toMatch(/\.section-lazy\s*\{[^}]*contain-intrinsic-size:\s*auto calc\(51\.67vw \+ 802px\)/);
+    expect(css).toMatch(/@media \(min-width: 768px\)\s*\{\s*\.section-lazy\s*\{[^}]*auto calc\(51\.67vw \+ 564px\)/);
+    expect(css).toMatch(/@media \(min-width: 1024px\)\s*\{\s*\.section-lazy\s*\{[^}]*auto 760px/);
   });
 });
 
-describe("the taller section (revision 5)", () => {
-  it("is at least 480 px high on a phone, 520 px on a tablet and 560 px on a laptop, with its content centred in it", () => {
+describe("the layout of the section (revision 6)", () => {
+  it("has the heading and the cards in the lower part: the content at the bottom, pulled 15% of the width up over the photo band under 1024 px, and a 760 px section from 1024 px", () => {
     const { container } = render(<FindByType />);
 
     const section = container.querySelector("section") as HTMLElement;
-    expect(section.className).toMatch(/\bmin-h-\[480px\]/);
-    expect(section.className).toMatch(/\bmd:min-h-\[520px\]/);
-    expect(section.className).toMatch(/\blg:min-h-\[560px\]/);
     expect(section.className).toMatch(/\bflex\b/);
     expect(section.className).toMatch(/\bflex-col\b/);
-    expect(section.className).toMatch(/\bjustify-center\b/);
+    expect(section.className).toMatch(/\bjustify-end\b/); // the content sits at the bottom, the faces above it
+    expect(section.className).toMatch(/\blg:min-h-\[760px\]/);
+    const content = container.querySelector("[data-backdrop-frame] + div") as HTMLElement;
+    expect(content.className).toMatch(/(^|\s)-mt-\[15%\](\s|$)/);
+    expect(content.className).toMatch(/\blg:mt-0\b/);
+  });
+
+  it("puts Pause and the credit in two rows on a phone and in one row from 768 px (a fixed height, whatever the width)", () => {
+    renderSlideshow();
+
+    const row = screen.getByRole("button", { name: "Pause photos" }).parentElement as HTMLElement;
+    expect(row.className).toMatch(/\bflex-col\b/);
+    expect(row.className).toMatch(/\bitems-start\b/);
+    expect(row.className).toMatch(/\bmd:flex-row\b/);
+  });
+
+  it("makes the cards 190 px high with 64 px icons and 20 px names, and a 16 px line under each name (the owner's words)", () => {
+    const { container } = render(<FindByType />);
+
+    const words: Record<string, string> = {
+      Hospital: "Admission, surgery and emergency care",
+      Clinic: "Check-ups and everyday treatment",
+      Maternity: "Antenatal care and childbirth",
+      Pharmacy: "Medicines and advice",
+      Laboratory: "Tests and results",
+    };
+    for (const [name, line] of Object.entries(words)) {
+      const card = screen.getByRole("link", { name }); // the name is still just the label: the line is the description
+      expect(card.className).toMatch(/\bh-\[190px\]/);
+      const label = container.querySelector(`#type-name-${name.toLowerCase()}`) as HTMLElement;
+      const description = container.querySelector(`#type-line-${name.toLowerCase()}`) as HTMLElement;
+      expect(label.textContent).toBe(name);
+      expect(label.className).toMatch(/\btext-xl\b/); // 20 px
+      expect(description.textContent).toBe(line);
+      expect(description.className).toMatch(/\btext-base\b/); // 16 px
+      expect(card).toHaveAttribute("aria-labelledby", `type-name-${name.toLowerCase()}`);
+      expect(card).toHaveAccessibleDescription(line);
+      const icon = card.querySelector("span") as HTMLElement;
+      expect(icon.className).toMatch(/\bmd:h-16\b/); // 64 px (56 px on a phone)
+      expect(icon.className).toMatch(/\bmd:w-16\b/);
+      expect(icon.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    }
+  });
+
+  it("lifts a card a little on hover and on keyboard focus (transform only, so nothing moves around it), and not at all with reduce motion", () => {
+    render(<FindByType />);
+
+    for (const card of screen.getAllByRole("link", { name: /Hospital|Clinic|Maternity|Pharmacy|Laboratory/ })) {
+      expect(card.className).toMatch(/\bhover:-translate-y-1\b/);
+      expect(card.className).toMatch(/\bfocus-visible:-translate-y-1\b/);
+      expect(card.className).toMatch(/\bhover:shadow-lg\b/);
+      expect(card.className).toMatch(/\bduration-200\b/);
+      expect(card.className).toMatch(/\bmotion-reduce:transition-none\b/);
+      expect(card.className).toMatch(/\bmotion-reduce:hover:translate-y-0\b/);
+      expect(card.className).toMatch(/\bmotion-reduce:focus-visible:translate-y-0\b/);
+    }
   });
 
   it("keeps the five tiles at 48 px or more with 16 px text, two columns on a phone with the last tile centred, one row on a laptop", () => {
@@ -430,8 +512,7 @@ describe("the taller section (revision 5)", () => {
     expect(tiles[4].className).toMatch(/\bmd:col-start-auto\b/);
     expect(tiles[0].className).toMatch(/\blg:col-span-1\b/);
     for (const tile of screen.getAllByRole("link", { name: /Hospital|Clinic|Maternity|Pharmacy|Laboratory/ })) {
-      expect(tile.className).toMatch(/\bmin-h-20\b/); // 80 px on a phone, 96 px from a tablet (md:min-h-24): never under 48
-      expect(tile.className).toMatch(/\bmd:min-h-24\b/);
+      expect(tile.className).toMatch(/\bh-\[190px\]/); // never under 48 px
       expect(tile.className).not.toMatch(/\btext-(xs|sm)\b/);
     }
   });
