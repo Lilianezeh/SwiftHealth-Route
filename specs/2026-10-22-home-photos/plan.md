@@ -2,6 +2,8 @@
 
 **Status: revision 4 (2026-10-23), approved ("Yes, with these changes"). Built 2026-10-23; draft PR #44 updated, waiting for the owner's Lighthouse run and look at the preview.** Requirements: [requirements.md](requirements.md). Rules: tests first, one commit per task, IDs (US-13, US-04, US-01, FR-14, FR-17, NFR-01, NFR-03, NFR-10, NFR-13) in commits and tests; `git branch --show-current` before every commit and push; the draft PR #44 is updated.
 
+**Revision 6 (2026-10-23, the owner's polish, built):** Task 5 below; the files and tasks above describe revisions 4 and 5, which revision 6 changes (the photo files are now 800 and 1600 px, the section layout and the cards are new).
+
 ## Files
 
 | File | Change |
@@ -32,3 +34,5 @@
 - [x] (`e8c954d`, `30f2e83`) `home-photos.spec.ts`: the slideshow changes photo (fake clock), Pause holds it, a hidden tab stops it, `reducedMotion: "reduce"` gives one still photo and no button, nothing wider than the screen, CLS 0, no photo requested before the section is near, the heading and tiles readable (a pixel contrast sample of the heading over every photo), hero and owners part unchanged, `/search` and `/find` have no picture, `/emergency` photos and offline check.
 ### Task 4: speed, wrap-up
 - [x] (`30f2e83`) Lighthouse before and after (five runs each); `validation.md`; update the draft PR #44; the owner's own Lighthouse decides.
+### Task 5: revision 6, the polish (tests first)
+- [x] (`6bb8522`, `3dd58e1`, `d38baeb`) Red unit and browser tests, then: 800 / 1600 px files and the script; `<picture>` and `srcset`; the 3:2 band under 1024 px and the full frame from 1024 px; the 190 px cards with a 16 px line (`HOME_CATEGORIES.description`); the light-blue tint; the Pause / Play icon; the card lift; the kept sizes; Lighthouse before and after; specs and `validation.md`; draft PR #44.

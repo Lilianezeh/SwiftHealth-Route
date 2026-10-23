@@ -216,6 +216,7 @@ for (const { width, height } of WIDTHS) {
         Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
         document.dispatchEvent(new Event("visibilitychange"));
       });
+      await page.waitForTimeout(300); // real time: lets the page draw again (and drop its timer) before the fast clock runs
       await page.clock.runFor(30_000);
       expect(await shownPhoto(page)).toBe(second);
     });
