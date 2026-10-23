@@ -16,6 +16,8 @@ const WIDTHS = [
 
 const BACKDROP_FILES = ["nurse-corridor", "doctor-and-patient", "consultation", "laboratory", "pharmacist-customer"];
 const FOREST = [0x1b, 0x6f, 0x93]; // --color-forest, the colour of the heading
+const PINE_50 = [0xee, 0xf6, 0xfa]; // --color-pine-50, the section's colour
+const PINE_100 = [0xdc, 0xec, 0xf4]; // --color-pine-100, the tint over the photos
 
 /** The page's own part (`main`) does not run past the screen (the header is left out on purpose: LOG.md, the fallback font between 344 and 370 px). */
 async function allIsInsideTheScreen(page: Page, width: number): Promise<void> {
@@ -71,7 +73,7 @@ test("near the section, only the first photo is asked for; the others come later
 
   await scrollToSlideshow(page);
 
-  expect(images[0]).toBe("/images/backdrop/nurse-corridor-960.webp");
+  expect(images[0]).toBe("/images/backdrop/nurse-corridor-800.webp"); // a phone takes the 800 px file, never the 1600 px one
   expect(images.length).toBeLessThanOrEqual(2); // the first, and at most the second (added once the first has loaded)
   expect(new Set(images).size).toBe(images.length);
 });
@@ -89,10 +91,12 @@ for (const { width, height } of WIDTHS) {
       const layer = section.locator("[data-backdrop]");
       expect(await layer.evaluate((element) => getComputedStyle(element).opacity)).toBe("0.45"); // the owner's choice
       expect(await layer.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("none");
-      const layerBox = (await layer.boundingBox())!;
+      const frameBox = (await section.locator("[data-backdrop-frame]").boundingBox())!;
       const sectionBox = (await section.boundingBox())!;
-      expect(Math.abs(layerBox.width - sectionBox.width)).toBeLessThan(1);
-      expect(Math.abs(layerBox.height - sectionBox.height)).toBeLessThan(1); // it covers the whole section, behind the content
+      expect(Math.abs(frameBox.width - sectionBox.width)).toBeLessThan(1);
+      // Under 1024 px the photos are a 3:2 band at the top (shown whole); from 1024 px they fill the whole section behind the cards.
+      const bandHeight = width < 1024 ? (sectionBox.width * 2) / 3 : sectionBox.height;
+      expect(Math.abs(frameBox.height - bandHeight)).toBeLessThan(1);
       const pause = section.getByRole("button", { name: "Pause photos" });
       const credit = section.getByRole("link", { name: /^Designed by Magnific/ });
       await expect(pause).toBeVisible();
@@ -104,14 +108,15 @@ for (const { width, height } of WIDTHS) {
       expect(tilesBox.y).toBeLessThan((await pause.boundingBox())!.y); // the controls are after the tiles
     });
 
-    test("is 480 px high on a phone (494 px under 340 px), 520 px on a tablet and 560 px on a laptop, with everything inside it and centred", async ({ page }) => {
+    test("has the heading and the cards in the lower part, the real height equal to the size kept for it (CLS 0), and everything inside it", async ({ page }) => {
       await page.goto("/", { waitUntil: "load" });
       await scrollToSlideshow(page);
 
       const section = slideshowSection(page);
       const sectionBox = (await section.boundingBox())!;
-      const expected = width < 340 ? 494 : width < 768 ? 480 : width < 1024 ? 520 : 560;
-      expect(Math.abs(sectionBox.height - expected), `${width} px: ${sectionBox.height}`).toBeLessThanOrEqual(1); // the kept size is the real size: CLS 0
+      // The kept size (globals.css): 51.67% of the width + 802 px under 768 px, + 564 px from 768 px, 760 px from 1024 px.
+      const expected = width < 768 ? 0.5167 * width + 802 : width < 1024 ? 0.5167 * width + 564 : 760;
+      expect(Math.abs(sectionBox.height - expected), `${width} px: ${sectionBox.height}`).toBeLessThanOrEqual(1.5);
       const pause = (await section.getByRole("button", { name: "Pause photos" }).boundingBox())!;
       const credit = (await section.getByRole("link", { name: /^Designed by Magnific/ }).boundingBox())!;
       const heading = (await section.getByRole("heading", { level: 2 }).boundingBox())!;
@@ -122,11 +127,14 @@ for (const { width, height } of WIDTHS) {
         expect(box.y).toBeGreaterThanOrEqual(sectionBox.y - 0.5);
         expect(box.y + box.height).toBeLessThanOrEqual(sectionBox.y + sectionBox.height + 0.5);
       }
-      for (const tile of boxes.slice(3)) expect(tile.height).toBeGreaterThanOrEqual(47.5);
-      if (width >= 340) expect(Math.abs(pause.y - credit.y)).toBeLessThan(4); // Pause and the credit share one row
-      const top = heading.y - sectionBox.y;
-      const bottom = sectionBox.y + sectionBox.height - (credit.y + credit.height);
-      expect(Math.abs(top - bottom)).toBeLessThanOrEqual(2); // the content is centred in the section
+      for (const tile of boxes.slice(3)) expect(Math.abs(tile.height - 190)).toBeLessThanOrEqual(1); // 190 px high cards
+      if (width >= 768) expect(Math.abs(pause.y - credit.y)).toBeLessThan(4); // Pause and the credit share one row from 768 px
+      else expect(credit.y).toBeGreaterThan(pause.y + pause.height - 1); // and are in two rows on a phone, whatever the width
+      // The heading is in the lower part: from 1024 px at least 40% down the section, under 1024 px below the photo band's 80%, so that the faces
+      // (in the upper part of each photo) are above it.
+      const headingTop = heading.y - sectionBox.y;
+      if (width >= 1024) expect(headingTop).toBeGreaterThanOrEqual(0.4 * sectionBox.height);
+      else expect(headingTop).toBeGreaterThanOrEqual(0.8 * ((sectionBox.width * 2) / 3) - 1);
       if (width >= 1024) {
         const rowTops = new Set(boxes.slice(3).map((box) => Math.round(box.y)));
         expect(rowTops.size).toBe(1); // one row of five on a laptop
@@ -149,8 +157,38 @@ for (const { width, height } of WIDTHS) {
       const backing = await heading.evaluate((element) => getComputedStyle(element).backgroundColor);
       expect(backing).toMatch(/^(oklab\(0\.99\d* [-0-9.e]+ [-0-9.e]+ \/ 0\.9\)|rgba\(255, 255, 255, 0\.9\))$/);
       expect(await heading.evaluate((element) => getComputedStyle(element).color)).toBe("rgb(27, 111, 147)"); // forest, as it was
-      const position = await section.locator("[data-backdrop] img").first().evaluate((image) => getComputedStyle(image).objectPosition);
-      expect(position).toBe(width < 768 ? "22% 0%" : "50% 10%"); // the nurse's face stays whole
+      const image = section.locator("[data-backdrop] img").first();
+      expect(await image.evaluate((element) => getComputedStyle(element).objectPosition)).toBe(width >= 1024 ? "50% 0%" : "50% 50%"); // the focus point is used where the photo is cropped
+      // A phone and a tablet take the 800 px file, a wide screen the 1600 px one (srcset and sizes).
+      expect(await image.evaluate((element) => (element as HTMLImageElement).currentSrc)).toContain(width >= 1024 ? "-1600.webp" : "-800.webp");
+      // The tint over the photos is the light brand blue (pine-100 at 40%), the section's own colour is pine-50.
+      expect(await section.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgb(238, 246, 250)");
+      expect(await section.locator("[data-backdrop-tint]").evaluate((element) => getComputedStyle(element).backgroundColor)).toMatch(/\/ 0\.4\)$|, 0\.4\)$/);
+    });
+
+    test("has cards of 190 px with 20 px names, a 16 px line, icons of 56 px (64 px from 768 px), a pause icon, and a gentle lift on hover", async ({ page }) => {
+      await page.goto("/", { waitUntil: "load" });
+      await scrollToSlideshow(page);
+
+      const section = slideshowSection(page);
+      const card = section.getByRole("link", { name: "Hospital" });
+      const [name, line] = [card.locator("#type-name-hospital"), card.locator("#type-line-hospital")];
+      expect(await name.evaluate((element) => getComputedStyle(element).fontSize)).toBe("20px");
+      expect(await line.evaluate((element) => getComputedStyle(element).fontSize)).toBe("16px");
+      expect(await line.textContent()).toBe("Admission, surgery and emergency care");
+      const iconBox = (await card.locator("span").first().boundingBox())!;
+      expect(Math.round(iconBox.width)).toBe(width >= 768 ? 64 : 56);
+      // No label, line or card overflows (the longest words at 320 px).
+      for (const element of await section.locator("li a, li a span").all()) {
+        expect(await element.evaluate((node) => node.scrollWidth <= node.clientWidth + 1 && node.scrollHeight <= node.clientHeight + 1)).toBe(true);
+      }
+      await expect(section.getByRole("button", { name: "Pause photos" }).locator("svg")).toHaveCount(1);
+      const before = await card.evaluate((element) => getComputedStyle(element).transform);
+      await card.hover();
+      await page.waitForTimeout(400);
+      const lifted = await card.evaluate((element) => new DOMMatrixReadOnly(getComputedStyle(element).transform).m42);
+      expect(before).toBe("none");
+      expect(lifted).toBeCloseTo(-4, 0); // 4 px up
     });
 
     test("changes photo with a 1.5 s fade, holds on Pause, and a hidden tab stops it (a fast clock)", async ({ page }) => {
@@ -216,7 +254,7 @@ for (const { width, height } of WIDTHS) {
   });
 }
 
-test("the heading passes AA over every photo, even its darkest pixel, at 45% over white and under its 90% white backing", async () => {
+test("the heading passes AA over every photo, even its darkest pixel, at 45% over the light blue, under the blue tint and its 90% white backing", async () => {
   const luminance = (rgb: number[]) => {
     const [r, g, b] = rgb.map((value) => {
       const channel = value / 255;
@@ -225,11 +263,12 @@ test("the heading passes AA over every photo, even its darkest pixel, at 45% ove
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   };
   for (const name of BACKDROP_FILES) {
-    const { data, info } = await sharp(join(process.cwd(), "public", "images", "backdrop", `${name}-960.webp`)).raw().toBuffer({ resolveWithObject: true });
+    const { data, info } = await sharp(join(process.cwd(), "public", "images", "backdrop", `${name}-800.webp`)).raw().toBuffer({ resolveWithObject: true });
     let darkest = 1;
     for (let at = 0; at < data.length; at += info.channels * 7) {
-      const onWhite = [0, 1, 2].map((channel) => 0.45 * data[at + channel] + 0.55 * 255); // the photo at 45% over the white section
-      const underHeading = onWhite.map((value) => 0.9 * 255 + 0.1 * value); // the heading's soft white backing (90%) over it
+      const onBlue = [0, 1, 2].map((channel) => 0.45 * data[at + channel] + 0.55 * PINE_50[channel]); // the photo at 45% over the section's pine-50
+      const tinted = onBlue.map((value, channel) => 0.4 * PINE_100[channel] + 0.6 * value); // the light brand-blue tint (pine-100 at 40%) over it
+      const underHeading = tinted.map((value) => 0.9 * 255 + 0.1 * value); // the heading's soft white backing (90%) over it
       darkest = Math.min(darkest, luminance(underHeading));
     }
     const ratio = (darkest + 0.05) / (luminance(FOREST) + 0.05);
