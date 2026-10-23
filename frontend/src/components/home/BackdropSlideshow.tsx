@@ -13,7 +13,7 @@
  * - Every 7 seconds the next photo fades in over 1.5 seconds (CSS `opacity`, no library). A Pause / Play button (48 px, with a text label) stops it.
  *   The photos also stop while the tab is hidden, and while the visitor has paused them.
  * - With "reduce motion" on: the first photo stays, still. No timer, no more photos, no fade, no Pause button (nothing moves).
- * The photos are decorative: no alt text, hidden from screen readers, under the content at BACKDROP_STRENGTH (about 40%) over the section's white
+ * The photos are decorative: no alt text, hidden from screen readers, under the content at BACKDROP_STRENGTH (45%) over the section's white
  * background. Every text is on a white surface (the tiles, the Pause button, the credit, and the heading's soft white backing in FindByType), so
  * WCAG AA holds whatever the photo is (tested with the worst case, a pure black pixel). The credit is one link for the whole slideshow, on a
  * white pill, never on a photo. Each photo has a focus point for a narrow and a wide screen (`object-position`, config/sitePhotos.ts), so a face is

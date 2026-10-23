@@ -15,8 +15,7 @@ const WIDTHS = [
 ];
 
 const BACKDROP_FILES = ["nurse-corridor", "doctor-and-patient", "consultation", "laboratory", "pharmacist-customer"];
-const PINE_50 = [0xee, 0xf6, 0xfa]; // --color-pine-50
-const PINE_DARK = [0x13, 0x4f, 0x6a]; // --color-pine-dark
+const FOREST = [0x1b, 0x6f, 0x93]; // --color-forest, the colour of the heading
 
 /** The page's own part (`main`) does not run past the screen (the header is left out on purpose: LOG.md, the fallback font between 344 and 370 px). */
 async function allIsInsideTheScreen(page: Page, width: number): Promise<void> {
@@ -88,7 +87,7 @@ for (const { width, height } of WIDTHS) {
       await allIsInsideTheScreen(page, width);
       const section = slideshowSection(page);
       const layer = section.locator("[data-backdrop]");
-      expect(await layer.evaluate((element) => getComputedStyle(element).opacity)).toBe("0.18");
+      expect(await layer.evaluate((element) => getComputedStyle(element).opacity)).toBe("0.45"); // the owner's choice
       expect(await layer.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("none");
       const layerBox = (await layer.boundingBox())!;
       const sectionBox = (await section.boundingBox())!;
@@ -103,6 +102,55 @@ for (const { width, height } of WIDTHS) {
       }
       const tilesBox = (await section.getByRole("link", { name: "Clinic" }).boundingBox())!;
       expect(tilesBox.y).toBeLessThan((await pause.boundingBox())!.y); // the controls are after the tiles
+    });
+
+    test("is 480 px high on a phone (494 px under 340 px), 520 px on a tablet and 560 px on a laptop, with everything inside it and centred", async ({ page }) => {
+      await page.goto("/", { waitUntil: "load" });
+      await scrollToSlideshow(page);
+
+      const section = slideshowSection(page);
+      const sectionBox = (await section.boundingBox())!;
+      const expected = width < 340 ? 494 : width < 768 ? 480 : width < 1024 ? 520 : 560;
+      expect(Math.abs(sectionBox.height - expected), `${width} px: ${sectionBox.height}`).toBeLessThanOrEqual(1); // the kept size is the real size: CLS 0
+      const pause = (await section.getByRole("button", { name: "Pause photos" }).boundingBox())!;
+      const credit = (await section.getByRole("link", { name: /^Designed by Magnific/ }).boundingBox())!;
+      const heading = (await section.getByRole("heading", { level: 2 }).boundingBox())!;
+      const tiles = await section.getByRole("link", { name: /Hospital|Clinic|Maternity|Pharmacy|Laboratory/ }).all();
+      expect(tiles).toHaveLength(5);
+      const boxes = [pause, credit, heading, ...(await Promise.all(tiles.map(async (tile) => (await tile.boundingBox())!)))];
+      for (const box of boxes) {
+        expect(box.y).toBeGreaterThanOrEqual(sectionBox.y - 0.5);
+        expect(box.y + box.height).toBeLessThanOrEqual(sectionBox.y + sectionBox.height + 0.5);
+      }
+      for (const tile of boxes.slice(3)) expect(tile.height).toBeGreaterThanOrEqual(47.5);
+      if (width >= 340) expect(Math.abs(pause.y - credit.y)).toBeLessThan(4); // Pause and the credit share one row
+      const top = heading.y - sectionBox.y;
+      const bottom = sectionBox.y + sectionBox.height - (credit.y + credit.height);
+      expect(Math.abs(top - bottom)).toBeLessThanOrEqual(2); // the content is centred in the section
+      if (width >= 1024) {
+        const rowTops = new Set(boxes.slice(3).map((box) => Math.round(box.y)));
+        expect(rowTops.size).toBe(1); // one row of five on a laptop
+      } else if (width < 768) {
+        const lastTile = boxes[boxes.length - 1];
+        expect(Math.abs(lastTile.x + lastTile.width / 2 - (sectionBox.x + sectionBox.width / 2))).toBeLessThanOrEqual(2); // the last tile of a phone is in the middle
+      } else {
+        const [fourth, fifth] = boxes.slice(-2); // on a tablet the last row of two is in the middle
+        expect(Math.abs((fourth.x + fifth.x + fifth.width) / 2 - (sectionBox.x + sectionBox.width / 2))).toBeLessThanOrEqual(2);
+      }
+    });
+
+    test("puts the heading on a soft white backing and gives the first photo its focus point for this screen", async ({ page }) => {
+      await page.goto("/", { waitUntil: "load" });
+      await scrollToSlideshow(page);
+
+      const section = slideshowSection(page);
+      const heading = section.getByRole("heading", { level: 2, name: "Find by type" });
+      // White at 90% (Chrome writes the colour of `bg-white/90` as oklab(0.99… / 0.9) or rgba(255, 255, 255, 0.9)).
+      const backing = await heading.evaluate((element) => getComputedStyle(element).backgroundColor);
+      expect(backing).toMatch(/^(oklab\(0\.99\d* [-0-9.e]+ [-0-9.e]+ \/ 0\.9\)|rgba\(255, 255, 255, 0\.9\))$/);
+      expect(await heading.evaluate((element) => getComputedStyle(element).color)).toBe("rgb(27, 111, 147)"); // forest, as it was
+      const position = await section.locator("[data-backdrop] img").first().evaluate((image) => getComputedStyle(image).objectPosition);
+      expect(position).toBe(width < 768 ? "22% 0%" : "50% 10%"); // the nurse's face stays whole
     });
 
     test("changes photo with a 1.5 s fade, holds on Pause, and a hidden tab stops it (a fast clock)", async ({ page }) => {
@@ -168,7 +216,7 @@ for (const { width, height } of WIDTHS) {
   });
 }
 
-test("the heading and credit pass AA over every photo, even its darkest pixel, at 18% over the section's light blue", async () => {
+test("the heading passes AA over every photo, even its darkest pixel, at 45% over white and under its 90% white backing", async () => {
   const luminance = (rgb: number[]) => {
     const [r, g, b] = rgb.map((value) => {
       const channel = value / 255;
@@ -180,10 +228,11 @@ test("the heading and credit pass AA over every photo, even its darkest pixel, a
     const { data, info } = await sharp(join(process.cwd(), "public", "images", "backdrop", `${name}-960.webp`)).raw().toBuffer({ resolveWithObject: true });
     let darkest = 1;
     for (let at = 0; at < data.length; at += info.channels * 7) {
-      const composite = [0, 1, 2].map((channel) => 0.18 * data[at + channel] + 0.82 * PINE_50[channel]);
-      darkest = Math.min(darkest, luminance(composite));
+      const onWhite = [0, 1, 2].map((channel) => 0.45 * data[at + channel] + 0.55 * 255); // the photo at 45% over the white section
+      const underHeading = onWhite.map((value) => 0.9 * 255 + 0.1 * value); // the heading's soft white backing (90%) over it
+      darkest = Math.min(darkest, luminance(underHeading));
     }
-    const ratio = (darkest + 0.05) / (luminance(PINE_DARK) + 0.05);
+    const ratio = (darkest + 0.05) / (luminance(FOREST) + 0.05);
     expect(ratio, `${name}: ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
   }
 });

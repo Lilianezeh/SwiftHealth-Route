@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** The faint background slideshow behind "Find by type". Requirements: US-13, NFR-01, NFR-10, NFR-13. Spec: specs/2026-10-22-home-photos/
  * requirements.md (revision 4) and ui-spec 2.1 (revision of 2026-10-23). Fake timers drive the 7 seconds; reduce motion and the visibility of the
- * tab are stubbed. The photos are decorative (no alt text, hidden from screen readers) and at about 40%, with every text on a white surface, so every text passes WCAG AA (4.5:1) even
+ * tab are stubbed. The photos are decorative (no alt text, hidden from screen readers) and at 45%, with every text on a white surface, so every text passes WCAG AA (4.5:1) even
  * over a pure black photo pixel.
  */
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -157,16 +157,15 @@ describe("the other photos", () => {
     expect(seen).toEqual(BACKDROP_PHOTOS.map((photo) => photo.src));
   });
 
-  it("are all hidden from screen readers and cover the section behind the content, at the strength of the config (about 40%)", () => {
+  it("are all hidden from screen readers and cover the section behind the content, at the strength of the config (45%)", () => {
     const { container } = renderSlideshow();
 
     const layer = container.querySelector("[data-backdrop]") as HTMLElement;
     expect(layer.className).toMatch(/\babsolute\b/);
     expect(layer.className).toMatch(/\binset-0\b/);
     expect(layer.className).toMatch(/(^|\s)-z-10(\s|$)/); // under the heading, the tiles and the controls
-    expect(BACKDROP_STRENGTH).toBeGreaterThanOrEqual(0.35); // the owner's range, 2026-10-23: 35% to 45%
-    expect(BACKDROP_STRENGTH).toBeLessThanOrEqual(0.45);
-    expect(layer.style.opacity).toBe(String(BACKDROP_STRENGTH));
+    expect(BACKDROP_STRENGTH).toBe(0.45); // the owner's choice, 2026-10-23
+    expect(layer.style.opacity).toBe("0.45");
   });
 
   it("give each photo a focus point for a narrow and a wide screen, so a face is never cut in half", () => {

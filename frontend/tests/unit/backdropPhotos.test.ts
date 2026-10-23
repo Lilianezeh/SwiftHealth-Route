@@ -50,9 +50,8 @@ describe("the slideshow photos in the config", () => {
     }
   });
 
-  it("are shown at about 40%: between the owner's 35% and 45%", () => {
-    expect(BACKDROP_STRENGTH).toBeGreaterThanOrEqual(0.35);
-    expect(BACKDROP_STRENGTH).toBeLessThanOrEqual(0.45);
+  it("are shown at 45%: the owner's choice of 2026-10-23, from screenshots of 35% and 45%", () => {
+    expect(BACKDROP_STRENGTH).toBe(0.45);
   });
 
   it("are decorative: no alt text in the config, nothing to read out", () => {

@@ -14,9 +14,9 @@ export type SitePhoto = PhotoFile & { alt: string };
 
 export const MAGNIFIC_CREDIT = { text: "Designed by Magnific", href: "https://www.magnific.com" } as const;
 
-/** How strongly the slideshow photos show over the white section background (0 to 1). The owner's range is 35% to 45%
- * (specs/2026-10-22-home-photos/, revision 5); every text is on a white surface, so any value in the range passes WCAG AA. */
-export const BACKDROP_STRENGTH = 0.4;
+/** How strongly the slideshow photos show over the white section background (0 to 1): 45%, the owner's choice of 2026-10-23 from screenshots
+ * of 35% and 45% (specs/2026-10-22-home-photos/, revision 5). Every text is on a white surface, so this passes WCAG AA. */
+export const BACKDROP_STRENGTH = 0.45;
 
 const BACKDROP_SIZE = { width: 960, height: 640 } as const; // 3:2
 
