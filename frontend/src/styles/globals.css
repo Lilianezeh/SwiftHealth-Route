@@ -52,22 +52,29 @@ body {
    screen. A browser's own lazy loading starts a download well before an image is on screen (Chrome: about 1250 px), so without this the first
    photo was asked for at load and slowed the hero on a slow phone (Lighthouse). With content-visibility: auto the browser skips the section's
    layout and paint until it is near the screen, so its photo is not asked for before that. The size it is given until it is drawn is the real
-   height of the section measured in a browser (a phone, 2 columns of tiles: 662 px; a tablet, 3 columns: 504 px; a laptop, 5 columns: 374 px),
-   so that what comes after it does not jump when it is drawn (CLS 0); "auto" then remembers the real size. CSS only: a browser that does not
-   know it draws the section at once. The text stays in the page for search, find-in-page and screen readers. */
+   height of the section (its minimum height, which its content fits in: a phone 480 px, a tablet 520 px, a laptop 560 px), so that what comes
+   after it does not jump when it is drawn (CLS 0); "auto" then remembers the real size. CSS only: a browser that does not know it draws the
+   section at once. The text stays in the page for search, find-in-page and screen readers. */
 .section-lazy {
   content-visibility: auto;
-  contain-intrinsic-size: auto 662px;
+  contain-intrinsic-size: auto 480px;
+}
+
+/* Under 340 px the Pause button and the credit no longer fit in one row, so the section is 494 px high (measured). */
+@media (max-width: 339px) {
+  .section-lazy {
+    contain-intrinsic-size: auto 494px;
+  }
 }
 
 @media (min-width: 768px) {
   .section-lazy {
-    contain-intrinsic-size: auto 504px;
+    contain-intrinsic-size: auto 520px;
   }
 }
 
 @media (min-width: 1024px) {
   .section-lazy {
-    contain-intrinsic-size: auto 374px;
+    contain-intrinsic-size: auto 560px;
   }
 }

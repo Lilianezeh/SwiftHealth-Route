@@ -6,24 +6,31 @@
  * The slideshow photos are decorative (faint, behind the cards), so they have no alt text. The two SwiftRescue photos have honest alt text,
  * written after looking at each converted file: one sentence, no medical claim, no city.
  */
-export type BackdropPhoto = { src: string; width: number; height: number };
-export type SitePhoto = BackdropPhoto & { alt: string };
+type PhotoFile = { src: string; width: number; height: number };
+/** `focus` is the CSS object-position of the photo on a narrow screen (under 768 px) and on a wide one: the point that stays in view when the
+ * photo is cropped to fill the section, chosen after looking at each crop so that the face is whole (revision 5, 2026-10-23). */
+export type BackdropPhoto = PhotoFile & { focus: { narrow: string; wide: string } };
+export type SitePhoto = PhotoFile & { alt: string };
 
 export const MAGNIFIC_CREDIT = { text: "Designed by Magnific", href: "https://www.magnific.com" } as const;
 
+/** How strongly the slideshow photos show over the white section background (0 to 1). The owner's range is 35% to 45%
+ * (specs/2026-10-22-home-photos/, revision 5); every text is on a white surface, so any value in the range passes WCAG AA. */
+export const BACKDROP_STRENGTH = 0.4;
+
 const BACKDROP_SIZE = { width: 960, height: 640 } as const; // 3:2
 
-function backdrop(name: string): BackdropPhoto {
-  return { src: `/images/backdrop/${name}-${BACKDROP_SIZE.width}.webp`, ...BACKDROP_SIZE };
+function backdrop(name: string, focus: BackdropPhoto["focus"]): BackdropPhoto {
+  return { src: `/images/backdrop/${name}-${BACKDROP_SIZE.width}.webp`, ...BACKDROP_SIZE, focus };
 }
 
 /** The five photos of the slideshow, in the owner's order: clinic, hospital, maternity, laboratory, pharmacy. */
 export const BACKDROP_PHOTOS: readonly BackdropPhoto[] = [
-  backdrop("nurse-corridor"), // clinic.jpg
-  backdrop("doctor-and-patient"), // hospital.jpg
-  backdrop("consultation"), // maternity.jpg
-  backdrop("laboratory"), // laboratory.jpg
-  backdrop("pharmacist-customer"), // pharmacy.jpg
+  backdrop("nurse-corridor", { narrow: "22% 0%", wide: "50% 10%" }), // clinic.jpg: the nurse's face at the left of the frame
+  backdrop("doctor-and-patient", { narrow: "100% 50%", wide: "50% 35%" }), // hospital.jpg: the patient's face at the right
+  backdrop("consultation", { narrow: "45% 30%", wide: "50% 8%" }), // maternity.jpg: the doctor's face, room above his head
+  backdrop("laboratory", { narrow: "24% 30%", wide: "50% 15%" }), // laboratory.jpg: the woman's face and the tube in her hand
+  backdrop("pharmacist-customer", { narrow: "54% 35%", wide: "50% 25%" }), // pharmacy.jpg: the pharmacist's face in the middle
 ];
 
 /** The two small header images of the Ambulance and the Fire service groups on /emergency (and nowhere else). */

@@ -8,14 +8,14 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { BACKDROP_PHOTOS, EMERGENCY_PHOTOS, MAGNIFIC_CREDIT, type BackdropPhoto } from "@/config/sitePhotos";
+import { BACKDROP_PHOTOS, BACKDROP_STRENGTH, EMERGENCY_PHOTOS, MAGNIFIC_CREDIT, type BackdropPhoto } from "@/config/sitePhotos";
 
 import { readWebpSize } from "../helpers/webp";
 
 const KILOBYTE = 1000;
 const PUBLIC = join(process.cwd(), "public");
 
-const fileOf = (photo: BackdropPhoto) => join(PUBLIC, photo.src);
+const fileOf = (photo: { src: string }) => join(PUBLIC, photo.src);
 const emergency = Object.values(EMERGENCY_PHOTOS);
 
 describe("the slideshow photos in the config", () => {
@@ -34,6 +34,25 @@ describe("the slideshow photos in the config", () => {
     for (const left of ["stethoscope", "pharmacists-screen", "pharmacy-counter", "owner", "pharmacy6", "hero", "ambulance", "fire"]) {
       expect(text, left).not.toContain(left);
     }
+  });
+
+  it("have a focus point for a narrow and a wide screen, chosen after looking at each crop so a face is whole (revision 5)", () => {
+    expect(BACKDROP_PHOTOS.map((photo) => photo.focus)).toEqual([
+      { narrow: "22% 0%", wide: "50% 10%" }, // clinic: the nurse's face at the left of the frame
+      { narrow: "100% 50%", wide: "50% 35%" }, // hospital: the patient's face at the right (the doctor's is cut by the original frame)
+      { narrow: "45% 30%", wide: "50% 8%" }, // maternity: the doctor's face, with room above his head
+      { narrow: "24% 30%", wide: "50% 15%" }, // laboratory: the woman's face and the tube in her hand
+      { narrow: "54% 35%", wide: "50% 25%" }, // pharmacy: the pharmacist's face in the middle
+    ]);
+    for (const photo of BACKDROP_PHOTOS) {
+      expect(photo.focus.narrow, photo.src).toMatch(/^\d{1,3}% \d{1,3}%$/);
+      expect(photo.focus.wide, photo.src).toMatch(/^\d{1,3}% \d{1,3}%$/);
+    }
+  });
+
+  it("are shown at about 40%: between the owner's 35% and 45%", () => {
+    expect(BACKDROP_STRENGTH).toBeGreaterThanOrEqual(0.35);
+    expect(BACKDROP_STRENGTH).toBeLessThanOrEqual(0.45);
   });
 
   it("are decorative: no alt text in the config, nothing to read out", () => {

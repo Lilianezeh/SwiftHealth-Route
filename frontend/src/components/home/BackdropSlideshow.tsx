@@ -13,13 +13,15 @@
  * - Every 7 seconds the next photo fades in over 1.5 seconds (CSS `opacity`, no library). A Pause / Play button (48 px, with a text label) stops it.
  *   The photos also stop while the tab is hidden, and while the visitor has paused them.
  * - With "reduce motion" on: the first photo stays, still. No timer, no more photos, no fade, no Pause button (nothing moves).
- * The photos are decorative: no alt text, hidden from screen readers, under the content at 18% strength over the section's light blue
- * (`pine-50`). Worst case, a pure black photo pixel gives that blue a little less than 18% darker; the heading is `pine-dark` (4.5:1 or more on
- * it, tested), and the Pause button and the credit sit on white. The credit is one link for the whole slideshow, on a white pill, never on a photo.
+ * The photos are decorative: no alt text, hidden from screen readers, under the content at BACKDROP_STRENGTH (about 40%) over the section's white
+ * background. Every text is on a white surface (the tiles, the Pause button, the credit, and the heading's soft white backing in FindByType), so
+ * WCAG AA holds whatever the photo is (tested with the worst case, a pure black pixel). The credit is one link for the whole slideshow, on a
+ * white pill, never on a photo. Each photo has a focus point for a narrow and a wide screen (`object-position`, config/sitePhotos.ts), so a face is
+ * never cut in half when the photo is cropped to fill the taller section.
  */
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-import { BACKDROP_PHOTOS, MAGNIFIC_CREDIT } from "@/config/sitePhotos";
+import { BACKDROP_PHOTOS, BACKDROP_STRENGTH, MAGNIFIC_CREDIT } from "@/config/sitePhotos";
 
 const SLIDE_SECONDS = 7; // how long each photo stays
 const PHOTO_COUNT = BACKDROP_PHOTOS.length;
@@ -91,7 +93,12 @@ export function BackdropSlideshow({ children }: BackdropSlideshowProps) {
 
   return (
     <>
-      <div data-backdrop="" aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 opacity-[0.18]">
+      <div
+        data-backdrop=""
+        aria-hidden="true"
+        style={{ opacity: BACKDROP_STRENGTH }}
+        className="pointer-events-none absolute inset-0 -z-10"
+      >
         {photosInPage.map((index) => (
           <div
             key={BACKDROP_PHOTOS[index].src}
@@ -109,31 +116,39 @@ export function BackdropSlideshow({ children }: BackdropSlideshowProps) {
               loading="lazy"
               decoding="async"
               onLoad={index === 0 ? () => setFirstLoaded(true) : undefined}
-              className="h-full w-full object-cover"
+              style={
+                {
+                  "--focus-narrow": BACKDROP_PHOTOS[index].focus.narrow,
+                  "--focus-wide": BACKDROP_PHOTOS[index].focus.wide,
+                } as CSSProperties
+              }
+              className="h-full w-full object-cover [object-position:var(--focus-narrow)] md:[object-position:var(--focus-wide)]"
             />
           </div>
         ))}
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-4 py-12 md:py-16">
+      <div className="relative mx-auto w-full max-w-6xl px-4 py-6 md:py-12 lg:py-16">
         {children}
         {/* The row of the controls is in the server's HTML from the first paint (its height is kept), so nothing moves when the Pause button
-            appears after the script has run. */}
-        <div className="mt-6 flex min-h-12 flex-wrap items-center gap-3">
+            appears after the script has run. The button says "Pause" or "Play" (its name for a screen reader is "Pause photos" / "Play photos"),
+            so that it and the credit fit in one row on a phone. */}
+        <div className="mt-4 flex min-h-12 flex-wrap items-center gap-2 md:mt-6 md:gap-3">
           {reducedMotion === false && (
             <button
               type="button"
               onClick={() => setPaused((before) => !before)}
-              className="inline-flex min-h-12 items-center rounded-xl border border-line bg-white px-4 text-base font-semibold text-forest"
+              aria-label={paused ? "Play photos" : "Pause photos"}
+              className="inline-flex min-h-12 items-center rounded-xl border border-line bg-white px-3 text-base font-semibold text-forest md:px-4"
             >
-              {paused ? "Play photos" : "Pause photos"}
+              {paused ? "Play" : "Pause"}
             </button>
           )}
           <a
             href={MAGNIFIC_CREDIT.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-12 items-center rounded-xl bg-white px-4 text-base font-semibold text-forest underline"
+            className="inline-flex min-h-12 items-center rounded-xl bg-white px-3 text-base font-semibold text-forest underline md:px-4"
           >
             {MAGNIFIC_CREDIT.text}
             <span className="sr-only"> (opens in a new tab)</span>
