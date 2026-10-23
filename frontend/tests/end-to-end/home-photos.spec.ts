@@ -36,7 +36,8 @@ const slideshowSection = (page: Page) => page.locator("section", { has: page.get
 async function shownPhoto(page: Page): Promise<string> {
   return page.evaluate(() => {
     const slides = [...document.querySelectorAll("[data-backdrop-slide]")] as HTMLElement[];
-    const shown = slides.find((slide) => Number(getComputedStyle(slide).opacity) > 0.5 && /\bopacity-100\b/.test(slide.className));
+    // The class says which one is shown (the fade is a CSS transition, which the fake clock does not drive).
+    const shown = slides.find((slide) => /\bopacity-100\b/.test(slide.className));
     return shown?.querySelector("img")?.getAttribute("src") ?? "";
   });
 }

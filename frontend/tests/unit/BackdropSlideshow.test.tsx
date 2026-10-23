@@ -366,3 +366,13 @@ describe("the section of Find by type", () => {
     expect(readSource("styles/globals.css")).toMatch(/\.section-lazy\s*\{[^}]*content-visibility:\s*auto/);
   });
 });
+
+describe("the size kept for the section until it is drawn (no layout shift)", () => {
+  const css = readSource("styles/globals.css");
+
+  it("is the measured height of the section on a phone (662 px), a tablet (504 px) and a laptop (374 px)", () => {
+    expect(css).toMatch(/\.section-lazy\s*\{[^}]*contain-intrinsic-size:\s*auto 662px/);
+    expect(css).toMatch(/@media \(min-width: 768px\)\s*\{\s*\.section-lazy\s*\{[^}]*auto 504px/);
+    expect(css).toMatch(/@media \(min-width: 1024px\)\s*\{\s*\.section-lazy\s*\{[^}]*auto 374px/);
+  });
+});
