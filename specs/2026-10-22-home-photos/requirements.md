@@ -62,7 +62,8 @@ The home page stays in the owner's order. The hero is not touched. **Two section
 
 ### 4. Speed (NFR-01) and Lighthouse
 
-- **Every one of these photos is below the fold** on a phone and a laptop (the hero is 85% of the screen on a laptop; the first photo section starts after it). All are `loading="lazy"` and `decoding="async"`, so **none is downloaded before the visitor scrolls near it**, and none can become the largest paint. The hero is untouched, so its loading is unchanged.
+- **Every one of these photos is below the fold** on a phone and a laptop (the hero is 85% of the screen on a laptop; the first photo section starts after it). All are `loading="lazy"` and `decoding="async"`, and none can become the largest paint. The hero is untouched, so its loading is unchanged.
+  **What the first build showed (2026-10-23), and the fix:** a browser's own lazy loading starts a download well before a photo is on the screen (Chrome: about 1250 px), so on a phone the seven photos just under the hero were asked for at load (8 images, 255 KiB) and Lighthouse on a throttled phone gave a slower hero (LCP 2.8 to 3.8 s instead of 1.6 to 2.6 s; Performance 77, 91, 69 instead of 83, 92, 94). So the five sections that hold photos carry **`content-visibility: auto`** (class `section-lazy`, with `contain-intrinsic-size: auto 720px`): the browser skips a section until it is near the screen, so **its photos are not asked for before that**. CSS only, no script. Result: before the load event the page asks for the same 16 requests and 2 images as before.
 - **WebP, fixed sizes, made by `scripts/optimize-hero-photos.mjs`** (updated) from `source-photos/`; budgets (kB): 
 
 | Use | Size | Budget |

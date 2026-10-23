@@ -12,7 +12,7 @@ export function Overview() {
   const { heading, text } = HOME_WORDS.overview;
 
   return (
-    <section aria-labelledby="overview-heading" className="bg-white">
+    <section aria-labelledby="overview-heading" className="section-lazy bg-white">
       <div className="mx-auto max-w-6xl px-4 py-12 md:grid md:grid-cols-2 md:items-center md:gap-10 md:py-16">
         <div>
           <h2 id="overview-heading" className="text-2xl font-bold text-forest">

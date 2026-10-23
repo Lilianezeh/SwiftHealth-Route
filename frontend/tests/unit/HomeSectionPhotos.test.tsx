@@ -243,3 +243,28 @@ describe("the photos stay out of the red", () => {
     }
   });
 });
+
+describe("the photos wait until their section is near the screen (speed, NFR-01)", () => {
+  // A browser's own lazy loading starts a download well before the photo is on screen (Chrome: about 1250 px), so the photos just under the hero
+  // were requested at load and slowed the hero (Lighthouse on a throttled phone: LCP 1.6-2.6 s before, 2.8-3.8 s after). `content-visibility: auto`
+  // makes the browser skip a section until it is near the screen, so its photo is not even asked for before that. CSS only, no script.
+  const css = readSource("styles/globals.css");
+
+  it("marks the five sections that have photos, and not the hero, with section-lazy", () => {
+    const { container } = renderPage();
+
+    const lazy = [...container.querySelectorAll("main section.section-lazy")];
+    expect(lazy.map((section) => section.querySelector("h2")?.textContent)).toEqual([
+      "What is SwiftHealth Route?", "How we verify", "Find by type", "SwiftRescue", "Own or manage a healthcare facility?",
+    ]);
+    expect(container.querySelector("main section")?.className).not.toMatch(/section-lazy/); // the hero
+    expect(sectionOf("Why SwiftHealth Route").className).not.toMatch(/section-lazy/); // no photo in it
+  });
+
+  it("has the CSS rule: content-visibility auto, with a remembered size so nothing jumps when a section is drawn", () => {
+    const rule = css.slice(css.indexOf(".section-lazy"));
+
+    expect(rule).toMatch(/content-visibility:\s*auto/);
+    expect(rule).toMatch(/contain-intrinsic-size:\s*auto\s+\d+px/);
+  });
+});

@@ -24,7 +24,7 @@ const PHOTO_ROW = [SECTION_PHOTOS.clinic, SECTION_PHOTOS.pharmacy, SECTION_PHOTO
 
 export function FindByType() {
   return (
-    <section aria-labelledby="find-by-type-heading">
+    <section aria-labelledby="find-by-type-heading" className="section-lazy">
       <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
         <h2 id="find-by-type-heading" className="text-2xl font-bold text-forest">
           {HOME_WORDS.findByType.heading}

@@ -15,7 +15,7 @@ export function HowWeVerify() {
   const words = HOME_WORDS.verify;
 
   return (
-    <section aria-labelledby="verify-heading" className="bg-white">
+    <section aria-labelledby="verify-heading" className="section-lazy bg-white">
       <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
         <h2 id="verify-heading" className="text-2xl font-bold text-forest">
           {words.heading}

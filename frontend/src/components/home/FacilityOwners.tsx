@@ -16,7 +16,7 @@ export function FacilityOwners() {
   const words = HOME_WORDS.owners;
 
   return (
-    <section aria-labelledby="owners-heading" className="bg-white">
+    <section aria-labelledby="owners-heading" className="section-lazy bg-white">
       <div className="mx-auto max-w-6xl px-4 py-12 md:grid md:grid-cols-2 md:items-center md:gap-10 md:py-16">
         <div className="flex flex-col">
           <SectionPhoto photo={SECTION_PHOTOS.owners} />

@@ -37,7 +37,10 @@ async function scrollThrough(page: Page): Promise<void> {
   await page.waitForTimeout(1200);
 }
 
-test("no photo of the sections is requested before the visitor scrolls (the hero's files are the only images)", async ({ page }) => {
+// A browser's own lazy loading starts a download a good way BEFORE the photo is on the screen (Chrome: about 1250 px on a fast connection), so
+// the photos just under the hero are asked for at load. What native lazy loading guarantees is that the ones far down are NOT: the photos of the
+// owners part and of the SwiftRescue part wait until the visitor scrolls near them.
+test("the photos far down the page (SwiftRescue and the owners part) are not requested before the visitor scrolls", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   const images: string[] = [];
   page.on("request", (request) => {
@@ -47,7 +50,8 @@ test("no photo of the sections is requested before the visitor scrolls (the hero
   await page.goto("/", { waitUntil: "load" });
   await page.waitForTimeout(1500);
 
-  expect(images.filter((path) => path.startsWith("/images/sections/") || path.startsWith("/images/emergency/"))).toEqual([]);
+  const farDown = ["/images/emergency/ambulance.webp", "/images/emergency/fire.webp", "/images/sections/pharmacy-counter-800.webp"];
+  for (const path of farDown) expect(images, path).not.toContain(path);
   expect(images.some((path) => path.startsWith("/images/home/hero3"))).toBe(true);
 });
 

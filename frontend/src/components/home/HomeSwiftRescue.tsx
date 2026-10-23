@@ -16,7 +16,7 @@ export function HomeSwiftRescue() {
   const words = HOME_WORDS.rescue;
 
   return (
-    <section aria-labelledby="rescue-heading" className="bg-pine-50">
+    <section aria-labelledby="rescue-heading" className="section-lazy bg-pine-50">
       <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
         <h2 id="rescue-heading" className="text-2xl font-bold text-forest">
           {brand.emergencyName}
