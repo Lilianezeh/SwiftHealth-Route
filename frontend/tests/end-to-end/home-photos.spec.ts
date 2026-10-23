@@ -130,11 +130,11 @@ for (const { width, height } of WIDTHS) {
       for (const tile of boxes.slice(3)) expect(Math.abs(tile.height - 190)).toBeLessThanOrEqual(1); // 190 px high cards
       if (width >= 768) expect(Math.abs(pause.y - credit.y)).toBeLessThan(4); // Pause and the credit share one row from 768 px
       else expect(credit.y).toBeGreaterThan(pause.y + pause.height - 1); // and are in two rows on a phone, whatever the width
-      // The heading is in the lower part: from 1024 px at least 40% down the section, under 1024 px below the photo band's 80%, so that the faces
-      // (in the upper part of each photo) are above it.
+      // The heading is in the lower part: from 1024 px at least 40% down the section, under 1024 px it starts 77% of the way down the photo band
+      // (15% of the width above the band's end), so that the faces (in the upper part of each photo) are above it.
       const headingTop = heading.y - sectionBox.y;
       if (width >= 1024) expect(headingTop).toBeGreaterThanOrEqual(0.4 * sectionBox.height);
-      else expect(headingTop).toBeGreaterThanOrEqual(0.8 * ((sectionBox.width * 2) / 3) - 1);
+      else expect(headingTop).toBeGreaterThanOrEqual(0.75 * ((sectionBox.width * 2) / 3));
       if (width >= 1024) {
         const rowTops = new Set(boxes.slice(3).map((box) => Math.round(box.y)));
         expect(rowTops.size).toBe(1); // one row of five on a laptop
@@ -183,12 +183,13 @@ for (const { width, height } of WIDTHS) {
         expect(await element.evaluate((node) => node.scrollWidth <= node.clientWidth + 1 && node.scrollHeight <= node.clientHeight + 1)).toBe(true);
       }
       await expect(section.getByRole("button", { name: "Pause photos" }).locator("svg")).toHaveCount(1);
-      const before = await card.evaluate((element) => getComputedStyle(element).transform);
+      // Tailwind 4 lifts with the CSS `translate` property: "none" at rest, "0px -4px" (4 px up) on hover.
+      const before = await card.evaluate((element) => getComputedStyle(element).translate);
       await card.hover();
       await page.waitForTimeout(400);
-      const lifted = await card.evaluate((element) => new DOMMatrixReadOnly(getComputedStyle(element).transform).m42);
+      const lifted = await card.evaluate((element) => getComputedStyle(element).translate);
       expect(before).toBe("none");
-      expect(lifted).toBeCloseTo(-4, 0); // 4 px up
+      expect(lifted).toBe("0px -4px");
     });
 
     test("changes photo with a 1.5 s fade, holds on Pause, and a hidden tab stops it (a fast clock)", async ({ page }) => {

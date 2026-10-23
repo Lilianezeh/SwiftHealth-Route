@@ -111,23 +111,28 @@ export function BackdropSlideshow({ children }: BackdropSlideshowProps) {
               data-backdrop-slide=""
               className={`absolute inset-0 transition-opacity duration-[1500ms] motion-reduce:transition-none ${index === current ? "opacity-100" : "opacity-0"}`}
             >
-              {/* A plain <img> on purpose: decorative, a fixed size so nothing moves when it loads, and files of ours. A phone and a tablet
-                  take the 800 px file (`sizes` says 800 px under 768 px), a wide screen the 1600 px one. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                ref={index === 0 ? firstPhoto : undefined}
-                src={BACKDROP_PHOTOS[index].src}
-                srcSet={`${BACKDROP_PHOTOS[index].src} ${BACKDROP_PHOTOS[index].width}w, ${BACKDROP_PHOTOS[index].srcLarge} ${BACKDROP_PHOTOS[index].widthLarge}w`}
-                sizes="(max-width: 767px) 800px, 100vw"
-                alt=""
-                width={BACKDROP_PHOTOS[index].width}
-                height={BACKDROP_PHOTOS[index].height}
-                loading="lazy"
-                decoding="async"
-                onLoad={index === 0 ? () => setFirstLoaded(true) : undefined}
-                style={{ "--focus": BACKDROP_PHOTOS[index].focus } as CSSProperties}
-                className="h-full w-full object-cover lg:[object-position:var(--focus)]"
-              />
+              {/* A plain <img> on purpose: decorative, a fixed size so nothing moves when it loads, and files of ours. A phone (under 768 px)
+                  always takes the 800 px file, whatever its pixel density (the <source>, like the hero's); a tablet or a laptop chooses between
+                  the 800 px and the 1600 px file by its width and density (srcset and sizes). Still lazy: nothing is asked for before the section
+                  is near. */}
+              <picture>
+                <source media="(max-width: 767px)" srcSet={BACKDROP_PHOTOS[index].src} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  ref={index === 0 ? firstPhoto : undefined}
+                  src={BACKDROP_PHOTOS[index].src}
+                  srcSet={`${BACKDROP_PHOTOS[index].src} ${BACKDROP_PHOTOS[index].width}w, ${BACKDROP_PHOTOS[index].srcLarge} ${BACKDROP_PHOTOS[index].widthLarge}w`}
+                  sizes="100vw"
+                  alt=""
+                  width={BACKDROP_PHOTOS[index].width}
+                  height={BACKDROP_PHOTOS[index].height}
+                  loading="lazy"
+                  decoding="async"
+                  onLoad={index === 0 ? () => setFirstLoaded(true) : undefined}
+                  style={{ "--focus": BACKDROP_PHOTOS[index].focus } as CSSProperties}
+                  className="h-full w-full object-cover lg:[object-position:var(--focus)]"
+                />
+              </picture>
             </div>
           ))}
         </div>

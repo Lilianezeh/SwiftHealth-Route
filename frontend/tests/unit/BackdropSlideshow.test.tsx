@@ -195,10 +195,15 @@ describe("the other photos", () => {
   it("come in two sizes: the 800 px file for phones and tablets, the 1600 px file for wide screens (srcset and sizes), still lazy", () => {
     const { container } = renderSlideshow();
 
-    const image = container.querySelector("img") as HTMLImageElement;
+    // A phone (under 768 px) always takes the 800 px file, whatever its pixel density: a <source> for it, like the hero's. A srcset with sizes would
+    // have sent the 1600 px file to a phone with a 2x screen (Lighthouse's phone did exactly that). Everyone else chooses by width and density.
+    const source = container.querySelector("picture > source") as HTMLSourceElement;
+    expect(source).toHaveAttribute("media", "(max-width: 767px)");
+    expect(source).toHaveAttribute("srcset", BACKDROP_PHOTOS[0].src);
+    const image = container.querySelector("picture > img") as HTMLImageElement;
     expect(image).toHaveAttribute("src", BACKDROP_PHOTOS[0].src);
     expect(image.getAttribute("srcset")).toBe(`${BACKDROP_PHOTOS[0].src} 800w, ${BACKDROP_PHOTOS[0].srcLarge} 1600w`);
-    expect(image.getAttribute("sizes")).toBe("(max-width: 767px) 800px, 100vw"); // a phone never takes the large file, whatever its pixel density
+    expect(image.getAttribute("sizes")).toBe("100vw");
     expect(image).toHaveAttribute("loading", "lazy");
     expect(image).toHaveAttribute("width", "800");
     expect(image).toHaveAttribute("height", "533");
