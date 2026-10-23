@@ -91,57 +91,25 @@ for (const { width, height } of WIDTHS) {
       await expect(page.getByText("We're starting in Enugu and adding more places soon.")).toBeVisible();
     });
 
-    test("the Pharmacy page shows its banner under the heading, then the credit, the search box and the chip; only that photo downloads", async ({ page }) => {
-      const photos: string[] = [];
+    test("a type page has its heading, search box and chip, and no picture and no credit; no image file downloads (owner, 2026-10-22)", async ({ page }) => {
+      const images: string[] = [];
       page.on("request", (request) => {
-        if (new URL(request.url()).pathname.startsWith("/images/types/")) photos.push(new URL(request.url()).pathname);
+        if (request.resourceType() === "image") images.push(new URL(request.url()).pathname);
       });
-      await page.goto("/search?category=pharmacy", { waitUntil: "load" });
-
-      const heading = page.getByRole("heading", { level: 1, name: "Pharmacies" });
-      const banner = page.getByRole("img", { name: /pharmacist in a white coat/ });
-      const credit = page.getByRole("link", { name: /^Designed by Magnific/ });
-      await expect(banner).toBeVisible({ timeout: 60_000 });
-      await expect(credit).toHaveAttribute("href", "https://www.magnific.com");
-      const [headingBox, bannerBox, creditBox, searchBox, chipBox] = await Promise.all([
-        heading.boundingBox(),
-        banner.boundingBox(),
-        credit.boundingBox(),
-        page.getByRole("searchbox").boundingBox(),
-        page.getByRole("button", { name: "Remove the Pharmacy filter" }).boundingBox(),
-      ]);
-      // Heading, banner, credit, search box, chip: each below the one before.
-      expect(bannerBox!.y).toBeGreaterThan(headingBox!.y);
-      expect(creditBox!.y).toBeGreaterThanOrEqual(bannerBox!.y + bannerBox!.height - 1);
-      expect(searchBox!.y).toBeGreaterThan(creditBox!.y);
-      expect(chipBox!.y).toBeGreaterThan(searchBox!.y);
-      // A real 3:1 picture that fits the screen, and a credit that is a tap target.
-      expect(bannerBox!.x + bannerBox!.width).toBeLessThanOrEqual(width + 0.5);
-      if (width < 768) {
-        expect(bannerBox!.width / bannerBox!.height).toBeCloseTo(3, 1); // a phone: the whole 3:1 picture, as before
-      } else {
-        expect(bannerBox!.height).toBeCloseTo(140, 0); // tablet and laptop: about half the old height, cropped (owner, 2026-10-17)
-        expect(bannerBox!.height).toBeLessThan(bannerBox!.width / 3 - 40);
+      for (const [slug, heading, chip] of [
+        ["pharmacy", "Pharmacies", "Pharmacy"],
+        ["clinic", "Clinics", "Clinic"],
+        ["laboratory", "Laboratories", "Laboratory"],
+        ["hospital", "Hospitals", "Hospital"],
+      ]) {
+        await page.goto(`/search?category=${slug}`, { waitUntil: "load" });
+        await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible({ timeout: 60_000 });
+        await expect(page.getByRole("button", { name: `Remove the ${chip} filter` })).toBeVisible();
+        await expect(page.locator("main img, main picture, main figure")).toHaveCount(0);
+        await expect(page.getByRole("link", { name: /Magnific/ })).toHaveCount(0);
       }
-      expect(creditBox!.height).toBeGreaterThanOrEqual(48); // the tap area is still 48 px
-      // The credit's own text sits right under the photo (tight, not a gap), at 16 px.
-      const textTop = await credit.evaluate((link) => {
-        const range = document.createRange();
-        range.selectNodeContents(link.firstChild as Node);
-        return range.getBoundingClientRect().top;
-      });
-      expect(textTop - (bannerBox!.y + bannerBox!.height)).toBeLessThanOrEqual(8);
-      expect(await credit.evaluate((link) => getComputedStyle(link).fontSize)).toBe("16px");
-      expect(photos).toEqual(["/images/types/banner-pharmacy-1.webp"]); // one file, not one for each type
-    });
-
-    test("the Hospital page has its heading and chip but no banner and no credit (no approved photo yet)", async ({ page }) => {
-      await page.goto("/search?category=hospital", { waitUntil: "load" });
-
-      await expect(page.getByRole("heading", { level: 1, name: "Hospitals" })).toBeVisible({ timeout: 60_000 });
-      await expect(page.getByRole("button", { name: "Remove the Hospital filter" })).toBeVisible();
-      await expect(page.locator("main img[src^='/images/types/']")).toHaveCount(0);
-      await expect(page.getByRole("link", { name: /Magnific/ })).toHaveCount(0);
+      expect(images.filter((path) => path.startsWith("/images/"))).toEqual([]);
+      await allIsInsideTheScreen(page, width);
     });
 
     test("Near you shows one card with both labels when the closest pharmacy is also the only 24-hour place", async ({ page }) => {

@@ -2,6 +2,10 @@
 # scripts/optimize-home-images.mjs reads them and writes the small WebP files to public/images/home/.
 image-sources/
 
+# The owner's full-size Magnific originals for the home hero and SwiftRescue photos (about 80 MB): never committed and never served.
+# scripts/optimize-hero-photos.mjs reads the ones it uses and writes the small WebP files to public/images/hero/ and public/images/emergency/.
+source-photos/
+
 # Output of the real-browser checks (npm run test:e2e).
 test-results/
 playwright-report/

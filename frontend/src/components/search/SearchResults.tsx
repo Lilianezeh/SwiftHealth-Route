@@ -17,11 +17,10 @@ import { ResultsSkeleton } from "@/components/search/ResultsSkeleton";
 import { SearchBox } from "@/components/search/SearchBox";
 import { SearchHeading } from "@/components/search/SearchHeading";
 import { SearchStatus } from "@/components/search/SearchStatus";
-import { TypeBanner } from "@/components/search/TypeBanner";
 import { TypeChip } from "@/components/search/TypeChip";
 import { ViewToggle } from "@/components/search/ViewToggle";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { bannerFor, findTypeChoice } from "@/config/types";
+import { findTypeChoice } from "@/config/types";
 import { useLocation } from "@/hooks/useLocation";
 import { useSearchResults } from "@/hooks/useSearchResults";
 import { filtersToQuery, queryToFilters, type SearchFilters } from "@/lib/search/searchQuery";
@@ -85,13 +84,9 @@ export function SearchResults() {
       ? null
       : searchHeading(filters.category, { area: filters.area, hasPosition });
 
-  // The photo banner (D6): only for one of the five types with an approved photo; it does not depend on the position or on the results.
-  const banner = bannerFor(filters.category);
-
   return (
     <div className="flex flex-col gap-4">
       <SearchHeading text={headingText} headingRef={headingRef} />
-      {banner && <TypeBanner photo={banner} />}
       <SearchBox key={filters.q ?? ""} defaultValue={filters.q ?? ""} filters={filters} view={view} />
       {filters.category && <TypeChip category={filters.category} onRemove={removeType} />}
       {/* Only after the chip was used, so the page has one live region at a time (the loading note is another). */}

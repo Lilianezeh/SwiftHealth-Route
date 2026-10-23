@@ -89,6 +89,32 @@ describe("RegisterServiceWorker", () => {
     render(<EmergencyPage />); // renders without a service worker
   });
 
+  it("on SwiftRescue also asks the worker to keep the two small photos, which are lazy and may not have loaded yet", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const { postMessage } = stubServiceWorker();
+    vi.spyOn(performance, "getEntriesByType").mockReturnValue([] as unknown as PerformanceEntryList);
+
+    render(<RegisterServiceWorker />);
+
+    await waitFor(() => expect(postMessage).toHaveBeenCalledTimes(1));
+    const message = postMessage.mock.calls[0][0] as { urls: string[] };
+    const origin = window.location.origin;
+    expect(message.urls).toContain(`${origin}/images/emergency/ambulance.webp`);
+    expect(message.urls).toContain(`${origin}/images/emergency/fire.webp`);
+  });
+
+  it("does not ask for those photos on Find blood", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const { postMessage } = stubServiceWorker();
+    vi.spyOn(performance, "getEntriesByType").mockReturnValue([] as unknown as PerformanceEntryList);
+
+    render(<RegisterServiceWorker pagePath="/blood" />);
+
+    await waitFor(() => expect(postMessage).toHaveBeenCalledTimes(1));
+    const message = postMessage.mock.calls[0][0] as { urls: string[] };
+    expect(message.urls.some((address) => address.includes("/images/"))).toBe(false);
+  });
+
   it("tells the worker the address of the page it is on: /blood on Find blood", async () => {
     vi.stubEnv("NODE_ENV", "production");
     const { postMessage } = stubServiceWorker();

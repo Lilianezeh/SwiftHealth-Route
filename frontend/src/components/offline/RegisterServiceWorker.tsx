@@ -10,6 +10,8 @@
  */
 import { useEffect } from "react";
 
+import { EMERGENCY_PHOTOS } from "@/config/sitePhotos";
+
 type RegisterServiceWorkerProps = { pagePath?: "/emergency" | "/blood" };
 
 export function RegisterServiceWorker({ pagePath = "/emergency" }: RegisterServiceWorkerProps) {
@@ -25,7 +27,9 @@ export function RegisterServiceWorker({ pagePath = "/emergency" }: RegisterServi
           .getEntriesByType("resource")
           .map((entry) => entry.name)
           .filter((address) => address.startsWith(`${window.location.origin}/`));
-        registration.active?.postMessage({ type: "keep-urls", urls: [`${window.location.origin}${pagePath}`, ...loaded] });
+        // The two SwiftRescue photos are lazy and may not have loaded yet, so the page names them (only on SwiftRescue).
+        const photos = pagePath === "/emergency" ? Object.values(EMERGENCY_PHOTOS).map((photo) => `${window.location.origin}${photo.src}`) : [];
+        registration.active?.postMessage({ type: "keep-urls", urls: [`${window.location.origin}${pagePath}`, ...photos, ...loaded] });
       })
       .catch(() => {
         // no worker: the page works as before, it just cannot be opened offline

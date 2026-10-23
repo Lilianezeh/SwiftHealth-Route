@@ -47,3 +47,29 @@ body {
 .on-dark :focus-visible {
   outline-color: var(--color-paper);
 }
+
+/* The section of the home page that holds the background slideshow ("Find by type", specs/2026-10-22-home-photos/) waits until it is near the
+   screen. A browser's own lazy loading starts a download well before an image is on screen (Chrome: about 1250 px), so without this the first
+   photo was asked for at load and slowed the hero on a slow phone (Lighthouse). With content-visibility: auto the browser skips the section's
+   layout and paint until it is near the screen, so its photo is not asked for before that. The size it is given until it is drawn is the real
+   height of the section, measured in a browser at 13 widths from 320 to 1440 px, so that what comes after it does not jump when it is drawn
+   (CLS 0); "auto" then remembers the real size. Under 1024 px the section is a photo band (as wide as the section, 3:2) with the content
+   pulled 15% of the width up over its end: the height is 51.67% of the width plus the fixed height of the content (the cards are 190 px high):
+   802 px on a phone, 564 px on a tablet. From 1024 px it is 760 px. CSS only: a browser that does not know it draws the section at once. The
+   text stays in the page for search, find-in-page and screen readers. */
+.section-lazy {
+  content-visibility: auto;
+  contain-intrinsic-size: auto calc(51.67vw + 802px);
+}
+
+@media (min-width: 768px) {
+  .section-lazy {
+    contain-intrinsic-size: auto calc(51.67vw + 564px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-lazy {
+    contain-intrinsic-size: auto 760px;
+  }
+}

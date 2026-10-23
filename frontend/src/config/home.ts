@@ -45,11 +45,11 @@ export const HOME_PHOTOS = {
 /** The five tiles of "Find by type": the label and the category slug of the seed (the search address). The icons are
  * chosen in FindByType.tsx. */
 export const HOME_CATEGORIES = [
-  { label: "Hospital", slug: "hospital" },
-  { label: "Clinic", slug: "clinic" },
-  { label: "Maternity", slug: "maternity" },
-  { label: "Pharmacy", slug: "pharmacy" },
-  { label: "Laboratory", slug: "laboratory" },
+  { label: "Hospital", slug: "hospital", description: "Admission, surgery and emergency care" },
+  { label: "Clinic", slug: "clinic", description: "Check-ups and everyday treatment" },
+  { label: "Maternity", slug: "maternity", description: "Antenatal care and childbirth" },
+  { label: "Pharmacy", slug: "pharmacy", description: "Medicines and advice" },
+  { label: "Laboratory", slug: "laboratory", description: "Tests and results" },
 ] as const;
 
 /** The words of the page: the owner's, as agreed on 2026-10-15 (D7 of specs/2026-10-15-find-by-type/requirements.md). The app's name always

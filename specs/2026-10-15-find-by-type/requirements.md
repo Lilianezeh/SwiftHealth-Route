@@ -2,6 +2,7 @@
 
 Branch `feature/find-by-type`. Status: **spec updated with the owner's answers (2026-10-15). No code yet.** Nothing is built until the owner has
 confirmed the two short lists at the end (the type words and the empty-results words), confirmed the Magnific credit (D6), and said go on the plan.
+**Changed on 2026-10-22 (owner; feature `specs/2026-10-22-home-photos/`): the type banners and their "Designed by Magnific" credits on `/search` are removed. The search page shows no pictures at all. The type words, heading, chip and empty-results words below stay.**
 Roadmap: "Find by type and home page wording" (after phase 6b). **Frontend only**: the search API already filters on the exact category slug, so there
 is no backend change, no new table, no new package.
 Source: the owner's points 1 to 11 in `LOG.md` ("To do later", "Next feature after the listing page"), and the owner's answers of 2026-10-15 (the
