@@ -135,12 +135,12 @@ Every photo is a `next/image` (or its `getImageProps` for the hero `<picture>`) 
 page description, names a city**: the home page does not say where SwiftHealth is live (owner, 2026-10-12). One `h1` (the hero
 heading); each following part has an `h2`.
 
-**Revision of 2026-10-22 (built 2026-10-23): photos in the sections below the hero** (owner's change of plan; feature `specs/2026-10-22-home-photos/`, which has the reasons, the photo table and the open questions). **The hero is not changed** by this revision: parts 1 and 2 below stay as they are. The hero slider that was first planned was dropped.
-- *Order of the parts:* header, hero, Overview (with the `hero` photo), Why, **How we verify (new: `hero2` and `hero3`)**, Find by type (a row of four photos above the tiles: `clinic`, `pharmacy`, `laboratory`, `maternity`; the tiles stay without photos), **SwiftRescue (new: `ambulance` and `fire`, a blue button to `/emergency`, never red)**, For facility owners (`owner` instead of the `hero4` portrait), footer. An optional slow photo strip above the owners part, only if the owner asks.
-- *Photos:* plain lazy `<img>` with fixed `width`, `height` and `aspect-ratio`, WebP under 50 kB (800 × 533) or 25 kB (480 × 320), honest alt text, below the fold only; nothing is downloaded before the visitor scrolls near it.
-- *Movement:* each photo fades and slides 24 px into place once, when it scrolls into view (CSS `transition` on `opacity` and `transform`, one small `IntersectionObserver` component, no library). Without JavaScript the photos are simply shown. **With reduce motion: no movement at all.** The text of the sections does not move.
-- *Credit:* one "Designed by Magnific" link (16 px, 48 px tap area, new tab) in each section that shows Magnific photos; none in the hero.
-- *Old rule replaced:* "No slideshow, no animation" gives way to the movement above (and the optional strip, with a visible Pause button that also stops when the tab is hidden).
+**Revision of 2026-10-23: one faint background slideshow behind "Find by type"** (owner's decision; feature `specs/2026-10-22-home-photos/`, revision 4, which has the reasons and the photo table). **Everything else of the home page is as the parts below describe it, unchanged**: the hero (`hero3`), the Overview, "Why", "For facility owners" with the `hero4` portrait, the footer. No new section, no photo row.
+- *The slideshow:* five photos (`clinic`, `hospital`, `maternity`, `laboratory`, `pharmacy`), one at a time, about **7 s** each with a **1.5 s** crossfade (CSS `opacity`, no library), drawn at **18% strength** over the section's `pine-50` background, behind the heading and the tiles, which are not redrawn when a photo changes. Decorative: no alt text, `aria-hidden`. The heading of the section is `pine-dark` so that all text passes 4.5:1 even over a pure black photo pixel.
+- *Controls:* a small **Pause / Play** button (48 px, a text label; WCAG 2.2.2) at the bottom of the section; the slideshow also **stops while the tab is hidden**. **With reduce motion:** one still faint photo, no timer, no button.
+- *Credit:* one small "Designed by Magnific" link (16 px, 48 px tap area, new tab) at the bottom of the section, on a white pill.
+- *Speed:* the section is `content-visibility: auto`; only the first photo is in the HTML (lazy); the other four are added after it has loaded and the page is idle, one ahead of their turn; 960 × 640 WebP under 50 kB each.
+- *Old rule replaced:* "No slideshow, no animation" gives way to this one slideshow (with its Pause button) and nothing else that moves.
 
 **Parts, top to bottom** (the words below are the exact text):
 1. **Header** — see "Layout" above. On this page it is transparent and sits on top of the hero.

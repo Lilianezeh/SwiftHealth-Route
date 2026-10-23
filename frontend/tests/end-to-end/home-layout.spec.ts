@@ -133,9 +133,7 @@ for (const { width, height } of VIEWPORTS) {
         "Why SwiftHealth Route",
         "Built for mobile data",
         "Your location stays private",
-        "How we verify",
         "Find by type",
-        "Emergency contacts for ambulance and fire",
         "Own or manage a healthcare facility?",
         "Listing is free during our launch",
       ]) {
@@ -197,19 +195,16 @@ test.describe("what the home page downloads", () => {
     });
   }
 
-  test("loads the hero photo first, at high priority, and the photos of the sections natively lazy", async ({ page }) => {
+  test("loads the hero photo first, at high priority, and the owners' photo natively lazy", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/", { waitUntil: "load" });
 
     const hero = page.locator("picture img");
     await expect(hero).toHaveAttribute("loading", "eager");
     await expect(hero).toHaveAttribute("fetchpriority", "high");
-    const photos = page.locator('img[src^="/images/sections/"], img[src^="/images/emergency/"]');
-    await expect(photos).toHaveCount(10);
-    for (const photo of await photos.all()) {
-      await expect(photo).toHaveAttribute("loading", "lazy");
-      await expect(photo).not.toHaveAttribute("fetchpriority", "high");
-    }
+    const portrait = page.locator('img[src*="hero4-portrait"]');
+    await expect(portrait).toHaveAttribute("loading", "lazy");
+    await expect(portrait).not.toHaveAttribute("fetchpriority", "high");
   });
 
   test("downloads no code of another page and no map code, and every link has prefetch off", async ({ page }) => {

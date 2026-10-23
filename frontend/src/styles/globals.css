@@ -47,31 +47,3 @@ body {
 .on-dark :focus-visible {
   outline-color: var(--color-paper);
 }
-
-/* The gentle fade-and-slide of the photos of the home page sections (specs/2026-10-22-home-photos/, part 3). Reveal.tsx marks a photo
-   data-reveal="hidden" after the script has run (never in the server's HTML, so without scripts every photo is simply shown) and
-   data-reveal="revealed" when 15% of it is in view. A photo rises 24 px and fades in over 0.8 s, once. Only opacity and transform change, so
-   nothing moves the layout. All of it is inside the no-preference guard: a visitor who asks for reduced motion sees no movement at all. */
-@media (prefers-reduced-motion: no-preference) {
-  .photo-reveal[data-reveal="hidden"] {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-
-  /* The transition belongs to the end state, so the photo is hidden at once (a photo already in view never flashes out and in) and
-     only the change into "revealed" takes 0.8 s. */
-  .photo-reveal[data-reveal="revealed"] {
-    transition: opacity 800ms ease-out, transform 800ms ease-out;
-  }
-}
-
-/* The sections of the home page that hold photos wait until they are near the screen (specs/2026-10-22-home-photos/, part 4). A browser's own
-   lazy loading starts a download well before a photo is on screen (Chrome: about 1250 px), so the photos just under the hero were asked for at
-   load and slowed the hero on a slow phone. With content-visibility: auto the browser skips a section's layout and paint until it is near the
-   screen, so its photos are not asked for before that. The remembered size ("auto 720px": the real size after the first draw) keeps the page
-   from jumping. It is CSS only, and a browser that does not know it simply draws every section at once. The text stays in the page for search,
-   find-in-page and screen readers. */
-.section-lazy {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 720px;
-}

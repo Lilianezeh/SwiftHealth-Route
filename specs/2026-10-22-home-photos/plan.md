@@ -1,53 +1,34 @@
 # Home photos: plan
 
-**Status: built 2026-10-23 (revision 3, owner's answers of 2026-10-22 are at the top of requirements.md: no strip, one 800 px file per photo, the credit only under `hero2`), after #37 to #43 were merged and `main` was merged in. Draft PR; waiting for the owner's Lighthouse run and look at the preview. The `PhotoStrip` lines below are cancelled.** Requirements: [requirements.md](requirements.md). Rules: tests first, one commit per task, IDs (US-13, US-01, US-04, FR-14, FR-17, NFR-01, NFR-03, NFR-10, NFR-13) in commits and tests; `git branch --show-current` before every commit and push; draft PR.
-
-## Where the branch stands
-
-| Commit | What | Status |
-| --- | --- | --- |
-| `0e28600` | Photo script, the specs, `source-photos/` ignored, sixteen slider WebP files | script and ignore entry stay; the sixteen `public/images/hero/*` slider files are replaced in task 1 |
-| `49fa1c1` | No pictures on `/search`: banners, credits, config, files, script and old tests removed; new test | **done, stays** |
-| `b83dc37` | Hero slider, hero search, feature cards, scroll-driven fade-in | built, then **undone** by `93eff44` on the owner's order |
-| `93eff44` | Revert of the slider work | the hero is exactly as it was |
+**Status: revision 4 (2026-10-23), approved ("Yes, with these changes"). Building now.** Requirements: [requirements.md](requirements.md). Rules: tests first, one commit per task, IDs (US-13, US-04, US-01, FR-14, FR-17, NFR-01, NFR-03, NFR-10, NFR-13) in commits and tests; `git branch --show-current` before every commit and push; the draft PR #44 is updated.
 
 ## Files
 
 | File | Change |
 | --- | --- |
-| `frontend/scripts/optimize-hero-photos.mjs` | Rewritten for the new sizes: `public/images/sections/<name>-800.webp` (50 kB), `-480.webp` (25 kB) and `public/images/emergency/{ambulance,fire}.webp` (640 × 240, 40 kB); crops by hand after looking at each photo (hero3 above y = 2830) |
-| `frontend/public/images/sections/` (new), `public/images/hero/` (deleted), `public/images/home/hero4-portrait.webp` (deleted, if question 6 is yes) | The files |
-| `frontend/src/config/sectionPhotos.ts` | New: one entry per photo (file, size, alt, section) and the credit (one place) |
-| `frontend/src/components/home/SectionPhoto.tsx` | New: the plain lazy `<img>` with fixed size and `aspect-ratio`, wrapped in `Reveal` |
-| `frontend/src/components/home/Reveal.tsx` | New, the only client component: the `IntersectionObserver`, off with reduce motion |
-| `frontend/src/components/home/PhotoCredit.tsx` | New: the "Designed by Magnific" link (16 px, 48 px, new tab) |
-| `frontend/src/components/home/Overview.tsx`, `FindByType.tsx`, `FacilityOwners.tsx` | Photos added (owners: `owner` instead of the `hero4` portrait) |
-| `frontend/src/components/home/HowWeVerify.tsx`, `HomeSwiftRescue.tsx` (new), `src/app/(home)/page.tsx`, `src/config/home.ts` | The two new sections and their words |
-| `frontend/src/components/home/PhotoStrip.tsx` (new, only if question 4 is yes) | The slow strip with Pause, visibility stop, reduce motion |
-| `frontend/src/styles/globals.css` | The `.photo-reveal` classes: the hidden start state exists only under `.js-reveal` (added by `Reveal`), and only inside `@media (prefers-reduced-motion: no-preference)` |
-| `frontend/src/components/emergency/EmergencyGroups.tsx`, `GroupPhoto.tsx` (new), `public/sw.js` | Task 5 (blocked by #37, #39, #40) |
-| `frontend/scripts/optimize-home-images.mjs`, `tests/unit/homeImages.test.ts`, `homePerformance.test.tsx`, `HomePage.test.tsx`, `HomeSections.test.tsx` | Updated to the new photo list and to the two client parts (`Reveal`, and the strip if built) |
-| `specs/frontend/ui-spec.md` (2.1, 2.5), `LOG.md` | Task 0 and the end |
+| `frontend/src/components/home/FindByType.tsx` | Back to `main`'s tiles; now inside `<BackdropSlideshow>`; the heading is `text-pine-dark` (4.5:1 on the worst case of the faint photo) |
+| `frontend/src/components/home/BackdropSlideshow.tsx` | New, client: the five photos, the 7 s timer and 1.5 s fade, the Pause button, the hidden-tab stop, reduce motion, the staged loading, the credit |
+| `frontend/src/config/sitePhotos.ts` (was `sectionPhotos.ts`) | `BACKDROP_PHOTOS` (five files), `EMERGENCY_PHOTOS`, the credit |
+| `frontend/scripts/optimize-hero-photos.mjs` | The five 960 × 640 backdrop files and the two SwiftRescue files from `source-photos/` |
+| `frontend/public/images/backdrop/` (new), `public/images/sections/` (deleted), `public/images/home/` (**not touched**) | The files |
+| `frontend/src/styles/globals.css` | Back to `main`, plus the `section-lazy` rule (`content-visibility: auto`); the fade-and-slide rule is gone |
+| `frontend/src/components/home/{HowWeVerify,HomeSwiftRescue,SectionPhoto,PhotoCredit,Reveal}.tsx` | Deleted (added by the first version of #44) |
+| Hero, Overview, WhySwiftHealth, FacilityOwners, HomeImage, `config/home.ts`, `app/(home)/page.tsx` | Exactly as on `main` |
+| `frontend/tests/unit/BackdropSlideshow.test.tsx`, `backdropPhotos.test.ts`, `HomeSections.test.tsx`, `HomePage.test.tsx`, `homePerformance.test.tsx`, `homeImages.test.ts`, `tests/end-to-end/home-photos.spec.ts` | Tests below |
+| `specs/2026-10-22-home-photos/*`, `specs/frontend/ui-spec.md` (2.1) | This revision |
 
 ## Tasks
 
-### Task 0: Spec (this document)
-- [x] Revision 3 written; ui-spec 2.1 rewritten (the slider block is gone); waiting for "yes".
-- [x] Photos reviewed; originals in `source-photos/` (ignored); part 1 done (`49fa1c1`).
+### Task 0: back to `main`, and the spec
+- [x] Restore the home page from `main` (files above), delete what #44 added and no longer uses, rename `sectionPhotos.ts`, rewrite requirements and plan.
 ### Task 1: the photo files (tests first)
-- [x] (`4de7795`) Red test `tests/unit/sectionPhotos.test.ts`: every config entry has a file; budgets (800 px ≤ 50 kB, 480 px ≤ 25 kB, emergency ≤ 40 kB); real pixel sizes equal the config; nothing else in the folders; no JPG or PNG original in `public/`; alt text rules (a sentence, no "image of", no city); the hero's `hero3.webp` untouched.
-- [x] (`4de7795`) Rewrite the script; make the files; delete the slider files; look at every file.
-### Task 2: the photos in the sections (tests first)
-- [x] (`6510602`) Red tests: the section order; each photo is in its section; every `<img>` is `loading="lazy"`, has `width`, `height`, alt and an aspect ratio; **no photo in the hero and the hero's HTML is unchanged** (a snapshot of its source); **no photo before the first section** (so none can delay the first paint); the credit link in each Magnific section (text, `https://www.magnific.com`, 16 px, 48 px, new tab, `rel`), none in the hero; the new sections' words are the exact text of requirements.md and every link goes to an existing route; one `h1`, an `h2` for each section; no red but the header's SwiftRescue button; no city; no number that is not in the config.
-- [x] (`6510602`) Build `SectionPhoto`, `PhotoCredit`, the sections, the new sections. Then (this commit) `section-lazy` (`content-visibility: auto`) on the five photo sections, after Lighthouse showed seven photos loading at the start.
-### Task 3: the movement (tests first)
-- [x] (`6510602`) Red tests (jsdom, a fake `IntersectionObserver`): a photo is shown with no class when scripts do not run; after mount it starts hidden and becomes visible when it intersects, once, and is then unobserved; **with reduce motion the observer is never created and no hidden class is ever added**; the CSS has the hidden start state only inside `@media (prefers-reduced-motion: no-preference)` and only under `.js-reveal`; only `opacity` and `transform` are animated; the observer is disconnected on unmount; the sections' text has no animation class.
-- [x] (`6510602`, `10c011c`) Build `Reveal` and the CSS.
-- [x] Cancelled (owner: no strip) — only if question 4 was yes: tests (Pause/Play text and 48 px, stops while the tab is hidden, stays stopped after Play when the visitor had paused, reduce motion = no animation and no timer, the strip adds no new file) and `PhotoStrip`.
-### Task 4: real-browser checks at 320, 360, 768 and 1024 px
-- [x] (`10c011c`) Playwright `tests/end-to-end/home-photos.spec.ts`: nothing wider than the screen; **no image request before scrolling** (the home page requests only the hero files until the visitor scrolls); photos appear on scroll (the class changes); with `reducedMotion: "reduce"` nothing moves and every photo is visible at once; **CLS 0** (a layout-shift observer, scrolling the whole page); each credit is 16 px and 48 px; `/search` has no images; the hero is pixel-identical to a screenshot taken before the change (same viewport).
-### Task 5: SwiftRescue photos on `/emergency` (blocked: wait for #37, #39, #40)
-- [x] (`ceeba50`) Red tests: a photo in the Ambulance and the Fire group only; fixed size, lazy; credit and alt; **112 and Call 112 stay the first things in the page source and the first tab stops** and appear with no photo request answered; a failing photo leaves no broken icon and no jump; the worker keeps the two files (cache first) and still never keeps an API answer or anything with a query; the saved offline copy has no image data. Real browser: offline check on a production build (`OFFLINE_CHECK=1`).
-- [x] (`ceeba50`) Build `GroupPhoto`, update `EmergencyGroups` and `sw.js`.
-### Task 6: speed and wrap-up
-- [x] (see `validation.md`; five runs each, not three) Lighthouse before and after, three runs each on the same production build (requirements.md, "Measuring"); bytes before load and after scrolling; JavaScript added; CLS. Docs (`validation.md`, LOG), push, **draft PR**; the owner's own Lighthouse on the preview decides.
+- [ ] Red `backdropPhotos.test.ts`: the five files exist (order clinic, hospital, maternity, laboratory, pharmacy), 960 × 640, under 50 kB, nothing else in the folders; `public/images/sections/` gone; `hero3`, `hero3-phone`, `hero4-portrait` still in `public/images/home/` and **byte-identical to `main`'s**; no original in `public/`.
+- [ ] Rewrite the script, make the files, look at them.
+### Task 2: the slideshow (tests first)
+- [ ] Red `BackdropSlideshow.test.tsx` (fake timers): only the first photo at first; the next added after the first has loaded and the page is idle; changes every 7 s; Pause holds and says Play; Play restarts; a hidden tab stops it; reduce motion = one still photo, no timer, no button; the credit (text, `https://www.magnific.com`, 16 px, new tab, `rel`); decorative (`alt=""`, `aria-hidden`); the heading and tiles are the same elements after a change; the HTML without scripts has the first photo and the credit; **contrast** from the tokens (worst case a black pixel at 18% over `pine-50`): heading `pine-dark` ≥ 4.5:1, credit and Pause on white ≥ 4.5:1; the section is `section-lazy`.
+- [ ] Update `HomePage`, `HomeSections`, `homePerformance`, `homeImages` tests: the page is `main`'s, plus the slideshow, one client part, one outside link (the credit).
+- [ ] Build `BackdropSlideshow` and change `FindByType`.
+### Task 3: real browser at 320, 360, 768 and 1024 px
+- [ ] `home-photos.spec.ts`: the slideshow changes photo (fake clock), Pause holds it, a hidden tab stops it, `reducedMotion: "reduce"` gives one still photo and no button, nothing wider than the screen, CLS 0, no photo requested before the section is near, the heading and tiles readable (a pixel contrast sample of the heading over every photo), hero and owners part unchanged, `/search` and `/find` have no picture, `/emergency` photos and offline check.
+### Task 4: speed, wrap-up
+- [ ] Lighthouse before and after (five runs each); `validation.md`; update the draft PR #44; the owner's own Lighthouse decides.

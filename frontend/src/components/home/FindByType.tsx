@@ -5,11 +5,8 @@
 import { Baby, FlaskConical, Hospital, Pill, Stethoscope, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
-import { PhotoCredit } from "@/components/home/PhotoCredit";
-import { SectionPhoto } from "@/components/home/SectionPhoto";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { HOME_CATEGORIES, HOME_WORDS } from "@/config/home";
-import { SECTION_PHOTOS } from "@/config/sectionPhotos";
 import { filtersToQuery } from "@/lib/search/searchQuery";
 
 const TILE_ICONS: Record<(typeof HOME_CATEGORIES)[number]["slug"], LucideIcon> = {
@@ -20,25 +17,13 @@ const TILE_ICONS: Record<(typeof HOME_CATEGORIES)[number]["slug"], LucideIcon> =
   laboratory: FlaskConical,
 };
 
-const PHOTO_ROW = [SECTION_PHOTOS.clinic, SECTION_PHOTOS.pharmacy, SECTION_PHOTOS.laboratory, SECTION_PHOTOS.maternity];
-
 export function FindByType() {
   return (
-    <section aria-labelledby="find-by-type-heading" className="section-lazy">
-      <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
+    <section aria-labelledby="find-by-type-heading">
+      <div className="mx-auto max-w-6xl px-4 py-12">
         <h2 id="find-by-type-heading" className="text-2xl font-bold text-forest">
           {HOME_WORDS.findByType.heading}
         </h2>
-        {/* Four photos above the tiles (2026-10-22, specs/2026-10-22-home-photos/): not clickable and not labelled as a type (there is no
-            hospital photo, and the maternity photo is a talk between two masked people), with one credit under the row. The tiles stay as they are. */}
-        <div className="mt-6 flex flex-col">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {PHOTO_ROW.map((photo) => (
-              <SectionPhoto key={photo.src} photo={photo} />
-            ))}
-          </div>
-          <PhotoCredit />
-        </div>
         <ul className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
           {HOME_CATEGORIES.map((category) => (
             <li key={category.slug}>

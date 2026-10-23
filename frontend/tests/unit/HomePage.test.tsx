@@ -15,7 +15,6 @@ import Home, { metadata as homeMetadata } from "@/app/(home)/page";
 import { FacilityOwners } from "@/components/home/FacilityOwners";
 import { PageFrame } from "@/components/layout/PageFrame";
 import { HOME_PHOTOS, HOME_WORDS } from "@/config/home";
-import { SECTION_PHOTOS } from "@/config/sectionPhotos";
 import { siteConfig } from "@/config/site";
 
 import { readSource } from "../helpers/source";
@@ -44,36 +43,38 @@ describe("the facility owners part", () => {
     const button = screen.getByRole("link", { name: "List your facility" });
     expect(button).toHaveAttribute("href", "/list-your-facility");
     expect(button.className).not.toMatch(/emergency/);
-    const image = screen.getByAltText(SECTION_PHOTOS.owners.alt);
-    expect(image).toHaveAttribute("src", "/images/sections/pharmacy-counter-800.webp");
+    const image = screen.getByAltText(HOME_PHOTOS.owner.alt);
+    expect(image).toHaveAttribute("src", "/images/home/hero4-portrait.webp");
     expect(image).toHaveAttribute("width", "800");
-    expect(image).toHaveAttribute("height", "533");
+    expect(image).toHaveAttribute("height", "1200");
     expect(image).toHaveAttribute("loading", "lazy");
   });
 
-  it("shows the owner photo whole in its 3:2 box: the full width on a phone, in the left half from 768 px, with its credit under it", () => {
+  it("shows the portrait photo whole: never cropped or stretched, full width on a phone, 26 rem high from 768 px (R25)", () => {
     render(<FacilityOwners />);
 
-    const image = screen.getByAltText(SECTION_PHOTOS.owners.alt);
-    expect(image.className).toMatch(/\baspect-\[3\/2\]/);
+    const image = screen.getByAltText(HOME_PHOTOS.owner.alt);
+    expect(image.className).not.toMatch(/\bobject-cover\b|(^|\s)h-full\b|\baspect-/); // nothing that cuts it
     expect(image.className).toMatch(/(^|\s)h-auto\b/);
-    expect(image.className).toMatch(/(^|\s)w-full\b/);
-    const credit = screen.getByRole("link", { name: /^Designed by Magnific/ });
-    expect(image.compareDocumentPosition(credit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(image.className).toMatch(/(^|\s)w-full\b/); // the full width of the content on a phone
+    expect(image.className).toMatch(/\bmd:h-\[26rem\]/); // smaller than the 32 rem of before
+    expect(image.className).toMatch(/\bmd:w-auto\b/); // the width follows from the 2:3 shape (about 17.3 rem)
+    expect(image.className).toMatch(/\bmd:shrink-0\b/);
+    expect(image.className).not.toMatch(/32rem/);
   });
 
-  it("has the text right beside the photo from 768 px: two columns, a normal gap, both vertically centred", () => {
+  it("has the text right beside the photo from 768 px: a normal gap, both vertically centred, no big empty space", () => {
     const { container } = render(<FacilityOwners />);
 
     const row = container.querySelector("section > div") as HTMLElement;
     expect(row.className).toMatch(/\bmax-w-6xl\b/); // the same container as the headings
-    expect(row.className).toMatch(/\bmd:grid\b/);
-    expect(row.className).toMatch(/\bmd:grid-cols-2\b/);
+    expect(row.className).toMatch(/\bmd:flex\b/);
     expect(row.className).toMatch(/\bmd:items-center\b/); // both vertically centred
     expect(row.className).toMatch(/\bmd:gap-10\b/); // 2.5 rem between the photo and the text
+    expect(row.className).not.toMatch(/\bmd:grid-cols-2\b|\bmd:justify-between\b/); // two half-width columns left a big gap
     const text = screen.getByRole("heading", { level: 2 }).parentElement as HTMLElement;
     expect(text.className).toMatch(/\bmd:max-w-xl\b/); // 36 rem at most
-    expect(row.contains(screen.getByAltText(SECTION_PHOTOS.owners.alt))).toBe(true);
+    expect(row.contains(screen.getByAltText(HOME_PHOTOS.owner.alt))).toBe(true);
     expect(row.contains(text)).toBe(true);
   });
 });
@@ -85,7 +86,7 @@ describe("the whole page", () => {
     const landmarks = [
       screen.getByRole("banner"),
       screen.getByRole("heading", { level: 1 }),
-      ...["What is SwiftHealth Route?", "Why SwiftHealth Route", "How we verify", "Find by type", "SwiftRescue"].map((name) =>
+      ...["What is SwiftHealth Route?", "Why SwiftHealth Route", "Find by type"].map((name) =>
         screen.getByRole("heading", { level: 2, name }),
       ),
       screen.getByRole("heading", { level: 2, name: "Own or manage a healthcare facility?" }),
@@ -102,13 +103,13 @@ describe("the whole page", () => {
     }
   });
 
-  it("has one h1 and six h2 (overview, why, how we verify, find by type, SwiftRescue, facility owners), and no heading deeper than h3", () => {
+  it("has one h1 and four h2 (overview, why, find by type, facility owners), and no heading deeper than h3", () => {
     renderWholePage();
 
     const levels = screen.getAllByRole("heading").map((heading) => Number(heading.tagName.slice(1)));
 
     expect(levels.filter((level) => level === 1)).toHaveLength(1);
-    expect(levels.filter((level) => level === 2)).toHaveLength(6);
+    expect(levels.filter((level) => level === 2)).toHaveLength(4);
     expect(screen.queryByRole("heading", { name: "How it works" })).not.toBeInTheDocument();
     expect(Math.max(...levels)).toBeLessThanOrEqual(3);
   });
@@ -173,8 +174,7 @@ describe("the whole page", () => {
     const copy = container.cloneNode(true) as HTMLElement;
     copy.querySelectorAll('[aria-hidden="true"]').forEach((element) => element.remove()); // the step numbers
     // "24-hour services" (the owner's words of 2026-10-15) names a kind of service; it is not a statistic.
-    // "112" is the national emergency number (the SwiftRescue part says "with 112 first"); it is not a statistic either.
-    const text = (copy.textContent ?? "").replace(String(siteConfig.copyrightYear), "").replaceAll("24-hour", "").replaceAll("112", "");
+    const text = (copy.textContent ?? "").replace(String(siteConfig.copyrightYear), "").replaceAll("24-hour", "");
 
     expect(text).not.toContain("%");
     expect(text).not.toMatch(/\d/);
@@ -186,22 +186,23 @@ describe("the whole page", () => {
     expect(container.querySelectorAll("blockquote, q")).toHaveLength(0);
   });
 
-  it("has no outside link but the five 'Designed by Magnific' credits, and no word Unsplash (the sections are in HomeSectionPhotos.test.tsx)", () => {
+  it("has no outside link anywhere on the page, and no photo credit", () => {
     const { container } = renderWholePage();
 
-    const outside = [...container.querySelectorAll('a[href^="http"], a[target="_blank"]')];
-
-    expect(outside.map((link) => link.getAttribute("href"))).toEqual(Array(5).fill("https://www.magnific.com"));
-    expect(container.textContent?.toLowerCase()).not.toMatch(/unsplash/);
+    expect(container.querySelectorAll('a[href^="http"], a[target="_blank"]')).toHaveLength(0);
+    expect(container.textContent?.toLowerCase()).not.toMatch(/magnific|unsplash/);
   });
 
-  it("has eleven images: the hero and the ten photos of the sections, each with alt text, a width and a height", () => {
+  it("has two images only, the hero and the owner photo, each with alt text, a width and a height", () => {
     const { container } = renderWholePage();
 
     const images = [...container.querySelectorAll("img")];
 
-    expect(images).toHaveLength(11);
-    expect(images[0].getAttribute("src")).toBe(HOME_PHOTOS.hero.src);
+    expect(images.map((image) => image.getAttribute("src"))).toEqual([
+      "/images/home/hero3.webp",
+      "/images/home/hero4-portrait.webp",
+    ]);
+    expect(images.map((image) => image.getAttribute("src"))).toEqual([HOME_PHOTOS.hero.src, HOME_PHOTOS.owner.src]);
     for (const image of images) {
       expect(image.getAttribute("alt")?.length, image.getAttribute("src") ?? "").toBeGreaterThan(10);
       expect(Number(image.getAttribute("width"))).toBeGreaterThan(0);
@@ -209,7 +210,7 @@ describe("the whole page", () => {
     }
   });
 
-  it("loads only the hero at once: the ten photos of the sections are lazy", () => {
+  it("loads only the hero at once: the owner photo is lazy", () => {
     const { container } = renderWholePage();
 
     const eager = [...container.querySelectorAll("img")].filter((image) => image.getAttribute("loading") !== "lazy");
@@ -259,13 +260,12 @@ describe("the whole page", () => {
     expect(description.length).toBeLessThanOrEqual(160);
   });
 
-  it("has no Emergency help button and no red button but the header's: the SwiftRescue part has a blue 'Open SwiftRescue' link", () => {
+  it("has no Emergency help and no Open SwiftRescue button: the way to SwiftRescue is the header's red button", () => {
     renderWholePage();
 
     expect(screen.queryByRole("link", { name: "Emergency help" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "SwiftRescue" })).toHaveAttribute("href", "/emergency"); // the header's red button
-    expect(screen.getByRole("link", { name: "Open SwiftRescue" })).toHaveAttribute("href", "/emergency"); // the blue one (2026-10-22)
-    expect(within(screen.getByRole("main")).queryByRole("link", { name: "SwiftRescue" })).toBeNull(); // none in the hero
+    expect(screen.queryByRole("link", { name: "Open SwiftRescue" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "SwiftRescue" })).toHaveAttribute("href", "/emergency");
   });
 
   it("points every button of the page to the right place", () => {

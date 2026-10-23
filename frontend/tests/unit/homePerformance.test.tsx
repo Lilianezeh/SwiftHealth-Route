@@ -11,9 +11,9 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import Home from "@/app/(home)/page";
-import { SectionPhoto } from "@/components/home/SectionPhoto";
+import { HomeImage } from "@/components/home/HomeImage";
 import { PageFrame } from "@/components/layout/PageFrame";
-import { SECTION_PHOTOS } from "@/config/sectionPhotos";
+import { HOME_PHOTOS } from "@/config/home";
 
 import { readSource } from "../helpers/source";
 
@@ -51,9 +51,8 @@ describe("no page of another address is downloaded early: every link of the home
     );
 
     // The skip link ("#main") stays on the same page, so there is nothing to prefetch (phase 13c).
-    // The "Designed by Magnific" credits go to another site: plain links, nothing to prefetch.
-    const links = [...container.querySelectorAll("a")].filter((link) => (link.getAttribute("href") ?? "").startsWith("/"));
-    expect(links.length).toBeGreaterThanOrEqual(17); // the logo, 2 header links, the hero button, How we verify, 5 tiles, Open SwiftRescue, the owners button, 6 footer links
+    const links = [...container.querySelectorAll("a")].filter((link) => !(link.getAttribute("href") ?? "").startsWith("#"));
+    expect(links.length).toBeGreaterThanOrEqual(15); // the logo, 2 header links, the hero button, 5 tiles, the owners button, 6 footer links
     for (const link of links) expect(link.getAttribute("data-prefetch"), link.textContent ?? "").toBe("false");
   });
 
@@ -79,12 +78,10 @@ describe("the header and the footer are server components (R44)", () => {
     expect(readSource("components/layout/MobileMenu.tsx")).toMatch(/^"use client";/); // the one client part of the header
   });
 
-  it("sends no JavaScript from the home page's own components either, except Reveal (the fade-and-slide of the photos, about 1 kB)", () => {
+  it("sends no JavaScript from the home page's own components either", () => {
     const folder = join(process.cwd(), "src", "components", "home");
     for (const file of readdirSync(folder)) {
-      const source = readFileSync(join(folder, file), "utf8");
-      if (file === "Reveal.tsx") expect(source, file).toMatch(/^"use client";/);
-      else expect(source, file).not.toMatch(/["']use client["']/);
+      expect(readFileSync(join(folder, file), "utf8"), file).not.toMatch(/["']use client["']/);
     }
   });
 });
@@ -145,18 +142,20 @@ describe("the route groups choose the header and the footer, and no address chan
   });
 });
 
-describe("the photos of the sections (R45, and specs/2026-10-22-home-photos/)", () => {
-  it("are drawn without the next/image component: the plain img attributes, lazy, with size and alt text", () => {
-    const source = readSource("components/home/SectionPhoto.tsx");
-    expect(source).not.toMatch(/from "next\/image"/); // the next/image component brings client JavaScript
+describe("the owners' photo (R45)", () => {
+  it("is drawn without the next/image component: the plain img attributes, still lazy, with its size and its alt text", () => {
+    const source = readSource("components/home/HomeImage.tsx");
+    expect(source).not.toMatch(/import Image\b/); // the next/image component brings client JavaScript
+    expect(source).toMatch(/import \{ getImageProps \} from "next\/image"/); // its server-side helper does not
+    expect(source).not.toMatch(/<Image\b/);
 
-    const { container } = render(<SectionPhoto photo={SECTION_PHOTOS.owners} />);
+    const { container } = render(<HomeImage photo={HOME_PHOTOS.owner} className="h-auto" />);
     const image = container.querySelector("img");
-    expect(image).toHaveAttribute("src", "/images/sections/pharmacy-counter-800.webp");
+    expect(image).toHaveAttribute("src", "/images/home/hero4-portrait.webp");
     expect(image).toHaveAttribute("width", "800");
-    expect(image).toHaveAttribute("height", "533");
-    expect(image).toHaveAttribute("alt", SECTION_PHOTOS.owners.alt);
-    expect(image).toHaveAttribute("loading", "lazy"); // the native lazy loading (no scroll watcher of ours for the download)
+    expect(image).toHaveAttribute("height", "1200");
+    expect(image).toHaveAttribute("alt", HOME_PHOTOS.owner.alt);
+    expect(image).toHaveAttribute("loading", "lazy"); // the native lazy loading the owner chose (no scroll watcher)
     expect(image).toHaveAttribute("decoding", "async");
     expect(image).not.toHaveAttribute("fetchpriority", "high"); // only the hero is high priority
   });
