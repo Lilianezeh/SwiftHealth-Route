@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LoginForm } from "@/components/admin/LoginForm";
-import { formatMaskedPhone } from "@/lib/formatters/phone";
+import { formatPhoneHint } from "@/lib/formatters/phone";
 import { readStaffSession } from "@/lib/staff/session";
 import type { StaffRole } from "@/types/staff";
 
@@ -20,7 +20,14 @@ vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 type Handler = (body: Record<string, string>) => Response;
 
-function stubAuth(options: { login?: Handler; verify?: Handler } = {}) {
+function tooManyRequests(detail: string, retryAfter: number): Response {
+  return new Response(JSON.stringify({ detail }), {
+    status: 429,
+    headers: { "Content-Type": "application/json", "Retry-After": String(retryAfter) },
+  });
+}
+
+function stubAuth(options: { login?: Handler; verify?: Handler; resend?: Handler } = {}) {
   const calls: { path: string; body: Record<string, string> }[] = [];
   vi.stubGlobal(
     "fetch",
@@ -29,6 +36,9 @@ function stubAuth(options: { login?: Handler; verify?: Handler } = {}) {
       const body = JSON.parse(String(init.body)) as Record<string, string>;
       calls.push({ path, body });
       if (path === "/auth/login") return (options.login ?? (() => json({ challenge_token: "challenge.jwt", sent_to: "+234******0001" })))(body);
+      if (path === "/auth/resend-code") {
+        return (options.resend ?? (() => json({ challenge_token: "challenge2.jwt", sent_to: "+234******0001" })))(body);
+      }
       if (path === "/auth/verify-code") {
         return (options.verify ?? (() => tokenFor("editor")))(body);
       }
@@ -62,12 +72,14 @@ async function logInTo(stepTwo = true) {
   if (stepTwo) await screen.findByLabelText("6-digit code");
 }
 
-describe("the masked number as it is shown", () => {
-  it("keeps the mask in the reading shape", () => {
-    expect(formatMaskedPhone("+234******0001")).toBe("0*** *** 0001");
+describe("the phone as the code screen hints at it (FR-57)", () => {
+  it("shows only the last four digits, the rest hidden", () => {
+    expect(formatPhoneHint("+234******4567")).toBe("••• ••• 4567");
+    expect(formatPhoneHint("+234******0001")).toBe("••• ••• 0001");
   });
-  it("returns anything else as it was given", () => {
-    expect(formatMaskedPhone("hello")).toBe("hello");
+  it("returns anything that does not end in four digits as it was given", () => {
+    expect(formatPhoneHint("hello")).toBe("hello");
+    expect(formatPhoneHint("")).toBe("");
   });
 });
 
@@ -93,7 +105,7 @@ describe("step 1: email and password", () => {
     await logInTo();
 
     expect(calls[0]).toEqual({ path: "/auth/login", body: { email: "ada@example.com", password: "a-long-password" } });
-    expect(screen.getByText("Sent to 0*** *** 0001")).toBeInTheDocument();
+    expect(screen.getByText("Code sent to ••• ••• 0001")).toBeInTheDocument();
     expect(screen.queryByLabelText("Password")).toBeNull();
   });
 
@@ -210,27 +222,182 @@ describe("step 2: the code", () => {
   });
 });
 
-describe("resending the code", () => {
-  it("is offered only after 60 seconds, and repeats step 1 with the password kept in memory", async () => {
+/** Moves the fake clock one second at a time: the countdown sets its next one-second timer only after React has drawn. */
+async function wait(seconds: number) {
+  for (let second = 0; second < seconds; second += 1) {
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+  }
+}
+
+describe("asking for a new code (FR-57)", () => {
+  const SEND_NEW_CODE = { name: "Send a new code" };
+
+  it("is disabled for 60 seconds, with the seconds counting down in words, then it can be pressed", async () => {
+    stubAuth();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(<LoginForm />);
+    await logInTo();
+
+    // The fake clock also moves with real time (the typing above took a moment), so read where the count is.
+    const secondsShown = () => Number(/in (\d+) seconds?\./.exec(screen.getByText(/You can ask for a new code in/).textContent ?? "")?.[1]);
+    const start = secondsShown();
+    expect(screen.getByRole("button", SEND_NEW_CODE)).toBeDisabled();
+    expect(start).toBeGreaterThanOrEqual(57);
+    expect(start).toBeLessThanOrEqual(60);
+    await wait(30);
+    expect(Math.abs(secondsShown() - (start - 30))).toBeLessThanOrEqual(1);
+    await wait(secondsShown() - 1);
+    expect(screen.getByText("You can ask for a new code in 1 second.")).toBeInTheDocument();
+    expect(screen.getByRole("button", SEND_NEW_CODE)).toBeDisabled();
+    await wait(1);
+
+    expect(screen.getByRole("button", SEND_NEW_CODE)).toBeEnabled();
+    expect(screen.queryByText(/You can ask for a new code in/)).toBeNull();
+    expect(screen.getByRole("status")).toHaveTextContent("You can send a new code now.");
+  });
+
+  it("asks for the new code with the current token, never with the password, and uses the new token", async () => {
+    const calls = stubAuth({ verify: () => tokenFor("editor") });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(<LoginForm />);
+    await logInTo();
+    await wait(60);
+
+    await userEvent.click(screen.getByRole("button", SEND_NEW_CODE));
+
+    expect(await screen.findByText("A new code was sent.")).toBeInTheDocument();
+    expect(calls.filter((call) => call.path === "/auth/login")).toHaveLength(1); // the login ran once only
+    expect(calls[1]).toEqual({ path: "/auth/resend-code", body: { challenge_token: "challenge.jwt" } });
+    expect(JSON.stringify(calls.slice(1))).not.toContain("a-long-password");
+    expect(screen.getByRole("button", SEND_NEW_CODE)).toBeDisabled(); // the 60 seconds start again
+    expect(screen.getByText("You can ask for a new code in 60 seconds.")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("6-digit code"), "482913");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(calls.at(-1)).toEqual({ path: "/auth/verify-code", body: { challenge_token: "challenge2.jwt", code: "482913" } });
+  });
+
+  it("clears the code the person had typed when a new one is sent", async () => {
+    stubAuth();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(<LoginForm />);
+    await logInTo();
+    await userEvent.type(screen.getByLabelText("6-digit code"), "123");
+    await wait(60);
+
+    await userEvent.click(screen.getByRole("button", SEND_NEW_CODE));
+    await screen.findByText("A new code was sent.");
+
+    expect(screen.getByLabelText("6-digit code")).toHaveValue("");
+  });
+
+  it("when the server says to wait a few more seconds, shows its sentence and counts those seconds", async () => {
+    stubAuth({ resend: () => tooManyRequests("Wait 20 seconds before asking for a new code.", 20) });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(<LoginForm />);
+    await logInTo();
+    await wait(60);
+
+    await userEvent.click(screen.getByRole("button", SEND_NEW_CODE));
+
+    expect(await screen.findByText("Wait 20 seconds before asking for a new code.")).toBeInTheDocument();
+    expect(screen.getByRole("button", SEND_NEW_CODE)).toBeDisabled();
+    expect(screen.getByText("You can ask for a new code in 20 seconds.")).toBeInTheDocument();
+    await wait(20);
+    expect(screen.getByRole("button", SEND_NEW_CODE)).toBeEnabled();
+  });
+
+  it("at the hourly limit shows the server's sentence and keeps the button off", async () => {
+    stubAuth({ resend: () => tooManyRequests("Too many codes. Try again in 52 minutes.", 3120) });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(<LoginForm />);
+    await logInTo();
+    await wait(60);
+
+    await userEvent.click(screen.getByRole("button", SEND_NEW_CODE));
+
+    expect(await screen.findByText("Too many codes. Try again in 52 minutes.")).toBeInTheDocument();
+    expect(screen.getByRole("button", SEND_NEW_CODE)).toBeDisabled();
+    expect(screen.queryByText(/You can ask for a new code in/)).toBeNull();
+    await wait(300);
+    expect(screen.getByRole("button", SEND_NEW_CODE)).toBeDisabled(); // it does not come back by itself
+    expect(screen.getByRole("button", { name: "Start again" })).toBeEnabled(); // the way out
+  });
+
+  it.each([
+    [401, "The code has expired. Choose Start again to get a new one."],
+    [403, "This account is deactivated."],
+    [502, "Could not send the code. Try again."],
+    [500, "We couldn't send a new code. Check your connection and try again."],
+  ])("on %i says: %s", async (status, message) => {
+    stubAuth({ resend: () => json({ detail: "x" }, status) });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(<LoginForm />);
+    await logInTo();
+    await wait(60);
+
+    await userEvent.click(screen.getByRole("button", SEND_NEW_CODE));
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(screen.getByLabelText("6-digit code")).toBeInTheDocument();
+  });
+});
+
+describe("starting again", () => {
+  it("is offered on the code step and goes back to email and password, with the email kept and nothing else", async () => {
+    const calls = stubAuth();
+    render(<LoginForm />);
+    await logInTo();
+    await userEvent.type(screen.getByLabelText("6-digit code"), "123");
+
+    await userEvent.click(screen.getByRole("button", { name: "Start again" }));
+
+    expect(screen.getByLabelText("Email")).toHaveValue("ada@example.com");
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+    expect(screen.queryByLabelText("6-digit code")).toBeNull();
+    expect(screen.queryByText(/Code sent to/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Send me a code" })).toBeInTheDocument();
+    expect(calls).toHaveLength(1); // going back sends nothing
+  });
+
+  it("then logs in again from the start, with a fresh code step", async () => {
+    const calls = stubAuth();
+    render(<LoginForm />);
+    await logInTo();
+    await userEvent.click(screen.getByRole("button", { name: "Start again" }));
+
+    await userEvent.type(screen.getByLabelText("Password"), "a-long-password");
+    await userEvent.click(screen.getByRole("button", { name: "Send me a code" }));
+
+    expect(await screen.findByLabelText("6-digit code")).toBeInTheDocument();
+    expect(calls.filter((call) => call.path === "/auth/login")).toHaveLength(2);
+  });
+
+  it("stops the countdown: nothing is asked of the server by the old screen", async () => {
     const calls = stubAuth();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     render(<LoginForm />);
     await logInTo();
-    expect(screen.queryByRole("button", { name: "Resend code" })).toBeNull();
 
-    await act(async () => {
-      vi.advanceTimersByTime(59_000);
-    });
-    expect(screen.queryByRole("button", { name: "Resend code" })).toBeNull();
-    await act(async () => {
-      vi.advanceTimersByTime(1_000);
-    });
-    await userEvent.click(await screen.findByRole("button", { name: "Resend code" }));
+    await userEvent.click(screen.getByRole("button", { name: "Start again" }));
+    await wait(120);
 
-    expect(calls.filter((call) => call.path === "/auth/login")).toHaveLength(2);
-    expect(calls[1].body).toEqual({ email: "ada@example.com", password: "a-long-password" });
-    expect(await screen.findByText("A new code was sent.")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Resend code" })).toBeNull(); // the 60 seconds start again
+    expect(calls).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Send a new code" })).toBeNull();
+  });
+
+  it("is a button with a 48 px tap area and plain colours (nothing red)", async () => {
+    stubAuth();
+    render(<LoginForm />);
+    await logInTo();
+
+    const again = screen.getByRole("button", { name: "Start again" });
+    const sendNew = screen.getByRole("button", { name: "Send a new code" });
+
+    for (const button of [again, sendNew]) expect(button.className).toMatch(/\bmin-h-(?:12|\[5\dpx\])/);
+    expect(readSource("components/admin/LoginForm.tsx")).not.toMatch(/\b(?:text|bg|border)-(?:red|emergency)/);
   });
 });
 

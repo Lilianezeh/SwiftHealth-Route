@@ -3,6 +3,7 @@
 The counters live in this process only: they reset on restart and are not shared between instances.
 That is fine for one Render instance (see decision 6 in the auth requirements).
 """
+import math
 import time
 from collections.abc import Callable
 from datetime import timedelta
@@ -46,6 +47,19 @@ class RateLimiter:
         self.call_times_by_ip[client_ip] = recent_call_times
         return True
 
+    def retry_after_seconds(self, key: str) -> int:
+        """Whole seconds until `key` may call again: 0 when under the limit. Asking counts as no call."""
+        now = self.clock()
+        recent_call_times = [
+            call_time
+            for call_time in self.call_times_by_ip.get(key, [])
+            if now - call_time < self.window_seconds
+        ]
+        if len(recent_call_times) < self.max_calls:
+            return 0
+        oldest_that_counts = recent_call_times[len(recent_call_times) - self.max_calls]
+        return math.ceil(oldest_that_counts + self.window_seconds - now)
+
     def reset(self) -> None:
         """Forgets every count. The test setup calls this between tests."""
         self.call_times_by_ip.clear()
@@ -72,6 +86,11 @@ def get_client_ip(request: Request, trusted_proxy_count: int) -> str:
 # api/dependencies.py, because answering 429 is HTTP work.
 login_limiter = RateLimiter(MAX_CALLS, WINDOW)
 verify_code_limiter = RateLimiter(MAX_CALLS, WINDOW)
+# Every login SMS costs money (FR-57): at most 5 codes per account per hour, the first one included. The
+# key is "sms:<user id>", not an address, so it follows the account. A cost limit, not a security control:
+# it is forgotten when the API restarts, like the other counters.
+SMS_CODES_PER_HOUR = 5
+sms_code_limiter = RateLimiter(SMS_CODES_PER_HOUR, timedelta(hours=1))
 # The public report form (NFR-06, api-spec "POST /reports"): 5 reports per client IP per hour.
 REPORT_MAX_CALLS = 5
 REPORT_WINDOW = timedelta(hours=1)

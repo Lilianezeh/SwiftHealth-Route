@@ -61,7 +61,9 @@ for (const { width, height } of WIDTHS) {
       await page.getByLabel("Email").fill("ada@example.com");
       await page.getByLabel("Password").fill("a-long-password");
       await page.getByRole("button", { name: "Send me a code" }).click();
-      await expect(page.getByText("Sent to 0*** *** 0001")).toBeVisible();
+      await expect(page.getByText("Code sent to ••• ••• 0001")).toBeVisible();
+      await expect(page.getByRole("button", { name: "Send a new code" })).toBeDisabled();
+      await expect(page.getByRole("button", { name: "Start again" })).toBeVisible();
       await allIsInsideTheScreen(page, width);
       await targetsAndTextAreBigEnough(page);
       await page.getByLabel("6-digit code").fill("482913");
@@ -74,6 +76,40 @@ for (const { width, height } of WIDTHS) {
       expect(stored.local).toBe(0);
       expect(page.url()).not.toContain("access.jwt");
       expect(seen.find((request) => request.path === "/listings")?.authorization).toBe("Bearer access.jwt");
+    });
+
+    test("login: a new code after 60 seconds (no password sent again), and Start again goes back to the email", async ({ page }) => {
+      await page.clock.install();
+      const seen = await fakeApi(page, (request) => {
+        if (request.path === "/auth/login") return { body: { challenge_token: "challenge.jwt", sent_to: "+234******4567" } };
+        if (request.path === "/auth/resend-code") return { body: { challenge_token: "challenge2.jwt", sent_to: "+234******4567" } };
+        return null;
+      });
+      await page.goto("/admin/login", { waitUntil: "load" });
+      await expect(page.getByRole("heading", { level: 1, name: "Staff login" })).toBeVisible({ timeout: 60_000 });
+      await page.getByLabel("Email").fill("ada@example.com");
+      await page.getByLabel("Password").fill("a-long-password");
+      await page.getByRole("button", { name: "Send me a code" }).click();
+
+      await expect(page.getByText("Code sent to ••• ••• 4567")).toBeVisible();
+      await expect(page.getByText("You can ask for a new code in 60 seconds.")).toBeVisible();
+      await expect(page.getByRole("button", { name: "Send a new code" })).toBeDisabled();
+      await allIsInsideTheScreen(page, width);
+      await targetsAndTextAreBigEnough(page);
+      await page.clock.runFor(30_000); // runFor fires every one-second timer of the countdown; fastForward fires each only once
+      await expect(page.getByText(/You can ask for a new code in (?:29|30|31) seconds\./)).toBeVisible();
+      await page.clock.runFor(31_000);
+      await expect(page.getByRole("button", { name: "Send a new code" })).toBeEnabled();
+      await page.getByRole("button", { name: "Send a new code" }).click();
+
+      await expect(page.getByText("A new code was sent.")).toBeVisible();
+      expect(seen.filter((request) => request.path === "/auth/login")).toHaveLength(1); // the password went once
+      expect(seen.find((request) => request.path === "/auth/resend-code")?.body).toEqual({ challenge_token: "challenge.jwt" });
+      await page.getByRole("button", { name: "Start again" }).click();
+      await expect(page.getByLabel("Email")).toHaveValue("ada@example.com");
+      await expect(page.getByLabel("Password")).toHaveValue("");
+      await expect(page.getByLabel("6-digit code")).toHaveCount(0);
+      await allIsInsideTheScreen(page, width);
     });
 
     test("listings: the staff bar and the cards fit, and a filter reaches the API", async ({ page }) => {
