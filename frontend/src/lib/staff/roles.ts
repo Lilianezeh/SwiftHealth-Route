@@ -5,7 +5,7 @@ import type { StaffRole } from "@/types/staff";
 
 /** "review" is the dashboard, the report queue and the re-checks: the work of an editor (phase 11).
  * "provider" is a provider's own facility, its edit page and its payments (phase 12). */
-export type StaffArea = "listings" | "staff" | "review" | "provider";
+export type StaffArea = "listings" | "staff" | "review" | "provider" | "security";
 
 /** Where a role starts: the dashboard for an editor and an admin, their own drafts for a verifier. */
 export function homeAddressFor(role: StaffRole): string {
@@ -15,6 +15,7 @@ export function homeAddressFor(role: StaffRole): string {
 }
 
 export function canOpen(role: StaffRole, area: StaffArea): boolean {
+  if (area === "security") return true; // every account can switch the authenticator app on (FR-58)
   if (area === "staff") return role === "admin";
   if (area === "review") return role === "editor" || role === "admin";
   if (area === "provider") return role === "provider";

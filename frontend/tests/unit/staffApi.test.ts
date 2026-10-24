@@ -37,6 +37,36 @@ describe("the two login steps", () => {
   });
 });
 
+describe("the authenticator app calls (FR-58)", () => {
+  it("send the password and the codes in the body, the token in the header, and nothing secret in an address", async () => {
+    const calls = stubFetch();
+
+    await staff.getTwoFactorStatus("tok");
+    await staff.startTwoFactorSetup("tok", "my-password");
+    await staff.confirmTwoFactorSetup("tok", "482913");
+    await staff.disableTwoFactor("tok", "my-password", "482913");
+    await staff.renewBackupCodes("tok", "my-password", "ABCDE23456");
+    await staff.askForSmsInstead("app.challenge.jwt");
+
+    expect(calls.map((call) => [call.init.method ?? "GET", call.url.pathname])).toEqual([
+      ["GET", "/account/two-factor"],
+      ["POST", "/account/two-factor/start"],
+      ["POST", "/account/two-factor/confirm"],
+      ["POST", "/account/two-factor/disable"],
+      ["POST", "/account/two-factor/backup-codes"],
+      ["POST", "/auth/use-sms"],
+    ]);
+    expect(calls[1].init.body).toBe(JSON.stringify({ password: "my-password" }));
+    expect(calls[2].init.body).toBe(JSON.stringify({ code: "482913" }));
+    expect(calls[3].init.body).toBe(JSON.stringify({ password: "my-password", code: "482913" }));
+    expect(calls[4].init.body).toBe(JSON.stringify({ password: "my-password", code: "ABCDE23456" }));
+    expect(calls[5].init.body).toBe(JSON.stringify({ challenge_token: "app.challenge.jwt" }));
+    for (const call of calls.slice(0, 5)) expect(headerOf(call.init, "Authorization")).toBe("Bearer tok");
+    expect(headerOf(calls[5].init, "Authorization")).toBeUndefined();
+    expect(calls.every((call) => call.url.search === "")).toBe(true);
+  });
+});
+
 describe("the listing calls carry the token in the header and never in the address", () => {
   it("lists with only the filters that are set", async () => {
     const calls = stubFetch();

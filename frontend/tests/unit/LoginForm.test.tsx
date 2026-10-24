@@ -27,7 +27,15 @@ function tooManyRequests(detail: string, retryAfter: number): Response {
   });
 }
 
-function stubAuth(options: { login?: Handler; verify?: Handler; resend?: Handler } = {}) {
+/** What the API answers when a code was sent by SMS (the usual case), and when the app is asked for (FR-58). */
+function sentBySms(challengeToken: string) {
+  return { challenge_token: challengeToken, sent_to: "+234******0001", method: "sms", can_use_sms: false };
+}
+function askForApp(canUseSms = false) {
+  return { challenge_token: "app.jwt", sent_to: null, method: "totp", can_use_sms: canUseSms };
+}
+
+function stubAuth(options: { login?: Handler; verify?: Handler; resend?: Handler; useSms?: Handler } = {}) {
   const calls: { path: string; body: Record<string, string> }[] = [];
   vi.stubGlobal(
     "fetch",
@@ -35,10 +43,9 @@ function stubAuth(options: { login?: Handler; verify?: Handler; resend?: Handler
       const path = new URL(address).pathname;
       const body = JSON.parse(String(init.body)) as Record<string, string>;
       calls.push({ path, body });
-      if (path === "/auth/login") return (options.login ?? (() => json({ challenge_token: "challenge.jwt", sent_to: "+234******0001" })))(body);
-      if (path === "/auth/resend-code") {
-        return (options.resend ?? (() => json({ challenge_token: "challenge2.jwt", sent_to: "+234******0001" })))(body);
-      }
+      if (path === "/auth/login") return (options.login ?? (() => json(sentBySms("challenge.jwt"))))(body);
+      if (path === "/auth/resend-code") return (options.resend ?? (() => json(sentBySms("challenge2.jwt"))))(body);
+      if (path === "/auth/use-sms") return (options.useSms ?? (() => json(sentBySms("sms.jwt"))))(body);
       if (path === "/auth/verify-code") {
         return (options.verify ?? (() => tokenFor("editor")))(body);
       }
@@ -398,6 +405,167 @@ describe("starting again", () => {
 
     for (const button of [again, sendNew]) expect(button.className).toMatch(/\bmin-h-(?:12|\[5\dpx\])/);
     expect(readSource("components/admin/LoginForm.tsx")).not.toMatch(/\b(?:text|bg|border)-(?:red|emergency)/);
+  });
+});
+
+describe("the authenticator app at login (FR-58)", () => {
+  const APP_CODE = "Code from your app";
+
+  it("asks for the code from the app, says nothing was sent, and offers neither a new code nor SMS", async () => {
+    stubAuth({ login: () => json(askForApp()) });
+    render(<LoginForm />);
+
+    await logInTo(false);
+
+    expect(await screen.findByLabelText(APP_CODE)).toBeInTheDocument();
+    expect(screen.getByText("Open your authenticator app and type the 6-digit code. Nothing is sent to your phone.")).toBeInTheDocument();
+    expect(screen.queryByText(/Code sent to/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Send a new code" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Use SMS instead" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Start again" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use a backup code" })).toBeInTheDocument();
+  });
+
+  it("keeps only digits (an app shows 482 913 with a space), at most 6, and posts the code with the app token", async () => {
+    const calls = stubAuth({ login: () => json(askForApp()), verify: () => tokenFor("admin") });
+    render(<LoginForm />);
+    await logInTo(false);
+
+    const field = await screen.findByLabelText(APP_CODE);
+    expect(field).toHaveAttribute("autocomplete", "one-time-code");
+    expect(field).toHaveAttribute("inputmode", "numeric");
+    await userEvent.type(field, "48a2 9-13999");
+    expect(field).toHaveValue("482913");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin"));
+    expect(calls.at(-1)).toEqual({ path: "/auth/verify-code", body: { challenge_token: "app.jwt", code: "482913" } });
+  });
+
+  it("does not send an app code that is not 6 digits", async () => {
+    const calls = stubAuth({ login: () => json(askForApp()) });
+    render(<LoginForm />);
+    await logInTo(false);
+
+    await userEvent.type(await screen.findByLabelText(APP_CODE), "123");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(calls.filter((call) => call.path === "/auth/verify-code")).toHaveLength(0);
+    expect(screen.getByText("Enter the 6 digits of the code.")).toBeInTheDocument();
+  });
+
+  it("switches to a backup code and back; the backup code is letters and digits, any case, dashes and spaces ignored, 10 at most", async () => {
+    const calls = stubAuth({ login: () => json(askForApp()), verify: () => tokenFor("editor") });
+    render(<LoginForm />);
+    await logInTo(false);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Use a backup code" }));
+    const backup = screen.getByLabelText("Backup code");
+    expect(backup).toHaveAttribute("maxlength", "10");
+    expect(backup).not.toHaveAttribute("inputmode", "numeric");
+    await userEvent.type(backup, "abcde-fgh 23456789");
+    expect(backup).toHaveValue("ABCDEFGH23");
+    await userEvent.click(screen.getByRole("button", { name: "Use the app code instead" }));
+    expect(screen.getByLabelText(APP_CODE)).toHaveValue("");
+    await userEvent.click(screen.getByRole("button", { name: "Use a backup code" }));
+    await userEvent.type(screen.getByLabelText("Backup code"), "ABCDE23456");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(calls.at(-1)).toEqual({ path: "/auth/verify-code", body: { challenge_token: "app.jwt", code: "ABCDE23456" } });
+  });
+
+  it("does not send a backup code that is not 10 characters", async () => {
+    const calls = stubAuth({ login: () => json(askForApp()) });
+    render(<LoginForm />);
+    await logInTo(false);
+    await userEvent.click(await screen.findByRole("button", { name: "Use a backup code" }));
+
+    await userEvent.type(screen.getByLabelText("Backup code"), "ABC23");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(calls.filter((call) => call.path === "/auth/verify-code")).toHaveLength(0);
+    expect(screen.getByText("A backup code has 10 letters and digits.")).toBeInTheDocument();
+  });
+
+  it("offers SMS instead only when the server says it is possible, and then goes to the SMS step with its own token", async () => {
+    const calls = stubAuth({ login: () => json(askForApp(true)), verify: () => tokenFor("editor") });
+    render(<LoginForm />);
+    await logInTo(false);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Use SMS instead" }));
+
+    expect(await screen.findByText("Code sent to ••• ••• 0001")).toBeInTheDocument();
+    expect(calls.at(-1)).toEqual({ path: "/auth/use-sms", body: { challenge_token: "app.jwt" } });
+    expect(screen.getByRole("button", { name: "Send a new code" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Use SMS instead" })).toBeNull();
+    await userEvent.type(screen.getByLabelText("6-digit code"), "482913");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(calls.at(-1)).toEqual({ path: "/auth/verify-code", body: { challenge_token: "sms.jwt", code: "482913" } });
+  });
+
+  it.each([
+    [409, "SMS codes are not available."],
+    [401, "The code has expired. Choose Start again to get a new one."],
+    [429, "Too many codes. Try again in 52 minutes."],
+    [502, "Could not send the code. Try again."],
+  ])("on %i from Use SMS instead says: %s", async (status, message) => {
+    stubAuth({ login: () => json(askForApp(true)), useSms: () => json({ detail: message }, status) });
+    render(<LoginForm />);
+    await logInTo(false);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Use SMS instead" }));
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(screen.getByLabelText(APP_CODE)).toBeInTheDocument(); // still on the app step
+  });
+
+  it.each([
+    [401, "Invalid or expired code"],
+    [429, "Too many wrong codes. Try again in 52 minutes."],
+    [503, "Codes from the app cannot be checked right now. Use a backup code."],
+  ])("on %i from the app step says: %s", async (status, message) => {
+    stubAuth({ login: () => json(askForApp()), verify: () => json({ detail: message }, status) });
+    render(<LoginForm />);
+    await logInTo(false);
+
+    await userEvent.type(await screen.findByLabelText(APP_CODE), "000000");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(readStaffSession()).toBeNull();
+  });
+
+  it("Start again from the app step goes back to the email and drops the app token", async () => {
+    stubAuth({ login: () => json(askForApp()) });
+    render(<LoginForm />);
+    await logInTo(false);
+    await screen.findByLabelText(APP_CODE);
+
+    await userEvent.click(screen.getByRole("button", { name: "Start again" }));
+
+    expect(screen.getByLabelText("Email")).toHaveValue("ada@example.com");
+    expect(screen.queryByLabelText(APP_CODE)).toBeNull();
+  });
+});
+
+describe("a login code sent by email (no SMS yet, D19)", () => {
+  const sentByEmail = { challenge_token: "mail.jwt", sent_to: "e***@demo.example.com", method: "email", can_use_sms: false };
+
+  it("says the code went to the email, with the same 6-digit field, new-code button and Start again", async () => {
+    const calls = stubAuth({ login: () => json(sentByEmail), verify: () => tokenFor("editor") });
+    render(<LoginForm />);
+
+    await logInTo();
+
+    expect(screen.getByText("Code sent to e***@demo.example.com")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send a new code" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Start again" })).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("6-digit code"), "482913");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(calls.at(-1)).toEqual({ path: "/auth/verify-code", body: { challenge_token: "mail.jwt", code: "482913" } });
   });
 });
 

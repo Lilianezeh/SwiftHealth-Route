@@ -13,16 +13,19 @@ import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { StaffBar } from "@/components/admin/StaffBar";
+import { TwoFactorOffer } from "@/components/admin/TwoFactorOffer";
 import { ApiError } from "@/lib/api/request";
 import { canOpen, homeAddressFor, type StaffArea } from "@/lib/staff/roles";
-import { clearStaffSession, readStaffSession } from "@/lib/staff/session";
-import type { StaffSession } from "@/types/staff";
+import { clearStaffSession, readStaffSession, saveStaffSession } from "@/lib/staff/session";
+import type { StaffSession, StaffUser } from "@/types/staff";
 
 type StaffContextValue = {
   session: StaffSession;
   /** Runs a staff call with the token. A 401 logs the user out; the error is still thrown to the caller. */
   call: <T>(operation: (token: string) => Promise<T>) => Promise<T>;
   logout: () => void;
+  /** Changes what the screens know about the logged-in user (for example that the authenticator app is now on). */
+  updateUser: (changes: Partial<StaffUser>) => void;
 };
 
 const StaffContext = createContext<StaffContextValue | null>(null);
@@ -51,11 +54,21 @@ export function StaffGate({ area, children }: StaffGateProps) {
     router.replace("/admin/login");
   }, [router]);
 
+  const updateUser = useCallback((changes: Partial<StaffUser>) => {
+    setSession((current) => {
+      if (!current) return current;
+      const next = { ...current, user: { ...current.user, ...changes } };
+      saveStaffSession(next);
+      return next;
+    });
+  }, []);
+
   const value = useMemo<StaffContextValue | null>(() => {
     if (!session) return null;
     return {
       session,
       logout,
+      updateUser,
       call: async <T,>(operation: (token: string) => Promise<T>) => {
         try {
           return await operation(session.token);
@@ -65,7 +78,7 @@ export function StaffGate({ area, children }: StaffGateProps) {
         }
       },
     };
-  }, [session, logout]);
+  }, [session, logout, updateUser]);
 
   if (!session || value === null) {
     return (
@@ -96,6 +109,7 @@ export function StaffGate({ area, children }: StaffGateProps) {
   return (
     <StaffContext.Provider value={value}>
       <StaffBar user={session.user} onLogout={logout} />
+      {area !== "security" && !session.user.two_factor_enabled && <TwoFactorOffer role={session.user.role} />}
       {children}
     </StaffContext.Provider>
   );

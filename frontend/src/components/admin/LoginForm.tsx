@@ -14,14 +14,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { resendLoginCode, startLogin, verifyLoginCode } from "@/lib/api/staff";
+import { askForSmsInstead, resendLoginCode, startLogin, verifyLoginCode } from "@/lib/api/staff";
 import { ApiError } from "@/lib/api/request";
 import { formatPhoneHint } from "@/lib/formatters/phone";
 import { homeAddressFor } from "@/lib/staff/roles";
 import { saveStaffSession } from "@/lib/staff/session";
+import type { LoginMethod } from "@/types/staff";
 
 const WAIT_FOR_NEW_CODE_SECONDS = 60;
 const CODE_LENGTH = 6;
+const BACKUP_CODE_LENGTH = 10;
+const LINK_BUTTON_CLASSES = "inline-flex min-h-12 items-center justify-center rounded-xl px-3 text-base font-semibold text-forest underline";
 const FIELD_CLASSES = "min-h-12 rounded-xl border border-line bg-white px-3 text-base text-ink";
 
 type Step = "credentials" | "code";
@@ -56,9 +59,23 @@ function messageForCode(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) return "Invalid or expired code";
     if (error.status === 403) return "This account is deactivated.";
-    if (error.status === 429) return "Too many attempts. Try again in a few minutes.";
+    if (error.status === 429) {
+      // The lock after 10 wrong codes from the app has its own sentence (with the minutes); any other 429 is the general one.
+      return error.detail?.startsWith("Too many wrong codes.") ? error.detail : "Too many attempts. Try again in a few minutes.";
+    }
+    if (error.status === 503 && error.detail) return error.detail; // the app's codes cannot be checked now: use a backup code
   }
   return "We couldn't check the code. Check your connection and try again.";
+}
+
+function messageForSmsInstead(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 401) return "The code has expired. Choose Start again to get a new one.";
+    if (error.status === 403) return "This account is deactivated.";
+    if ((error.status === 409 || error.status === 429) && error.detail) return error.detail;
+    if (error.status === 502) return "Could not send the code. Try again.";
+  }
+  return "We couldn't send an SMS code. Check your connection and try again.";
 }
 
 export function LoginForm() {
@@ -67,7 +84,10 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
-  const [challenge, setChallenge] = useState<{ token: string; sentTo: string } | null>(null);
+  const [challenge, setChallenge] = useState<{ token: string; sentTo: string | null } | null>(null);
+  const [method, setMethod] = useState<LoginMethod>("sms"); // what the code step asks for: a sent code, or the app's code (FR-58)
+  const [canUseSms, setCanUseSms] = useState(false); // with the app: SMS may be asked for instead
+  const [useBackup, setUseBackup] = useState(false); // with the app: a backup code is typed instead
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -100,9 +120,12 @@ export function LoginForm() {
       const started = await startLogin(email.trim(), password);
       setPassword(""); // not needed any more: a new code uses the token, not the password
       setChallenge({ token: started.challenge_token, sentTo: started.sent_to });
+      setMethod(started.method);
+      setCanUseSms(started.can_use_sms);
+      setUseBackup(false);
       setCode("");
       setStep("code");
-      waitBeforeNewCode(WAIT_FOR_NEW_CODE_SECONDS);
+      if (started.method !== "totp") waitBeforeNewCode(WAIT_FOR_NEW_CODE_SECONDS); // the app sends nothing, so nothing to wait for
       setCodeLimitReached(false);
     } catch (error) {
       setProblem(messageForLogin(error));
@@ -134,9 +157,34 @@ export function LoginForm() {
     }
   }
 
+  /** With the app: ask for an SMS code instead (the server says when that is possible). */
+  async function switchToSms() {
+    if (busy || challenge === null) return;
+    setBusy(true);
+    setProblem(null);
+    setNotice(null);
+    try {
+      const started = await askForSmsInstead(challenge.token);
+      setChallenge({ token: started.challenge_token, sentTo: started.sent_to });
+      setMethod(started.method);
+      setCanUseSms(false);
+      setUseBackup(false);
+      setCode("");
+      waitBeforeNewCode(WAIT_FOR_NEW_CODE_SECONDS);
+      setCodeLimitReached(false);
+    } catch (error) {
+      setProblem(messageForSmsInstead(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function startAgain() {
     setStep("credentials");
     setChallenge(null);
+    setMethod("sms");
+    setCanUseSms(false);
+    setUseBackup(false);
     setCode("");
     setPassword("");
     setProblem(null);
@@ -148,7 +196,12 @@ export function LoginForm() {
   async function checkCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy || challenge === null) return;
-    if (code.length !== CODE_LENGTH) {
+    if (method === "totp" && useBackup) {
+      if (code.length !== BACKUP_CODE_LENGTH) {
+        setProblem(`A backup code has ${BACKUP_CODE_LENGTH} letters and digits.`);
+        return;
+      }
+    } else if (code.length !== CODE_LENGTH) {
       setProblem(`Enter the ${CODE_LENGTH} digits of the code.`);
       return;
     }
@@ -213,21 +266,38 @@ export function LoginForm() {
 
       {step === "code" && challenge && (
         <form onSubmit={checkCode} className="flex flex-col gap-4">
-          <p className="text-base text-ink">Code sent to {formatPhoneHint(challenge.sentTo)}</p>
+          {method === "totp" ? (
+            <p className="text-base text-ink">Open your authenticator app and type the 6-digit code. Nothing is sent to your phone.</p>
+          ) : (
+            <p className="text-base text-ink">Code sent to {method === "email" ? challenge.sentTo : formatPhoneHint(challenge.sentTo ?? "")}</p>
+          )}
           <div className="flex flex-col gap-1">
             <label htmlFor="staff-code" className="text-base font-semibold text-ink">
-              6-digit code
+              {method !== "totp" ? "6-digit code" : useBackup ? "Backup code" : "Code from your app"}
             </label>
-            <input
-              id="staff-code"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={CODE_LENGTH}
-              value={code}
-              onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, CODE_LENGTH))}
-              className={`${FIELD_CLASSES} tracking-widest`}
-            />
+            {method === "totp" && useBackup ? (
+              <input
+                id="staff-code"
+                type="text"
+                autoComplete="off"
+                autoCapitalize="characters"
+                maxLength={BACKUP_CODE_LENGTH}
+                value={code}
+                onChange={(event) => setCode(event.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, BACKUP_CODE_LENGTH))}
+                className={`${FIELD_CLASSES} tracking-widest`}
+              />
+            ) : (
+              <input
+                id="staff-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={CODE_LENGTH}
+                value={code}
+                onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, CODE_LENGTH))}
+                className={`${FIELD_CLASSES} tracking-widest`}
+              />
+            )}
           </div>
           {notice && (
             <p role="status" className="text-base text-ink">
@@ -243,30 +313,46 @@ export function LoginForm() {
             {busy ? "Checking…" : "Log in"}
           </button>
           <div className="flex flex-col gap-2 border-t border-line pt-4">
-            {secondsLeft > 0 && (
+            {method !== "totp" && secondsLeft > 0 && (
               <p id="new-code-hint" className="text-base text-ink-soft">
                 {`You can ask for a new code in ${secondsLeft} ${secondsLeft === 1 ? "second" : "seconds"}.`}
               </p>
             )}
-            {secondsLeft === 0 && !codeLimitReached && (
+            {method !== "totp" && secondsLeft === 0 && !codeLimitReached && (
               <p id="new-code-hint" role="status" className="text-base text-ink-soft">
                 You can send a new code now.
               </p>
             )}
-            <button
-              type="button"
-              onClick={() => void sendNewCode()}
-              disabled={busy || secondsLeft > 0 || codeLimitReached}
-              aria-describedby="new-code-hint"
-              className={`${buttonClasses("secondary")} disabled:opacity-60`}
-            >
-              Send a new code
-            </button>
-            <button
-              type="button"
-              onClick={startAgain}
-              className="inline-flex min-h-12 items-center justify-center rounded-xl px-3 text-base font-semibold text-forest underline"
-            >
+            {method !== "totp" && (
+              <button
+                type="button"
+                onClick={() => void sendNewCode()}
+                disabled={busy || secondsLeft > 0 || codeLimitReached}
+                aria-describedby="new-code-hint"
+                className={`${buttonClasses("secondary")} disabled:opacity-60`}
+              >
+                Send a new code
+              </button>
+            )}
+            {method === "totp" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setUseBackup((before) => !before);
+                  setCode("");
+                  setProblem(null);
+                }}
+                className={LINK_BUTTON_CLASSES}
+              >
+                {useBackup ? "Use the app code instead" : "Use a backup code"}
+              </button>
+            )}
+            {method === "totp" && canUseSms && (
+              <button type="button" onClick={() => void switchToSms()} disabled={busy} className={buttonClasses("secondary")}>
+                Use SMS instead
+              </button>
+            )}
+            <button type="button" onClick={startAgain} className={LINK_BUTTON_CLASSES}>
               Start again
             </button>
           </div>

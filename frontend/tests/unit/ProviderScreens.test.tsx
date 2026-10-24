@@ -70,6 +70,7 @@ describe("who may open the provider screens", () => {
       ["Dashboard", "/provider"],
       ["Edit my facility", "/provider/edit"],
       ["Get featured", "/provider/featured"],
+      ["Security", "/admin/security"], // the authenticator app (FR-58): every role has it
     ]);
     expect(within(bar).getByRole("button", { name: "Log out" })).toBeInTheDocument();
   });
