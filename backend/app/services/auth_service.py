@@ -10,22 +10,28 @@ from datetime import datetime
 from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
+from app.core.config import settings
 from app.core.rate_limit import sms_code_limiter
 from app.core.security import (
+    LOGIN_CODE_PURPOSE,
     InvalidTokenError,
     code_matches,
     create_access_token,
     create_challenge_token,
+    create_totp_challenge_token,
     decode_access_token,
     decode_challenge_token,
+    decode_totp_challenge_token,
     generate_login_code,
     hash_password,
     verify_password,
 )
+from app.integrations.resend import EmailSendError, mask_email
 from app.integrations.termii import SmsSendError, mask_phone, send_sms
 from app.models import User
 from app.models.base import ApprovalStatus, utcnow
 from app.repositories import user_repository
+from app.services import account_mail_service, two_factor_service
 
 MIN_SECONDS_BETWEEN_CODES = 60  # FR-57: the wait before "Send a new code" works, kept by the server too
 
@@ -101,10 +107,16 @@ class TooManyCodesError(Exception):
         self.seconds_left = seconds_left
 
 
+class SmsNotAvailableError(Exception):
+    """"Use SMS instead" was asked for, but Termii is not set up or the phone is not confirmed."""
+
+
 @dataclass(frozen=True)
 class LoginStarted:
     challenge_token: str
-    sent_to: str
+    sent_to: str | None  # masked phone or email; None for the app (nothing is sent)
+    method: str = "sms"  # "sms", "email" or "totp"
+    can_use_sms: bool = False  # with "totp": the person may ask for an SMS code instead
 
 
 @dataclass(frozen=True)
@@ -123,13 +135,37 @@ async def start_login(session: AsyncSession, email: str, password: str, moment: 
         raise InvalidCredentialsError
     # Only after the password is right, so this does not reveal which accounts exist.
     ensure_account_is_ready(user)
-    if not user.phone:
+    if user.two_factor_enabled:  # the authenticator app: free, nothing is sent (FR-58)
+        return LoginStarted(
+            challenge_token=create_totp_challenge_token(user.id),
+            sent_to=None,
+            method="totp",
+            can_use_sms=sms_is_possible(user),
+        )
+    channel = code_channel()
+    if channel == "sms" and not user.phone:
         raise MissingPhoneError
-    return await _send_login_code(user, moment)
+    return await _send_login_code(user, moment, channel)
 
 
-async def _send_login_code(user: User, moment: datetime) -> LoginStarted:
-    """Texts a new code to the user's phone and returns its challenge token (FR-57: at most 5 codes an hour).
+def sms_is_possible(user: User) -> bool:
+    """True when an SMS can really be sent: Termii is set up and the person's phone is confirmed."""
+    return bool(settings.termii_api_key) and bool(user.phone) and user.phone_verified_at is not None
+
+
+def code_channel() -> str:
+    """How a login code is sent to a person without the app: "sms" when Termii is set up, else "email" when
+    Resend is (so a new account is never left with no way to log in while the SMS is not set up, D19), else
+    "sms", which in development only logs the code."""
+    if settings.termii_api_key:
+        return "sms"
+    if settings.resend_api_key and settings.resend_from_email:
+        return "email"
+    return "sms"
+
+
+async def _send_login_code(user: User, moment: datetime, channel: str) -> LoginStarted:
+    """Sends a new code by `channel` and returns its challenge token (FR-57: at most 5 codes an hour).
 
     Every code counts, the first one and the ones of a new login too, so logging in again cannot get around
     the limit. The limiter is plain Python state and nothing is awaited between its check and its update,
@@ -139,13 +175,35 @@ async def _send_login_code(user: User, moment: datetime) -> LoginStarted:
     if not sms_code_limiter.allow(limiter_key):
         raise TooManyCodesError(sms_code_limiter.retry_after_seconds(limiter_key))
     code = generate_login_code()
+    token = create_challenge_token(user.id, code, sent_at=moment)
+    if channel == "email":
+        try:
+            await account_mail_service.send_email_code(user.email, code, LOGIN_CODE_PURPOSE)
+        except EmailSendError as error:
+            raise CodeNotSentError from error
+        return LoginStarted(challenge_token=token, sent_to=mask_email(user.email), method="email")
     try:
         await send_sms(user.phone, f"Your SwiftHealth login code is {code}. It expires in 5 minutes.")
     except SmsSendError as error:
         raise CodeNotSentError from error
-    return LoginStarted(
-        challenge_token=create_challenge_token(user.id, code, sent_at=moment), sent_to=mask_phone(user.phone)
-    )
+    return LoginStarted(challenge_token=token, sent_to=mask_phone(user.phone), method="sms")
+
+
+async def use_sms_instead(session: AsyncSession, challenge_token: str, moment: datetime) -> LoginStarted:
+    """A person with the app asks for an SMS code instead: allowed only when SMS can really be sent."""
+    try:
+        user_id = decode_totp_challenge_token(challenge_token)
+    except InvalidTokenError as error:
+        raise InvalidCodeError from error
+    user = await user_repository.get_by_id(session, user_id)
+    if user is None:
+        raise InvalidCodeError
+    ensure_account_is_ready(user)
+    if not user.two_factor_enabled:  # switched off since the password step: start again
+        raise InvalidCodeError
+    if not sms_is_possible(user):
+        raise SmsNotAvailableError
+    return await _send_login_code(user, moment, "sms")
 
 
 async def resend_login_code(session: AsyncSession, challenge_token: str, moment: datetime) -> LoginStarted:
@@ -161,20 +219,26 @@ async def resend_login_code(session: AsyncSession, challenge_token: str, moment:
     if user is None:
         raise InvalidCodeError
     ensure_account_is_ready(user)
-    if not user.phone:
+    channel = code_channel()
+    if channel == "sms" and not user.phone:
         raise MissingPhoneError
     seconds_since_sent = max((moment - claims.sent_at).total_seconds(), 0)
     if seconds_since_sent < MIN_SECONDS_BETWEEN_CODES:
         raise CodeTooSoonError(math.ceil(MIN_SECONDS_BETWEEN_CODES - seconds_since_sent))
-    return await _send_login_code(user, moment)
+    return await _send_login_code(user, moment, channel)
 
 
-async def verify_login_code(session: AsyncSession, challenge_token: str, code: str) -> LoginCompleted:
-    """Step 2: checks the code against the challenge token and returns an access token."""
+async def verify_login_code(
+    session: AsyncSession, challenge_token: str, code: str, moment: datetime
+) -> LoginCompleted:
+    """Step 2: checks the code against the challenge token and returns an access token.
+
+    The token says what was asked for: a code that was sent (SMS or email), or a code from the app.
+    """
     try:
         claims = decode_challenge_token(challenge_token)
-    except InvalidTokenError as error:
-        raise InvalidCodeError from error
+    except InvalidTokenError:
+        return await _verify_app_login(session, challenge_token, code, moment)
     if not code_matches(claims.user_id, code, claims.code_hash):
         raise InvalidCodeError
 
@@ -183,6 +247,29 @@ async def verify_login_code(session: AsyncSession, challenge_token: str, code: s
         raise InvalidCodeError
     ensure_account_is_ready(user)  # the account may have changed between the two steps
 
+    await user_repository.set_last_login(session, user, utcnow())
+    await session.commit()
+    return LoginCompleted(access_token=create_access_token(user.id), user=user)
+
+
+async def _verify_app_login(
+    session: AsyncSession, challenge_token: str, code: str, moment: datetime
+) -> LoginCompleted:
+    """Step 2 for a person with the app: a code from it (once) or a backup code (once); 10 wrong lock it."""
+    try:
+        user_id = decode_totp_challenge_token(challenge_token)
+    except InvalidTokenError as error:
+        raise InvalidCodeError from error
+    user = await user_repository.get_by_id(session, user_id)
+    if user is None:
+        raise InvalidCodeError
+    ensure_account_is_ready(user)
+    if not user.two_factor_enabled:  # switched off since the password step: start again
+        raise InvalidCodeError
+    try:
+        await two_factor_service.check_second_factor(session, user, code, moment)
+    except two_factor_service.WrongCodeError as error:
+        raise InvalidCodeError from error
     await user_repository.set_last_login(session, user, utcnow())
     await session.commit()
     return LoginCompleted(access_token=create_access_token(user.id), user=user)

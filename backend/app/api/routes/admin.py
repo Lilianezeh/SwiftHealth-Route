@@ -14,7 +14,8 @@ from app.models import User
 from app.models.base import Role
 from app.schemas.admin_user import AdminUserCreate, AdminUserList, AdminUserUpdate
 from app.schemas.auth import UserRead
-from app.services import admin_user_service, csv_export_service, csv_import_service
+from app.schemas.two_factor import EnabledResponse
+from app.services import admin_user_service, csv_export_service, csv_import_service, two_factor_service
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -84,6 +85,29 @@ async def update_user(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             "To make a provider staff, give a new password of at least 10 characters in the same request.",
         ) from None
+
+
+@router.post(
+    "/users/{user_id}/reset-two-factor",
+    response_model=EnabledResponse,
+    summary="Admin: clear another account's authenticator app and backup codes (lost phone)",
+    responses={400: {"description": "An admin cannot reset their own: another admin must."}},
+)
+async def reset_two_factor(
+    user_id: int,
+    admin: User = Depends(require_role(Role.admin)),
+    moment: datetime = Depends(get_current_moment),
+    session: AsyncSession = Depends(get_session),
+) -> EnabledResponse:
+    try:
+        await two_factor_service.admin_reset(session, admin, user_id, moment)
+    except two_factor_service.SelfResetError:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Another admin must reset your two-step login."
+        ) from None
+    except two_factor_service.UserNotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found") from None
+    return EnabledResponse(enabled=False)
 
 
 class ImportRowError(BaseModel):

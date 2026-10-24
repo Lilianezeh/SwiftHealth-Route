@@ -90,7 +90,11 @@ verify_code_limiter = RateLimiter(MAX_CALLS, WINDOW)
 # key is "sms:<user id>", not an address, so it follows the account. A cost limit, not a security control:
 # it is forgotten when the API restarts, like the other counters.
 SMS_CODES_PER_HOUR = 5
-sms_code_limiter = RateLimiter(SMS_CODES_PER_HOUR, timedelta(hours=1))
+sms_code_limiter = RateLimiter(SMS_CODES_PER_HOUR, timedelta(hours=1))  # also counts the codes sent by email
+# Wrong second-step codes (app or backup) per account: after 10 in an hour the second step is locked for the
+# rest of the hour (FR-58). The key is "totp:<user id>". Kept in memory like the others.
+WRONG_APP_CODES_PER_HOUR = 10
+totp_failure_limiter = RateLimiter(WRONG_APP_CODES_PER_HOUR, timedelta(hours=1))
 # The public report form (NFR-06, api-spec "POST /reports"): 5 reports per client IP per hour.
 REPORT_MAX_CALLS = 5
 REPORT_WINDOW = timedelta(hours=1)

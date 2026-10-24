@@ -20,6 +20,12 @@ SEND_URL = "https://api.resend.com/emails"
 TIMEOUT_SECONDS = 10.0  # our choice: Resend's page names no timeout
 
 
+def mask_email(email: str) -> str:
+    """ada@example.com becomes a***@example.com: the first letter and the domain (the screen's hint, D19)."""
+    name, _, domain = email.partition("@")
+    return f"{name[:1]}***@{domain}"
+
+
 class EmailSendError(Exception):
     """The email could not be sent. The message never contains the API key or the address."""
 

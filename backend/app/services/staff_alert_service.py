@@ -117,6 +117,25 @@ async def send_recheck_summary(summary: RecheckSummary) -> None:
             logger.warning("Re-check summary email failed: %s", error)
 
 
+async def alert_two_factor_locked(session: AsyncSession, account_name: str) -> None:
+    """Tells the admins that an account's second login step is locked for an hour (FR-58). Nothing raises.
+
+    The text holds the person's name and nothing else about the account: no email, no code. The password
+    alone does not log anyone in, so this is a notice, not an emergency.
+    """
+    subject = "A second login step was locked"
+    body = (
+        f"The authenticator codes of {account_name} were wrong 10 times in an hour, so that second step "
+        "is locked until the hour ends. If it was not them, nothing needs doing: a password alone does "
+        "not log anyone in. If it was them, they can use a backup code or ask an admin to reset it."
+    )
+    for admin in await user_repository.list_active_with_roles(session, {Role.admin}):
+        try:
+            await resend.send_email(admin.email, subject, body)
+        except resend.EmailSendError as error:
+            logger.warning("Two-factor lock email failed: %s", error)
+
+
 async def send_alerts(alert: StaffAlert) -> None:
     """Sends every message. One failure never stops the others, and nothing here raises."""
     if alert.kind == "failed_check":

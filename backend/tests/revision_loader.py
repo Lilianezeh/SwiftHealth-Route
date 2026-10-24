@@ -24,6 +24,8 @@ WHATSAPP_REVISION_FILE_PATTERN = "*_phone_is_whatsapp.py"
 SWIFTRESCUE_GROUPS_REVISION_FILE_PATTERN = "*_swiftrescue_more_groups.py"
 # Feature specs/2026-10-23-accounts-and-facility-ownership/ (Phase 2)
 ACCOUNT_FOUNDATION_REVISION_FILE_PATTERN = "*_account_foundation.py"
+# Phase 2c
+AUTHENTICATOR_APP_REVISION_FILE_PATTERN = "*_authenticator_app.py"
 
 
 def revision_file(pattern: str = REVISION_FILE_PATTERN) -> Path:

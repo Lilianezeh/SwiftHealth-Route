@@ -1,4 +1,6 @@
 """Request and response shapes for /auth. See specs/backend/api-spec.md section 4 (FR-30)."""
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict
 
 from app.models.base import Role
@@ -11,7 +13,15 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     challenge_token: str
-    sent_to: str  # masked, for example +234******0001
+    # Where the code went, masked: +234******0001 for "sms", a***@example.com for "email", null for "totp"
+    # (nothing is sent).
+    sent_to: str | None
+    method: Literal["sms", "email", "totp"] = "sms"  # what the second step asks for (FR-58, D19)
+    can_use_sms: bool = False  # with "totp": SMS may be asked for instead (Termii set up, phone confirmed)
+
+
+class UseSmsRequest(BaseModel):
+    challenge_token: str  # the app challenge from POST /auth/login; a bad one is answered with 401, not 422
 
 
 class ResendCodeRequest(BaseModel):
@@ -34,6 +44,7 @@ class UserRead(BaseModel):
     phone: str | None
     role: Role
     is_active: bool
+    two_factor_enabled: bool = False  # the authenticator app is switched on (FR-58)
 
 
 class TokenResponse(BaseModel):

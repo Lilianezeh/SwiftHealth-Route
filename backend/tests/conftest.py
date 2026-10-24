@@ -22,6 +22,7 @@ from app.core.rate_limit import (
     report_limiter,
     sms_code_limiter,
     submission_limiter,
+    totp_failure_limiter,
     verify_code_limiter,
 )
 from app.core.security import hash_password
@@ -94,6 +95,7 @@ def reset_rate_limiters() -> None:
     report_limiter.reset()
     submission_limiter.reset()
     sms_code_limiter.reset()
+    totp_failure_limiter.reset()
 
 
 @pytest.fixture
