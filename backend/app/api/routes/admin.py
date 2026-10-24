@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.api.dependencies import get_current_moment, get_session, require_role
+from app.core.passwords import PasswordRuleError
 from app.models import User
 from app.models.base import Role
 from app.schemas.admin_user import AdminUserCreate, AdminUserList, AdminUserUpdate
@@ -42,6 +43,8 @@ async def create_user(
         return await admin_user_service.create_user(session, admin, payload, moment)
     except admin_user_service.EmailTakenError:
         raise HTTPException(status.HTTP_409_CONFLICT, "A user with this email already exists.") from None
+    except PasswordRuleError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from None
 
 
 @router.patch(
@@ -73,6 +76,13 @@ async def update_user(
     except admin_user_service.ListingAlreadyOwnedError:
         raise HTTPException(
             status.HTTP_409_CONFLICT, "This listing already belongs to another user."
+        ) from None
+    except PasswordRuleError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from None
+    except admin_user_service.NewPasswordNeededError:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "To make a provider staff, give a new password of at least 10 characters in the same request.",
         ) from None
 
 

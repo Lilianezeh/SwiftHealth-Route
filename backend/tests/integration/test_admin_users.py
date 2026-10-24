@@ -3,6 +3,8 @@ Contract: specs/backend/api-spec.md, section 11 and its phase 10 clarifications.
 specs/2026-10-20-staff-screens/requirements.md.
 """
 
+import json
+
 import pytest
 from httpx import AsyncClient
 from sqlmodel import select
@@ -28,6 +30,10 @@ NEW_USER = {
 
 async def create(client: AsyncClient, admin: User, **changes: object):
     return await client.post("/admin/users", json={**NEW_USER, **changes}, headers=bearer_for(admin))
+
+
+async def patch_user(client: AsyncClient, admin: User, user: User, **changes: object):
+    return await client.patch(f"/admin/users/{user.id}", json=changes, headers=bearer_for(admin))
 
 
 async def audit(session: AsyncSession) -> list[AuditEntry]:
@@ -169,8 +175,11 @@ async def test_a_role_change_and_a_deactivation_apply_on_the_next_request(
     assert (
         await client.get("/listings", headers=editor_headers)
     ).status_code == 403  # the role is read from the row
+    # A provider becomes staff again only with a new password of 10 characters (FR-56): one is sent.
     await client.patch(
-        f"/admin/users/{editor.id}", json={"role": "editor", "is_active": False}, headers=bearer_for(admin)
+        f"/admin/users/{editor.id}",
+        json={"role": "editor", "is_active": False, "password": "another-long-password"},
+        headers=bearer_for(admin),
     )
     assert (await client.get("/listings", headers=editor_headers)).status_code == 403  # deactivated
 
@@ -198,6 +207,115 @@ async def test_a_short_new_password_is_422(client: AsyncClient, demo_users: dict
         headers=bearer_for(demo_users[Role.admin]),
     )
     assert response.status_code == 422
+
+
+# --- the password rule (FR-56): 8 for a provider, 10 for staff and admin, nothing very common for anyone ---
+
+
+@pytest.mark.parametrize(
+    ("role", "password", "created"),
+    [
+        ("provider", "river78!", True),
+        ("provider", "river7!", False),
+        ("verifier", "river-b9!", False),
+        ("verifier", "river-bed!", True),
+        ("editor", "river-b9!", False),
+        ("admin", "river-b9!", False),
+        ("admin", "river-bed!", True),
+    ],
+)
+async def test_creating_needs_8_characters_for_a_provider_and_10_for_staff_and_admin(
+    client: AsyncClient, demo_users: dict[Role, User], role: str, password: str, created: bool
+) -> None:
+    response = await create(client, demo_users[Role.admin], role=role, password=password)
+
+    assert response.status_code == (201 if created else 422), response.text
+
+
+@pytest.mark.parametrize("role", ["provider", "verifier", "editor", "admin"])
+@pytest.mark.parametrize("password", ["password", "Password1", "12345678", "qwertyuiop"])
+async def test_creating_refuses_a_very_common_password_for_every_role_with_a_plain_sentence(
+    client: AsyncClient, session: AsyncSession, demo_users: dict[Role, User], role: str, password: str
+) -> None:
+    response = await create(client, demo_users[Role.admin], role=role, password=password)
+
+    assert response.status_code == 422
+    assert isinstance(response.json()["detail"], str)  # a sentence to show, not a list of pydantic errors
+    assert response.json()["detail"] in {
+        "This password is too common. Choose another one.",
+        f"The password needs at least {8 if role == 'provider' else 10} characters.",
+    }
+    assert json.dumps(password) not in response.text  # the sentence says "password", never the value
+    assert await user_repository.get_by_email(session, "ada.verifier@example.com") is None
+
+
+async def test_the_email_is_not_accepted_as_the_password(
+    client: AsyncClient, demo_users: dict[Role, User]
+) -> None:
+    response = await create(client, demo_users[Role.admin], password="Ada.Verifier@Example.com")
+
+    assert response.status_code == 422
+    assert "email" in response.json()["detail"]
+
+
+async def test_a_new_password_is_checked_against_the_stored_role(
+    client: AsyncClient, demo_users: dict[Role, User]
+) -> None:
+    admin, provider, editor = demo_users[Role.admin], demo_users[Role.provider], demo_users[Role.editor]
+
+    outcomes = [
+        (await patch_user(client, admin, provider, password="river78!")).status_code,
+        (await patch_user(client, admin, editor, password="river-b9!")).status_code,
+        (await patch_user(client, admin, editor, password="river-bed!")).status_code,
+        (await patch_user(client, admin, editor, password="password")).status_code,
+        (await patch_user(client, admin, provider, password="password")).status_code,
+    ]
+
+    assert outcomes == [200, 422, 200, 422, 422]
+
+
+async def test_a_password_sent_with_a_new_role_is_checked_against_the_new_role(
+    client: AsyncClient, demo_users: dict[Role, User]
+) -> None:
+    admin, provider = demo_users[Role.admin], demo_users[Role.provider]
+
+    refused = await patch_user(client, admin, provider, role="editor", password="river78!")
+
+    assert refused.status_code == 422
+    assert refused.json()["detail"] == "The password needs at least 10 characters."
+
+
+async def test_a_provider_becomes_staff_only_with_a_new_password_of_10_characters(
+    client: AsyncClient, session: AsyncSession, demo_users: dict[Role, User]
+) -> None:
+    """A short provider password never becomes a staff password. Staff to provider needs no new password."""
+    admin, provider = demo_users[Role.admin], demo_users[Role.provider]
+
+    without = await patch_user(client, admin, provider, role="verifier")
+    assert without.status_code == 422
+    assert "new password" in without.json()["detail"]
+    await session.refresh(provider)
+    assert provider.role == Role.provider  # nothing changed
+
+    with_password = await patch_user(client, admin, provider, role="verifier", password="river-bed!")
+    assert with_password.status_code == 200
+    assert with_password.json()["role"] == "verifier"
+
+    back = await patch_user(client, admin, provider, role="provider")
+    assert back.status_code == 200
+
+
+async def test_the_admin_endpoints_never_log_or_return_a_refused_password(
+    client: AsyncClient, demo_users: dict[Role, User], caplog: pytest.LogCaptureFixture
+) -> None:
+    admin, editor = demo_users[Role.admin], demo_users[Role.editor]
+    created = await create(client, admin, password="Zq9-xyz-1")  # 9 characters: too short for a verifier
+    patched = await patch_user(client, admin, editor, password="Zq9-xyz-2")
+
+    assert (created.status_code, patched.status_code) == (422, 422)
+    for refused in ("Zq9-xyz-1", "Zq9-xyz-2"):
+        assert refused not in caplog.text
+        assert refused not in created.text + patched.text
 
 
 async def test_an_admin_cannot_deactivate_themselves_or_take_their_own_admin_role_away(

@@ -71,6 +71,9 @@ def test_every_variable_is_needed_and_the_error_names_it(missing: str) -> None:
     ("variable", "value", "message"),
     [
         ("BOOTSTRAP_ADMIN_PASSWORD", "short", "at least 10"),
+        ("BOOTSTRAP_ADMIN_PASSWORD", "river-b9!", "at least 10"),  # 9: the admin minimum is not lowered to 8
+        ("BOOTSTRAP_ADMIN_PASSWORD", "qwertyuiop", "too common"),
+        ("BOOTSTRAP_ADMIN_PASSWORD", "First.Admin@Example.com", "email"),
         ("BOOTSTRAP_ADMIN_PHONE", "12345", "Nigerian"),
         ("BOOTSTRAP_ADMIN_EMAIL", "not-an-email", "email"),
         ("BOOTSTRAP_ADMIN_NAME", "   ", "BOOTSTRAP_ADMIN_NAME"),

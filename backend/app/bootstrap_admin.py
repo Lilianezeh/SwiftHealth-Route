@@ -28,11 +28,12 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from app.core.database import engine, session_factory
+from app.core.passwords import PasswordRuleError, check_password
 from app.core.phone import normalise_nigerian_phone
 from app.core.security import hash_password
 from app.models.base import Role
 from app.repositories import audit_repository, user_repository
-from app.schemas.admin_user import MIN_PASSWORD_LENGTH, check_email
+from app.schemas.admin_user import check_email
 
 logger = logging.getLogger(__name__)  # "app.bootstrap_admin"
 
@@ -76,8 +77,11 @@ def read_details(environment: Mapping[str, str]) -> AdminDetails:
     if phone is None:
         raise BootstrapError("BOOTSTRAP_ADMIN_PHONE must be a Nigerian phone number that can receive SMS.")
     password = values["BOOTSTRAP_ADMIN_PASSWORD"]
-    if len(password) < MIN_PASSWORD_LENGTH:
-        raise BootstrapError(f"BOOTSTRAP_ADMIN_PASSWORD needs at least {MIN_PASSWORD_LENGTH} characters.")
+    try:
+        check_password(password, Role.admin, email)  # the same rule as everywhere (FR-56): 10 for an admin
+    except PasswordRuleError as error:
+        # The sentence never holds the password.
+        raise BootstrapError(f"BOOTSTRAP_ADMIN_PASSWORD: {error}") from None
     return AdminDetails(
         name=values["BOOTSTRAP_ADMIN_NAME"].strip(), email=email, phone=phone, password=password
     )
