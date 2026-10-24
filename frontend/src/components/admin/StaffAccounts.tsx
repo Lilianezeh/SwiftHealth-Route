@@ -13,13 +13,14 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import { createAdminUser, listAdminUsers, updateAdminUser } from "@/lib/api/staff";
 import { ApiError } from "@/lib/api/request";
 import { formatPhoneForReading } from "@/lib/formatters/phone";
+import { minPasswordLength } from "@/lib/staff/roles";
 import type { AdminUserChanges, StaffRole, StaffUser } from "@/types/staff";
 
 const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink disabled:bg-closed-bg";
 const ROLES: StaffRole[] = ["verifier", "editor", "admin", "provider"];
 const ROLE_LABELS: Record<StaffRole, string> = { verifier: "Verifier", editor: "Editor", admin: "Admin", provider: "Provider" };
-const MIN_PASSWORD_LENGTH = 10;
-const PASSWORD_TOO_SHORT = `The password needs at least ${MIN_PASSWORD_LENGTH} characters.`;
+const passwordTooShort = (role: StaffRole) => `The password needs at least ${minPasswordLength(role)} characters.`;
+const STAFF_NEEDS_NEW_PASSWORD = `To make a provider staff, type a new password of at least ${minPasswordLength("editor")} characters.`;
 
 function sentenceFor(error: unknown): string {
   if (error instanceof ApiError && error.detail) return error.detail;
@@ -56,8 +57,12 @@ function AccountRow({ user, isMe, onSaved }: RowProps) {
   async function save(event: FormEvent) {
     event.preventDefault();
     if (nothingToSave || busy) return;
-    if (changes.password !== undefined && changes.password.length < MIN_PASSWORD_LENGTH) {
-      setProblem(PASSWORD_TOO_SHORT);
+    if (user.role === "provider" && role !== "provider" && changes.password === undefined) {
+      setProblem(STAFF_NEEDS_NEW_PASSWORD); // a short provider password must never become a staff password (FR-56)
+      return;
+    }
+    if (changes.password !== undefined && changes.password.length < minPasswordLength(role)) {
+      setProblem(passwordTooShort(role));
       return;
     }
     if (changes.listing_id !== undefined && !Number.isInteger(changes.listing_id)) {
@@ -117,7 +122,7 @@ function AccountRow({ user, isMe, onSaved }: RowProps) {
           </label>
           {isMe && <p className="text-base text-ink-soft">You cannot deactivate yourself or give up your own admin role.</p>}
           <div className="flex flex-col gap-1">
-            <label htmlFor={`password-${user.id}`} className="text-base font-semibold text-ink">{`New password for ${user.name} (at least 10 characters)`}</label>
+            <label htmlFor={`password-${user.id}`} className="text-base font-semibold text-ink">{`New password for ${user.name} (at least ${minPasswordLength(role)} characters)`}</label>
             <input id={`password-${user.id}`} type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className={FIELD} />
           </div>
           {role === "provider" && (
@@ -149,8 +154,8 @@ function AddUserForm({ onAdded, onClose }: { onAdded: (user: StaffUser) => void;
   async function add(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setProblem(PASSWORD_TOO_SHORT);
+    if (password.length < minPasswordLength(role)) {
+      setProblem(passwordTooShort(role));
       return;
     }
     setBusy(true);
@@ -190,7 +195,7 @@ function AddUserForm({ onAdded, onClose }: { onAdded: (user: StaffUser) => void;
         </select>
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="new-password" className="text-base font-semibold text-ink">Password (at least 10 characters)</label>
+        <label htmlFor="new-password" className="text-base font-semibold text-ink">{`Password (at least ${minPasswordLength(role)} characters)`}</label>
         <input id="new-password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className={FIELD} />
       </div>
       {problem && <p role="alert" className="rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink">{problem}</p>}

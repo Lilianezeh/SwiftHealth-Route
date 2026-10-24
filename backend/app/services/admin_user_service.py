@@ -12,6 +12,7 @@ from datetime import datetime
 from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
+from app.core.passwords import check_password
 from app.core.security import hash_password
 from app.models import User
 from app.models.base import Role
@@ -46,6 +47,10 @@ class ListingAlreadyOwnedError(Exception):
     """The listing already belongs to another user."""
 
 
+class NewPasswordNeededError(Exception):
+    """A provider is being made staff without a new password (FR-56): a provider's password may be shorter."""
+
+
 async def list_users(session: AsyncSession) -> AdminUserList:
     users = await user_repository.list_all(session)
     return AdminUserList(items=[UserRead.model_validate(user) for user in users], total=len(users))
@@ -54,6 +59,7 @@ async def list_users(session: AsyncSession) -> AdminUserList:
 async def create_user(
     session: AsyncSession, admin: User, payload: AdminUserCreate, moment: datetime
 ) -> UserRead:
+    check_password(payload.password, payload.role, payload.email)  # PasswordRuleError: the route answers 422
     if await user_repository.get_by_email(session, payload.email) is not None:
         raise EmailTakenError
     # run_in_threadpool (Starlette): Argon2 is slow CPU work, so it runs in a thread, off the event loop.
@@ -92,6 +98,13 @@ async def update_user(
     if user.id == admin.id:
         if payload.is_active is False or (payload.role is not None and payload.role != Role.admin):
             raise SelfLockoutError
+
+    # The password rule (FR-56) is checked for the role the account will have, before anything is changed.
+    new_role = payload.role if payload.role is not None else user.role
+    if user.role == Role.provider and new_role != Role.provider and payload.password is None:
+        raise NewPasswordNeededError
+    if payload.password is not None:
+        check_password(payload.password, new_role, user.email)
 
     changes: list[tuple[str, str | None, str | None, int | None]] = []  # field, old, new, listing id
     if payload.name is not None and payload.name != user.name:

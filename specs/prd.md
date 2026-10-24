@@ -55,6 +55,11 @@ Sixteen stories define the MVP; each has a test that tells us when it is done.
 | US-14 | Visitor in an emergency | Share my exact location with one tap | Family or responders can find me | Tapping Share my location sends a Google Maps link of my position via WhatsApp or SMS | Must |
 | US-15 | Visitor needing blood | Find the nearest blood bank and which blood groups it usually supplies | I can get blood for a patient quickly | Find blood shows blood banks nearest first, with blood groups, hours, Call button and a "call to confirm stock" note | Must |
 | US-16 | Visitor who wants to donate | Find where and how to donate blood | I can help save a life | Donate blood page shows centres accepting donors, basic eligibility, and Call and Directions buttons | Must |
+| US-17 | Facility owner | Sign up, confirm my email and phone, and ask to link my facility | I can keep its details right | I can sign up, my email and phone are confirmed by codes, and staff approve the link before I can edit (spec: `specs/2026-10-23-accounts-and-facility-ownership/`) | Must |
+| US-18 | Admin | Approve or reject staff sign-ups and choose their role | Nobody gets access by signing up | A staff sign-up has no access until I approve it as editor or verifier | Must |
+| US-19 | Editor | Phone a facility and approve its owner | Only the real owner edits it | An owner link stays pending until I approve it with a note of who I reached | Must |
+| US-20 | Facility owner | Report that my facility moved or closed | People are not sent to the wrong place | A move keeps the address history and hides the listing until staff re-check it; a closure hides it and keeps the record | Must |
+| US-21 | Account holder | Change my password, recover it, or close my account | My account stays safe and mine | Change needs the current password; forgot-password uses an email code; closing anonymises my data | Should |
 
 ## Functional requirements: public website
 
@@ -154,6 +159,22 @@ Every listing moves through five statuses, and only Published listings are visib
 | FR-44 | Providers can pay for a 30-day featured listing with Paystack (test mode in the MVP); payment is confirmed only by a verified Paystack webhook | Must |
 | FR-45 | At most one featured listing appears first in matching search results, labelled "Sponsored"; never in SwiftRescue | Must |
 | FR-46 | Every payment is recorded in the audit log with its Paystack reference, and repeated webhooks never double-apply | Must |
+
+## Functional requirements: accounts and facility ownership
+
+Feature folder: `specs/2026-10-23-accounts-and-facility-ownership/` (owner's answers of 2026-10-24). Built in phases, one pull request each; a row is built when its phase is merged.
+
+| ID | Requirement | Priority |
+| --- | --- | --- |
+| FR-48 | Anyone can sign up as Staff or Facility owner; the account works only after the email (code by Resend) and the phone (code by SMS) are confirmed; sign-up never says whether an email is already registered | Must |
+| FR-49 | A staff sign-up is "pending" and has no access until an admin approves it as editor or verifier, or rejects it | Must |
+| FR-50 | A provider can register a new facility or claim an existing listing; staff phone the facility and approve the owner link before the provider can edit (many owners per facility, many facilities per owner) | Must |
+| FR-51 | `/list-your-facility` needs a logged-in provider account and every submission is linked to the account that sent it; searching, calling and SwiftRescue need no account | Must |
+| FR-52 | A listing can be a branch of another listing (one level) | Should |
+| FR-53 | A move keeps an address history (old, new, date, who) and hides the listing until staff re-check it; a closure hides the listing and keeps the record; nothing is deleted | Must |
+| FR-54 | A logged-in person can edit their profile, change their password, reset a forgotten password by email, and close their account | Must |
+| FR-55 | An admin sees all accounts (with last login), the pending staff, approves, rejects, suspends and reactivates (never deletes), and sees an activity log of who did what and when | Must |
+| FR-56 | One password rule for every way an account gets a password: at least 8 characters for a provider, at least 10 for a verifier, editor or admin, at most 128, not a very common password, not the email; a provider made staff gets a new password of at least 10 | Must |
 
 ## Data model
 

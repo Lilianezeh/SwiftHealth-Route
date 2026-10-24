@@ -10,8 +10,7 @@ from app.core.phone import normalise_nigerian_phone
 from app.models.base import Role
 from app.schemas.auth import UserRead
 
-MIN_PASSWORD_LENGTH = 10  # api-spec, section 11
-MAX_PASSWORD_LENGTH = 128
+PASSWORD_BODY_LIMIT = 1000  # only a bound on the request; the rule is app/core/passwords.py (FR-56)
 EMAIL_SHAPE = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 MAX_EMAIL_LENGTH = 254
 
@@ -35,7 +34,7 @@ class AdminUserCreate(BaseModel):
     email: str
     phone: str = Field(max_length=30)
     role: Role
-    password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
+    password: str = Field(max_length=PASSWORD_BODY_LIMIT)  # the rule: in the service
 
     @field_validator("name")
     @classmethod
@@ -63,7 +62,7 @@ class AdminUserUpdate(BaseModel):
     phone: str | None = Field(default=None, max_length=30)
     role: Role | None = None
     is_active: bool | None = None
-    password: str | None = Field(default=None, min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
+    password: str | None = Field(default=None, max_length=PASSWORD_BODY_LIMIT)
     listing_id: int | None = Field(default=None, description="For a provider: the listing they own.")
 
     @field_validator("name")
