@@ -289,7 +289,7 @@ extra table is needed.
 
 **Response 200:** `{ "challenge_token": "<jwt, 5 min>", "sent_to": "+234******0001" }`
 
-**Rules:** wrong email or password → 401 with the same message for both. Inactive user → 403 (checked only after the password is correct). User with no phone number → 400. Sends the code by SMS; if no Termii key is set (local dev), logs the code to the API console instead. If the SMS cannot be sent → 502 `"Could not send the code. Try again."` and no challenge token is returned. Wrong-password and unknown-email requests take the same time (an unknown email still runs a dummy password check). Rate limited to 10 attempts per IP per 15 minutes → 429.
+**Rules:** wrong email or password → 401 with the same message for both. Inactive user → 403 (checked only after the password is correct). **Account state (FR-48, FR-49, owner's plan of 2026-10-24):** a user that is not ready is also refused with 403 and a plain sentence in `detail`, after the password is correct and before any SMS: "This account is closed.", "This account was not approved.", "This account is waiting for approval by an admin.", "This account is deactivated.", "Confirm your email address first.", "Confirm your phone number first." (`users.approval_status`, `closed_at`, `is_active`, `email_verified_at`, `phone_verified_at`; checked in this order). Every account that exists before the sign-up work is approved with both confirmed. User with no phone number → 400. Sends the code by SMS; if no Termii key is set (local dev), logs the code to the API console instead. If the SMS cannot be sent → 502 `"Could not send the code. Try again."` and no challenge token is returned. Wrong-password and unknown-email requests take the same time (an unknown email still runs a dummy password check). Rate limited to 10 attempts per IP per 15 minutes → 429.
 
 ### POST /auth/verify-code
 **Request:** `{ "challenge_token": "...", "code": "482913" }`
@@ -305,7 +305,9 @@ Any logged-in user. Send the access token as `Authorization: Bearer <access_toke
 
 **Rules:** the access token only identifies the user (it carries no role). Every protected endpoint loads the user from the database and uses `role` and `is_active` from that row, so a role change or deactivation applies on the next request. Missing or invalid token → 401. Deactivated user → 403.
 
-**Tests:** wrong password · wrong code · expired challenge · token works on `/auth/me` · inactive user blocked · user with no phone · login and verify-code rate limits (429) · role read from database.
+**Account state (FR-48, FR-49):** the same check runs for **every** endpoint that needs a login (it is in `get_current_user`, one place): an account that is waiting for approval, rejected, closed, deactivated, or whose email or phone is not confirmed gets 403 with the sentence above, even with a valid token. A test calls every operation that needs a login with an admin in each of these states.
+
+**Tests:** wrong password · wrong code · expired challenge · token works on `/auth/me` · inactive user blocked · user with no phone · login and verify-code rate limits (429) · role read from database · every login-protected route refuses an account that is not ready.
 
 ---
 

@@ -209,6 +209,19 @@ async def test_a_short_new_password_is_422(client: AsyncClient, demo_users: dict
     assert response.status_code == 422
 
 
+async def test_an_account_made_by_an_admin_is_approved_and_confirmed_so_it_can_log_in(
+    client: AsyncClient, session: AsyncSession, demo_users: dict[Role, User]
+) -> None:
+    """The admin typed the email and the phone, so they count as confirmed (Phase 2)."""
+    assert (await create(client, demo_users[Role.admin])).status_code == 201
+
+    made = await user_repository.get_by_email(session, "ada.verifier@example.com")
+    assert made is not None
+    assert made.approval_status == "approved"
+    assert made.email_verified_at is not None and made.phone_verified_at is not None
+    assert (await client.get("/auth/me", headers=bearer_for(made))).status_code == 200
+
+
 # --- the password rule (FR-56): 8 for a provider, 10 for staff and admin, nothing very common for anyone ---
 
 

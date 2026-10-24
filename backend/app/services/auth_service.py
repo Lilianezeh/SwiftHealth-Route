@@ -21,7 +21,7 @@ from app.core.security import (
 )
 from app.integrations.termii import SmsSendError, mask_phone, send_sms
 from app.models import User
-from app.models.base import utcnow
+from app.models.base import ApprovalStatus, utcnow
 from app.repositories import user_repository
 
 # Checked when the email is unknown, so an unknown email takes as long as a wrong password (NFR-06).
@@ -35,6 +35,37 @@ class InvalidCredentialsError(Exception):
 
 class InactiveAccountError(Exception):
     """The account is deactivated."""
+
+
+class AccountNotReadyError(Exception):
+    """The account cannot be used yet or any more: waiting, rejected, closed, or email or phone not confirmed.
+
+    `message` is a plain sentence for the person; the route answers 403 with it (FR-48, FR-49).
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
+
+def ensure_account_is_ready(user: User) -> None:
+    """Returns quietly when the account may be used, otherwise raises the error that says why.
+
+    Used by the login and by `get_current_user`, so every endpoint that needs a login is covered by one check.
+    Plain `def`: it only reads fields already in memory (decision 11).
+    """
+    if user.closed_at is not None:
+        raise AccountNotReadyError("This account is closed.")
+    if user.approval_status == ApprovalStatus.rejected.value:
+        raise AccountNotReadyError("This account was not approved.")
+    if user.approval_status != ApprovalStatus.approved.value:  # pending, or an unknown value: no access
+        raise AccountNotReadyError("This account is waiting for approval by an admin.")
+    if not user.is_active:
+        raise InactiveAccountError
+    if user.email_verified_at is None:
+        raise AccountNotReadyError("Confirm your email address first.")
+    if user.phone_verified_at is None:
+        raise AccountNotReadyError("Confirm your phone number first.")
 
 
 class MissingPhoneError(Exception):
@@ -69,8 +100,8 @@ async def start_login(session: AsyncSession, email: str, password: str) -> Login
     password_is_right = await run_in_threadpool(verify_password, password, password_hash)
     if user is None or not password_is_right:
         raise InvalidCredentialsError
-    if not user.is_active:  # only after the password is right, so this does not reveal which accounts exist
-        raise InactiveAccountError
+    # Only after the password is right, so this does not reveal which accounts exist.
+    ensure_account_is_ready(user)
     if not user.phone:
         raise MissingPhoneError
 
@@ -96,8 +127,7 @@ async def verify_login_code(session: AsyncSession, challenge_token: str, code: s
     user = await user_repository.get_by_id(session, claims.user_id)
     if user is None:
         raise InvalidCodeError
-    if not user.is_active:  # deactivated between the two steps
-        raise InactiveAccountError
+    ensure_account_is_ready(user)  # the account may have changed between the two steps
 
     await user_repository.set_last_login(session, user, utcnow())
     await session.commit()
@@ -107,12 +137,12 @@ async def verify_login_code(session: AsyncSession, challenge_token: str, code: s
 async def get_user_for_token(session: AsyncSession, access_token: str) -> User:
     """Loads the user an access token belongs to. The role and is_active come from this database row.
 
-    Raises InvalidTokenError for a bad token or a deleted user, InactiveAccountError for a deactivated user.
+    Raises InvalidTokenError for a bad token or a deleted user, InactiveAccountError for a deactivated user,
+    AccountNotReadyError for an account that is waiting, rejected, closed or not confirmed.
     """
     user_id = decode_access_token(access_token)
     user = await user_repository.get_by_id(session, user_id)
     if user is None:
         raise InvalidTokenError("User not found")
-    if not user.is_active:
-        raise InactiveAccountError
+    ensure_account_is_ready(user)
     return user

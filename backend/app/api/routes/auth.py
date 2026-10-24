@@ -22,6 +22,8 @@ async def login(login_request: LoginRequest, session: AsyncSession = Depends(get
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, WRONG_LOGIN_MESSAGE) from None
     except auth_service.InactiveAccountError:
         raise HTTPException(status.HTTP_403_FORBIDDEN, DEACTIVATED_MESSAGE) from None
+    except auth_service.AccountNotReadyError as error:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, error.message) from None
     except auth_service.MissingPhoneError:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This account has no phone number.") from None
     except auth_service.CodeNotSentError:
@@ -41,6 +43,8 @@ async def verify_code(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired code") from None
     except auth_service.InactiveAccountError:
         raise HTTPException(status.HTTP_403_FORBIDDEN, DEACTIVATED_MESSAGE) from None
+    except auth_service.AccountNotReadyError as error:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, error.message) from None
     return TokenResponse(
         access_token=completed.access_token,
         expires_in=settings.jwt_minutes * 60,

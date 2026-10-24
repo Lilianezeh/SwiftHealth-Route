@@ -4,7 +4,7 @@ from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import User
-from app.models.base import Role
+from app.models.base import ApprovalStatus, Role, utcnow
 
 
 async def get_by_email(session: AsyncSession, email: str) -> User | None:
@@ -23,10 +23,33 @@ async def set_last_login(session: AsyncSession, user: User, logged_in_at: dateti
 
 
 async def create(
-    session: AsyncSession, *, name: str, email: str, phone: str | None, password_hash: str, role: Role
+    session: AsyncSession,
+    *,
+    name: str,
+    email: str,
+    phone: str | None,
+    password_hash: str,
+    role: Role,
+    confirmed: bool = True,
+    approval_status: str = ApprovalStatus.approved.value,
 ) -> User:
-    """Adds the user and flushes so it has an id. The caller commits."""
-    user = User(name=name, email=email, phone=phone, password_hash=password_hash, role=role)
+    """Adds the user and flushes so it has an id. The caller commits.
+
+    An account made by an admin, the seed or the first-admin command is `confirmed` (the admin typed
+    the email and the phone) and approved. Sign-up (Phase 3) passes `confirmed=False`, and
+    `approval_status="pending"` for staff.
+    """
+    confirmed_at = utcnow() if confirmed else None
+    user = User(
+        name=name,
+        email=email,
+        phone=phone,
+        password_hash=password_hash,
+        role=role,
+        approval_status=approval_status,
+        email_verified_at=confirmed_at,
+        phone_verified_at=confirmed_at,
+    )
     session.add(user)
     await session.flush()
     return user
