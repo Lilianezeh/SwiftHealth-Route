@@ -231,7 +231,7 @@ async def test_verify_returns_a_token_and_the_user_without_secrets(client, demo_
     assert body["expires_in"] == settings.jwt_minutes * 60
     assert body["user"] == {
         "id": user.id, "name": user.name, "email": user.email, "phone": user.phone,
-        "role": "provider", "is_active": True,
+        "role": "provider", "is_active": True, "two_factor_enabled": False,  # the field of FR-58
     }
     assert "password_hash" not in response.text
     assert code not in response.text

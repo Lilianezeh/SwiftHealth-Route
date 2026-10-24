@@ -7,6 +7,7 @@ import type {
   AdminUserChanges,
   AdminUserInput,
   AdminUserList,
+  BackupCodes,
   CheckInput,
   CheckList,
   CheckRead,
@@ -21,6 +22,8 @@ import type {
   StaffListParams,
   StaffUser,
   TokenResponse,
+  TwoFactorSetupStart,
+  TwoFactorStatus,
   UploadSignature,
 } from "@/types/staff";
 
@@ -28,6 +31,32 @@ type Options = Omit<RequestOptions, "token" | "body" | "method">;
 
 export function startLogin(email: string, password: string, options: Options = {}): Promise<LoginStarted> {
   return requestJson<LoginStarted>("/auth/login", { ...options, body: { email, password } });
+}
+
+/** With the app switched on: an SMS code instead, when the server says SMS is possible (FR-58). */
+export function askForSmsInstead(challengeToken: string, options: Options = {}): Promise<LoginStarted> {
+  return requestJson<LoginStarted>("/auth/use-sms", { ...options, body: { challenge_token: challengeToken } });
+}
+
+/** The authenticator app of the logged-in person (FR-58). The password and the code go in the body, never in an address. */
+export function getTwoFactorStatus(token: string, options: Options = {}): Promise<TwoFactorStatus> {
+  return requestJson<TwoFactorStatus>("/account/two-factor", { ...options, token });
+}
+
+export function startTwoFactorSetup(token: string, password: string, options: Options = {}): Promise<TwoFactorSetupStart> {
+  return requestJson<TwoFactorSetupStart>("/account/two-factor/start", { ...options, token, body: { password } });
+}
+
+export function confirmTwoFactorSetup(token: string, code: string, options: Options = {}): Promise<BackupCodes> {
+  return requestJson<BackupCodes>("/account/two-factor/confirm", { ...options, token, body: { code } });
+}
+
+export function disableTwoFactor(token: string, password: string, code: string, options: Options = {}): Promise<{ enabled: boolean }> {
+  return requestJson<{ enabled: boolean }>("/account/two-factor/disable", { ...options, token, body: { password, code } });
+}
+
+export function renewBackupCodes(token: string, password: string, code: string, options: Options = {}): Promise<BackupCodes> {
+  return requestJson<BackupCodes>("/account/two-factor/backup-codes", { ...options, token, body: { password, code } });
 }
 
 /** A new login code for the current challenge token: the password is not sent again (FR-57). */

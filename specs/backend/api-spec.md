@@ -287,7 +287,10 @@ extra table is needed.
 ### POST /auth/login
 **Request:** `{ "email": "ada@example.com", "password": "..." }`
 
-**Response 200:** `{ "challenge_token": "<jwt, 5 min>", "sent_to": "+234******0001" }`
+**Response 200:** `{ "challenge_token": "<jwt, 5 min>", "sent_to": "+234******0001", "method": "sms", "can_use_sms": false }`. **`method` (FR-58, owner's answers D18 and D19, 2026-10-24) says what the second step asks for:**
+- `"totp"`: the person has switched on the **authenticator app**. **Nothing is sent** (no SMS, no email: it is free); `sent_to` is `null`; the challenge token holds no code. `can_use_sms` is true only when Termii is set up (`TERMII_API_KEY`) and the person's phone is confirmed: then `POST /auth/use-sms` may be used.
+- `"sms"`: a 6-digit code was sent by SMS (as before). With no Termii key (development, or production today) the code is only logged.
+- `"email"`: a 6-digit code was sent by **email** (`sent_to` is `a***@example.com`). Used for a person **without the app** when **Termii is not set up and Resend is** (so a new account is never left with no way to log in); no phone is needed. Termii set up always means `"sms"`.
 
 **Rules:** wrong email or password → 401 with the same message for both. Inactive user → 403 (checked only after the password is correct). **Account state (FR-48, FR-49, owner's plan of 2026-10-24):** a user that is not ready is also refused with 403 and a plain sentence in `detail`, after the password is correct and before any SMS: "This account is closed.", "This account was not approved.", "This account is waiting for approval by an admin.", "This account is deactivated.", "Confirm your email address first.", "Confirm your phone number first." (`users.approval_status`, `closed_at`, `is_active`, `email_verified_at`, `phone_verified_at`; checked in this order). Every account that exists before the sign-up work is approved with both confirmed. User with no phone number → 400. Sends the code by SMS; if no Termii key is set (local dev), logs the code to the API console instead. If the SMS cannot be sent → 502 `"Could not send the code. Try again."` and no challenge token is returned. Wrong-password and unknown-email requests take the same time (an unknown email still runs a dummy password check). Rate limited to 10 attempts per IP per 15 minutes → 429.
 
@@ -313,6 +316,11 @@ FR-57 (owner's request, 2026-10-24). A new login code for the person who is on t
 ```
 **Rules:** wrong, malformed or expired code or challenge → 401. User deactivated since login → 403. Sets `last_login_at`. Rate limited to 10 attempts per IP per 15 minutes → 429 (separate counter from login).
 
+**`POST /auth/verify-code` with the app (FR-58).** The same request. The token says what is checked: a code that was sent (as above), or, for `"totp"`, **a code from the app** (6 digits, spaces ignored; the current 30-second step and one step either side; **each step only once**, so a copied code cannot be used again) **or a backup code** (10 characters, any case, dashes and spaces ignored; **each works once**). A backup code needs no secret, so it still works if the encryption key is lost. **Wrong code → 401 `"Invalid or expired code"` and it is counted: 10 wrong codes in an hour for one account lock its second step for the rest of the hour** (429 `"Too many wrong codes. Try again in N minutes."`, `Retry-After`, even for the right code; the password step still works; the admins are told by email, with the person's name only). If the encryption key cannot be used, a code from the app → 503 `"Codes from the app cannot be checked right now. Use a backup code."`. The per-address limit applies too.
+
+### POST /auth/use-sms
+FR-58. For a person whose `/auth/login` answered `"totp"` with `can_use_sms: true`. **Request:** `{ "challenge_token": "<the app challenge>" }`. **Response 200:** like `/auth/login` with `method: "sms"`, a new challenge token and `sent_to`. **Rules:** another kind of token, an expired one, or an account whose app was switched off since → 401 `"Invalid or expired code"`; account not ready → 403; SMS not possible (Termii not set up, or phone not confirmed) → **409 `"SMS codes are not available."`** and nothing is sent; the code counts in the **5 codes an hour** (429 as for `/auth/login`); SMS failure → 502. The screen offers this only when `can_use_sms` is true.
+
 ### GET /auth/me
 Any logged-in user. Send the access token as `Authorization: Bearer <access_token>`. **Response 200:** `UserRead`
 
@@ -321,6 +329,29 @@ Any logged-in user. Send the access token as `Authorization: Bearer <access_toke
 **Account state (FR-48, FR-49):** the same check runs for **every** endpoint that needs a login (it is in `get_current_user`, one place): an account that is waiting for approval, rejected, closed, deactivated, or whose email or phone is not confirmed gets 403 with the sentence above, even with a valid token. A test calls every operation that needs a login with an admin in each of these states.
 
 **Tests:** wrong password · wrong code · expired challenge · token works on `/auth/me` · inactive user blocked · user with no phone · login and verify-code rate limits (429) · role read from database · every login-protected route refuses an account that is not ready.
+
+`UserRead` (also in the answer of `/auth/verify-code` and `/admin/users`) has **`two_factor_enabled`** (boolean, FR-58). It never holds the secret or a backup code.
+
+---
+
+## 4b. The authenticator app (FR-58, Phase 2c)
+
+Feature `specs/2026-10-23-accounts-and-facility-ownership/`; the owner's answers D17 to D19 of 2026-10-24. **A free second step instead of an SMS code.** Standard time-based codes (RFC 6238: SHA-1, 6 digits, 30 seconds), written with the Python standard library and tested against the RFC's own values; the secret is **encrypted** in the database with Fernet (the `cryptography` package) and the key `TOTP_ENCRYPTION_KEY` (a Render variable; in development and the tests a public development key, refused elsewhere). **With no usable key the API starts normally and the set-up answers 503 `"The authenticator app is not available yet."`**; nothing is ever stored in the clear. **Every route needs a login** (so a ready account); the account is never named in the request.
+
+| Route | Needs | Answer |
+| --- | --- | --- |
+| `GET /account/two-factor` | login | `{ "enabled": bool, "backup_codes_left": n, "available": bool }` (`available`: a usable key exists here) |
+| `POST /account/two-factor/start` `{ "password" }` | login, password (rate-limited per address like the login) | 200 `{ "secret": "<32 letters>", "otpauth_uri": "otpauth://totp/..." }`, **shown this once**; 403 `"The password is not right."` (not 401: that means "log in again"); 409 `"The authenticator app is already switched on."`; 503 as above. A second start before the first code replaces the unfinished secret. The app is **not on** yet. |
+| `POST /account/two-factor/confirm` `{ "code" }` | login, a start | The first code from the app. 200 `{ "backup_codes": [10 codes] }`, **shown this once**; the app is on from now and the login asks for it. 400 `"That code is not right. Check that your phone's time is set automatically."`; 400 `"Start the set-up first."`. |
+| `POST /account/two-factor/disable` `{ "password", "code" }` | login, password, a code (app or backup) | 200 `{ "enabled": false }`; clears the secret and the backup codes. 400 `"The authenticator app is not switched on."`, 403, 400 as above. |
+| `POST /account/two-factor/backup-codes` `{ "password", "code" }` | login, password, a code | 200 `{ "backup_codes": [10 new codes] }`; **the old ones stop working**. |
+| `POST /admin/users/{id}/reset-two-factor` | **admin** | 200 `{ "enabled": false }`: clears another account's app and backup codes (lost phone). **400 `"Another admin must reset your two-step login."` for oneself**; 404 unknown id; 403 for any other role. |
+
+**Rules:** wrong codes of `confirm`, `disable` and `backup-codes` count in the same limit as the login (10 an hour per account, then 429 `"Too many wrong codes. Try again in N minutes."` with `Retry-After`). A backup code is 10 characters from `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (no 0, O, 1, I), stored only as keyed hashes, each worth one use. **Audit entries** (`field_changed` "two_factor"): `two_factor_on`, `two_factor_off`, `two_factor_codes` (new codes), `two_factor_backup_used` (the number left), `two_factor_reset` (by an admin, or `startup-reset`); **none holds a secret or a code**, and the secret is in no log and no answer after the set-up.
+
+**One-time start-up step for the only admin** (no other admin to ask): `python -m app.reset_two_factor --at-startup`, run by the Dockerfile before the API. It reads `RESET_TWO_FACTOR_FOR_EMAIL`; **nothing happens, and nothing is logged, if it is missing or blank**; with an email it clears that account's app, writes an audit entry (`startup-reset`) and logs only `two-factor reset for an account` (or `...: no account has the email in RESET_TWO_FACTOR_FOR_EMAIL`); a failure is logged without details and never stops the API. The owner sets the variable in Render, lets the API start once, and deletes it.
+
+**Tests:** the RFC 6238 values; the window of one step and the one-use step; backup codes (once, case, dashes, 10 of 10 characters); the encryption (not readable, tampered or wrong key refused, development key refused elsewhere); every route's login, password and code rules; the lock after 10 wrong codes (per account only) and the admin email; no SMS for an account with the app (the SMS function is asserted not called); SMS only when Termii is set up; the email code when Termii is off and Resend on; nothing secret in a log, an audit entry or an answer; the migration; the admin and start-up resets.
 
 ---
 

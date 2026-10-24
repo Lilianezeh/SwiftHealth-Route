@@ -28,4 +28,15 @@ class User(SQLModel, table=True):
     phone_verified_at: datetime | None = None
     signup_note: str | None = None  # a staff sign-up says who they are; at most 500 characters
     password_changed_at: datetime | None = None  # tokens made before this are refused (Phase 5)
+    # Authenticator app (FR-58, Phase 2c). The secret is stored encrypted (core/secret_box.py); while
+    # totp_enabled_at is empty it is only a set-up that was not finished and is not used for the login.
+    totp_secret: str | None = None
+    totp_enabled_at: datetime | None = None
+    totp_last_step: int | None = None  # the last 30-second step accepted: a code is good once
+    backup_code_hashes: str | None = None  # a JSON list of keyed hashes; a used code is removed
     closed_at: datetime | None = None  # closed by the person (Phase 5): the row stays, the data is replaced
+
+    @property
+    def two_factor_enabled(self) -> bool:
+        """True when the person has switched on the authenticator app (a finished set-up)."""
+        return self.totp_enabled_at is not None

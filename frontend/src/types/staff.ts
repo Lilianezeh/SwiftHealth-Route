@@ -13,11 +13,20 @@ export type StaffUser = {
   phone: string | null; // +234...
   role: StaffRole;
   is_active: boolean;
+  two_factor_enabled?: boolean; // the authenticator app is switched on (FR-58); absent in a session saved before it existed
 };
 
 export type StaffSession = { token: string; user: StaffUser };
 
-export type LoginStarted = { challenge_token: string; sent_to: string }; // sent_to is masked: +234******0001
+/** What the second login step asks for: a code that was sent by SMS or email, or a code from the authenticator app (FR-58). */
+export type LoginMethod = "sms" | "email" | "totp";
+/** `sent_to` is masked: +234******0001 (sms), a***@example.com (email), null (totp: nothing is sent). */
+export type LoginStarted = { challenge_token: string; sent_to: string | null; method: LoginMethod; can_use_sms: boolean };
+
+/** The authenticator app of the logged-in person. `available` is false when the server has no usable encryption key. */
+export type TwoFactorStatus = { enabled: boolean; backup_codes_left: number; available: boolean };
+export type TwoFactorSetupStart = { secret: string; otpauth_uri: string };
+export type BackupCodes = { backup_codes: string[] };
 export type TokenResponse = { access_token: string; token_type: string; expires_in: number; user: StaffUser };
 
 export type StaffListingSummary = ListingSummary & {

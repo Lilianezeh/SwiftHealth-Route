@@ -196,15 +196,16 @@ describe("the staff bar", () => {
   }
 
   it("shows an editor the dashboard, reports, re-checks and listings", () => {
-    expect(barFor("editor")).toEqual(["Dashboard", "Reports", "Re-checks", "Listings"]);
+    // "Security" (the authenticator app, FR-58) is in every role's bar, last.
+    expect(barFor("editor")).toEqual(["Dashboard", "Reports", "Re-checks", "Listings", "Security"]);
   });
 
   it("shows an admin the same, and also staff and import and export", () => {
-    expect(barFor("admin")).toEqual(["Dashboard", "Reports", "Re-checks", "Listings", "Staff", "Import and export"]);
+    expect(barFor("admin")).toEqual(["Dashboard", "Reports", "Re-checks", "Listings", "Staff", "Import and export", "Security"]);
   });
 
-  it("shows a verifier listings only", () => {
-    expect(barFor("verifier")).toEqual(["Listings"]);
+  it("shows a verifier listings only (and Security, which every role has)", () => {
+    expect(barFor("verifier")).toEqual(["Listings", "Security"]);
   });
 
   it("links to the three new screens", () => {

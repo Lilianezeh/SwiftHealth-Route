@@ -9,8 +9,10 @@ a 503.
 """
 
 from app.core.security import (
+    CHALLENGE_TOKEN_LIFETIME,
     EMAIL_CODE_LIFETIME,
     EMAIL_CONFIRM_PURPOSE,
+    LOGIN_CODE_PURPOSE,
     PASSWORD_RESET_LIFETIME,
     PASSWORD_RESET_PURPOSE,
 )
@@ -30,6 +32,8 @@ _TEXTS = {
         "to reset your password",
         PASSWORD_RESET_LIFETIME,
     ),
+    # The login code by email, for a person with neither the app nor SMS (owner's answer D19).
+    LOGIN_CODE_PURPOSE: (f"Your {BRAND} login code", "to log in", CHALLENGE_TOKEN_LIFETIME),
 }
 
 

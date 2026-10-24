@@ -111,6 +111,39 @@ describe("StaffGate", () => {
     expect(readStaffSession()).toBeNull();
   });
 
+  it("offers the authenticator app to anyone who has not switched it on, with a link to the Security screen", async () => {
+    saveStaffSession({ token: "tok", user: user("editor") });
+    render(<StaffGate area="listings"><p>x</p></StaffGate>);
+    await screen.findByText("x");
+
+    expect(screen.getByText("Switch on the authenticator app: free login codes, no SMS.")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: "Set it up" });
+    expect(link).toHaveAttribute("href", "/admin/security");
+    expect(link.className).toMatch(/\bmin-h-12\b/);
+    expect(screen.getByRole("link", { name: "Security" })).toHaveAttribute("href", "/admin/security"); // also in the bar
+  });
+
+  it("asks an admin more firmly, in the same place", async () => {
+    saveStaffSession({ token: "tok", user: user("admin") });
+    render(<StaffGate area="listings"><p>x</p></StaffGate>);
+    await screen.findByText("x");
+
+    expect(screen.getByText("Admins: please switch on the authenticator app. It is free, and it protects every listing.")).toBeInTheDocument();
+  });
+
+  it("says nothing about it once it is on, or on the Security screen itself", async () => {
+    saveStaffSession({ token: "tok", user: { ...user("editor"), two_factor_enabled: true } });
+    const first = render(<StaffGate area="listings"><p>x</p></StaffGate>);
+    await screen.findByText("x");
+    expect(screen.queryByText(/authenticator app/)).toBeNull();
+    first.unmount();
+
+    saveStaffSession({ token: "tok", user: user("editor") });
+    render(<StaffGate area="security"><p>y</p></StaffGate>);
+    await screen.findByText("y");
+    expect(screen.queryByText("Switch on the authenticator app: free login codes, no SMS.")).toBeNull();
+  });
+
   it("a 403 from a call does not log the user out", async () => {
     saveStaffSession({ token: "tok", user: user("editor") });
     render(<StaffGate area="listings"><Probe /></StaffGate>);

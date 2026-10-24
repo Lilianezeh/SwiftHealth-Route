@@ -64,7 +64,8 @@ async def test_the_list_has_every_user_by_id_and_never_a_password_hash(
     body = response.json()
     assert body["total"] == 4
     assert [item["id"] for item in body["items"]] == sorted(item["id"] for item in body["items"])
-    assert set(body["items"][0]) == {"id", "name", "email", "phone", "role", "is_active"}
+    shown = {"id", "name", "email", "phone", "role", "is_active", "two_factor_enabled"}
+    assert set(body["items"][0]) == shown
     assert "password" not in response.text
 
 
@@ -79,7 +80,7 @@ async def test_an_admin_creates_a_user_of_any_role_who_can_then_be_read(
         assert body["role"] == role.value
         assert body["is_active"] is True
         assert body["phone"] == "+2348030000111"
-        assert set(body) == {"id", "name", "email", "phone", "role", "is_active"}
+        assert set(body) == {"id", "name", "email", "phone", "role", "is_active", "two_factor_enabled"}
     assert (await client.get("/admin/users", headers=bearer_for(admin))).json()["total"] == 8
 
 

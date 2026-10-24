@@ -104,6 +104,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/admin/login", // phase 10, the staff login
         "/admin/recheck", // phase 11, listings past or near their check date
         "/admin/reports", // phase 11, the report queue
+        "/admin/security", // accounts phase 2c, the authenticator app (FR-58)
         "/admin/staff", // phase 10, the staff accounts
         "/blood",
         "/blood/donate", // phase 8, donation centres

@@ -84,4 +84,8 @@ describe("where each role starts, and what each may open (decision C11)", () => 
     for (const role of ["verifier", "provider"] as const) expect(canOpen(role, "review")).toBe(false);
     for (const role of ["verifier", "editor", "provider"] as const) expect(canOpen(role, "staff")).toBe(false);
   });
+
+  it("lets every role open the Security screen (FR-58): everyone with an account can switch the app on", () => {
+    for (const role of ["verifier", "editor", "admin", "provider"] as const) expect(canOpen(role, "security")).toBe(true);
+  });
 });

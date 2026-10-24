@@ -112,6 +112,87 @@ for (const { width, height } of WIDTHS) {
       await allIsInsideTheScreen(page, width);
     });
 
+    test("login with the authenticator app: nothing is sent, the code and the backup code fit the screen, and SMS is offered only when allowed", async ({ page }) => {
+      const seen = await fakeApi(page, (request) => {
+        if (request.path === "/auth/login") return { body: { challenge_token: "app.jwt", sent_to: null, method: "totp", can_use_sms: true } };
+        if (request.path === "/auth/use-sms") return { body: { challenge_token: "sms.jwt", sent_to: "+234******4567", method: "sms", can_use_sms: false } };
+        return null;
+      });
+      await page.goto("/admin/login", { waitUntil: "load" });
+      await expect(page.getByRole("heading", { level: 1, name: "Staff login" })).toBeVisible({ timeout: 60_000 });
+      await page.getByLabel("Email").fill("ada@example.com");
+      await page.getByLabel("Password").fill("a-long-password");
+      await page.getByRole("button", { name: "Send me a code" }).click();
+
+      await expect(page.getByLabel("Code from your app")).toBeVisible();
+      await expect(page.getByText("Nothing is sent to your phone.")).toBeVisible();
+      await expect(page.getByRole("button", { name: "Send a new code" })).toHaveCount(0);
+      await allIsInsideTheScreen(page, width);
+      await targetsAndTextAreBigEnough(page);
+      await page.getByRole("button", { name: "Use a backup code" }).click();
+      await expect(page.getByLabel("Backup code")).toBeVisible();
+      await allIsInsideTheScreen(page, width);
+      await page.getByRole("button", { name: "Use SMS instead" }).click();
+
+      await expect(page.getByText("Code sent to ••• ••• 4567")).toBeVisible();
+      await expect(page.getByRole("button", { name: "Send a new code" })).toBeDisabled();
+      expect(seen.find((request) => request.path === "/auth/use-sms")?.body).toEqual({ challenge_token: "app.jwt" });
+      await allIsInsideTheScreen(page, width);
+    });
+
+    test("security: set up the authenticator app with a real QR code, see the backup codes once, and switch it off", async ({ page }) => {
+      await logInAs(page, "editor");
+      const secret = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
+      const codes = ["ABCDE23456", "FGHJK23457", "LMNPQ23458", "RSTUV23459", "WXYZA23467", "BCDEF23468", "GHJKL23469", "MNPQR23478", "STUVW23479", "XYZAB23489"];
+      let enabled = false;
+      const seen = await fakeApi(page, (request) => {
+        if (request.path === "/account/two-factor" && request.method === "GET") return { body: { enabled, backup_codes_left: enabled ? 10 : 0, available: true } };
+        if (request.path === "/account/two-factor/start") return { body: { secret, otpauth_uri: `otpauth://totp/SwiftHealth%20Route:ada%40example.com?secret=${secret}&issuer=SwiftHealth%20Route` } };
+        if (request.path === "/account/two-factor/confirm") {
+          enabled = true;
+          return { body: { backup_codes: codes } };
+        }
+        if (request.path === "/account/two-factor/disable") {
+          enabled = false;
+          return { body: { enabled: false } };
+        }
+        return null;
+      });
+      await page.goto("/admin/security", { waitUntil: "load" });
+      await expect(page.getByRole("heading", { level: 1, name: "Security" })).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByText("The authenticator app is off.")).toBeVisible();
+      await allIsInsideTheScreen(page, width);
+      await targetsAndTextAreBigEnough(page);
+
+      await page.getByRole("button", { name: "Set up the authenticator app" }).click();
+      await page.getByLabel("Your password").fill("my-password");
+      await page.getByRole("button", { name: "Show the QR code" }).click();
+      const picture = page.getByAltText("QR code to scan with your authenticator app");
+      await expect(picture).toBeVisible({ timeout: 60_000 }); // the QR package is loaded now, and a cold dev server compiles it first
+      expect(await picture.evaluate((image: HTMLImageElement) => image.naturalWidth > 100 && image.currentSrc.startsWith("data:image/"))).toBe(true);
+      await expect(page.getByText("JBSW Y3DP EHPK 3PXP JBSW Y3DP EHPK 3PXP")).toBeVisible();
+      await allIsInsideTheScreen(page, width);
+      await targetsAndTextAreBigEnough(page);
+
+      await page.getByLabel("6-digit code from the app").fill("482913");
+      await page.getByRole("button", { name: "Switch it on" }).click();
+      await expect(page.getByRole("heading", { name: "Your backup codes" })).toBeVisible();
+      await expect(page.getByRole("listitem")).toHaveCount(10);
+      await allIsInsideTheScreen(page, width);
+      expect(await page.evaluate(() => JSON.stringify({ ...window.sessionStorage }) + JSON.stringify({ ...window.localStorage }))).not.toContain("ABCDE23456");
+      await page.getByRole("button", { name: "I have saved them" }).click();
+      await expect(page.getByText("The authenticator app is on.")).toBeVisible();
+      await expect(page.getByText("ABCDE23456")).toHaveCount(0);
+
+      await page.getByRole("button", { name: "Switch it off" }).click();
+      await page.getByLabel("Your password").fill("my-password");
+      await page.getByLabel("A code from your app, or a backup code").fill("482913");
+      await page.getByRole("button", { name: "Yes, switch it off" }).click();
+      await expect(page.getByText("The authenticator app is off.")).toBeVisible();
+      expect(seen.find((request) => request.path === "/account/two-factor/start")?.body).toEqual({ password: "my-password" });
+      expect(seen.find((request) => request.path === "/account/two-factor/start")?.authorization).toBe("Bearer fake.token.value");
+    });
+
     test("listings: the staff bar and the cards fit, and a filter reaches the API", async ({ page }) => {
       await logInAs(page, "admin");
       const seen = await fakeApi(page, (request) => {

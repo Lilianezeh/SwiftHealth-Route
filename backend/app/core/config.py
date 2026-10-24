@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     termii_base_url: str = ""  # per account, from the Termii dashboard; needed only when a key is set
     termii_sender_id: str = "SwiftHealth"
     termii_channel: str = "dnd"  # "dnd" reaches Do-Not-Disturb numbers but needs the DND route activated
+    # Encrypts the authenticator-app secret in the database (FR-58): a Fernet key, 32 random bytes in URL-safe
+    # base64 (how to make one without a file: specs/2026-10-23-accounts-and-facility-ownership/
+    # requirements.md, 5c). Empty in development uses a public development key; empty elsewhere means the
+    # app set-up answers "not available yet".
+    totp_encryption_key: str = ""
     featured_price_naira: Decimal = Decimal("5000.00")  # monthly featured price; set the real price in .env
 
     # Fixed list of areas (PRD: managed in settings, not a table)

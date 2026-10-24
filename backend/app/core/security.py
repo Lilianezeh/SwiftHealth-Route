@@ -27,6 +27,8 @@ CHALLENGE_PURPOSE = "login_challenge"
 EMAIL_CONFIRM_PURPOSE = "email_confirm"
 PHONE_CONFIRM_PURPOSE = "phone_confirm"
 PASSWORD_RESET_PURPOSE = "password_reset"
+TOTP_CHALLENGE_PURPOSE = "login_totp"  # password step passed; the second step is a code from the app (FR-58)
+LOGIN_CODE_PURPOSE = "login_code"  # the text of the login code sent by email when there is no SMS (D19)
 EMAIL_CODE_LIFETIME = timedelta(minutes=15)
 PHONE_CODE_LIFETIME = timedelta(minutes=5)  # an SMS is read at once, and it costs money to resend
 PASSWORD_RESET_LIFETIME = timedelta(minutes=15)
@@ -166,3 +168,13 @@ def create_challenge_token(
 
 def decode_challenge_token(token: str) -> ChallengeClaims:
     return decode_code_token(token, CHALLENGE_PURPOSE)
+
+
+def create_totp_challenge_token(user_id: int, expires_delta: timedelta = CHALLENGE_TOKEN_LIFETIME) -> str:
+    """Proves the password step passed for a person with the authenticator app: no code is in it (FR-58)."""
+    return _encode({"sub": str(user_id), "purpose": TOTP_CHALLENGE_PURPOSE}, expires_delta)
+
+
+def decode_totp_challenge_token(token: str) -> int:
+    """Returns the user id. Raises InvalidTokenError for any bad token, and for a code challenge."""
+    return _user_id_from(_decode(token, TOTP_CHALLENGE_PURPOSE))
