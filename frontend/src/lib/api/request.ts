@@ -10,10 +10,12 @@ import { PUBLIC_API_URL } from "@/lib/api/client";
 
 /** The API answered with an error status (404, 422, 500...). */
 export class ApiError extends Error {
-  /** `detail` is the API's own sentence when it sent one (the staff screens show it), else null. */
+  /** `detail` is the API's own sentence when it sent one (the staff screens show it), else null.
+   * `retryAfterSeconds` is the `Retry-After` header when it is a whole number of seconds (the login code limits), else null. */
   constructor(
     public readonly status: number,
     public readonly detail: string | null = null,
+    public readonly retryAfterSeconds: number | null = null,
   ) {
     super(`The API answered with status ${status}.`);
     this.name = "ApiError";
@@ -67,6 +69,12 @@ async function readDetail(response: Response): Promise<string | null> {
   }
 }
 
+/** The `Retry-After` header as whole seconds. The date form of the header is not used by our API, so it is ignored. */
+function readRetryAfter(response: Response): number | null {
+  const header = response.headers.get("Retry-After");
+  return header !== null && /^\d+$/.test(header.trim()) ? Number(header) : null;
+}
+
 export async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { onSlow, signal, slowAfterMs = WAKING_NOTICE_MS, timeoutMs = REQUEST_TIMEOUT_MS, body, token, csvBody, asText } = options;
   const hasBody = body !== undefined;
@@ -97,7 +105,7 @@ export async function requestJson<T>(path: string, options: RequestOptions = {})
       credentials: "omit", // the API needs no cookies: the staff token travels in the header
       signal: controller.signal,
     });
-    if (!response.ok) throw new ApiError(response.status, await readDetail(response));
+    if (!response.ok) throw new ApiError(response.status, await readDetail(response), readRetryAfter(response));
     return (asText ? await response.text() : await response.json()) as T;
   } catch (error) {
     if (error instanceof ApiError) throw error;

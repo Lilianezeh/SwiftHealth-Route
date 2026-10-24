@@ -30,6 +30,11 @@ export function startLogin(email: string, password: string, options: Options = {
   return requestJson<LoginStarted>("/auth/login", { ...options, body: { email, password } });
 }
 
+/** A new login code for the current challenge token: the password is not sent again (FR-57). */
+export function resendLoginCode(challengeToken: string, options: Options = {}): Promise<LoginStarted> {
+  return requestJson<LoginStarted>("/auth/resend-code", { ...options, body: { challenge_token: challengeToken } });
+}
+
 export function verifyLoginCode(challengeToken: string, code: string, options: Options = {}): Promise<TokenResponse> {
   return requestJson<TokenResponse>("/auth/verify-code", { ...options, body: { challenge_token: challengeToken, code } });
 }

@@ -291,6 +291,19 @@ extra table is needed.
 
 **Rules:** wrong email or password → 401 with the same message for both. Inactive user → 403 (checked only after the password is correct). **Account state (FR-48, FR-49, owner's plan of 2026-10-24):** a user that is not ready is also refused with 403 and a plain sentence in `detail`, after the password is correct and before any SMS: "This account is closed.", "This account was not approved.", "This account is waiting for approval by an admin.", "This account is deactivated.", "Confirm your email address first.", "Confirm your phone number first." (`users.approval_status`, `closed_at`, `is_active`, `email_verified_at`, `phone_verified_at`; checked in this order). Every account that exists before the sign-up work is approved with both confirmed. User with no phone number → 400. Sends the code by SMS; if no Termii key is set (local dev), logs the code to the API console instead. If the SMS cannot be sent → 502 `"Could not send the code. Try again."` and no challenge token is returned. Wrong-password and unknown-email requests take the same time (an unknown email still runs a dummy password check). Rate limited to 10 attempts per IP per 15 minutes → 429.
 
+### POST /auth/resend-code
+FR-57 (owner's request, 2026-10-24). A new login code for the person who is on the code step, **without sending the password again**.
+
+**Request:** `{ "challenge_token": "<the current token>" }`. **Response 200:** the same as `POST /auth/login`: `{ "challenge_token": "<a new jwt, 5 min>", "sent_to": "+234******0001" }`.
+
+**Rules:**
+- The token must be a valid, unexpired login challenge: any other, expired or tampered token → 401 `"Invalid or expired code"`. After 5 minutes the person starts again with `/auth/login`. The older code is **not** cancelled (nothing is stored): it works until its token expires.
+- The account is checked again: deactivated → 403, not ready (account state) → 403 with the sentence, no phone → 400.
+- **At least 60 seconds after the previous send.** The token carries its send time (`sent_at`, the API's clock). Sooner → **429** `"Wait N seconds before asking for a new code."` with the header `Retry-After: N`, and no SMS.
+- **At most 5 codes per account per hour, the first one counted, and a new login counts too** (`POST /auth/login` also answers 429 `"Too many codes. Try again in M minutes."` for the sixth). `Retry-After` is in seconds. The count is in the API's memory (per instance, forgotten at a restart): a cost limit, not a security control. Other accounts are not affected.
+- The per-address limit of `/auth/login` (10 calls in 15 minutes) applies to this route too.
+- SMS cannot be sent → 502 `"Could not send the code. Try again."`, no token. Nothing about the code, the phone or the tokens is logged.
+
 ### POST /auth/verify-code
 **Request:** `{ "challenge_token": "...", "code": "482913" }`
 

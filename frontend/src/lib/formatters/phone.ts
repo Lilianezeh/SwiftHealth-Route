@@ -16,6 +16,14 @@ export function formatMaskedPhone(masked: string): string {
   return `${local.slice(0, 4)} ${local.slice(4, 7)} ${local.slice(7)}`;
 }
 
+/** Where the login code went, for the code screen (FR-57): only the last four digits, the rest hidden: "••• ••• 4567".
+ * A value that does not end in four digits is returned as it was given.
+ */
+export function formatPhoneHint(masked: string): string {
+  const lastFour = /(\d{4})$/.exec(masked);
+  return lastFour ? `••• ••• ${lastFour[1]}` : masked;
+}
+
 /** A number for reading as text: +2348031234567 -> "0803 123 4567" (leading 0, groups of 4, 3 and 4). Spec: listing page D12.
  * A value that is not a Nigerian number is returned as it was given, never guessed at. Links (tel:, wa.me) keep the international form.
  */

@@ -14,6 +14,10 @@ class LoginResponse(BaseModel):
     sent_to: str  # masked, for example +234******0001
 
 
+class ResendCodeRequest(BaseModel):
+    challenge_token: str  # the current one; a bad or expired one is answered with 401, not 422
+
+
 class VerifyCodeRequest(BaseModel):
     challenge_token: str
     code: str  # a plain string on purpose: a malformed code is answered with 401, not 422

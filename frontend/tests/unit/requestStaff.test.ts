@@ -85,6 +85,22 @@ describe("ApiError", () => {
     expect(second.status).toBe(502);
   });
 
+  it("carries the Retry-After header in whole seconds when the API sent one, else null", async () => {
+    stubFetch(new Response(JSON.stringify({ detail: "Wait 20 seconds before asking for a new code." }), {
+      status: 429,
+      headers: { "Retry-After": "20" },
+    }));
+    const waiting = (await requestJson("/x").catch((caught: unknown) => caught)) as ApiError;
+    stubFetch(new Response("{}", { status: 429 }));
+    const plain = (await requestJson("/x").catch((caught: unknown) => caught)) as ApiError;
+    stubFetch(new Response("{}", { status: 503, headers: { "Retry-After": "Wed, 21 Oct 2026 07:28:00 GMT" } }));
+    const dated = (await requestJson("/x").catch((caught: unknown) => caught)) as ApiError;
+
+    expect(waiting.retryAfterSeconds).toBe(20);
+    expect(plain.retryAfterSeconds).toBeNull();
+    expect(dated.retryAfterSeconds).toBeNull(); // only the number form is read
+  });
+
   it("still names only the status in its own message (no address, no token)", async () => {
     stubFetch(new Response("{}", { status: 404 }));
 

@@ -6,7 +6,7 @@ code: nothing is stored in the database, and a purpose cannot be used for anothe
 phone code, a code token is not an access token).
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -95,6 +95,33 @@ def test_the_login_challenge_still_works_as_before() -> None:
 
     assert claims.user_id == 7
     assert code_matches(7, "004821", claims.code_hash)
+
+
+def test_a_token_carries_the_time_it_was_sent_which_the_resend_rule_reads() -> None:
+    sent_at = datetime(2026, 10, 24, 12, 0, 30, tzinfo=timezone.utc)
+
+    claims = decode_challenge_token(create_challenge_token(7, "004821", sent_at=sent_at))
+
+    assert claims.sent_at == sent_at
+
+
+def test_without_a_given_time_the_send_time_is_now() -> None:
+    before = datetime.now(timezone.utc).replace(microsecond=0)
+
+    token = create_code_token(7, "004821", EMAIL_CONFIRM_PURPOSE, timedelta(minutes=5))
+
+    claims = decode_code_token(token, EMAIL_CONFIRM_PURPOSE)
+
+    assert before <= claims.sent_at <= datetime.now(timezone.utc)
+
+
+def test_a_send_time_far_in_the_future_does_not_make_the_token_invalid() -> None:
+    """The send time is our own claim, not the standard `iat`: a skewed clock cannot break a token."""
+    sent_at = datetime.now(timezone.utc) + timedelta(days=1)
+
+    token = create_challenge_token(7, "004821", sent_at=sent_at)
+
+    assert decode_challenge_token(token).user_id == 7
 
 
 def test_the_lifetimes_are_15_minutes_for_email_and_reset_and_5_for_the_phone() -> None:

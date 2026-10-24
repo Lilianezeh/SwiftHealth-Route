@@ -3,11 +3,14 @@
 No HTTP here: the routes turn these domain errors into status codes (specs/backend/api-spec.md section 4).
 Every function awaits the database or the SMS service, so they are async (decision 11).
 """
+import math
 from dataclasses import dataclass
+from datetime import datetime
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
+from app.core.rate_limit import sms_code_limiter
 from app.core.security import (
     InvalidTokenError,
     code_matches,
@@ -23,6 +26,8 @@ from app.integrations.termii import SmsSendError, mask_phone, send_sms
 from app.models import User
 from app.models.base import ApprovalStatus, utcnow
 from app.repositories import user_repository
+
+MIN_SECONDS_BETWEEN_CODES = 60  # FR-57: the wait before "Send a new code" works, kept by the server too
 
 # Checked when the email is unknown, so an unknown email takes as long as a wrong password (NFR-06).
 # It is the hash of a throwaway string, not a real password.
@@ -80,6 +85,22 @@ class InvalidCodeError(Exception):
     """The code or the challenge token is wrong, malformed, expired or tampered with."""
 
 
+class CodeTooSoonError(Exception):
+    """A new code was asked for under 60 seconds after the last one. `seconds_left` is the wait."""
+
+    def __init__(self, seconds_left: int) -> None:
+        super().__init__(seconds_left)
+        self.seconds_left = seconds_left
+
+
+class TooManyCodesError(Exception):
+    """This account has had 5 codes in the last hour. `seconds_left` is how long until it may have another."""
+
+    def __init__(self, seconds_left: int) -> None:
+        super().__init__(seconds_left)
+        self.seconds_left = seconds_left
+
+
 @dataclass(frozen=True)
 class LoginStarted:
     challenge_token: str
@@ -92,7 +113,7 @@ class LoginCompleted:
     user: User
 
 
-async def start_login(session: AsyncSession, email: str, password: str) -> LoginStarted:
+async def start_login(session: AsyncSession, email: str, password: str, moment: datetime) -> LoginStarted:
     """Step 1: checks the password, then texts a 6-digit code and returns the challenge token."""
     user = await user_repository.get_by_email(session, email)
     password_hash = user.password_hash if user else _DUMMY_PASSWORD_HASH
@@ -104,15 +125,48 @@ async def start_login(session: AsyncSession, email: str, password: str) -> Login
     ensure_account_is_ready(user)
     if not user.phone:
         raise MissingPhoneError
+    return await _send_login_code(user, moment)
 
+
+async def _send_login_code(user: User, moment: datetime) -> LoginStarted:
+    """Texts a new code to the user's phone and returns its challenge token (FR-57: at most 5 codes an hour).
+
+    Every code counts, the first one and the ones of a new login too, so logging in again cannot get around
+    the limit. The limiter is plain Python state and nothing is awaited between its check and its update,
+    so two requests cannot race on the event loop.
+    """
+    limiter_key = f"sms:{user.id}"
+    if not sms_code_limiter.allow(limiter_key):
+        raise TooManyCodesError(sms_code_limiter.retry_after_seconds(limiter_key))
     code = generate_login_code()
     try:
         await send_sms(user.phone, f"Your SwiftHealth login code is {code}. It expires in 5 minutes.")
     except SmsSendError as error:
         raise CodeNotSentError from error
     return LoginStarted(
-        challenge_token=create_challenge_token(user.id, code), sent_to=mask_phone(user.phone)
+        challenge_token=create_challenge_token(user.id, code, sent_at=moment), sent_to=mask_phone(user.phone)
     )
+
+
+async def resend_login_code(session: AsyncSession, challenge_token: str, moment: datetime) -> LoginStarted:
+    """Step 1 again, without the password: a new code for the owner of the (unexpired) challenge token.
+
+    At least 60 seconds after the previous send (read from the token), and inside the 5 codes an hour.
+    """
+    try:
+        claims = decode_challenge_token(challenge_token)
+    except InvalidTokenError as error:
+        raise InvalidCodeError from error
+    user = await user_repository.get_by_id(session, claims.user_id)
+    if user is None:
+        raise InvalidCodeError
+    ensure_account_is_ready(user)
+    if not user.phone:
+        raise MissingPhoneError
+    seconds_since_sent = max((moment - claims.sent_at).total_seconds(), 0)
+    if seconds_since_sent < MIN_SECONDS_BETWEEN_CODES:
+        raise CodeTooSoonError(math.ceil(MIN_SECONDS_BETWEEN_CODES - seconds_since_sent))
+    return await _send_login_code(user, moment)
 
 
 async def verify_login_code(session: AsyncSession, challenge_token: str, code: str) -> LoginCompleted:

@@ -43,6 +43,7 @@ class InvalidTokenError(Exception):
 class ChallengeClaims:
     user_id: int
     code_hash: str
+    sent_at: datetime  # when the code was sent (whole seconds, UTC)
 
 
 def hash_password(plain_password: str) -> str:
@@ -120,29 +121,47 @@ def decode_access_token(token: str) -> int:
     return _user_id_from(_decode(token, ACCESS_PURPOSE))
 
 
-def create_code_token(user_id: int, code: str, purpose: str, expires_delta: timedelta) -> str:
+def create_code_token(
+    user_id: int, code: str, purpose: str, expires_delta: timedelta, sent_at: datetime | None = None
+) -> str:
     """A signed token that proves a code was sent to a user, without storing the code (a keyed hash is in it).
 
     The `purpose` (login, email, phone, password reset) is in the signed claims, so a token made for
-    one use is refused for another.
+    one use is refused for another. `sent_at` (now, if not given) is our own claim, not the standard `iat`,
+    so the rule "at least 60 seconds between two codes" (FR-57) can read it, and a test clock or a skewed
+    server clock cannot make the token invalid.
     """
+    sent = sent_at or datetime.now(timezone.utc)
     return _encode(
-        {"sub": str(user_id), "purpose": purpose, "code_hash": hash_login_code(user_id, code)}, expires_delta
+        {
+            "sub": str(user_id),
+            "purpose": purpose,
+            "code_hash": hash_login_code(user_id, code),
+            "sent_at": int(sent.timestamp()),
+        },
+        expires_delta,
     )
 
 
 def decode_code_token(token: str, purpose: str) -> ChallengeClaims:
-    """Returns the user id and the code hash. Raises InvalidTokenError for a bad, expired or wrong token."""
+    """Returns the user id, the code hash and the send time. Raises InvalidTokenError for a bad token.
+
+    A token made before `sent_at` existed (at most 5 minutes old at the deploy) counts as sent long ago.
+    """
     claims = _decode(token, purpose)
     if "code_hash" not in claims:
         raise InvalidTokenError("Token has no code")
-    return ChallengeClaims(user_id=_user_id_from(claims), code_hash=claims["code_hash"])
+    sent_at = datetime.fromtimestamp(int(claims.get("sent_at", 0)), tz=timezone.utc)
+    return ChallengeClaims(user_id=_user_id_from(claims), code_hash=claims["code_hash"], sent_at=sent_at)
 
 
 def create_challenge_token(
-    user_id: int, code: str, expires_delta: timedelta = CHALLENGE_TOKEN_LIFETIME
+    user_id: int,
+    code: str,
+    expires_delta: timedelta = CHALLENGE_TOKEN_LIFETIME,
+    sent_at: datetime | None = None,
 ) -> str:
-    return create_code_token(user_id, code, CHALLENGE_PURPOSE, expires_delta)
+    return create_code_token(user_id, code, CHALLENGE_PURPOSE, expires_delta, sent_at)
 
 
 def decode_challenge_token(token: str) -> ChallengeClaims:
