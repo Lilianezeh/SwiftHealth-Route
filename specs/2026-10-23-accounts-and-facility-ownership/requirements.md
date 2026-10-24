@@ -112,9 +112,9 @@ Why: Resend sends only from a domain you own and have verified by adding DNS rec
 - **My suggestion:** if you already own any domain, use a subdomain of it (free). If not, the cheapest sensible choice is one domain for the whole project that you also use later for the website and for staff email addresses; a `.com.ng` or `.org` keeps the name credible for a health directory. Cloudflare's DNS is free and its registrar charges no mark-up. The decision and the purchase are yours; I add no domain setting to the code (the sender address stays `RESEND_FROM_EMAIL`).
 - **After you have a domain:** (1) add it in the Resend dashboard, (2) add the DNS records Resend shows (it lists them; I have not named them because the page I read did not), (3) wait for "verified", (4) set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in Render, (5) send yourself a test, (6) only then set `SIGNUP_ENABLED`.
 
-### 5c. Added on 2026-10-24: the login code screen and an authenticator app (proposed, **waiting for the owner's "yes"**)
+### 5c. Added on 2026-10-24: the login code screen and an authenticator app (**approved by the owner on 2026-10-24: yes to FR-57 and FR-58, D17 yes, D18 yes (protect the secret), D19 yes**)
 
-Two additions asked for by the owner. They are **specs only until you say yes**: nothing for them is built, and Phase 2 does not depend on them. They get proposed requirement numbers FR-57 and FR-58 (added to `specs/prd.md` after your yes).
+Two additions asked for by the owner, now approved. They are requirements FR-57 and FR-58 (in `specs/prd.md`). Phase 2b (FR-57) is built first, then Phase 2c (FR-58), each on its own branch from `main` after the previous one is merged. Two points were **changed from the first proposal when the answers were recorded**: (1) with no `TOTP_ENCRYPTION_KEY` the API **starts normally** and only the set-up of an authenticator app answers 503 (it used to say the API would refuse to start, which would have crashed a deploy that ran before the variable was added); (2) in development and in the tests a built-in, public development key is used, like the development secret of the reporter hash, and it is **never accepted outside development**.
 
 **Where things are today (read from the code, 2026-10-24).**
 - The login screen already has a "Resend code" button that appears after 60 seconds; it works by sending the email and password again, and the only limit is the general login limiter (10 calls per 15 minutes per client address). There is **no limit per account per hour**, so one account can be made to receive many SMS (each costs money).
@@ -140,7 +140,7 @@ Two additions asked for by the owner. They are **specs only until you say yes**:
 - **Who must use it:** nobody is forced yet. It is offered at login to every account without it ("Set up the app: free, no SMS"), and admins are asked more firmly. **A later decision (yours) can make it required for staff and admin.**
 - **Proposed phase:** after Phase 2 and the login screen, **before sign-up opens**: Phase 2b (login code screen, 1.5 days) and Phase 2c (authenticator app, 4 days), so that every account made from Phase 3 on can be free of SMS from its first login.
 
-**Needs your yes (two questions on top of the yes to FR-57 and FR-58):**
+**The three questions and the owner's answers (2026-10-24: all yes, the recommended option):**
 
 | # | Question | Recommended |
 | --- | --- | --- |
@@ -148,7 +148,18 @@ Two additions asked for by the owner. They are **specs only until you say yes**:
 | D18 | **Protecting the secret in the database.** The secret must be readable by the server to check a code, so a copy of the database would hold it. Option A: encrypt it with a key kept outside the database (a new Render variable `TOTP_ENCRYPTION_KEY`, and the well-known `cryptography` package, Fernet). Option B: store it as it is (simpler, no package, no new variable; the database is already private and holds password hashes, but a leak would let someone make codes for everyone who set it up, if they also had the password). I will not write my own encryption. | A |
 | D19 | **Email code for people who have neither the app nor SMS.** In production with Termii off, a new staff account (Phase 3 on) could never get a code. Option A: for an account with no app, send the code by **email** (Resend, free plan, once the sending domain is verified) when Termii is not set; the app is then offered at once. Option B: no email code (new staff must be given the app set-up by an admin, which needs a first login that cannot happen). | A |
 
-**What would change on Render if you say yes:** nothing at once. FR-57 needs no variable. FR-58 adds columns by a migration at deploy (additive), and with D18 option A one new variable `TOTP_ENCRYPTION_KEY` (you create the value; the API refuses to start in production if it is missing once the feature is on, so the deploy cannot silently store secrets unprotected), and with the one-time recovery step the variable `RESET_TWO_FACTOR_FOR_EMAIL` only when needed.
+**What changes on Render.**
+- **Phase 2b (FR-57): nothing.** No variable, no package, no migration.
+- **Phase 2c (FR-58):** a migration at deploy (additive: four columns), the `cryptography` package (in the image at build, nothing to do), and **one new variable, `TOTP_ENCRYPTION_KEY`**. Without it the API still starts and everything works as before; only "Set up an authenticator app" answers 503 "Not available yet", so **no secret is ever stored unprotected and the order of deploy and variable does not matter**. Add it **before you first want to switch the app on**, best **before you merge the Phase 2c pull request** so the first deploy already has it.
+- **`RESET_TWO_FACTOR_FOR_EMAIL`** only when the only admin has lost the app and the backup codes; you delete it after one start.
+
+**How to make the key on your laptop without it appearing in a file, a log or git (D18).** The key is 32 random bytes written in URL-safe base64, 44 characters (the form the `cryptography` package's Fernet uses). In a terminal on your laptop (WSL, Linux or Mac, anywhere that has `openssl`) this makes one and puts it **straight on the clipboard, with no newline, printing nothing**:
+
+- **WSL on Windows:** `openssl rand -base64 32 | tr '+/' '-_' | tr -d '\n' | clip.exe`
+- **Mac:** `openssl rand -base64 32 | tr '+/' '-_' | tr -d '\n' | pbcopy`
+- **Linux with a desktop:** `openssl rand -base64 32 | tr '+/' '-_' | tr -d '\n' | xclip -selection clipboard` (or `wl-copy` on Wayland)
+
+Then, **in the Render dashboard**: the backend service, Environment, **Add Environment Variable**, name **`TOTP_ENCRYPTION_KEY`**, paste, Save (Render redeploys). Do **not** paste it into a chat, an issue, a pull request, `.env`, or any file. The shell stores the command (which holds no secret) and never the result. **Keep one copy in your password manager** (paste it there right after Render, before you copy anything else): if the key is lost, every stored authenticator secret becomes unreadable and each person has to set the app up again (backup codes and the SMS or email fallback still let them in); if it leaks, someone with a copy of the database could read the secrets (they would still need the password). Changing the key later is a planned job (every person sets up again), not a quick edit; the plan does not rotate it.
 
 ## 6. What the Privacy page and the Terms must change (NDPA 2023)
 
