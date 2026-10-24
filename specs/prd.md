@@ -175,6 +175,8 @@ Feature folder: `specs/2026-10-23-accounts-and-facility-ownership/` (owner's ans
 | FR-54 | A logged-in person can edit their profile, change their password, reset a forgotten password by email, and close their account | Must |
 | FR-55 | An admin sees all accounts (with last login), the pending staff, approves, rejects, suspends and reactivates (never deletes), and sees an activity log of who did what and when | Must |
 | FR-56 | One password rule for every way an account gets a password: at least 8 characters for a provider, at least 10 for a verifier, editor or admin, at most 128, not a very common password, not the email; a provider made staff gets a new password of at least 10 | Must |
+| FR-57 | The login code screen shows the phone mostly hidden ("••• ••• 4567"), has a "Send a new code" button (60 seconds between sends, at most 5 codes per account per hour, enforced by the server) and a "Start again" link | Must |
+| FR-58 | A person can switch on an authenticator app (standard time-based codes, QR code, 10 backup codes) for a free second step instead of an SMS code; the secret is encrypted in the database; SMS (or an email code while Termii is off) stays the fallback | Must |
 
 ## Data model
 
