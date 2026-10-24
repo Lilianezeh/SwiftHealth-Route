@@ -1,6 +1,6 @@
 # Accounts, sign-up and facility ownership: plan
 
-**Status: APPROVED 2026-10-24 (owner: "Yes", D1 yes, D2 yes, D3 hide, D4 yes, D5 yes, D6 to D16 as written, passwords 8 for providers and 10 for staff and admin). Spec is a draft PR; Phase 1 is in progress on `feature/accounts-1-password-rule`. Answers: [requirements.md](requirements.md), section 5.**
+**Status: APPROVED 2026-10-24 (owner: "Yes", D1 yes, D2 yes, D3 hide, D4 yes, D5 yes, D6 to D16 as written, passwords 8 for providers and 10 for staff and admin). Spec is draft PR #45; **Phase 1 is built, draft PR #46** (`feature/accounts-1-password-rule`; backend 1486 and frontend 1566 tests passing; it also made "provider to staff needs a new 10-character password" part of Phase 1 instead of Phase 4). Answers: [requirements.md](requirements.md), section 5.**
 Rules (CLAUDE.md): tests first; one requirement per change; one PR per phase, **draft** until its checklist is done; IDs (FR-48 to FR-56, US-17 to US-21, NFR-06, NFR-07) in commits and tests; `git branch --show-current` before every commit and push, never on `main`; no AI lines in commits or PRs; no secrets; no `.env` edits; Resend, Termii, Render and Netlify settings are changed by the owner only. Each phase is one branch from an up-to-date `main`: `feature/accounts-1-password-rule`, `feature/accounts-2-foundation`, and so on. Estimates are working days for one person, tests and specs included, about plus or minus 30%.
 
 ## Order and sizes
