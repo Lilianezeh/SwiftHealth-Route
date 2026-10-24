@@ -54,6 +54,8 @@ async def get_current_user(
         ) from None
     except auth_service.InactiveAccountError:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "This account is deactivated.") from None
+    except auth_service.AccountNotReadyError as error:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, error.message) from None
 
 
 def require_role(*allowed_roles: Role) -> Callable[[User], User]:

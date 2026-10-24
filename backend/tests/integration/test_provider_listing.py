@@ -93,6 +93,8 @@ async def test_a_provider_reads_only_their_own_listing(
         phone="+2340000000088",
         password_hash="x",
         role=Role.provider,
+        email_verified_at=NOW,  # a made-by-hand user must be confirmed to log in (FR-48)
+        phone_verified_at=NOW,
     )
     session.add(other)
     await session.commit()

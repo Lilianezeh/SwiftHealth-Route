@@ -13,6 +13,14 @@ class Role(str, Enum):
     provider = "provider"
 
 
+class ApprovalStatus(str, Enum):
+    """Whether an admin has let the account in. Plain text in `users.approval_status`, not a database enum."""
+
+    pending = "pending"  # a staff sign-up waiting for an admin
+    approved = "approved"  # accounts made before sign-up, accounts an admin makes, providers who signed up
+    rejected = "rejected"
+
+
 class ListingStatus(str, Enum):
     draft = "draft"
     pending_review = "pending_review"

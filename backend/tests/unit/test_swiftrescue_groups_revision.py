@@ -29,7 +29,9 @@ def test_it_follows_the_last_revision_and_the_history_still_has_one_head() -> No
     scripts = ScriptDirectory.from_config(config)
 
     assert module.down_revision == LAST_REVISION_BEFORE_THIS_ONE
-    assert scripts.get_heads() == [module.revision]
+    # Later revisions (the account foundation) now follow it: the history is still one line with one head.
+    assert len(scripts.get_heads()) == 1
+    assert module.revision in {revision.revision for revision in scripts.walk_revisions()}
 
 
 def test_it_lists_the_three_new_categories_and_the_three_renames_written_out() -> None:

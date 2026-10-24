@@ -1,8 +1,10 @@
 """Security helpers: password hashing and JWT tokens. See specs/backend/api-spec.md section 4.
 
-Two token types, told apart by the "purpose" claim so one can never be used as the other:
+Token types, told apart by the "purpose" claim so one can never be used as another:
 - access token: identifies the user (no role; the role is read from the database on each request).
-- challenge token: proves the password step passed and carries a keyed hash of the SMS code (FR-30).
+- code tokens: carry a keyed hash of a code that was sent, and nothing else. The login challenge
+  (FR-30, the SMS code after the password step) is one; the email, phone and password-reset codes
+  (FR-48, FR-54) are the others.
 PyJWT requires the "sub" claim to be a string, so the user id is stored as str and converted back to int.
 """
 import hashlib
@@ -21,6 +23,13 @@ JWT_ALGORITHM = "HS256"
 CHALLENGE_TOKEN_LIFETIME = timedelta(minutes=5)
 ACCESS_PURPOSE = "access"
 CHALLENGE_PURPOSE = "login_challenge"
+# The codes of sign-up and of a forgotten password (FR-48, FR-54, accounts spec).
+EMAIL_CONFIRM_PURPOSE = "email_confirm"
+PHONE_CONFIRM_PURPOSE = "phone_confirm"
+PASSWORD_RESET_PURPOSE = "password_reset"
+EMAIL_CODE_LIFETIME = timedelta(minutes=15)
+PHONE_CODE_LIFETIME = timedelta(minutes=5)  # an SMS is read at once, and it costs money to resend
+PASSWORD_RESET_LIFETIME = timedelta(minutes=15)
 
 # Argon2id with the pwdlib defaults (FastAPI docs, OAuth2 with Password and JWT).
 _password_hasher = PasswordHash.recommended()
@@ -111,17 +120,30 @@ def decode_access_token(token: str) -> int:
     return _user_id_from(_decode(token, ACCESS_PURPOSE))
 
 
-def create_challenge_token(
-    user_id: int, code: str, expires_delta: timedelta = CHALLENGE_TOKEN_LIFETIME
-) -> str:
+def create_code_token(user_id: int, code: str, purpose: str, expires_delta: timedelta) -> str:
+    """A signed token that proves a code was sent to a user, without storing the code (a keyed hash is in it).
+
+    The `purpose` (login, email, phone, password reset) is in the signed claims, so a token made for
+    one use is refused for another.
+    """
     return _encode(
-        {"sub": str(user_id), "purpose": CHALLENGE_PURPOSE, "code_hash": hash_login_code(user_id, code)},
-        expires_delta,
+        {"sub": str(user_id), "purpose": purpose, "code_hash": hash_login_code(user_id, code)}, expires_delta
     )
 
 
-def decode_challenge_token(token: str) -> ChallengeClaims:
-    claims = _decode(token, CHALLENGE_PURPOSE)
+def decode_code_token(token: str, purpose: str) -> ChallengeClaims:
+    """Returns the user id and the code hash. Raises InvalidTokenError for a bad, expired or wrong token."""
+    claims = _decode(token, purpose)
     if "code_hash" not in claims:
-        raise InvalidTokenError("Challenge token has no code")
+        raise InvalidTokenError("Token has no code")
     return ChallengeClaims(user_id=_user_id_from(claims), code_hash=claims["code_hash"])
+
+
+def create_challenge_token(
+    user_id: int, code: str, expires_delta: timedelta = CHALLENGE_TOKEN_LIFETIME
+) -> str:
+    return create_code_token(user_id, code, CHALLENGE_PURPOSE, expires_delta)
+
+
+def decode_challenge_token(token: str) -> ChallengeClaims:
+    return decode_code_token(token, CHALLENGE_PURPOSE)

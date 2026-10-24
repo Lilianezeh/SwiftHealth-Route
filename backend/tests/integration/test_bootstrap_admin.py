@@ -42,6 +42,9 @@ async def test_it_creates_an_active_admin_with_a_hashed_password_and_an_audit_en
     )
     assert user.password_hash != GOOD["BOOTSTRAP_ADMIN_PASSWORD"]
     assert verify_password(GOOD["BOOTSTRAP_ADMIN_PASSWORD"], user.password_hash)
+    # The first admin counts as approved and confirmed, so they can log in on production (Phase 2).
+    assert user.approval_status == "approved"
+    assert user.email_verified_at is not None and user.phone_verified_at is not None
     [entry] = (await session.exec(select(AuditEntry))).all()
     assert (entry.action, entry.reference) == ("user_create", "bootstrap-admin")
     assert GOOD["BOOTSTRAP_ADMIN_PASSWORD"] not in " ".join(str(v) for v in entry.model_dump().values())
