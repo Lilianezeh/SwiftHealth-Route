@@ -219,6 +219,96 @@ describe("adding a user", () => {
   });
 });
 
+describe("the password rule: 8 characters for a provider, 10 for staff and admin (FR-56)", () => {
+  async function openAddForm() {
+    const calls = stubApi();
+    render(<AdminStaffPage />);
+    await screen.findAllByRole("listitem");
+    await userEvent.click(screen.getByRole("button", { name: "Add user" }));
+    await userEvent.type(screen.getByLabelText("Name"), "Ada New");
+    await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+    await userEvent.type(screen.getByLabelText("Phone"), "0803 000 0001");
+    return calls;
+  }
+
+  it("asks for 8 characters when the role is provider and for 10 for every staff role", async () => {
+    await openAddForm();
+
+    for (const role of ["verifier", "editor", "admin"]) {
+      await userEvent.selectOptions(screen.getByLabelText("Role"), role);
+      expect(screen.getByLabelText("Password (at least 10 characters)")).toBeInTheDocument();
+    }
+    await userEvent.selectOptions(screen.getByLabelText("Role"), "provider");
+    expect(screen.getByLabelText("Password (at least 8 characters)")).toBeInTheDocument();
+  });
+
+  it("sends an 8-character password for a provider but not for a staff role", async () => {
+    const { writes } = await openAddForm();
+
+    await userEvent.selectOptions(screen.getByLabelText("Role"), "editor");
+    await userEvent.type(screen.getByLabelText("Password (at least 10 characters)"), "river78!");
+    await userEvent.click(screen.getByRole("button", { name: "Add this user" }));
+    expect(screen.getByText("The password needs at least 10 characters.")).toBeInTheDocument();
+    expect(writes()).toHaveLength(0);
+
+    await userEvent.selectOptions(screen.getByLabelText("Role"), "provider"); // the same 8 characters now pass
+    await userEvent.click(screen.getByRole("button", { name: "Add this user" }));
+    expect(await screen.findByText("Ada New was added.")).toBeInTheDocument();
+    expect(writes()[0].body).toMatchObject({ role: "provider", password: "river78!" });
+  });
+
+  it("shows the sentence the API gives for a very common password, and keeps the form", async () => {
+    stubApi({ write: () => json({ detail: "This password is too common. Choose another one." }, 422) });
+    render(<AdminStaffPage />);
+    await screen.findAllByRole("listitem");
+    await userEvent.click(screen.getByRole("button", { name: "Add user" }));
+    await userEvent.type(screen.getByLabelText("Name"), "Ada New");
+    await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+    await userEvent.type(screen.getByLabelText("Phone"), "0803 000 0001");
+    await userEvent.type(screen.getByLabelText("Password (at least 10 characters)"), "qwertyuiop");
+
+    await userEvent.click(screen.getByRole("button", { name: "Add this user" }));
+
+    expect(await screen.findByText("This password is too common. Choose another one.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toHaveValue("Ada New");
+  });
+
+  async function openRow(name: string) {
+    const calls = stubApi();
+    render(<AdminStaffPage />);
+    const rows = await screen.findAllByRole("listitem");
+    const row = rows.find((candidate) => candidate.textContent?.includes(name)) as HTMLElement;
+    await userEvent.click(within(row).getByRole("button", { name: `Edit ${name}` }));
+    return calls;
+  }
+
+  it("asks for a new 10-character password when a provider is made staff, and sends it with the role", async () => {
+    const { writes } = await openRow("Person 4");
+    expect(screen.getByLabelText("New password for Person 4 (at least 8 characters)")).toBeInTheDocument();
+
+    await userEvent.selectOptions(screen.getByLabelText("Role of Person 4"), "verifier");
+    expect(screen.getByLabelText("New password for Person 4 (at least 10 characters)")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Save Person 4" }));
+    expect(screen.getByText("To make a provider staff, type a new password of at least 10 characters.")).toBeInTheDocument();
+    expect(writes()).toHaveLength(0);
+
+    await userEvent.type(screen.getByLabelText("New password for Person 4 (at least 10 characters)"), "river-bed!");
+    await userEvent.click(screen.getByRole("button", { name: "Save Person 4" }));
+    await screen.findByText("Person 4 was updated.");
+    expect(writes()[0].body).toEqual({ role: "verifier", password: "river-bed!" });
+  });
+
+  it("lets a staff account become a provider with no new password", async () => {
+    const { writes } = await openRow("Person 2");
+
+    await userEvent.selectOptions(screen.getByLabelText("Role of Person 2"), "provider");
+    await userEvent.click(screen.getByRole("button", { name: "Save Person 2" }));
+
+    await screen.findByText("Person 2 was updated.");
+    expect(writes()[0].body).toEqual({ role: "provider" });
+  });
+});
+
 describe("editing a user", () => {
   async function openEditor(name: string) {
     const { writes } = stubApi();

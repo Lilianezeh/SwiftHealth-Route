@@ -20,3 +20,8 @@ export function canOpen(role: StaffRole, area: StaffArea): boolean {
   if (area === "provider") return role === "provider";
   return role === "verifier" || role === "editor" || role === "admin";
 }
+
+/** The shortest password for a role (FR-56): 8 for a provider, 10 for staff and admin. The API checks it too, and also refuses very common passwords. */
+export function minPasswordLength(role: StaffRole): number {
+  return role === "provider" ? 8 : 10;
+}
