@@ -609,3 +609,15 @@ Things the owner must do before real visitors use the site.
   names (also for the database rows), the three new groups, "no phone numbers added by the code", and the merge order, and I checked production.
 - **Tomorrow:** the home page photos in the sections (How we verify and SwiftRescue as new parts, fade and slide on scroll, the two SwiftRescue photos),
   Lighthouse before and after, then my own Lighthouse run on the preview.
+
+## Day 11 — 2026-10-23 and 2026-10-24
+- **Built:** the home page "Find by type" slideshow was polished (bigger cards with a line each, content in the lower part, 800 and 1600 px photos,
+  a light blue tint, a Pause icon, a gentle lift) and **#44 is merged into `main`**. The accounts, sign-up and facility ownership spec was written
+  (`specs/2026-10-23-accounts-and-facility-ownership/`, nine phases, one PR each) and approved with my answers.
+- **Measured (PageSpeed Insights, mobile, production, after #44, 24 Oct 2026):** **Performance 100, Accessibility 100, Best Practices 100,
+  SEO 100.** (Before the work, my own Lighthouse gave 73 and 100; the laptop runs in the PR were only a guide.)
+- **Decisions:** one new table, `facility_owners` (the 10th, my yes); a move hides the listing until staff re-check it; passwords are 8 characters
+  minimum for providers and 10 for staff and admin, and very common passwords are blocked for everyone; email codes need a verified sending domain in Resend
+  (options and prices are in section 5b of the requirements; I buy and set up nothing yet).
+- **AI use:** Claude Code read the code and wrote the spec and, from Phase 1, the tests and code; I chose the answers D1 to D5, the password rule and what
+  to do about the Resend domain.
