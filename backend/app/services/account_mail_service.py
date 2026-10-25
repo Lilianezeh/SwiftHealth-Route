@@ -48,3 +48,19 @@ async def send_email_code(to: str, code: str, purpose: str) -> None:
         f"It works for {minutes} minutes. If you did not ask for it, ignore this email: nothing changes.\n"
     )
     await resend.send_email(to, subject, body, required=True)
+
+
+async def send_account_exists_notice(to: str) -> None:
+    """Tells the owner of an email that someone tried to sign up with it and that it is already an account.
+
+    Sign-up gives the same answer on screen whether the email is an account or not (so nobody can find out
+    who has one), so this email is how the owner learns it. Best effort and not `required`: with no Resend
+    key nothing is sent. No code, no link, no name of the person who asked, no address in the text.
+    """
+    body = (
+        f"Someone, maybe you, tried to sign up to {BRAND} with this email address. "
+        "It already has an account.\n\n"
+        "If it was you, log in with your password instead. "
+        "If it was not you, ignore this email: nothing changes.\n"
+    )
+    await resend.send_email(to, f"You already have a {BRAND} account", body)

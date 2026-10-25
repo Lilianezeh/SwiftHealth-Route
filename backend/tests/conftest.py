@@ -20,6 +20,9 @@ from app.core.database import get_session
 from app.core.rate_limit import (
     login_limiter,
     report_limiter,
+    signup_code_failure_limiter,
+    signup_email_limiter,
+    signup_limiter,
     sms_code_limiter,
     submission_limiter,
     totp_failure_limiter,
@@ -96,6 +99,9 @@ def reset_rate_limiters() -> None:
     submission_limiter.reset()
     sms_code_limiter.reset()
     totp_failure_limiter.reset()
+    signup_limiter.reset()
+    signup_email_limiter.reset()
+    signup_code_failure_limiter.reset()
 
 
 @pytest.fixture

@@ -95,6 +95,12 @@ sms_code_limiter = RateLimiter(SMS_CODES_PER_HOUR, timedelta(hours=1))  # also c
 # rest of the hour (FR-58). The key is "totp:<user id>". Kept in memory like the others.
 WRONG_APP_CODES_PER_HOUR = 10
 totp_failure_limiter = RateLimiter(WRONG_APP_CODES_PER_HOUR, timedelta(hours=1))
+# Sign-up (FR-48): 10 attempts per client address per hour, 3 per email per hour (an existing email counts
+# too, so the limit says nothing about who has an account), and 10 wrong codes per account per hour. In
+# memory, like the others.
+signup_limiter = RateLimiter(10, timedelta(hours=1))
+signup_email_limiter = RateLimiter(3, timedelta(hours=1))
+signup_code_failure_limiter = RateLimiter(10, timedelta(hours=1))
 # The public report form (NFR-06, api-spec "POST /reports"): 5 reports per client IP per hour.
 REPORT_MAX_CALLS = 5
 REPORT_WINDOW = timedelta(hours=1)

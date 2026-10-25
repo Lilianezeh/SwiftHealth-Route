@@ -1,9 +1,10 @@
 from datetime import datetime
 
+from sqlalchemy import exists, or_
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import User
+from app.models import AuditEntry, Listing, User, UserReport, VerificationCheck
 from app.models.base import ApprovalStatus, Role, utcnow
 
 
@@ -32,12 +33,13 @@ async def create(
     role: Role,
     confirmed: bool = True,
     approval_status: str = ApprovalStatus.approved.value,
+    signup_note: str | None = None,
 ) -> User:
     """Adds the user and flushes so it has an id. The caller commits.
 
     An account made by an admin, the seed or the first-admin command is `confirmed` (the admin typed
-    the email and the phone) and approved. Sign-up (Phase 3) passes `confirmed=False`, and
-    `approval_status="pending"` for staff.
+    the email and the phone) and approved. Sign-up passes `confirmed=False`, and
+    `approval_status="pending"` and a `signup_note` for staff.
     """
     confirmed_at = utcnow() if confirmed else None
     user = User(
@@ -49,10 +51,35 @@ async def create(
         approval_status=approval_status,
         email_verified_at=confirmed_at,
         phone_verified_at=confirmed_at,
+        signup_note=signup_note,
     )
     session.add(user)
     await session.flush()
     return user
+
+
+async def list_stale_unconfirmed_without_records(
+    session: AsyncSession, created_before: datetime
+) -> list[User]:
+    """Accounts made before `created_before`, email or phone never confirmed, that no other row points to.
+
+    They can do nothing, so keeping their personal data helps nobody (NDPA, data minimisation). An account
+    named in an audit entry, a listing, a report or a check is never in this list, so deleting these
+    breaks no row.
+    """
+    named_somewhere = or_(
+        exists().where(col(AuditEntry.user_id) == col(User.id)),
+        exists().where(col(Listing.owner_id) == col(User.id)),
+        exists().where(col(Listing.created_by) == col(User.id)),
+        exists().where(col(UserReport.resolved_by) == col(User.id)),
+        exists().where(col(VerificationCheck.staff_id) == col(User.id)),
+    )
+    query = select(User).where(
+        col(User.created_at) < created_before,
+        or_(col(User.email_verified_at).is_(None), col(User.phone_verified_at).is_(None)),
+        ~named_somewhere,
+    )
+    return list((await session.exec(query)).all())
 
 
 async def list_active_with_roles(session: AsyncSession, roles: set[Role]) -> list[User]:
