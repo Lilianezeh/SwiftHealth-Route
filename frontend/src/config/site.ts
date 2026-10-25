@@ -21,7 +21,13 @@ export const siteConfig = {
   findCareLink: { label: "Find care", href: "/find" },
   emergencyLink: { label: brand.emergencyName, href: "/emergency" },
   facilitiesLink: { label: "For facilities", href: "/list-your-facility" },
-  // On a phone the red SwiftRescue button stays in the bar (FR-02); the Menu panel holds the other two.
+  // After For facilities (accounts phase 3b, decision D16): Log in and Sign up, or My account when a session exists in the tab.
+  // The footer does not get them.
+  logInLink: { label: "Log in", href: "/log-in" },
+  signUpLink: { label: "Sign up", href: "/sign-up" },
+  myAccountLabel: "My account",
+  // On a phone the red SwiftRescue button stays in the bar (FR-02); the Menu panel holds the other two, then (MobileMenu itself)
+  // Log in and Sign up, or My account.
   menuLinks: [
     { label: "Find care", href: "/find" },
     { label: "For facilities", href: "/list-your-facility" },

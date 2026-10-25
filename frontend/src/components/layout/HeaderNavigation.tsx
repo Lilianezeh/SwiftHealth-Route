@@ -6,6 +6,7 @@
 import { Siren } from "lucide-react";
 import Link from "next/link";
 
+import { AccountLinks } from "@/components/layout/AccountLinks";
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { siteConfig } from "@/config/site";
@@ -40,6 +41,8 @@ export function HeaderNavigation({ isHomePage }: HeaderNavigationProps) {
         <Link href={siteConfig.facilitiesLink.href} prefetch={prefetch} className={BAR_LINK}>
           {siteConfig.facilitiesLink.label}
         </Link>
+        {/* Log in and Sign up, or My account: the one small client part of the bar (accounts phase 3b, D16). */}
+        <AccountLinks prefetch={prefetch} />
       </nav>
       <div className="md:hidden">
         <MobileMenu links={menuLinks} />

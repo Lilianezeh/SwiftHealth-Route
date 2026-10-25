@@ -70,13 +70,18 @@ describe("no page of another address is downloaded early: every link of the home
 });
 
 describe("the header and the footer are server components (R44)", () => {
-  it("send no JavaScript of their own: no use client and no usePathname in the layout components except the Menu button", () => {
+  it("send no JavaScript of their own: no use client and no usePathname in the layout components except the Menu button and the account links", () => {
     for (const file of ["PageFrame", "SiteHeader", "HeaderNavigation", "SiteFooter", "Logo"]) {
       const source = readSource(`components/layout/${file}.tsx`);
       expect(source, file).not.toMatch(/["']use client["']/);
       expect(source, file).not.toMatch(/usePathname|useEffect|useState|next\/navigation/);
     }
-    expect(readSource("components/layout/MobileMenu.tsx")).toMatch(/^"use client";/); // the one client part of the header
+    // The two client parts of the header: the Menu button, and (accounts phase 3b) the Log in / Sign up / My account links,
+    // which only read the tab's own session and never call the API.
+    expect(readSource("components/layout/MobileMenu.tsx")).toMatch(/^"use client";/);
+    const accountLinks = readSource("components/layout/AccountLinks.tsx");
+    expect(accountLinks).toMatch(/^"use client";/);
+    expect(accountLinks).not.toMatch(/lib\/api|fetch\(/);
   });
 
   it("sends no JavaScript from the home page's own components either, except the background slideshow (owner, 2026-10-23)", () => {
@@ -114,6 +119,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/how-we-verify",
         "/list-your-facility",
         "/listing/[slug]",
+        "/log-in", // accounts phase 3b, the login for everyone (the same form as /admin/login)
         "/privacy",
         "/provider",
         "/provider/edit", // phase 12, my facility: change phones, hours, services, description
@@ -121,6 +127,9 @@ describe("the route groups choose the header and the footer, and no address chan
         "/provider/payment-complete", // phase 12, where Paystack sends the provider back
         "/report/[slug]", // was /report/[id] until phase 9 (decision B1 in specs/2026-10-20-reports/)
         "/search",
+        "/sign-up", // accounts phase 3b, the choice and the form
+        "/sign-up/confirm", // the email code, then the phone code when Termii is live
+        "/sign-up/waiting", // staff wait for an admin
         "/terms",
       ].sort(),
     );

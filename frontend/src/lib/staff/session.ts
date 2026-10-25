@@ -7,6 +7,13 @@
 import type { StaffRole, StaffSession, StaffUser } from "@/types/staff";
 
 export const STAFF_SESSION_KEY = "swifthealth.staff-session";
+/** Fired on `window` when this tab saves or clears the session. The browser's own `storage` event only reaches other tabs, and the
+ * header (Log in / Sign up or My account) must change at once in this one. */
+export const STAFF_SESSION_CHANGED = "swifthealth:staff-session-changed";
+
+function announceChange(): void {
+  window.dispatchEvent(new Event(STAFF_SESSION_CHANGED));
+}
 
 const ROLES: StaffRole[] = ["verifier", "editor", "admin", "provider"];
 
@@ -16,6 +23,7 @@ export function saveStaffSession(session: StaffSession): void {
   } catch {
     // nothing to do: without storage the visitor logs in again
   }
+  announceChange();
 }
 
 function looksLikeAUser(value: unknown): value is StaffUser {
@@ -52,4 +60,5 @@ export function clearStaffSession(): void {
   } catch {
     // nothing to do
   }
+  announceChange();
 }
