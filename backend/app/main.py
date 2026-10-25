@@ -13,14 +13,14 @@ from app.core.logging_filters import install_log_redaction
 
 install_log_redaction()  # the API access log must never keep a visitor's lat and lng (NFR-07)
 
-# uvicorn's own logger, so the line shows in the Render log at INFO (our own modules' loggers show warnings only).
+# uvicorn's own logger, so the line shows in the Render log at INFO (our modules' loggers show warnings only).
 startup_logger = logging.getLogger("uvicorn.error")
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Runs once when the API starts (FastAPI docs: Lifespan Events). It says, in one fixed sentence, whether
-    the authenticator-app key can be used and why not: the key, or any part of it, is never written (FR-58)."""
+    the authenticator-app key can be used and why not: the key, or part of it, is never written (FR-58)."""
     report = secret_box.describe_key()
     startup_logger.log(logging.INFO if report.usable else logging.WARNING, report.sentence)
     yield

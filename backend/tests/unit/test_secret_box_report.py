@@ -1,9 +1,10 @@
 """What the API says at start-up about the authenticator-app key. Requirements: FR-58, NFR-06.
 Spec: specs/2026-10-23-accounts-and-facility-ownership/ (found when production said "not available yet").
 
-`secret_box.describe_key()` tells, in one fixed sentence, whether `TOTP_ENCRYPTION_KEY` can be used and, if not, why: not set,
-the public development key, or not a key of the right form. The sentence never holds the key, nor any part of it; for a key of
-the wrong form it says how many characters the value has (a good key has 44), which is how a lost "=" or a cut paste is seen.
+`secret_box.describe_key()` tells, in one fixed sentence, whether `TOTP_ENCRYPTION_KEY` can be used and,
+if not, why: not set, the public development key, or not a key of the right form. The sentence never
+holds the key, nor any part of it; for a key of the wrong form it says how many characters the value has
+(a good key has 44), which is how a lost "=" or a cut paste is seen.
 """
 
 import base64
@@ -52,7 +53,9 @@ def test_a_blank_key_counts_as_not_set(monkeypatch: pytest.MonkeyPatch) -> None:
     assert secret_box.describe_key().status == "missing"
 
 
-def test_in_development_with_no_key_the_public_key_is_used_and_it_says_so(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_in_development_with_no_key_the_public_key_is_used_and_it_says_so(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     set_key(monkeypatch, "", "development")
 
     report = secret_box.describe_key()
@@ -61,7 +64,9 @@ def test_in_development_with_no_key_the_public_key_is_used_and_it_says_so(monkey
     assert "development" in report.sentence
 
 
-def test_the_public_development_key_is_refused_outside_development_and_says_so(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_public_development_key_is_refused_outside_development_and_says_so(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     set_key(monkeypatch, secret_box.DEVELOPMENT_KEY)
 
     report = secret_box.describe_key()
@@ -96,7 +101,8 @@ def test_a_key_of_the_wrong_form_says_how_long_the_value_is_and_never_shows_it(
 
 
 def test_the_report_agrees_with_what_the_secret_box_does(monkeypatch: pytest.MonkeyPatch) -> None:
-    for key, environment in [(GOOD, "production"), ("", "production"), ("", "development"), (GOOD[:30], "production")]:
+    cases = [(GOOD, "production"), ("", "production"), ("", "development"), (GOOD[:30], "production")]
+    for key, environment in cases:
         set_key(monkeypatch, key, environment)
         assert secret_box.describe_key().usable == secret_box.is_available()
 
@@ -105,7 +111,8 @@ def test_the_report_agrees_with_what_the_secret_box_does(monkeypatch: pytest.Mon
 
 
 def start_up_lines(caplog: pytest.LogCaptureFixture) -> list[tuple[int, str]]:
-    return [(record.levelno, record.getMessage()) for record in caplog.records if record.name == "uvicorn.error"]
+    records = [record for record in caplog.records if record.name == "uvicorn.error"]
+    return [(record.levelno, record.getMessage()) for record in records]
 
 
 async def test_the_start_up_logs_one_info_line_when_the_key_is_good_and_never_the_key(
@@ -117,7 +124,8 @@ async def test_the_start_up_logs_one_info_line_when_the_key_is_good_and_never_th
         async with lifespan(FastAPI()):
             pass
 
-    assert start_up_lines(caplog) == [(logging.INFO, "Authenticator app: TOTP_ENCRYPTION_KEY is set and usable.")]
+    sentence = "Authenticator app: TOTP_ENCRYPTION_KEY is set and usable."
+    assert start_up_lines(caplog) == [(logging.INFO, sentence)]
     assert GOOD not in caplog.text
 
 

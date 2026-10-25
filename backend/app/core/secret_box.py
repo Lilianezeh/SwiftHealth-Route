@@ -70,7 +70,8 @@ def describe_key() -> KeyReport:
         return KeyReport(
             "invalid",
             False,
-            f"{_PREFIX} is not a usable key: the value has {len(key)} characters, and a key has 44 characters "
+            f"{_PREFIX} is not a usable key: the value has {len(key)} characters, "
+            "and a key has 44 characters "
             "(32 random bytes in URL-safe base64, ends with =), so the app set-up is not available.",
         )
     return KeyReport("ok", True, f"{_PREFIX} is set and usable.")
