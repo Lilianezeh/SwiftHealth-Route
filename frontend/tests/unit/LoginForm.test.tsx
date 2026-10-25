@@ -105,6 +105,25 @@ describe("step 1: email and password", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Staff login" })).toBeInTheDocument();
   });
 
+  it("has the shared show / hide eye on the password field, hidden at first, and the password is hidden again after Send me a code", async () => {
+    stubAuth();
+    render(<LoginForm />);
+    const password = screen.getByLabelText("Password");
+    expect(password).toHaveAttribute("type", "password");
+    await userEvent.type(password, "a-long-password");
+
+    await userEvent.click(screen.getByRole("button", { name: "Show password" }));
+    expect(password).toHaveAttribute("type", "text");
+    expect(screen.getByRole("button", { name: "Hide password" })).toHaveAttribute("aria-pressed", "true");
+    await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+    await userEvent.click(screen.getByRole("button", { name: "Send me a code" }));
+
+    await screen.findByLabelText("6-digit code");
+    await userEvent.click(screen.getByRole("button", { name: "Start again" })); // the password field is drawn again, empty and hidden
+    expect(screen.getByLabelText("Password")).toHaveAttribute("type", "password");
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+  });
+
   it("posts the email and password, then asks for the code and says where it was sent", async () => {
     const calls = stubAuth();
     render(<LoginForm />);

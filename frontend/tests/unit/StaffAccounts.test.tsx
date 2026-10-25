@@ -144,6 +144,17 @@ describe("adding a user", () => {
     expect(screen.getByLabelText("Password (at least 10 characters)")).toHaveAttribute("autocomplete", "new-password");
   });
 
+  it("has the shared show / hide eye on the password field, with new-password so the browser can suggest one", async () => {
+    await openForm();
+
+    const password = screen.getByLabelText("Password (at least 10 characters)");
+    expect(password).toHaveAttribute("autocomplete", "new-password");
+    expect(password).toHaveAttribute("type", "password");
+    await userEvent.click(screen.getByRole("button", { name: "Show password" }));
+    expect(password).toHaveAttribute("type", "text");
+    expect(password.className).toMatch(/\bmin-h-12\b/);
+  });
+
   it("offers the four roles", async () => {
     await openForm();
 
@@ -350,6 +361,19 @@ describe("editing a user", () => {
 
     expect(screen.getByText("The password needs at least 10 characters.")).toBeInTheDocument();
     expect(writes()).toHaveLength(0);
+  });
+
+  it("has the shared eye on the new password of a user too, and Save hides it again", async () => {
+    await openEditor("Person 2");
+    const password = screen.getByLabelText("New password for Person 2 (at least 10 characters)");
+
+    await userEvent.click(screen.getByRole("button", { name: "Show password" }));
+    await userEvent.type(password, "another-long-password");
+    expect(password).toHaveAttribute("type", "text");
+    await userEvent.click(screen.getByRole("button", { name: "Save Person 2" }));
+
+    await screen.findByText("Person 2 was updated.");
+    expect(screen.getByLabelText("New password for Person 2 (at least 10 characters)")).toHaveAttribute("type", "password");
   });
 
   it("has nothing to save until something changes", async () => {

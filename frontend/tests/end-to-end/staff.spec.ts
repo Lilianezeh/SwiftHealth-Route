@@ -59,7 +59,7 @@ for (const { width, height } of WIDTHS) {
       await targetsAndTextAreBigEnough(page);
 
       await page.getByLabel("Email").fill("ada@example.com");
-      await page.getByLabel("Password").fill("a-long-password");
+      await page.getByLabel("Password", { exact: true }).fill("a-long-password");
       await page.getByRole("button", { name: "Send me a code" }).click();
       await expect(page.getByText("Code sent to ••• ••• 0001")).toBeVisible();
       await expect(page.getByRole("button", { name: "Send a new code" })).toBeDisabled();
@@ -78,6 +78,39 @@ for (const { width, height } of WIDTHS) {
       expect(seen.find((request) => request.path === "/listings")?.authorization).toBe("Bearer access.jwt");
     });
 
+    test("password eye: inside the field, 48 px or more, shows and hides, never sends the form, and the password is hidden after Send me a code", async ({ page }) => {
+      const seen = await fakeApi(page, (request) => {
+        if (request.path === "/auth/login") return { body: { challenge_token: "challenge.jwt", sent_to: "+234******0001", method: "sms", can_use_sms: false } };
+        return null;
+      });
+      await page.goto("/admin/login", { waitUntil: "load" });
+      await expect(page.getByRole("heading", { level: 1, name: "Staff login" })).toBeVisible({ timeout: 60_000 });
+      const field = page.getByLabel("Password", { exact: true });
+      const eye = page.getByRole("button", { name: "Show password" });
+      await field.fill("a-long-password");
+
+      const fieldBox = (await field.boundingBox())!;
+      const eyeBox = (await eye.boundingBox())!;
+      expect(eyeBox.width).toBeGreaterThanOrEqual(48);
+      expect(eyeBox.height).toBeGreaterThanOrEqual(48);
+      expect(eyeBox.x).toBeGreaterThanOrEqual(fieldBox.x); // inside the field, at its right edge
+      expect(eyeBox.x + eyeBox.width).toBeLessThanOrEqual(fieldBox.x + fieldBox.width + 1);
+      await allIsInsideTheScreen(page, width);
+      const textPaddingRight = await field.evaluate((input) => parseFloat(getComputedStyle(input).paddingRight));
+      expect(textPaddingRight).toBeGreaterThanOrEqual(48); // the typed text never runs under the button
+
+      await eye.click();
+      await expect(field).toHaveAttribute("type", "text");
+      await expect(page.getByRole("button", { name: "Hide password" })).toHaveAttribute("aria-pressed", "true");
+      expect(seen.filter((request) => request.path === "/auth/login")).toHaveLength(0); // the eye did not send the form
+      await page.keyboard.press("Tab"); // the eye keeps its place in the tab order: the next stop is the send button
+      await page.getByLabel("Email").fill("ada@example.com");
+      await page.getByRole("button", { name: "Send me a code" }).click();
+      await expect(page.getByLabel("6-digit code")).toBeVisible();
+      await page.getByRole("button", { name: "Start again" }).click();
+      await expect(page.getByLabel("Password", { exact: true })).toHaveAttribute("type", "password");
+    });
+
     test("login: a new code after 60 seconds (no password sent again), and Start again goes back to the email", async ({ page }) => {
       await page.clock.install();
       const seen = await fakeApi(page, (request) => {
@@ -88,7 +121,7 @@ for (const { width, height } of WIDTHS) {
       await page.goto("/admin/login", { waitUntil: "load" });
       await expect(page.getByRole("heading", { level: 1, name: "Staff login" })).toBeVisible({ timeout: 60_000 });
       await page.getByLabel("Email").fill("ada@example.com");
-      await page.getByLabel("Password").fill("a-long-password");
+      await page.getByLabel("Password", { exact: true }).fill("a-long-password");
       await page.getByRole("button", { name: "Send me a code" }).click();
 
       await expect(page.getByText("Code sent to ••• ••• 4567")).toBeVisible();
@@ -107,7 +140,7 @@ for (const { width, height } of WIDTHS) {
       expect(seen.find((request) => request.path === "/auth/resend-code")?.body).toEqual({ challenge_token: "challenge.jwt" });
       await page.getByRole("button", { name: "Start again" }).click();
       await expect(page.getByLabel("Email")).toHaveValue("ada@example.com");
-      await expect(page.getByLabel("Password")).toHaveValue("");
+      await expect(page.getByLabel("Password", { exact: true })).toHaveValue("");
       await expect(page.getByLabel("6-digit code")).toHaveCount(0);
       await allIsInsideTheScreen(page, width);
     });
@@ -121,7 +154,7 @@ for (const { width, height } of WIDTHS) {
       await page.goto("/admin/login", { waitUntil: "load" });
       await expect(page.getByRole("heading", { level: 1, name: "Staff login" })).toBeVisible({ timeout: 60_000 });
       await page.getByLabel("Email").fill("ada@example.com");
-      await page.getByLabel("Password").fill("a-long-password");
+      await page.getByLabel("Password", { exact: true }).fill("a-long-password");
       await page.getByRole("button", { name: "Send me a code" }).click();
 
       await expect(page.getByLabel("Code from your app")).toBeVisible();

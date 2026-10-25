@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useStaff } from "@/components/admin/StaffGate";
 import { ResultsSkeleton } from "@/components/search/ResultsSkeleton";
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { createAdminUser, listAdminUsers, updateAdminUser } from "@/lib/api/staff";
 import { ApiError } from "@/lib/api/request";
 import { formatPhoneForReading } from "@/lib/formatters/phone";
@@ -123,7 +124,7 @@ function AccountRow({ user, isMe, onSaved }: RowProps) {
           {isMe && <p className="text-base text-ink-soft">You cannot deactivate yourself or give up your own admin role.</p>}
           <div className="flex flex-col gap-1">
             <label htmlFor={`password-${user.id}`} className="text-base font-semibold text-ink">{`New password for ${user.name} (at least ${minPasswordLength(role)} characters)`}</label>
-            <input id={`password-${user.id}`} type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className={FIELD} />
+            <PasswordField id={`password-${user.id}`} autoComplete="new-password" value={password} onChange={setPassword} />
           </div>
           {role === "provider" && (
             <div className="flex flex-col gap-1">
@@ -196,7 +197,7 @@ function AddUserForm({ onAdded, onClose }: { onAdded: (user: StaffUser) => void;
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="new-password" className="text-base font-semibold text-ink">{`Password (at least ${minPasswordLength(role)} characters)`}</label>
-        <input id="new-password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className={FIELD} />
+        <PasswordField id="new-password" autoComplete="new-password" value={password} onChange={setPassword} />
       </div>
       {problem && <p role="alert" className="rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink">{problem}</p>}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

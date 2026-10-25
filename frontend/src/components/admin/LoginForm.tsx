@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { askForSmsInstead, resendLoginCode, startLogin, verifyLoginCode } from "@/lib/api/staff";
 import { ApiError } from "@/lib/api/request";
 import { formatPhoneHint } from "@/lib/formatters/phone";
@@ -243,15 +244,7 @@ export function LoginForm() {
             <label htmlFor="staff-password" className="text-base font-semibold text-ink">
               Password
             </label>
-            <input
-              id="staff-password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className={FIELD_CLASSES}
-            />
+            <PasswordField id="staff-password" autoComplete="current-password" required value={password} onChange={setPassword} />
           </div>
           {problem && (
             <p role="alert" className="rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink">

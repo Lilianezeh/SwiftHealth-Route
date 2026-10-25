@@ -142,6 +142,23 @@ describe("switching it on", () => {
     expect(screen.queryByText(URI)).toBeNull(); // the long address is only in the QR code
   });
 
+  it("has the shared show / hide eye on the password step, and the password is hidden again once it was sent", async () => {
+    stubApi();
+    await openScreen();
+    await userEvent.click(await screen.findByRole("button", { name: "Set up the authenticator app" }));
+    const password = screen.getByLabelText("Your password");
+    expect(password).toHaveAttribute("type", "password");
+    expect(password).toHaveAttribute("autocomplete", "current-password");
+
+    await userEvent.click(screen.getByRole("button", { name: "Show password" }));
+    expect(password).toHaveAttribute("type", "text");
+    await userEvent.type(password, "my-password");
+    await userEvent.click(screen.getByRole("button", { name: "Show the QR code" }));
+
+    await screen.findByAltText("QR code to scan with your authenticator app");
+    expect(screen.queryByLabelText("Your password")).toBeNull(); // the step is gone, with the password
+  });
+
   it("does not ask the server before a password is typed", async () => {
     const calls = stubApi();
     await openScreen();
