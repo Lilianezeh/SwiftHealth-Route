@@ -6,6 +6,12 @@ Requirements: [requirements.md](requirements.md). Plan: [plan.md](plan.md). One 
 
 - 8 characters minimum for a provider, 10 for staff and admin, common passwords blocked for everyone, a provider made staff needs a new 10-character password. Backend 1486 tests, frontend 1566 of 1567 (a load flake that passed alone).
 
+## Phase 2c follow-up: the start-up line about the key (2026-10-25)
+
+**Why:** after #51 was merged, production's `/admin/security` said "The authenticator app is not available yet" although `TOTP_ENCRYPTION_KEY` was set. By GET requests (no login, no key read) the live API had every new route, so the code was deployed; the only thing that makes the page say it is `available: false`, i.e. the API's process cannot use the key (not set in that process, the public development key, or a value that is not 32 bytes of URL-safe base64, often a lost `=`). **Nothing in the log said which.** Now one fixed line at start-up does (api-spec 4b), without the key or any part of it; for a value of the wrong form it gives its number of characters (a good key has 44).
+- **Tests (first):** `tests/unit/test_secret_box_report.py` (16: every state, a value without its `=` says 43 characters, a cut paste, hex, 24 bytes, the sentence never holds the key or its first characters, the report agrees with `is_available()`, the start-up logs INFO for a good key and WARNING for the others and the API still starts). **Backend: 1670 passed, `ruff` clean** (full run). No frontend change.
+- **Render:** nothing to set. After the deploy, open the API's log: the line is near the top of the start-up.
+
 ## Phase 2c: the authenticator app (FR-58; draft PR, 2026-10-24; the owner's answers D17, D18, D19 all yes)
 
 **What changed for people:** `/admin/security` (every role, a **Security** link in the staff bar): set up the authenticator app with the password, a real QR code and the key to type, the first code, and ten backup codes shown once; get new backup codes; switch it off. At login a person with the app is asked for the code from the app and **no SMS is sent**; a backup code works instead; SMS only when Termii is set up. A person without the app gets an SMS code as before, or an **email code** while Termii is off and Resend is on (D19). An offer under the staff bar asks anyone without the app (an admin more firmly) to switch it on; nothing is forced. Another admin can reset someone's app (`POST /admin/users/{id}/reset-two-factor`), and the only admin has the one-time start-up variable `RESET_TWO_FACTOR_FOR_EMAIL`.
