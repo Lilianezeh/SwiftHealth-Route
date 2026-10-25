@@ -35,6 +35,14 @@ class SelfLockoutError(Exception):
     """An admin tried to deactivate themselves or give up their own admin role."""
 
 
+class EmailNotConfirmedError(Exception):
+    """The email of the account is not confirmed yet, so its phone cannot be confirmed by a call."""
+
+
+class NoPhoneError(Exception):
+    """The account has no phone number to confirm."""
+
+
 class NotAProviderError(Exception):
     """A listing can only be linked to a user whose role is provider."""
 
@@ -151,3 +159,33 @@ async def update_user(
         )
     await session.commit()
     return UserRead.model_validate(user)
+
+
+async def confirm_phone_by_call(session: AsyncSession, admin: User, user_id: int, moment: datetime) -> None:
+    """The admin phoned the person at the number on the account and heard them confirm it (decision D20).
+
+    Used when Termii is off, so no SMS code could confirm the phone. It confirms nothing else and approves
+    nothing. Asking again for a phone that is already confirmed changes nothing and writes no second entry.
+    The audit entry names the account, never the number (NDPA data minimisation).
+    """
+    user = await user_repository.get_by_id(session, user_id)
+    if user is None:
+        raise UserNotFoundError
+    if user.phone_verified_at is not None:
+        return
+    if user.email_verified_at is None:
+        raise EmailNotConfirmedError
+    if not user.phone:
+        raise NoPhoneError
+    user.phone_verified_at = moment
+    await user_repository.save(session, user)
+    await audit_repository.add_entry(
+        session,
+        user_id=admin.id,
+        listing_id=None,
+        action="phone_confirmed_by_call",
+        field_changed="phone",
+        new_value=f"confirmed for user {user.id}",
+        changed_at=moment,
+    )
+    await session.commit()

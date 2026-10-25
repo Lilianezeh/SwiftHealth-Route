@@ -2,10 +2,11 @@
 Spec: specs/2026-10-23-accounts-and-facility-ownership/ (Phase 3a); decisions D6, D8 and D2.
 
 The road: `start_signup` makes the account (not usable: email and phone unconfirmed) and emails a code;
-`confirm_email` checks it and texts a code to the phone; `confirm_phone` checks that. A provider is then
-ready (`approved` from the start); a staff account is `pending` and ready for nothing until an admin
-approves it (Phase 4). The codes are signed tokens (nothing is stored), tied to the account and to what
-they are for.
+`confirm_email` checks it and, only when Termii is live, texts a code to the phone; `confirm_phone` checks
+that. Without Termii the email code ends the road and the phone stays not confirmed until an admin records
+a call (decision D20). A provider is then ready (`approved` from the start); a staff account is `pending`
+and ready for nothing until an admin approves it (Phase 4). The codes are signed tokens (nothing is
+stored), tied to the account and to what they are for.
 
 Nobody can find out who has an account: sign-up gives the same answer for an email that is already an
 account (a token that can never be confirmed, and a notice to the owner of the email, who is the only one
@@ -50,7 +51,12 @@ from app.models.base import ApprovalStatus, Role
 from app.repositories import audit_repository, user_repository
 from app.schemas.signup import SignupRequest
 from app.services import account_mail_service, staff_alert_service
-from app.services.auth_service import CodeNotSentError, CodeTooSoonError, TooManyCodesError
+from app.services.auth_service import (
+    CodeNotSentError,
+    CodeTooSoonError,
+    TooManyCodesError,
+    phone_must_be_confirmed,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -90,16 +96,23 @@ class NextStep:
     sent_to: str
 
 
+@dataclass(frozen=True)
+class EmailConfirmed:
+    """After the email code: the phone code that was texted (Termii live), or the outcome (no Termii)."""
+
+    phone_step: NextStep | None
+    outcome: str | None  # "active" or "waiting_for_approval" when the sign-up is finished
+
+
 def signup_is_open() -> bool:
-    """Sign-up is closed unless the setting is on; outside development it also needs Resend and Termii,
-    because a code that cannot be sent cannot be confirmed, and an account that nobody can use must not be
-    made (decision D2)."""
+    """Sign-up is closed unless the setting is on; outside development it also needs Resend, because a code
+    that cannot be sent cannot be confirmed, and an account that nobody can use must not be made (decision
+    D2). Termii is not needed: without it the phone is confirmed by an admin's call (decision D20)."""
     if not settings.signup_enabled:
         return False
     if settings.app_env == "development":
         return True
-    email_can_be_sent = bool(settings.resend_api_key and settings.resend_from_email)
-    return email_can_be_sent and bool(settings.termii_api_key)
+    return bool(settings.resend_api_key and settings.resend_from_email)
 
 
 def _role_for(account_type: str) -> Role:
@@ -107,8 +120,10 @@ def _role_for(account_type: str) -> Role:
     return Role.provider if account_type == "provider" else Role.verifier
 
 
-def _both_confirmed(user: User) -> bool:
-    return user.email_verified_at is not None and user.phone_verified_at is not None
+def _is_an_account(user: User) -> bool:
+    """A confirmed email makes it an account, whatever its phone: without Termii the phone waits for a call
+    (D20), and restarting such an account would replace the password of a usable one."""
+    return user.email_verified_at is not None
 
 
 async def _use_a_code(session: AsyncSession, key: str) -> None:
@@ -181,7 +196,7 @@ async def start_signup(session: AsyncSession, payload: SignupRequest, moment: da
     sent_to = mask_email(payload.email)
     existing = await user_repository.get_by_email(session, payload.email)
 
-    if existing is not None and _both_confirmed(existing):
+    if existing is not None and _is_an_account(existing):
         await _use_a_code(session, f"mail:{existing.id}")
         try:
             await account_mail_service.send_account_exists_notice(existing.email)
@@ -229,8 +244,30 @@ def _claims(token: str, purpose: str) -> ChallengeClaims:
         raise InvalidSignupCodeError from None
 
 
-async def confirm_email(session: AsyncSession, token: str, code: str, moment: datetime) -> NextStep:
-    """The code of the email is right: the email is confirmed and a code is texted to the phone."""
+async def _finish(session: AsyncSession, user: User, moment: datetime) -> str:
+    """The last confirmation is done: writes the audit entry and tells the admins about a staff sign-up.
+    Returns "active" or "waiting_for_approval"."""
+    waiting = user.approval_status != ApprovalStatus.approved.value
+    applicant = user.name  # read before the commit: nothing is read from the row after it
+    phone_confirmed = user.phone_verified_at is not None
+    await audit_repository.add_entry(
+        session,
+        user_id=user.id,
+        listing_id=None,
+        action="signup_confirmed",
+        field_changed="account",
+        new_value=f"{user.role.value} ({user.approval_status})",
+        changed_at=moment,
+    )
+    await session.commit()
+    if waiting:
+        await staff_alert_service.alert_staff_signup_waiting(session, applicant, phone_confirmed)
+    return "waiting_for_approval" if waiting else "active"
+
+
+async def confirm_email(session: AsyncSession, token: str, code: str, moment: datetime) -> EmailConfirmed:
+    """The code of the email is right: the email is confirmed. With Termii live a code is texted to the phone;
+    without it the sign-up is finished and the phone waits for an admin's call (decision D20)."""
     claims = _claims(token, EMAIL_CONFIRM_PURPOSE)
     user = await user_repository.get_by_id(session, claims.user_id)
     if user is None or user.email_verified_at is not None:  # unknown, or already confirmed (a decoy)
@@ -240,10 +277,12 @@ async def confirm_email(session: AsyncSession, token: str, code: str, moment: da
         raise _wrong_code(user)
     user.email_verified_at = moment
     await user_repository.save(session, user)
+    if not phone_must_be_confirmed():
+        return EmailConfirmed(phone_step=None, outcome=await _finish(session, user, moment))
     # If the SMS cannot be sent, all is undone: the email stays unconfirmed and the code can be retried.
     step = await _send_phone_code(session, user, moment)
     await session.commit()
-    return step
+    return EmailConfirmed(phone_step=step, outcome=None)
 
 
 async def confirm_phone(session: AsyncSession, token: str, code: str, moment: datetime) -> str:
@@ -257,21 +296,7 @@ async def confirm_phone(session: AsyncSession, token: str, code: str, moment: da
         raise _wrong_code(user)
     user.phone_verified_at = moment
     await user_repository.save(session, user)
-    waiting = user.approval_status != ApprovalStatus.approved.value
-    applicant = user.name  # read before the commit: nothing is read from the row after it
-    await audit_repository.add_entry(
-        session,
-        user_id=user.id,
-        listing_id=None,
-        action="signup_confirmed",
-        field_changed="account",
-        new_value=f"{user.role.value} ({user.approval_status})",
-        changed_at=moment,
-    )
-    await session.commit()
-    if waiting:
-        await staff_alert_service.alert_staff_signup_waiting(session, applicant)
-    return "waiting_for_approval" if waiting else "active"
+    return await _finish(session, user, moment)
 
 
 async def resend_code(session: AsyncSession, token: str, moment: datetime) -> NextStep:
@@ -305,13 +330,14 @@ async def resend_code(session: AsyncSession, token: str, moment: datetime) -> Ne
 
 
 async def purge_unconfirmed(session: AsyncSession, moment: datetime) -> int:
-    """Deletes accounts whose email or phone was never confirmed in 7 days (decision D8). Returns how many.
+    """Deletes accounts whose email was never confirmed in 7 days, or whose phone was not while Termii is
+    live (decisions D8 and D20). Returns how many.
 
     The only deletion of an account in the whole plan, and only of one that can do nothing and that no
-    other row names.
+    other row names. Without Termii the phone waits for an admin's call, so it does not count.
     """
     stale = await user_repository.list_stale_unconfirmed_without_records(
-        session, moment - timedelta(days=UNCONFIRMED_KEPT_DAYS)
+        session, moment - timedelta(days=UNCONFIRMED_KEPT_DAYS), phone_counts=phone_must_be_confirmed()
     )
     for user in stale:
         await session.delete(user)

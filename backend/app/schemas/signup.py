@@ -49,6 +49,15 @@ class ConfirmStep(BaseModel):
     sent_to: str  # a***@example.com for the email code, +234******0123 for the phone code
 
 
+class EmailConfirmedResponse(BaseModel):
+    """The answer of "confirm email". With Termii live: `phone_code_sent`, with the token and hint of the
+    phone code. Without Termii the sign-up is finished: `active` or `waiting_for_approval`, no token."""
+
+    status: Literal["phone_code_sent", "active", "waiting_for_approval"]
+    confirm_token: str | None = None
+    sent_to: str | None = None
+
+
 class ConfirmRequest(BaseModel):
     confirm_token: str  # a bad or expired one is answered with 401, not 422
     code: str  # a plain string on purpose: a wrong shape is answered with 401, not 422

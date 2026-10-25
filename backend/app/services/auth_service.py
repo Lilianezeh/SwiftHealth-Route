@@ -75,8 +75,14 @@ def ensure_account_is_ready(user: User) -> None:
         raise InactiveAccountError
     if user.email_verified_at is None:
         raise AccountNotReadyError("Confirm your email address first.")
-    if user.phone_verified_at is None:
+    if user.phone_verified_at is None and phone_must_be_confirmed():
         raise AccountNotReadyError("Confirm your phone number first.")
+
+
+def phone_must_be_confirmed() -> bool:
+    """The phone is confirmed by an SMS code only when Termii is live (decision D20). Without Termii a
+    sign-up leaves it not confirmed until an admin records a call, and the account works meanwhile."""
+    return bool(settings.termii_api_key)
 
 
 class MissingPhoneError(Exception):

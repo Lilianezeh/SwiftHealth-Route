@@ -59,9 +59,10 @@ async def create(
 
 
 async def list_stale_unconfirmed_without_records(
-    session: AsyncSession, created_before: datetime
+    session: AsyncSession, created_before: datetime, *, phone_counts: bool
 ) -> list[User]:
-    """Accounts made before `created_before`, email or phone never confirmed, that no other row points to.
+    """Accounts made before `created_before`, email never confirmed (or phone, when `phone_counts`), that
+    no other row points to.
 
     They can do nothing, so keeping their personal data helps nobody (NDPA, data minimisation). An account
     named in an audit entry, a listing, a report or a check is never in this list, so deleting these
@@ -74,11 +75,10 @@ async def list_stale_unconfirmed_without_records(
         exists().where(col(UserReport.resolved_by) == col(User.id)),
         exists().where(col(VerificationCheck.staff_id) == col(User.id)),
     )
-    query = select(User).where(
-        col(User.created_at) < created_before,
-        or_(col(User.email_verified_at).is_(None), col(User.phone_verified_at).is_(None)),
-        ~named_somewhere,
-    )
+    unconfirmed = col(User.email_verified_at).is_(None)
+    if phone_counts:
+        unconfirmed = or_(unconfirmed, col(User.phone_verified_at).is_(None))
+    query = select(User).where(col(User.created_at) < created_before, unconfirmed, ~named_somewhere)
     return list((await session.exec(query)).all())
 
 

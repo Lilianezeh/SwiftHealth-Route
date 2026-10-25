@@ -6,7 +6,12 @@ checks it and texts a code to the phone; `/auth/confirm-phone` checks that. A pr
 staff account waits for an admin (`pending`), with no access to anything. The answer of sign-up is the
 same whether the email is already an account or not, and nothing is kept if the code of the email cannot
 be sent. Everything is closed unless SIGNUP_ENABLED is set (off in production until the owner opens it),
-and in production unless Resend and Termii are set up (a code that cannot be sent cannot be confirmed).
+and in production unless Resend is set up (a code that cannot be sent cannot be confirmed).
+
+Decision D20 (owner, 2026-10-25): the phone is confirmed by an SMS code only when Termii is live. These
+tests run with Termii live (the autouse fixture below) and the section "without Termii" turns it off:
+then `confirm-email` ends the road, no SMS is sent, and the phone stays not confirmed until an admin
+records a call (tests/integration/test_confirm_phone_by_call.py).
 Every name, address and number here is fictional.
 """
 
@@ -86,6 +91,12 @@ class Clock:
 @pytest.fixture(autouse=True)
 def sign_up_is_open(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "signup_enabled", True)
+
+
+@pytest.fixture(autouse=True)
+def termii_is_live(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The SMS road of sign-up needs Termii live (D20). Sending is always replaced by the `sms` fixture."""
+    monkeypatch.setattr(settings, "termii_api_key", "key-set-for-tests")
 
 
 @pytest.fixture
@@ -176,9 +187,9 @@ def test_the_setting_is_off_unless_it_is_set() -> None:
 
 @pytest.mark.parametrize(
     ("resend_key", "termii_key"),
-    [("", ""), ("key", ""), ("", "key")],
+    [("", ""), ("", "key")],
 )
-async def test_outside_development_it_is_closed_until_both_email_and_sms_can_be_sent(
+async def test_outside_development_it_is_closed_until_the_email_can_be_sent_whatever_termii_is(
     client: AsyncClient,
     session: AsyncSession,
     mail: MailRecorder,
@@ -186,7 +197,8 @@ async def test_outside_development_it_is_closed_until_both_email_and_sms_can_be_
     resend_key: str,
     termii_key: str,
 ) -> None:
-    """A code that cannot be sent cannot be confirmed, so no account is made that nobody can use."""
+    """A code that cannot be sent cannot be confirmed, so no account is made that nobody can use.
+    Termii does not matter for opening (D20): only the email code is always needed."""
     monkeypatch.setattr(settings, "app_env", "production")
     monkeypatch.setattr(settings, "resend_api_key", resend_key)
     monkeypatch.setattr(settings, "resend_from_email", "no-reply@example.test" if resend_key else "")
@@ -199,13 +211,14 @@ async def test_outside_development_it_is_closed_until_both_email_and_sms_can_be_
     assert await user_with(session, "ada.owner@example.com") is None
 
 
-async def test_outside_development_it_opens_when_both_are_set_up(
-    client: AsyncClient, mail: MailRecorder, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("termii_key", ["", "key"])
+async def test_outside_development_it_opens_with_resend_alone_and_with_both(
+    client: AsyncClient, mail: MailRecorder, monkeypatch: pytest.MonkeyPatch, termii_key: str
 ) -> None:
     monkeypatch.setattr(settings, "app_env", "production")
     monkeypatch.setattr(settings, "resend_api_key", "key")
     monkeypatch.setattr(settings, "resend_from_email", "no-reply@example.test")
-    monkeypatch.setattr(settings, "termii_api_key", "key")
+    monkeypatch.setattr(settings, "termii_api_key", termii_key)
 
     assert (await sign_up(client)).status_code == 200
 
@@ -248,6 +261,7 @@ async def test_a_provider_signs_up_confirms_both_codes_and_can_then_log_in(
 
     email_step = await confirm_email(client, started.json()["confirm_token"], mail.last_code)
     assert email_step.status_code == 200
+    assert email_step.json()["status"] == "phone_code_sent"
     assert email_step.json()["sent_to"] == "+234******0123"
     assert sms.messages[-1][0] == "+2348030000123"
     login = await start_login(client, "ada.owner@example.com", PROVIDER["password"])
@@ -304,6 +318,7 @@ async def test_a_staff_account_waits_for_an_admin_and_the_admins_are_told(
     _to, subject, body = admin_mail[0]
     assert subject == "Someone is waiting for approval"
     assert "Bola Staff" in body
+    assert "confirmed their email and phone" in body and "phone them" not in body
     assert "bola.staff@example.com" not in body and STAFF["password"] not in body
     login = await start_login(client, "bola.staff@example.com", STAFF["password"])
     assert (login.status_code, login.json()["detail"]) == (403, WAITING)
@@ -403,11 +418,167 @@ async def test_the_email_is_lower_cased_and_the_phone_is_made_international(
     assert (user.email, user.phone) == ("ada.owner@example.com", "+2348030000123")
 
 
+# --- without Termii (D20): one code, the phone is confirmed later by a call ---
+
+
+@pytest.fixture
+def no_termii(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "termii_api_key", "")
+
+
+async def test_without_termii_the_email_code_ends_the_road_and_no_sms_is_sent(
+    client: AsyncClient, session: AsyncSession, mail: MailRecorder, sms: SmsRecorder, no_termii: None
+) -> None:
+    started = await sign_up(client)
+
+    email_step = await confirm_email(client, started.json()["confirm_token"], mail.last_code)
+
+    assert (email_step.status_code, email_step.json()) == (200, {"status": "active"})
+    assert sms.messages == []
+    user = await user_with(session, "ada.owner@example.com")
+    await session.refresh(user)
+    assert user.email_verified_at is not None
+    assert user.phone_verified_at is None  # stored, not confirmed
+    assert user.phone == "+2348030000123"
+
+
+async def test_without_termii_a_provider_can_log_in_after_the_email_code_and_no_phone_is_needed(
+    client: AsyncClient, mail: MailRecorder, sms: SmsRecorder, no_termii: None
+) -> None:
+    started = await sign_up(client)
+    await confirm_email(client, started.json()["confirm_token"], mail.last_code)
+
+    login = await start_login(client, "ada.owner@example.com", PROVIDER["password"])
+
+    assert login.status_code == 200
+    token = (await verify(client, login.json()["challenge_token"], sms.last_code)).json()["access_token"]
+    me = await client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me.json()["two_factor_enabled"] is False  # the app is offered at this first login
+    assert me.json()["role"] == "provider"
+
+
+async def test_without_termii_the_email_must_still_be_confirmed_before_a_login(
+    client: AsyncClient, mail: MailRecorder, no_termii: None
+) -> None:
+    await sign_up(client)
+
+    login = await start_login(client, "ada.owner@example.com", PROVIDER["password"])
+
+    assert (login.status_code, login.json()["detail"]) == (403, "Confirm your email address first.")
+
+
+async def test_without_termii_the_one_audit_entry_is_written_at_the_email_code_without_a_secret(
+    client: AsyncClient, session: AsyncSession, mail: MailRecorder, no_termii: None
+) -> None:
+    started = await sign_up(client)
+    assert (await session.exec(select(AuditEntry))).all() == []
+
+    await confirm_email(client, started.json()["confirm_token"], mail.last_code)
+
+    [entry] = (await session.exec(select(AuditEntry))).all()
+    user = await user_with(session, "ada.owner@example.com")
+    assert (entry.action, entry.user_id, entry.new_value) == (
+        "signup_confirmed",
+        user.id,
+        "provider (approved)",
+    )
+    text = " ".join(str(value) for value in entry.model_dump().values())
+    assert "0123" not in text and "ada.owner@example.com" not in text
+
+
+async def test_without_termii_staff_wait_for_approval_and_the_admins_are_told_to_phone_them(
+    client: AsyncClient,
+    session: AsyncSession,
+    mail: MailRecorder,
+    admin_mail: list,
+    demo_users: dict[Role, User],
+    no_termii: None,
+) -> None:
+    started = await client.post("/auth/signup", json=STAFF)
+
+    done = await confirm_email(client, started.json()["confirm_token"], mail.last_code)
+
+    assert (done.status_code, done.json()) == (200, {"status": "waiting_for_approval"})
+    [(to, subject, body)] = admin_mail
+    assert (to, subject) == (demo_users[Role.admin].email, "Someone is waiting for approval")
+    assert "Bola Staff" in body
+    assert "has not confirmed their phone" in body and "phone confirmed by call" in body
+    assert "bola.staff@example.com" not in body and "0456" not in body and STAFF["password"] not in body
+    login = await start_login(client, "bola.staff@example.com", STAFF["password"])
+    assert (login.status_code, login.json()["detail"]) == (403, WAITING)  # still nothing before approval
+
+
+async def test_without_termii_a_waiting_staff_account_can_use_no_route_that_needs_a_login(
+    client: AsyncClient, session: AsyncSession, mail: MailRecorder, no_termii: None
+) -> None:
+    started = await client.post("/auth/signup", json=STAFF)
+    await confirm_email(client, started.json()["confirm_token"], mail.last_code)
+    user = await user_with(session, "bola.staff@example.com")
+    wrong = []
+
+    for method, path in routes_that_need_a_login():
+        response = await client.request(method, path, headers=bearer_for(user), json=body_for(method))
+        if response.status_code != 403 or response.json().get("detail") != STATES["pending"]:
+            wrong.append(f"{method} {path}: {response.status_code}")
+
+    assert wrong == []
+
+
+async def test_with_termii_live_the_phone_is_still_needed_before_a_login(
+    client: AsyncClient, mail: MailRecorder, sms: SmsRecorder
+) -> None:
+    started = await sign_up(client)
+    await confirm_email(client, started.json()["confirm_token"], mail.last_code)
+
+    login = await start_login(client, "ada.owner@example.com", PROVIDER["password"])
+
+    assert (login.status_code, login.json()["detail"]) == (403, "Confirm your phone number first.")
+
+
+async def test_a_phone_token_made_while_termii_was_live_still_works_after_it_is_switched_off(
+    client: AsyncClient, mail: MailRecorder, sms: SmsRecorder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started = await sign_up(client)
+    email_step = await confirm_email(client, started.json()["confirm_token"], mail.last_code)
+    monkeypatch.setattr(settings, "termii_api_key", "")
+
+    done = await confirm_phone(client, email_step.json()["confirm_token"], sms.last_code)
+
+    assert (done.status_code, done.json()) == (200, {"status": "active"})
+
+
+async def test_without_termii_an_email_that_is_already_an_account_gets_the_notice_and_no_restart(
+    client: AsyncClient,
+    session: AsyncSession,
+    mail: MailRecorder,
+    no_termii: None,
+) -> None:
+    """The first account has its email confirmed and its phone not: it must count as an account, or anyone
+    who knows the email could restart it and replace its password."""
+    started = await sign_up(client)
+    await confirm_email(client, started.json()["confirm_token"], mail.last_code)
+    before = await user_with(session, "ada.owner@example.com")
+    old_hash = before.password_hash
+
+    again = await sign_up(client, name="Someone Else", password="another-pw-88")
+
+    assert again.status_code == 200 and set(again.json()) == {"confirm_token", "sent_to"}
+    assert mail.notices == ["ada.owner@example.com"]
+    assert len(mail.codes) == 1  # no second code
+    await session.refresh(before)
+    assert (before.name, before.password_hash) == ("Ada Owner", old_hash)
+    assert before.email_verified_at is not None
+
+
 # --- an email that is already an account: the same answer, nothing revealed, nothing changed ---
 
 
 async def test_an_email_that_is_already_an_account_gets_the_same_answer_and_a_notice_and_no_code(
-    client: AsyncClient, session: AsyncSession, demo_users: dict[Role, User], mail: MailRecorder
+    client: AsyncClient,
+    session: AsyncSession,
+    demo_users: dict[Role, User],
+    mail: MailRecorder,
+    sms: SmsRecorder,
 ) -> None:
     editor = demo_users[Role.editor]
     new = await sign_up(client)
