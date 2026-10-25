@@ -13,6 +13,7 @@ from app.api.routes import (
     public,
     reports,
     search,
+    signup,
     two_factor,
     uploads,
     verifications,
@@ -21,8 +22,8 @@ from app.api.routes import (
 api_router = APIRouter()
 
 all_route_modules = [
-    public, auth, two_factor, search, listings, emergency, blood, reports, verifications, providers, payments,
-    uploads, dashboard, admin,
+    public, auth, signup, two_factor, search, listings, emergency, blood, reports, verifications, providers,
+    payments, uploads, dashboard, admin,
 ]
 for route_module in all_route_modules:
     api_router.include_router(route_module.router)

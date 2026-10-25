@@ -13,6 +13,7 @@ from app.core.rate_limit import (
     get_client_ip,
     login_limiter,
     report_limiter,
+    signup_limiter,
     submission_limiter,
     verify_code_limiter,
 )
@@ -23,8 +24,8 @@ from app.services import access_service, auth_service
 
 __all__ = [
     "NO_PERMISSION_MESSAGE", "get_current_moment", "get_current_user", "get_session", "login_rate_limit",
-    "require_listing_access", "report_rate_limit", "require_role", "submission_rate_limit",
-    "verify_code_rate_limit",
+    "require_listing_access", "report_rate_limit", "require_role", "signup_rate_limit",
+    "submission_rate_limit", "verify_code_rate_limit",
 ]
 
 STAFF_ROLES = {Role.verifier, Role.editor, Role.admin}
@@ -111,6 +112,9 @@ login_rate_limit = build_rate_limit_dependency(login_limiter)
 verify_code_rate_limit = build_rate_limit_dependency(verify_code_limiter)
 report_rate_limit = build_rate_limit_dependency(
     report_limiter, "You've sent several reports. Please try again later."
+)
+signup_rate_limit = build_rate_limit_dependency(
+    signup_limiter, "You've tried to sign up several times. Please try again later."
 )
 submission_rate_limit = build_rate_limit_dependency(
     submission_limiter, "You've sent several submissions. Please try again tomorrow."

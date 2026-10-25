@@ -136,6 +136,24 @@ async def alert_two_factor_locked(session: AsyncSession, account_name: str) -> N
             logger.warning("Two-factor lock email failed: %s", error)
 
 
+async def alert_staff_signup_waiting(session: AsyncSession, applicant_name: str) -> None:
+    """Tells the admins that a staff sign-up has confirmed email and phone and waits for approval (FR-49).
+
+    Nothing raises. The text holds the applicant's name only: no email, no phone, no note, no password.
+    The admin reads the rest on the screen.
+    """
+    subject = "Someone is waiting for approval"
+    body = (
+        f"{applicant_name} signed up as staff and confirmed their email and phone. They cannot use "
+        "anything until an admin approves them and chooses their role (editor or verifier), or rejects them."
+    )
+    for admin in await user_repository.list_active_with_roles(session, {Role.admin}):
+        try:
+            await resend.send_email(admin.email, subject, body)
+        except resend.EmailSendError as error:
+            logger.warning("Sign-up waiting email failed: %s", error)
+
+
 async def send_alerts(alert: StaffAlert) -> None:
     """Sends every message. One failure never stops the others, and nothing here raises."""
     if alert.kind == "failed_check":

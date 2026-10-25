@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     termii_base_url: str = ""  # per account, from the Termii dashboard; needed only when a key is set
     termii_sender_id: str = "SwiftHealth"
     termii_channel: str = "dnd"  # "dnd" reaches Do-Not-Disturb numbers but needs the DND route activated
+    # Sign-up (FR-48): closed unless this is true. Off in production until the owner opens it (after the
+    # Privacy page was reviewed by a lawyer, and Resend and Termii are set up): until then sign-up answers
+    # 503 "Sign-up is not open yet."
+    signup_enabled: bool = False
     # Encrypts the authenticator-app secret in the database (FR-58): a Fernet key, 32 random bytes in URL-safe
     # base64 (how to make one without a file: specs/2026-10-23-accounts-and-facility-ownership/
     # requirements.md, 5c). Empty in development uses a public development key; empty elsewhere means the
