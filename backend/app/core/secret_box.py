@@ -12,6 +12,7 @@ a key, a secret or a stored value.
 
 import base64
 import binascii
+from dataclasses import dataclass
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -31,24 +32,62 @@ class SecretBoxUnavailableError(Exception):
     """There is no usable key here, so nothing can be encrypted or read (the route answers 503)."""
 
 
-def _usable_key() -> bytes | None:
-    """The key to use now, or None. Development with no key: the public development key."""
+@dataclass(frozen=True)
+class KeyReport:
+    """What can be said about the key without showing it: one fixed sentence, never the key or part of it."""
+
+    status: str  # "ok", "development", "missing", "development_key_refused" or "invalid"
+    usable: bool
+    sentence: str
+
+
+_PREFIX = "Authenticator app: TOTP_ENCRYPTION_KEY"
+
+
+def describe_key() -> KeyReport:
+    """Whether the key can be used now and, if not, why. Development, no key: the public development key."""
     key = settings.totp_encryption_key.strip()
     in_development = settings.app_env == "development"
     if not key:
-        return DEVELOPMENT_KEY.encode() if in_development else None
+        if in_development:
+            return KeyReport(
+                "development", True, "Authenticator app: using the public development key (development only)."
+            )
+        return KeyReport("missing", False, f"{_PREFIX} is not set, so the app set-up is not available.")
     if key == DEVELOPMENT_KEY and not in_development:
-        return None
+        return KeyReport(
+            "development_key_refused",
+            False,
+            f"{_PREFIX} is the public development key, which is not allowed here, "
+            "so the app set-up is not available.",
+        )
     try:
-        if len(base64.urlsafe_b64decode(key.encode())) != FERNET_KEY_BYTES:
-            return None
+        well_formed = len(base64.urlsafe_b64decode(key.encode())) == FERNET_KEY_BYTES
     except (binascii.Error, ValueError):
+        well_formed = False
+    if not well_formed:
+        # The length is the clue (a good key has 44 characters): a lost "=" or a cut paste shows at once.
+        return KeyReport(
+            "invalid",
+            False,
+            f"{_PREFIX} is not a usable key: the value has {len(key)} characters, "
+            "and a key has 44 characters "
+            "(32 random bytes in URL-safe base64, ends with =), so the app set-up is not available.",
+        )
+    return KeyReport("ok", True, f"{_PREFIX} is set and usable.")
+
+
+def _usable_key() -> bytes | None:
+    """The key to use now, or None."""
+    report = describe_key()
+    if not report.usable:
         return None
-    return key.encode()
+    key = settings.totp_encryption_key.strip()
+    return key.encode() if key else DEVELOPMENT_KEY.encode()
 
 
 def is_available() -> bool:
-    return _usable_key() is not None
+    return describe_key().usable
 
 
 def _fernet() -> Fernet:

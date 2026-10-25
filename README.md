@@ -69,7 +69,8 @@ Staff, admins and providers can switch on an authenticator app at `/admin/securi
 stored encrypted with the key in the variable **`TOTP_ENCRYPTION_KEY`** (set it in the Render dashboard; make it on your laptop without a file:
 `openssl rand -base64 32 | tr '+/' '-_' | tr -d '\n' | clip.exe` on WSL, `pbcopy` on a Mac; keep a copy in a password manager; if it is lost,
 everyone sets the app up again). With no key the API still starts and only the set-up says "not available yet"; in development a public
-development key is used.
+development key is used. **When the API starts it writes one line about the key in the Render log** ("is set and usable", or why not: not set,
+the public development key, or not a usable key with the number of characters it has: a good key has 44), never the key itself.
 **Lost phone:** a backup code works instead of the app's code; else another admin resets it (Staff screen API: `POST /admin/users/{id}/reset-two-factor`);
 else, for the only admin: set **`RESET_TWO_FACTOR_FOR_EMAIL`** to that account's email in Render, let the API start once (it clears the app of that
 account and logs `two-factor reset for an account`), then delete the variable. Details: `specs/2026-10-23-accounts-and-facility-ownership/`.
