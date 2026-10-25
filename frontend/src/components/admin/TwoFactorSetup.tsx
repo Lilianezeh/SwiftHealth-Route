@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import { useStaff } from "@/components/admin/StaffGate";
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { PasswordField } from "@/components/ui/PasswordField";
 import {
   confirmTwoFactorSetup,
   disableTwoFactor,
@@ -233,14 +234,7 @@ export function TwoFactorSetup() {
             <label htmlFor="security-password" className="text-base font-semibold text-ink">
               Your password
             </label>
-            <input
-              id="security-password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className={FIELD}
-            />
+            <PasswordField id="security-password" autoComplete="current-password" value={password} onChange={setPassword} />
           </div>
           {problem && (
             <p role="alert" className={PROBLEM}>
@@ -332,14 +326,7 @@ export function TwoFactorSetup() {
             <label htmlFor="security-password" className="text-base font-semibold text-ink">
               Your password
             </label>
-            <input
-              id="security-password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className={FIELD}
-            />
+            <PasswordField id="security-password" autoComplete="current-password" value={password} onChange={setPassword} />
           </div>
           <div className="flex flex-col gap-1">
             <label htmlFor="security-code" className="text-base font-semibold text-ink">
