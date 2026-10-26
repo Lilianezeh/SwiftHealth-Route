@@ -201,7 +201,8 @@ describe("the staff bar", () => {
   });
 
   it("shows an admin the same, and also staff and import and export", () => {
-    expect(barFor("admin")).toEqual(["Dashboard", "Reports", "Re-checks", "Listings", "Staff", "Import and export", "Security"]);
+    // Activity (the activity log) is for the admin only, accounts phase 4b.
+    expect(barFor("admin")).toEqual(["Dashboard", "Reports", "Re-checks", "Listings", "Staff", "Activity", "Import and export", "Security"]);
   });
 
   it("shows a verifier listings only (and Security, which every role has)", () => {

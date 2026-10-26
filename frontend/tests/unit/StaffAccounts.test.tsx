@@ -82,7 +82,7 @@ describe("the staff list", () => {
     expect(rows[0]).toHaveTextContent("Admin");
     expect(rows[0]).toHaveTextContent("Active");
     expect(rows[2]).toHaveTextContent("Verifier");
-    expect(rows[2]).toHaveTextContent("Deactivated");
+    expect(rows[2]).toHaveTextContent("Suspended"); // "Deactivated" until accounts phase 4b: one word for it everywhere
     expect(calls[0].headers.Authorization).toBe("Bearer tok");
   });
 

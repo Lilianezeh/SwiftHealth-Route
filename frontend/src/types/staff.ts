@@ -122,7 +122,51 @@ export type AdminUserChanges = {
   password?: string;
   listing_id?: number;
 };
-export type AdminUserList = { items: StaffUser[]; total: number };
+/** An account in the admin's list (api-spec section 11, "Phase 4a"): the usual user plus what the admin needs to decide.
+ * Never a password, a hash, a code or the authenticator secret. */
+export type ApprovalStatus = "pending" | "approved" | "rejected";
+export type AdminUserRow = StaffUser & {
+  approval_status: ApprovalStatus;
+  last_login_at: string | null;
+  created_at: string;
+  email_verified_at: string | null;
+  phone_verified_at: string | null;
+  signup_note: string | null; // what a staff sign-up wrote about themselves
+};
+export type AdminUserList = { items: AdminUserRow[]; total: number }; // `total` counts every match, not only this page
+export type AdminUserQuery = {
+  role?: StaffRole;
+  approval_status?: ApprovalStatus;
+  is_active?: boolean;
+  q?: string;
+  limit?: number;
+  offset?: number;
+};
+
+/** One entry of the activity log (GET /admin/activity). The Paystack reference column is never sent. */
+export type ActivityItem = {
+  id: number;
+  at: string;
+  user_id: number | null;
+  user_name: string | null; // null: the nightly job or an anonymous submission
+  action: string;
+  listing_id: number | null;
+  listing_name: string | null;
+  target_user_id: number | null; // the account a decision was about
+  target_user_name: string | null;
+  field_changed: string | null;
+  old_value: string | null;
+  new_value: string | null;
+};
+export type ActivityList = { items: ActivityItem[]; total: number };
+export type ActivityQuery = {
+  user_id?: number;
+  action?: string;
+  from?: string; // YYYY-MM-DD, included
+  to?: string; // YYYY-MM-DD, included
+  limit?: number;
+  offset?: number;
+};
 
 export type DueFilter = "overdue" | "this_week";
 

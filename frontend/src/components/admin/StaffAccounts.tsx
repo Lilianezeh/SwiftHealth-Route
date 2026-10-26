@@ -1,146 +1,30 @@
 "use client";
 
-/** The staff accounts screen (admin only): the list, adding a user and editing one. Requirements: FR-41, NFR-06, NFR-07, NFR-10.
- * UI spec 3.8 and "Phase 10 details"; decision C10 in specs/2026-10-20-staff-screens/requirements.md.
- * A password is typed, sent once and dropped: it is never shown again and never kept in a storage. A PATCH carries only what
- * changed. An admin cannot deactivate themselves or give up their own admin role (the API refuses it too).
+/** The staff accounts screen (admin only): approve staff sign-ups, the list of all accounts, adding a user. Requirements: FR-41,
+ * FR-49, FR-55, US-18, NFR-06, NFR-07, NFR-10. UI spec 3.8 and "Phase 10 details"; decision C10 in
+ * specs/2026-10-20-staff-screens/requirements.md; accounts phase 4b in specs/2026-10-23-accounts-and-facility-ownership/.
+ * Two tabs: "Waiting for approval (N)" (the staff sign-ups to decide on) and "All accounts" (the default, with filters). The
+ * number comes from asking the API for the accounts that wait. A password is typed, sent once and dropped: it is never shown
+ * again and never kept in a storage.
  */
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
+import { AllAccounts } from "@/components/admin/AllAccounts";
 import { useStaff } from "@/components/admin/StaffGate";
+import { WaitingForApproval } from "@/components/admin/WaitingForApproval";
 import { ResultsSkeleton } from "@/components/search/ResultsSkeleton";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { PasswordField } from "@/components/ui/PasswordField";
-import { createAdminUser, listAdminUsers, updateAdminUser } from "@/lib/api/staff";
-import { ApiError } from "@/lib/api/request";
-import { formatPhoneForReading } from "@/lib/formatters/phone";
+import { createAdminUser, listAdminUsers } from "@/lib/api/staff";
+import { ROLE_LABELS, sentenceFor } from "@/lib/staff/accountText";
 import { minPasswordLength } from "@/lib/staff/roles";
-import type { AdminUserChanges, StaffRole, StaffUser } from "@/types/staff";
+import type { AdminUserRow, StaffRole, StaffUser } from "@/types/staff";
 
 const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink disabled:bg-closed-bg";
 const ROLES: StaffRole[] = ["verifier", "editor", "admin", "provider"];
-const ROLE_LABELS: Record<StaffRole, string> = { verifier: "Verifier", editor: "Editor", admin: "Admin", provider: "Provider" };
 const passwordTooShort = (role: StaffRole) => `The password needs at least ${minPasswordLength(role)} characters.`;
-const STAFF_NEEDS_NEW_PASSWORD = `To make a provider staff, type a new password of at least ${minPasswordLength("editor")} characters.`;
-
-function sentenceFor(error: unknown): string {
-  if (error instanceof ApiError && error.detail) return error.detail;
-  if (error instanceof ApiError && error.status === 422) {
-    return "Check the fields: the phone must look like 0803 123 4567 and the email must be an email address.";
-  }
-  return "We couldn't do that. Check your connection and try again.";
-}
-
-type RowProps = { user: StaffUser; isMe: boolean; onSaved: (user: StaffUser) => void };
-
-function AccountRow({ user, isMe, onSaved }: RowProps) {
-  const { call } = useStaff();
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState(user.name);
-  const [phone, setPhone] = useState(user.phone ? formatPhoneForReading(user.phone) : "");
-  const [role, setRole] = useState<StaffRole>(user.role);
-  const [active, setActive] = useState(user.is_active);
-  const [password, setPassword] = useState("");
-  const [listing, setListing] = useState("");
-  const [problem, setProblem] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const changes: AdminUserChanges = {};
-  if (name.trim() !== user.name) changes.name = name.trim();
-  if (phone.trim() !== (user.phone ? formatPhoneForReading(user.phone) : "")) changes.phone = phone.trim();
-  if (role !== user.role) changes.role = role;
-  if (active !== user.is_active) changes.is_active = active;
-  if (password !== "") changes.password = password;
-  if (role === "provider" && listing.trim() !== "") changes.listing_id = Number(listing);
-  const nothingToSave = Object.keys(changes).length === 0;
-
-  async function save(event: FormEvent) {
-    event.preventDefault();
-    if (nothingToSave || busy) return;
-    if (user.role === "provider" && role !== "provider" && changes.password === undefined) {
-      setProblem(STAFF_NEEDS_NEW_PASSWORD); // a short provider password must never become a staff password (FR-56)
-      return;
-    }
-    if (changes.password !== undefined && changes.password.length < minPasswordLength(role)) {
-      setProblem(passwordTooShort(role));
-      return;
-    }
-    if (changes.listing_id !== undefined && !Number.isInteger(changes.listing_id)) {
-      setProblem("The listing number must be a whole number.");
-      return;
-    }
-    setBusy(true);
-    setProblem(null);
-    setMessage(null);
-    try {
-      const saved = await call((token) => updateAdminUser(token, user.id, changes));
-      setPassword("");
-      setListing("");
-      onSaved(saved);
-      setMessage(`${saved.name} was updated.`);
-    } catch (error) {
-      setProblem(sentenceFor(error));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <li className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
-      <p className="text-lg font-bold text-forest">{user.name}</p>
-      <p className="text-base text-ink-soft">{user.email}</p>
-      <p className="text-base text-ink">
-        {ROLE_LABELS[user.role]} · {user.is_active ? "Active" : "Deactivated"}
-      </p>
-      {message && <p role="status" className="text-base font-semibold text-ink">{message}</p>}
-      {!open && (
-        <button type="button" onClick={() => setOpen(true)} aria-label={`Edit ${user.name}`} className={`${buttonClasses("secondary")} sm:w-auto sm:self-start sm:px-6`}>
-          Edit
-        </button>
-      )}
-      {open && (
-        <form onSubmit={save} className="flex flex-col gap-3 border-t border-line pt-3">
-          <div className="flex flex-col gap-1">
-            <label htmlFor={`name-${user.id}`} className="text-base font-semibold text-ink">{`Name of ${user.name}`}</label>
-            <input id={`name-${user.id}`} value={name} onChange={(event) => setName(event.target.value)} className={FIELD} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor={`phone-${user.id}`} className="text-base font-semibold text-ink">{`Phone of ${user.name}`}</label>
-            <input id={`phone-${user.id}`} inputMode="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className={FIELD} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor={`role-${user.id}`} className="text-base font-semibold text-ink">{`Role of ${user.name}`}</label>
-            <select id={`role-${user.id}`} value={role} disabled={isMe} onChange={(event) => setRole(event.target.value as StaffRole)} className={FIELD}>
-              {ROLES.map((value) => (
-                <option key={value} value={value}>{ROLE_LABELS[value]}</option>
-              ))}
-            </select>
-          </div>
-          <label className="inline-flex min-h-12 items-center gap-3 text-base text-ink">
-            <input type="checkbox" checked={active} disabled={isMe} onChange={(event) => setActive(event.target.checked)} aria-label={`${user.name} is active`} className="h-5 w-5 accent-pine" />
-            Active
-          </label>
-          {isMe && <p className="text-base text-ink-soft">You cannot deactivate yourself or give up your own admin role.</p>}
-          <div className="flex flex-col gap-1">
-            <label htmlFor={`password-${user.id}`} className="text-base font-semibold text-ink">{`New password for ${user.name} (at least ${minPasswordLength(role)} characters)`}</label>
-            <PasswordField id={`password-${user.id}`} autoComplete="new-password" value={password} onChange={setPassword} />
-          </div>
-          {role === "provider" && (
-            <div className="flex flex-col gap-1">
-              <label htmlFor={`listing-${user.id}`} className="text-base font-semibold text-ink">{`Listing number for ${user.name}`}</label>
-              <input id={`listing-${user.id}`} inputMode="numeric" value={listing} onChange={(event) => setListing(event.target.value.replace(/\D/g, ""))} className={FIELD} />
-            </div>
-          )}
-          {problem && <p role="alert" className="rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink">{problem}</p>}
-          <button type="submit" disabled={nothingToSave || busy} aria-label={`Save ${user.name}`} className={`${buttonClasses("primary")} disabled:opacity-60`}>
-            {busy ? "Saving…" : "Save"}
-          </button>
-        </form>
-      )}
-    </li>
-  );
-}
+const WAITING_LIMIT = 200; // the API's largest page; a waiting list is never near it
+const TAB = "inline-flex min-h-12 flex-1 items-center justify-center rounded-xl border px-3 text-base font-semibold sm:flex-none sm:px-6";
 
 function AddUserForm({ onAdded, onClose }: { onAdded: (user: StaffUser) => void; onClose: () => void }) {
   const { call } = useStaff();
@@ -212,34 +96,47 @@ function AddUserForm({ onAdded, onClose }: { onAdded: (user: StaffUser) => void;
   );
 }
 
+type Tab = "waiting" | "all";
+
 export function StaffAccounts() {
-  const { session, call } = useStaff();
-  const [users, setUsers] = useState<StaffUser[]>([]);
-  const [load, setLoad] = useState<"loading" | "ready" | "error">("loading");
+  const { call } = useStaff();
+  const [tab, setTab] = useState<Tab>("all");
+  const [waiting, setWaiting] = useState<AdminUserRow[]>([]);
+  const [waitingLoad, setWaitingLoad] = useState<"loading" | "ready" | "error">("loading");
   const [adding, setAdding] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [attempt, setAttempt] = useState(0);
 
+  // The accounts that wait: their number is on the tab and in words, and the first tab's cards are these.
   useEffect(() => {
     let isCurrent = true;
-    setLoad("loading");
-    call((token) => listAdminUsers(token))
+    setWaitingLoad("loading");
+    call((token) => listAdminUsers(token, { approval_status: "pending", limit: WAITING_LIMIT }))
       .then((list) => {
         if (!isCurrent) return;
-        setUsers(list.items);
-        setLoad("ready");
+        setWaiting(list.items);
+        setWaitingLoad("ready");
       })
       .catch(() => {
-        if (isCurrent) setLoad("error");
+        if (isCurrent) setWaitingLoad("error");
       });
     return () => {
       isCurrent = false;
     };
   }, [call, attempt]);
 
-  const replaceUser = useCallback((saved: StaffUser) => {
-    setUsers((current) => current.map((user) => (user.id === saved.id ? saved : user)));
+  const decided = useCallback((user: AdminUserRow, message: string) => {
+    setWaiting((current) => current.filter((candidate) => candidate.id !== user.id));
+    setNotice(message);
   }, []);
+
+  const updated = useCallback((user: AdminUserRow) => {
+    setWaiting((current) => current.map((candidate) => (candidate.id === user.id ? user : candidate)));
+  }, []);
+
+  const count = waiting.length;
+  const waitingLabel = waitingLoad === "ready" ? `Waiting for approval (${count})` : "Waiting for approval";
 
   return (
     <section className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6">
@@ -255,32 +152,57 @@ export function StaffAccounts() {
       {adding && (
         <AddUserForm
           onAdded={(created) => {
-            setUsers((current) => [...current, created]);
             setAdding(false);
             setNotice(`${created.name} was added.`);
+            setReloadKey((current) => current + 1); // the list asks again, so the new account is where the filters put it
           }}
           onClose={() => setAdding(false)}
         />
       )}
+      {waitingLoad === "ready" && count > 0 && (
+        <p className="text-base font-semibold text-ink">{`${count} ${count === 1 ? "person is" : "people are"} waiting for approval.`}</p>
+      )}
 
-      {load === "loading" && (
-        <div aria-busy="true">
-          <ResultsSkeleton />
-        </div>
-      )}
-      {load === "error" && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
-          <p className="text-base text-ink">We couldn&apos;t load this. Check your connection and try again.</p>
-          <button type="button" onClick={() => setAttempt((current) => current + 1)} className={buttonClasses("primary")}>Retry</button>
-        </div>
-      )}
-      {load === "ready" && (
-        <ul className="flex flex-col gap-3">
-          {users.map((user) => (
-            <AccountRow key={user.id} user={user} isMe={user.id === session.user.id} onSaved={replaceUser} />
-          ))}
-        </ul>
-      )}
+      <div role="tablist" aria-label="Accounts" className="flex gap-2">
+        <button
+          type="button"
+          role="tab"
+          id="tab-waiting"
+          aria-selected={tab === "waiting"}
+          aria-controls="panel-accounts"
+          onClick={() => setTab("waiting")}
+          className={`${TAB} ${tab === "waiting" ? "border-pine bg-pine text-white" : "border-pine bg-white text-forest"}`}
+        >
+          {waitingLabel}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-all"
+          aria-selected={tab === "all"}
+          aria-controls="panel-accounts"
+          onClick={() => setTab("all")}
+          className={`${TAB} ${tab === "all" ? "border-pine bg-pine text-white" : "border-pine bg-white text-forest"}`}
+        >
+          All accounts
+        </button>
+      </div>
+
+      <div role="tabpanel" id="panel-accounts" aria-labelledby={tab === "waiting" ? "tab-waiting" : "tab-all"} className="flex flex-col gap-4">
+        {tab === "all" && <AllAccounts reloadKey={reloadKey} />}
+        {tab === "waiting" && waitingLoad === "loading" && (
+          <div aria-busy="true">
+            <ResultsSkeleton />
+          </div>
+        )}
+        {tab === "waiting" && waitingLoad === "error" && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+            <p className="text-base text-ink">We couldn&apos;t load this. Check your connection and try again.</p>
+            <button type="button" onClick={() => setAttempt((current) => current + 1)} className={buttonClasses("primary")}>Retry</button>
+          </div>
+        )}
+        {tab === "waiting" && waitingLoad === "ready" && <WaitingForApproval users={waiting} onDecided={decided} onUpdated={updated} />}
+      </div>
     </section>
   );
 }

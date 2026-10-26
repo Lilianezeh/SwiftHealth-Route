@@ -4,9 +4,13 @@
  */
 import { requestJson, type RequestOptions } from "@/lib/api/request";
 import type {
+  ActivityList,
+  ActivityQuery,
   AdminUserChanges,
   AdminUserInput,
   AdminUserList,
+  AdminUserQuery,
+  AdminUserRow,
   BackupCodes,
   CheckInput,
   CheckList,
@@ -120,8 +124,53 @@ export function signUpload(token: string, options: Options = {}): Promise<Upload
   return requestJson<UploadSignature>("/uploads/sign", { ...options, token, body: { folder: "entrances" } });
 }
 
-export function listAdminUsers(token: string, options: Options = {}): Promise<AdminUserList> {
-  return requestJson<AdminUserList>("/admin/users", { ...options, token });
+/** The accounts that match the filters, one page. Only the filters that were given are sent; with none, the API's own page of 100. */
+export function listAdminUsers(token: string, query: AdminUserQuery = {}, options: Options = {}): Promise<AdminUserList> {
+  const parameters = new URLSearchParams();
+  if (query.role) parameters.set("role", query.role);
+  if (query.approval_status) parameters.set("approval_status", query.approval_status);
+  if (query.is_active !== undefined) parameters.set("is_active", String(query.is_active));
+  if (query.q?.trim()) parameters.set("q", query.q.trim());
+  if (query.limit !== undefined) parameters.set("limit", String(query.limit));
+  if (query.offset) parameters.set("offset", String(query.offset));
+  const text = parameters.toString();
+  return requestJson<AdminUserList>(`/admin/users${text ? `?${text}` : ""}`, { ...options, token });
+}
+
+/** Approve a staff sign-up as an editor or a verifier (never an admin or a provider). */
+export function approveAdminUser(token: string, userId: number, role: "editor" | "verifier", options: Options = {}): Promise<AdminUserRow> {
+  return requestJson<AdminUserRow>(`/admin/users/${userId}/approve`, { ...options, token, body: { role } });
+}
+
+/** Reject a staff sign-up; the reason is optional and goes in the body, never in the address. */
+export function rejectAdminUser(token: string, userId: number, reason?: string, options: Options = {}): Promise<AdminUserRow> {
+  return requestJson<AdminUserRow>(`/admin/users/${userId}/reject`, { ...options, token, body: reason ? { reason } : {} });
+}
+
+export function suspendAdminUser(token: string, userId: number, reason: string, options: Options = {}): Promise<AdminUserRow> {
+  return requestJson<AdminUserRow>(`/admin/users/${userId}/suspend`, { ...options, token, body: { reason } });
+}
+
+export function reactivateAdminUser(token: string, userId: number, options: Options = {}): Promise<AdminUserRow> {
+  return requestJson<AdminUserRow>(`/admin/users/${userId}/reactivate`, { ...options, token, method: "POST" });
+}
+
+/** The admin phoned the person and the phone is theirs (used while Termii is off, decision D20). */
+export function confirmPhoneByCall(token: string, userId: number, options: Options = {}): Promise<{ phone_confirmed: boolean }> {
+  return requestJson<{ phone_confirmed: boolean }>(`/admin/users/${userId}/confirm-phone-by-call`, { ...options, token, method: "POST" });
+}
+
+/** The activity log, newest first. Only the filters that were given are sent. */
+export function listActivity(token: string, query: ActivityQuery = {}, options: Options = {}): Promise<ActivityList> {
+  const parameters = new URLSearchParams();
+  if (query.user_id !== undefined) parameters.set("user_id", String(query.user_id));
+  if (query.action) parameters.set("action", query.action);
+  if (query.from) parameters.set("from", query.from);
+  if (query.to) parameters.set("to", query.to);
+  if (query.limit !== undefined) parameters.set("limit", String(query.limit));
+  if (query.offset) parameters.set("offset", String(query.offset));
+  const text = parameters.toString();
+  return requestJson<ActivityList>(`/admin/activity${text ? `?${text}` : ""}`, { ...options, token });
 }
 
 export function createAdminUser(token: string, input: AdminUserInput, options: Options = {}): Promise<StaffUser> {

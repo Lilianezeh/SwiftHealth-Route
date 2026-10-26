@@ -150,3 +150,70 @@ describe("the staff account calls", () => {
     ]);
   });
 });
+
+describe("the account list with filters (accounts phase 4a and 4b)", () => {
+  it("sends only the filters that were given, with the API's own names, and the page", async () => {
+    const calls = stubFetch();
+
+    await staff.listAdminUsers("tok", { approval_status: "pending", limit: 200 });
+    await staff.listAdminUsers("tok", { role: "editor", is_active: false, q: "  okafor ", limit: 50, offset: 100 });
+
+    expect(Object.fromEntries(calls[0].url.searchParams)).toEqual({ approval_status: "pending", limit: "200" });
+    expect(Object.fromEntries(calls[1].url.searchParams)).toEqual({
+      role: "editor", is_active: "false", q: "okafor", limit: "50", offset: "100",
+    });
+    expect(calls.every((call) => headerOf(call.init, "Authorization") === "Bearer tok")).toBe(true);
+  });
+
+  it("sends no filter at all when none is given (the API's own page of 100)", async () => {
+    const calls = stubFetch();
+
+    await staff.listAdminUsers("tok");
+
+    expect(calls[0].url.search).toBe("");
+  });
+});
+
+describe("the account decisions (accounts phase 4a and 4b)", () => {
+  it("post to the right address with the right body and the token, nothing secret in an address", async () => {
+    const calls = stubFetch();
+
+    await staff.approveAdminUser("tok", 7, "editor");
+    await staff.rejectAdminUser("tok", 7, "Not known to us.");
+    await staff.rejectAdminUser("tok", 8);
+    await staff.suspendAdminUser("tok", 9, "Left the team.");
+    await staff.reactivateAdminUser("tok", 9);
+    await staff.confirmPhoneByCall("tok", 7);
+
+    expect(calls.map((call) => [call.init.method, call.url.pathname])).toEqual([
+      ["POST", "/admin/users/7/approve"],
+      ["POST", "/admin/users/7/reject"],
+      ["POST", "/admin/users/8/reject"],
+      ["POST", "/admin/users/9/suspend"],
+      ["POST", "/admin/users/9/reactivate"],
+      ["POST", "/admin/users/7/confirm-phone-by-call"],
+    ]);
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ role: "editor" });
+    expect(JSON.parse(String(calls[1].init.body))).toEqual({ reason: "Not known to us." });
+    expect(JSON.parse(String(calls[2].init.body))).toEqual({}); // no reason: an empty body, not a missing one
+    expect(JSON.parse(String(calls[3].init.body))).toEqual({ reason: "Left the team." });
+    expect(calls.every((call) => call.url.search === "")).toBe(true);
+    expect(calls.every((call) => headerOf(call.init, "Authorization") === "Bearer tok")).toBe(true);
+  });
+});
+
+describe("the activity log call (accounts phase 4a and 4b)", () => {
+  it("sends the filters under the API's names and a page", async () => {
+    const calls = stubFetch();
+
+    await staff.listActivity("tok", { user_id: 3, action: "user_approve", from: "2026-10-01", to: "2026-10-26", limit: 50, offset: 50 });
+    await staff.listActivity("tok", {});
+
+    expect(calls[0].url.pathname).toBe("/admin/activity");
+    expect(Object.fromEntries(calls[0].url.searchParams)).toEqual({
+      user_id: "3", action: "user_approve", from: "2026-10-01", to: "2026-10-26", limit: "50", offset: "50",
+    });
+    expect(calls[1].url.search).toBe("");
+    expect(headerOf(calls[0].init, "Authorization")).toBe("Bearer tok");
+  });
+});
