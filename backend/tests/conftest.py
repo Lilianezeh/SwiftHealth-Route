@@ -18,6 +18,8 @@ import app.models  # noqa: F401  (registers all 10 tables)
 from app.core.config import settings
 from app.core.database import get_session
 from app.core.rate_limit import (
+    claim_limiter,
+    claimable_search_limiter,
     forgot_email_limiter,
     forgot_ip_limiter,
     login_limiter,
@@ -100,6 +102,8 @@ def reset_rate_limiters() -> None:
     verify_code_limiter.reset()
     report_limiter.reset()
     submission_limiter.reset()
+    claim_limiter.reset()
+    claimable_search_limiter.reset()
     sms_code_limiter.reset()
     totp_failure_limiter.reset()
     signup_limiter.reset()

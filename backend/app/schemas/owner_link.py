@@ -54,6 +54,7 @@ class QueueItem(BaseModel):
     id: int
     role: str
     requested_at: datetime
+    reason: str | None  # the person's own words (Phase 7), kept in the link's note while it waits
     person: QueuePerson
     listing: QueueListing
 

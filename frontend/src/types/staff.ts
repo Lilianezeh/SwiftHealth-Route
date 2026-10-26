@@ -160,6 +160,7 @@ export type OwnerRequest = {
   id: number;
   role: "owner" | "manager";
   requested_at: string;
+  reason: string | null; // the person's own words, when they gave some (a claim or a new facility's notes)
   person: { id: number; name: string; email: string; phone: string | null };
   listing: { id: number; name: string; area: string; phones: { number: string; label: string | null; is_primary: boolean }[] };
 };

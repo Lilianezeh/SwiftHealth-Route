@@ -212,6 +212,20 @@ describe("step 2: the code", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith(address));
   });
 
+  it("sends a provider who came from List your facility back to it, and keeps staff on their own home", async () => {
+    window.history.pushState({}, "", "/log-in?next=/list-your-facility");
+    try {
+      stubAuth({ verify: () => tokenFor("provider") });
+      render(<LoginForm />);
+      await logInTo();
+      await userEvent.type(screen.getByLabelText("6-digit code"), "482913");
+      await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+      await waitFor(() => expect(replace).toHaveBeenCalledWith("/list-your-facility"));
+    } finally {
+      window.history.pushState({}, "", "/");
+    }
+  });
+
   it("keeps only digits in the code field and stops at 6", async () => {
     stubAuth();
     render(<LoginForm />);

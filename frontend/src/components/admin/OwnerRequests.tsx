@@ -65,6 +65,7 @@ function RequestCard({ request, onDecided }: CardProps) {
       <p className="text-base text-ink-soft">{`Asked on ${formatLagosDateTime(request.requested_at)}`}</p>
       <p className="mt-1 text-base font-bold text-forest">{listing.name}</p>
       <p className="text-base text-ink-soft">{listing.area}</p>
+      {request.reason && <p className="text-base text-ink">{`Their reason: ${request.reason}`}</p>}
       <p className="text-base font-semibold text-ink">Phone the facility on:</p>
       <div className="flex flex-col">
         {listing.phones.map((phone) => (

@@ -69,6 +69,7 @@ async def queue(session: AsyncSession) -> QueueList:
             id=link.id,  # type: ignore[arg-type]
             role=link.role,
             requested_at=link.requested_at,
+            reason=link.note,
             person=QueuePerson(id=user.id, name=user.name, email=user.email, phone=user.phone),  # type: ignore[arg-type]
             listing=QueueListing(
                 id=listing.id,  # type: ignore[arg-type]

@@ -13,6 +13,13 @@ MINIMUM_SECRET_BYTES = 32
 # and a listing cannot have none. The centre of the pilot city; a verifier sets the real pin (decision C5
 # in specs/2026-10-20-staff-screens/requirements.md). It is only a point on the map, not a city name.
 DEFAULT_MAP_CENTRE: tuple[float, float] = (6.4584, 7.5464)  # latitude, longitude
+# Registering a facility (FR-51, decision D15): a listing in the same area whose name has this pg_trgm
+# `similarity` (0 to 1, the whole name against the whole name) with the new name stops the registration.
+# 0.6 is high on purpose: "Example Clinic" and "Example Clinic Ltd" match, "Good Life Pharmacy" and
+# "Good Health Pharmacy" do not, and a wrong stop only sends the person to claim or contact us.
+DUPLICATE_NAME_SIMILARITY = 0.6
+# The claim search shows at most this many listings (api-spec section 7, "Phase 7").
+CLAIMABLE_RESULT_LIMIT = 10
 # Netlify builds each pull request at https://deploy-preview-<number>--swifthealth-ng.netlify.app.
 # The API lets exactly those addresses call it, so a preview works without listing every number in
 # CORS_ORIGINS (NFR-06). The whole address must match: https, digits only, this site's name, no port.

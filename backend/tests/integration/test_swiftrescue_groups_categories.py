@@ -13,8 +13,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.api.dependencies import get_current_moment
 from app.main import app
+from app.models import User
+from app.models.base import Role
 from tests.revision_loader import SWIFTRESCUE_GROUPS_REVISION_FILE_PATTERN as GROUPS
 from tests.revision_loader import run_upgrade
+from tests.staff_helpers import bearer_for
 
 pytestmark = pytest.mark.anyio
 
@@ -52,16 +55,17 @@ async def test_meta_lists_the_new_categories_as_emergency_ones_with_their_names(
 
 @pytest.mark.parametrize("slug", NEW_SLUGS)
 async def test_list_your_facility_refuses_the_new_categories_like_every_emergency_category(
-    client: AsyncClient, clock: None, migrated: None, slug: str
+    client: AsyncClient, clock: None, migrated: None, demo_users: dict[Role, User], slug: str
 ) -> None:
     body = {
         "facility_name": "Example Support", "category": slug, "area": "GRA",
-        "address": "4 Example Street", "phone": "08030000000", "contact_name": "Example Person",
-        "contact_email": "owner@example.com",
+        "address": "4 Example Street", "phone": "08030000000",
     }
 
     response = await client.post(
-        "/facility-submissions", json=body, headers={"x-forwarded-for": "203.0.113.9"}
+        "/provider/facilities",
+        json=body,
+        headers={**bearer_for(demo_users[Role.provider]), "x-forwarded-for": "203.0.113.9"},
     )
 
     assert response.status_code == 422

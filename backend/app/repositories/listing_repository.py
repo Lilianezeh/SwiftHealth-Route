@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import func
+from sqlalchemy import ColumnElement, and_, func, or_
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -17,7 +17,7 @@ from app.models import (
     VerificationCheck,
 )
 from app.models.base import CheckMethod, CheckResult, ListingStatus
-from app.repositories.search_repository import flagged_listing_ids
+from app.repositories.search_repository import flagged_listing_ids, text_matches
 
 # Only these listings are a re-check job; a draft, a pending or a hidden one is not (decision H6).
 RECHECK_STATUSES = (ListingStatus.published, ListingStatus.recheck_due)
@@ -263,6 +263,64 @@ async def find_overdue_published(session: AsyncSession, moment: datetime) -> lis
 
 async def slug_exists(session: AsyncSession, slug: str) -> bool:
     return (await session.exec(select(Listing.id).where(Listing.slug == slug))).first() is not None
+
+
+async def find_by_phone_number(session: AsyncSession, number: str) -> Listing | None:
+    """A listing of ANY status that has this phone number (already in the +234 form). Duplicate check, D15."""
+    query = (
+        select(Listing)
+        .join(PhoneNumber, col(PhoneNumber.listing_id) == col(Listing.id))
+        .where(col(PhoneNumber.number) == number)
+        .order_by(col(Listing.id))
+        .limit(1)
+    )
+    return (await session.exec(query)).first()
+
+
+async def find_similar_name_in_area(
+    session: AsyncSession, name: str, area: str, minimum_similarity: float
+) -> Listing | None:
+    """The most similar listing of ANY status in the area, if its name is at least `minimum_similarity` like
+    `name` (pg_trgm `similarity`, the whole name against the whole name). Duplicate check, D15."""
+    similarity = func.similarity(col(Listing.name), name)
+    query = (
+        select(Listing)
+        .where(col(Listing.area) == area, similarity >= minimum_similarity)
+        .order_by(similarity.desc(), col(Listing.id))
+        .limit(1)
+    )
+    return (await session.exec(query)).first()
+
+
+async def search_claimable(
+    session: AsyncSession, search_text: str, match_threshold: float, limit: int
+) -> list[tuple[Listing, Category]]:
+    """Published and re-check-due listings whose name or area resembles `search_text`, best name match first.
+
+    The whole text may match, or (for 2 or more words) every word may, like the public search. Never a draft,
+    a pending or a hidden listing."""
+    words = search_text.split()
+    whole_text = _name_or_area_matches(search_text, match_threshold)
+    matches = whole_text
+    if len(words) > 1:
+        every_word = and_(*(_name_or_area_matches(word, match_threshold) for word in words))
+        matches = or_(whole_text, every_word)
+    best_name_first = func.word_similarity(search_text, col(Listing.name)).desc()
+    query = (
+        select(Listing, Category)
+        .join(Category, col(Category.id) == col(Listing.category_id))
+        .where(col(Listing.status).in_(RECHECK_STATUSES), matches)
+        .order_by(best_name_first, col(Listing.name), col(Listing.id))
+        .limit(limit)
+    )
+    return [(listing, category) for listing, category in (await session.exec(query)).all()]
+
+
+def _name_or_area_matches(text: str, match_threshold: float) -> ColumnElement[bool]:
+    return or_(
+        text_matches(text, col(Listing.name), match_threshold),
+        text_matches(text, col(Listing.area), match_threshold),
+    )
 
 
 async def replace_children(

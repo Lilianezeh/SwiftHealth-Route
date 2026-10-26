@@ -20,7 +20,7 @@ import { useSignupOpen } from "@/hooks/useSignupOpen";
 import { askForSmsInstead, resendLoginCode, startLogin, verifyLoginCode } from "@/lib/api/staff";
 import { ApiError } from "@/lib/api/request";
 import { formatPhoneHint } from "@/lib/formatters/phone";
-import { homeAddressFor } from "@/lib/staff/roles";
+import { addressAfterLogin } from "@/lib/staff/roles";
 import { saveStaffSession } from "@/lib/staff/session";
 import type { LoginMethod } from "@/types/staff";
 
@@ -231,7 +231,7 @@ export function LoginForm() {
       const completed = await verifyLoginCode(challenge.token, code);
       saveStaffSession({ token: completed.access_token, user: completed.user });
       setPassword(""); // the password is not needed any more
-      router.replace(homeAddressFor(completed.user.role));
+      router.replace(addressAfterLogin(completed.user.role, window.location.search));
     } catch (error) {
       setProblem(messageForCode(error));
       setBusy(false);

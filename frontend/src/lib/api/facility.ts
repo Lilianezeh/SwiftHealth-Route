@@ -1,32 +1,45 @@
-/** POST /facility-submissions from the browser ("List your facility"). Requirements: FR-37, NFR-06, NFR-07.
- * Contract: api-spec, "POST /facility-submissions". Nothing about the visitor's position is sent. A 422 and a 429 reach the caller as
- * an ApiError with that status. The owner's name and email are sent once and are not kept anywhere in the browser.
+/** Registering a facility and asking to manage one, from the browser. Requirements: FR-50, FR-51, NFR-06, NFR-07.
+ * Contract: api-spec section 7, "Phase 7". All three calls need a provider's token. Nothing about the visitor's position is sent.
+ * A 409 reaches the caller as an ApiError whose `detail` is the API's sentence (and `listingId` when the facility may be claimed);
+ * a 422 and a 429 reach it with that status.
  */
 import { requestJson } from "@/lib/api/request";
 
-export type FacilitySubmission = {
+export type FacilityRole = "owner" | "manager";
+
+export type FacilityRegistration = {
   facility_name: string;
   category: string;
   area: string;
   address: string;
   phone: string;
-  contact_name: string;
-  contact_email: string;
+  role: FacilityRole;
   notes: string;
 };
 
-export function postFacilitySubmission(submission: FacilitySubmission): Promise<{ message: string }> {
-  const notes = submission.notes.trim();
-  return requestJson<{ message: string }>("/facility-submissions", {
+export type ClaimableFacility = { id: number; name: string; area: string; category: { slug: string; name: string } };
+
+export function registerFacility(token: string, registration: FacilityRegistration): Promise<{ message: string; listing_id: number; link_id: number }> {
+  const notes = registration.notes.trim();
+  return requestJson("/provider/facilities", {
+    token,
     body: {
-      facility_name: submission.facility_name.trim(),
-      category: submission.category,
-      area: submission.area,
-      address: submission.address.trim(),
-      phone: submission.phone.trim(),
-      contact_name: submission.contact_name.trim(),
-      contact_email: submission.contact_email.trim(),
+      facility_name: registration.facility_name.trim(),
+      category: registration.category,
+      area: registration.area,
+      address: registration.address.trim(),
+      phone: registration.phone.trim(),
+      role: registration.role,
       ...(notes ? { notes } : {}),
     },
   });
+}
+
+export async function findClaimableFacilities(token: string, searchText: string, signal?: AbortSignal): Promise<ClaimableFacility[]> {
+  const answer = await requestJson<{ items: ClaimableFacility[] }>(`/provider/claimable?q=${encodeURIComponent(searchText.trim())}`, { token, signal });
+  return answer.items;
+}
+
+export function claimFacility(token: string, claim: { listing_id: number; role: FacilityRole; reason: string }): Promise<{ message: string; link_id: number }> {
+  return requestJson("/provider/claims", { token, body: { ...claim, reason: claim.reason.trim() } });
 }

@@ -112,19 +112,24 @@ async def phones_of(session: AsyncSession, listing_ids: set[int]) -> dict[int, l
 
 
 async def request_link(
-    session: AsyncSession, listing_id: int, user_id: int, role: str, moment: datetime
+    session: AsyncSession, listing_id: int, user_id: int, role: str, moment: datetime,
+    reason: str | None = None,
 ) -> FacilityOwner:
     """Asks for a link. A link that waits or is approved is left as it is. A removed one is set back to
-    `pending` (the same row: the audit log keeps the history). The caller commits."""
+    `pending` (the same row: the audit log keeps the history). The caller commits.
+
+    `reason` is the person's own words; it is kept in `note` while the link waits, and a decision by staff
+    replaces it with their own note."""
     link = await get_for(session, listing_id, user_id)
     if link is None:
         link = FacilityOwner(
             listing_id=listing_id, user_id=user_id, role=role,
-            status=LinkStatus.pending.value, requested_at=moment,
+            status=LinkStatus.pending.value, requested_at=moment, note=reason,
         )
     elif link.status == LinkStatus.removed.value:
         link.status, link.role, link.requested_at = LinkStatus.pending.value, role, moment
-        link.approved_by = link.approved_at = link.removed_by = link.removed_at = link.note = None
+        link.approved_by = link.approved_at = link.removed_by = link.removed_at = None
+        link.note = reason
     else:
         return link
     session.add(link)

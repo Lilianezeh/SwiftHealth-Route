@@ -10,6 +10,8 @@ from app.core.config import settings
 from app.core.database import get_session
 from app.core.rate_limit import (
     RateLimiter,
+    claim_limiter,
+    claimable_search_limiter,
     forgot_ip_limiter,
     get_client_ip,
     login_limiter,
@@ -24,7 +26,8 @@ from app.models.base import Role
 from app.services import access_service, auth_service
 
 __all__ = [
-    "NO_PERMISSION_MESSAGE", "forgot_rate_limit", "get_current_moment", "get_current_user", "get_session",
+    "NO_PERMISSION_MESSAGE", "claim_rate_limit", "claimable_search_rate_limit", "forgot_rate_limit",
+    "get_current_moment", "get_current_user", "get_session",
     "login_rate_limit",
     "require_listing_access", "report_rate_limit", "require_role", "signup_rate_limit",
     "submission_rate_limit", "verify_code_rate_limit",
@@ -120,6 +123,12 @@ signup_rate_limit = build_rate_limit_dependency(
 )
 submission_rate_limit = build_rate_limit_dependency(
     submission_limiter, "You've sent several submissions. Please try again tomorrow."
+)
+claim_rate_limit = build_rate_limit_dependency(
+    claim_limiter, "You've sent several requests. Please try again tomorrow."
+)
+claimable_search_rate_limit = build_rate_limit_dependency(
+    claimable_search_limiter, "You've searched many times. Please try again later."
 )
 forgot_rate_limit = build_rate_limit_dependency(
     forgot_ip_limiter, "You've asked for several codes. Please try again later."
