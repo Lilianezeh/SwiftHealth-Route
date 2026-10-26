@@ -5,7 +5,9 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { allIsInsideTheScreen, fakeApi, logInAs, targetsAndTextAreBigEnough } from "../helpers/browserApi";
+import {
+  allIsInsideTheScreen, fakeApi, logInAs, targetsAndTextAreBigEnough, type FakeAnswer, type FakeRequest,
+} from "../helpers/browserApi";
 
 const WIDTHS = [
   { width: 320, height: 640 },
@@ -14,6 +16,19 @@ const WIDTHS = [
   { width: 1280, height: 800 },
 ];
 const FROM_TABLET = 768;
+
+/** A fake GET /meta that says whether sign-up is open (the header and the login page read it); everything else goes to the API. */
+function signUpIs(open: boolean) {
+  return (request: FakeRequest): FakeAnswer =>
+    request.path === "/meta"
+      ? {
+          body: {
+            areas: ["GRA"], categories: [], services: [], blood_groups: [], report_reasons: [], service_catalogue: [],
+            signup_open: open,
+          },
+        }
+      : null;
+}
 
 for (const { width, height } of WIDTHS) {
   test.describe(`sign-up at ${width} px`, () => {
@@ -85,8 +100,8 @@ for (const { width, height } of WIDTHS) {
       await allIsInsideTheScreen(page, width);
     });
 
-    test("/log-in is the login form with a link to sign up, and fits the screen", async ({ page }) => {
-      await fakeApi(page, () => null);
+    test("/log-in is the login form with a link to sign up while sign-up is open, and fits the screen", async ({ page }) => {
+      await fakeApi(page, signUpIs(true));
       await page.goto("/log-in", { waitUntil: "load" });
 
       await expect(page.getByRole("heading", { level: 1, name: "Log in" })).toBeVisible({ timeout: 60_000 });
@@ -96,7 +111,7 @@ for (const { width, height } of WIDTHS) {
     });
 
     test("the header: Log in and Sign up in the bar from tablet width, in the Menu on a phone; SwiftRescue stays red and outside it", async ({ page }) => {
-      await fakeApi(page, () => null);
+      await fakeApi(page, signUpIs(true));
       await page.goto("/find", { waitUntil: "load" });
       const rescue = page.getByRole("banner").getByRole("link", { name: "SwiftRescue" });
       await expect(rescue).toBeVisible({ timeout: 60_000 });
@@ -120,8 +135,29 @@ for (const { width, height } of WIDTHS) {
       await expect(rescue).toHaveCSS("background-color", /^rgb\((2[0-9][0-9]|1[5-9][0-9]), ?\d+, ?\d+\)$/); // the red, and only SwiftRescue
     });
 
+    test("the header: while sign-up is closed there is Log in and no Sign up, in the bar and in the Menu, and nothing is wider than the screen", async ({ page }) => {
+      await fakeApi(page, signUpIs(false));
+      await page.goto("/find", { waitUntil: "load" });
+      const bar = page.getByRole("banner");
+      await expect(bar.getByRole("link", { name: "SwiftRescue" })).toBeVisible({ timeout: 60_000 });
+      await page.waitForResponse((response) => response.url().endsWith("/meta"));
+
+      await expect(bar.getByRole("link", { name: "Sign up" })).toHaveCount(0);
+      if (width >= FROM_TABLET) {
+        await expect(bar.getByRole("link", { name: "Log in" })).toBeVisible();
+      } else {
+        await page.getByRole("button", { name: "Menu" }).click();
+        const menu = page.getByRole("navigation", { name: "Menu links" });
+        await expect(menu.getByRole("link", { name: "Log in" })).toBeVisible();
+        await expect(menu.getByRole("link", { name: "Sign up" })).toHaveCount(0);
+      }
+      await page.goto("/log-in", { waitUntil: "load" });
+      await expect(page.getByRole("heading", { level: 1, name: "Log in" })).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByRole("link", { name: "Sign up" })).toHaveCount(0);
+    });
+
     test("the header: a session turns Log in and Sign up into My account, and nothing in the bar moves", async ({ page }) => {
-      await fakeApi(page, () => null);
+      await fakeApi(page, signUpIs(true));
       await page.goto("/find", { waitUntil: "load" });
       const bar = page.getByRole("banner");
       const rescue = bar.getByRole("link", { name: "SwiftRescue" });
@@ -151,6 +187,18 @@ for (const { width, height } of WIDTHS) {
     });
   });
 }
+
+test.describe("the old login address", () => {
+  test("/admin/login redirects to /log-in with a permanent redirect, and a browser lands on the login", async ({ page, request }) => {
+    const answer = await request.get("/admin/login", { maxRedirects: 0 });
+    expect(answer.status()).toBe(308);
+    expect(new URL(answer.headers()["location"], "http://localhost").pathname).toBe("/log-in"); // the address may be relative
+
+    await page.goto("/admin/login", { waitUntil: "load" });
+    await expect(page).toHaveURL(/\/log-in$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Log in" })).toBeVisible({ timeout: 60_000 });
+  });
+});
 
 test.describe("the pages need no account where they never did", () => {
   test.use({ viewport: { width: 360, height: 740 } });

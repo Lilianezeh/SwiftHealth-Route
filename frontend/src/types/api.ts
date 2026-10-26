@@ -81,6 +81,7 @@ export type MetaResponse = {
   blood_groups: string[];
   report_reasons: string[];
   service_catalogue: string[]; // the names staff may pick for a listing (phase 10, decision C1)
+  signup_open: boolean; // the sign-up routes would answer; the header and the login page show "Sign up" only then
 };
 
 /** One item of GET /blood/banks (api-spec): a summary plus the blood groups and the date they were confirmed (FR-27). */

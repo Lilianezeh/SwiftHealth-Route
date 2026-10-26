@@ -331,7 +331,7 @@ describe("access", () => {
     window.sessionStorage.clear();
     stubApi();
     const first = render(await AdminChecksPage({ params: Promise.resolve({ id: "12" }) }));
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
     first.unmount();
 
     loginAs("provider");

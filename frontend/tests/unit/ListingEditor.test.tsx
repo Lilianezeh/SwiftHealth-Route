@@ -299,7 +299,7 @@ describe("an existing listing", () => {
     stubApi();
     await openEdit();
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
     expect(screen.queryByLabelText("Name")).toBeNull();
   });
 });

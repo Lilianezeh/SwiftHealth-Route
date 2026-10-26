@@ -7,11 +7,12 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LoginForm } from "@/components/admin/LoginForm";
+import { resetMetaCache } from "@/lib/api/meta";
 import { formatPhoneHint } from "@/lib/formatters/phone";
 import { readStaffSession } from "@/lib/staff/session";
 import type { StaffRole } from "@/types/staff";
 
-import { json } from "../helpers/api";
+import { json, META } from "../helpers/api";
 import { readSource } from "../helpers/source";
 
 const replace = vi.fn();
@@ -35,12 +36,16 @@ function askForApp(canUseSms = false) {
   return { challenge_token: "app.jwt", sent_to: null, method: "totp", can_use_sms: canUseSms };
 }
 
-function stubAuth(options: { login?: Handler; verify?: Handler; resend?: Handler; useSms?: Handler } = {}) {
+function stubAuth(
+  options: { login?: Handler; verify?: Handler; resend?: Handler; useSms?: Handler; meta?: () => Response | Promise<Response> } = {},
+) {
   const calls: { path: string; body: Record<string, string> }[] = [];
+  resetMetaCache(); // the "Sign up" prompt asks GET /meta; what an earlier test kept is forgotten
   vi.stubGlobal(
     "fetch",
     vi.fn(async (address: string, init: RequestInit) => {
       const path = new URL(address).pathname;
+      if (path === "/meta") return (options.meta ?? (() => json({ ...META, signup_open: false })))(); // not a login call: not in `calls`
       const body = JSON.parse(String(init.body)) as Record<string, string>;
       calls.push({ path, body });
       if (path === "/auth/login") return (options.login ?? (() => json(sentBySms("challenge.jwt"))))(body);
@@ -102,7 +107,7 @@ describe("step 1: email and password", () => {
     expect(password).toHaveAttribute("type", "password");
     expect(password).toHaveAttribute("autocomplete", "current-password");
     for (const field of [email, password]) expect(field.className).toMatch(/\bmin-h-12\b/);
-    expect(screen.getByRole("heading", { level: 1, name: "Staff login" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
   });
 
   it("has the shared show / hide eye on the password field, hidden at first, and the password is hidden again after Send me a code", async () => {
@@ -589,13 +594,9 @@ describe("a login code sent by email (no SMS yet, D19)", () => {
 });
 
 describe("the login of the accounts pages (Phase 3b, UI spec 3.1c)", () => {
-  it("keeps the heading Staff login by default (the old address) and takes another heading for /log-in", () => {
+  it("has the one heading Log in (the old address /admin/login redirects to /log-in)", () => {
     stubAuth();
-    const { unmount } = render(<LoginForm />);
-    expect(screen.getByRole("heading", { level: 1, name: "Staff login" })).toBeInTheDocument();
-    unmount();
-
-    render(<LoginForm heading="Log in" />);
+    render(<LoginForm />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
   });
@@ -626,22 +627,31 @@ describe("the login of the accounts pages (Phase 3b, UI spec 3.1c)", () => {
     expect(screen.queryByText(/stack trace/)).not.toBeInTheDocument();
   });
 
-  it("offers a link to sign up under the first step only when asked to (the /log-in page)", async () => {
-    stubAuth();
-    const { unmount } = render(<LoginForm />);
-    expect(screen.queryByRole("link", { name: "Sign up" })).not.toBeInTheDocument();
-    unmount();
+  it("offers a link to sign up under the first step only while sign-up is open (GET /meta says so)", async () => {
+    stubAuth({ meta: () => json({ ...META, signup_open: true }) });
+    render(<LoginForm />);
 
-    render(<LoginForm heading="Log in" showSignUpLink />);
-    expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
+    expect(await screen.findByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
     await logInTo();
 
     expect(screen.queryByRole("link", { name: "Sign up" })).not.toBeInTheDocument(); // gone on the code step
   });
 
+  it.each([false, "fails"] as const)("offers no link to sign up while sign-up is closed (%s)", async (state) => {
+    const calls = stubAuth({
+      meta: () => (state === "fails" ? Promise.reject(new TypeError("offline")) : json({ ...META, signup_open: false })),
+    });
+    render(<LoginForm />);
+    await waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled());
+
+    expect(screen.queryByRole("link", { name: "Sign up" })).not.toBeInTheDocument();
+    expect(calls).toEqual([]); // the login calls were not touched
+    expect(screen.getByRole("button", { name: "Send me a code" })).toBeEnabled(); // and the form works without the answer
+  });
+
   it("sends a provider to their own page after the code, as before", async () => {
     stubAuth({ verify: () => tokenFor("provider") });
-    render(<LoginForm heading="Log in" />);
+    render(<LoginForm />);
     await logInTo();
 
     await userEvent.type(screen.getByLabelText("6-digit code"), "482913");

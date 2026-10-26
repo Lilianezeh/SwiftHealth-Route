@@ -42,7 +42,7 @@ describe("who may open it", () => {
     const { requests } = stubStaffApi({});
     await openPage();
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
     expect(requests).toHaveLength(0);
   });
 
@@ -162,7 +162,7 @@ describe("the list", () => {
     stubStaffApi({ "/listings": () => json({ detail: "Invalid or expired token" }, 401) });
     await openPage();
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
   });
 });
 

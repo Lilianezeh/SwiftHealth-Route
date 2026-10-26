@@ -46,7 +46,7 @@ describe("who may open the provider screens", () => {
     const { requests } = withMeta({});
     render(<ProviderPage />);
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
     expect(requests).toHaveLength(0);
   });
 
@@ -181,7 +181,7 @@ describe("my facility (/provider)", () => {
     withMeta({ "/provider/listing": () => json({ detail: "Invalid or expired token" }, 401) });
     render(<ProviderPage />);
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
   });
 });
 

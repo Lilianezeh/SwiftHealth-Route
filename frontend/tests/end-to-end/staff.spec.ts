@@ -53,8 +53,8 @@ for (const { width, height } of WIDTHS) {
         if (request.path === "/listings") return { body: { items: [], total: 0 } };
         return null;
       });
-      await page.goto("/admin/login", { waitUntil: "load" });
-      await expect(page.getByRole("heading", { level: 1, name: "Staff login" })).toBeVisible({ timeout: 60_000 });
+      await page.goto("/log-in", { waitUntil: "load" });
+      await expect(page.getByRole("heading", { level: 1, name: "Log in" })).toBeVisible({ timeout: 60_000 });
       await allIsInsideTheScreen(page, width);
       await targetsAndTextAreBigEnough(page);
 
@@ -83,8 +83,8 @@ for (const { width, height } of WIDTHS) {
         if (request.path === "/auth/login") return { body: { challenge_token: "challenge.jwt", sent_to: "+234******0001", method: "sms", can_use_sms: false } };
         return null;
       });
-      await page.goto("/admin/login", { waitUntil: "load" });
-      await expect(page.getByRole("heading", { level: 1, name: "Staff login" })).toBeVisible({ timeout: 60_000 });
+      await page.goto("/log-in", { waitUntil: "load" });
+      await expect(page.getByRole("heading", { level: 1, name: "Log in" })).toBeVisible({ timeout: 60_000 });
       const field = page.getByLabel("Password", { exact: true });
       const eye = page.getByRole("button", { name: "Show password" });
       await field.fill("a-long-password");
@@ -118,8 +118,8 @@ for (const { width, height } of WIDTHS) {
         if (request.path === "/auth/resend-code") return { body: { challenge_token: "challenge2.jwt", sent_to: "+234******4567" } };
         return null;
       });
-      await page.goto("/admin/login", { waitUntil: "load" });
-      await expect(page.getByRole("heading", { level: 1, name: "Staff login" })).toBeVisible({ timeout: 60_000 });
+      await page.goto("/log-in", { waitUntil: "load" });
+      await expect(page.getByRole("heading", { level: 1, name: "Log in" })).toBeVisible({ timeout: 60_000 });
       await page.getByLabel("Email").fill("ada@example.com");
       await page.getByLabel("Password", { exact: true }).fill("a-long-password");
       await page.getByRole("button", { name: "Send me a code" }).click();
@@ -151,8 +151,8 @@ for (const { width, height } of WIDTHS) {
         if (request.path === "/auth/use-sms") return { body: { challenge_token: "sms.jwt", sent_to: "+234******4567", method: "sms", can_use_sms: false } };
         return null;
       });
-      await page.goto("/admin/login", { waitUntil: "load" });
-      await expect(page.getByRole("heading", { level: 1, name: "Staff login" })).toBeVisible({ timeout: 60_000 });
+      await page.goto("/log-in", { waitUntil: "load" });
+      await expect(page.getByRole("heading", { level: 1, name: "Log in" })).toBeVisible({ timeout: 60_000 });
       await page.getByLabel("Email").fill("ada@example.com");
       await page.getByLabel("Password", { exact: true }).fill("a-long-password");
       await page.getByRole("button", { name: "Send me a code" }).click();
@@ -350,7 +350,7 @@ for (const { width, height } of WIDTHS) {
       const bare = await page.context().browser()?.newContext({ viewport: { width, height } });
       const visitor = await bare?.newPage();
       await visitor?.goto("http://localhost:3000/admin/listings", { waitUntil: "load" });
-      await expect(visitor as NonNullable<typeof visitor>).toHaveURL(/\/admin\/login$/, { timeout: 60_000 });
+      await expect(visitor as NonNullable<typeof visitor>).toHaveURL(/\/log-in$/, { timeout: 60_000 });
       await bare?.close();
     });
   });

@@ -18,7 +18,7 @@ export function AdminHome() {
 
   useEffect(() => {
     const session = readStaffSession();
-    if (session === null) router.replace("/admin/login");
+    if (session === null) router.replace("/log-in");
     else if (canOpen(session.user.role, "review")) setShowDashboard(true);
     else router.replace(homeAddressFor(session.user.role));
   }, [router]);
