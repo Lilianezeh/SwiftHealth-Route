@@ -59,6 +59,11 @@ export function StaffBar({ user, onLogout }: StaffBarProps) {
           </Link>
         )}
         {canOpen(user.role, "staff") && (
+          <Link href="/admin/activity" prefetch={false} className={LINK_CLASSES}>
+            Activity
+          </Link>
+        )}
+        {canOpen(user.role, "staff") && (
           <Link href="/admin/import-export" prefetch={false} className={LINK_CLASSES}>
             Import and export
           </Link>

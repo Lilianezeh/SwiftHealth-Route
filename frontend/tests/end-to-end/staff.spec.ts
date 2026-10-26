@@ -130,7 +130,13 @@ for (const { width, height } of WIDTHS) {
       await allIsInsideTheScreen(page, width);
       await targetsAndTextAreBigEnough(page);
       await page.clock.runFor(30_000); // runFor fires every one-second timer of the countdown; fastForward fires each only once
-      await expect(page.getByText(/You can ask for a new code in (?:29|30|31) seconds\./)).toBeVisible();
+      // The installed clock also runs in real time, so a slow machine adds the seconds it took to get here: the count is "about 30
+      // or fewer", never more, and never zero yet (it was exactly 29 to 31 on a quick machine, and 23 on a very busy one).
+      const hint = page.getByText(/You can ask for a new code in \d+ seconds?\./);
+      await expect(hint).toBeVisible();
+      const secondsLeft = Number(/in (\d+) second/.exec((await hint.textContent()) ?? "")?.[1]);
+      expect(secondsLeft).toBeLessThanOrEqual(31);
+      expect(secondsLeft).toBeGreaterThan(0);
       await page.clock.runFor(31_000);
       await expect(page.getByRole("button", { name: "Send a new code" })).toBeEnabled();
       await page.getByRole("button", { name: "Send a new code" }).click();
