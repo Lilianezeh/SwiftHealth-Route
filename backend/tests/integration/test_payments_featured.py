@@ -19,7 +19,7 @@ from app.integrations import paystack
 from app.main import app
 from app.models import AuditEntry, Listing, User
 from app.models.base import ListingStatus, Role
-from tests.factories import add_listing
+from tests.factories import add_listing, add_owner_link
 from tests.staff_helpers import bearer_for
 
 pytestmark = pytest.mark.anyio
@@ -54,6 +54,7 @@ async def provider_listing(
     listing = await add_listing(session, "Provider Clinic", status=status)
     listing.owner_id = provider.id
     session.add(listing)
+    await add_owner_link(session, listing, provider)  # since phase 6a the approved link gives the access
     await session.commit()
     return listing
 

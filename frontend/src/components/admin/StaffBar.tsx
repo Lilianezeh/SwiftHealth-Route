@@ -46,6 +46,9 @@ export function StaffBar({ user, onLogout }: StaffBarProps) {
             <Link href="/admin/recheck" prefetch={false} className={LINK_CLASSES}>
               Re-checks
             </Link>
+            <Link href="/admin/owner-requests" prefetch={false} className={LINK_CLASSES}>
+              Owner requests
+            </Link>
           </>
         )}
         {canOpen(user.role, "listings") && (

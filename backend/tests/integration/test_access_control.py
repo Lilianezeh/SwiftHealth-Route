@@ -12,6 +12,7 @@ from app.core.security import create_access_token, create_challenge_token
 from app.models import Listing, User
 from app.models.base import ListingStatus, Role
 from app.repositories import category_repository, listing_repository
+from tests.factories import add_owner_link
 
 pytestmark = pytest.mark.anyio
 
@@ -159,7 +160,9 @@ async def test_verifier_can_open_their_own_draft_but_not_other_listings(access_c
 async def test_provider_can_open_only_their_own_listing(access_client, demo_users, session):
     provider = demo_users[Role.provider]
     own_listing = await add_listing(session, owner_id=provider.id)
+    await add_owner_link(session, own_listing, provider)  # since phase 6a an approved link gives the access
     other_listing = await add_listing(session, owner_id=demo_users[Role.editor].id)
+    await session.commit()
     headers = bearer_for(provider)
     assert (await access_client.get(f"/listings/{own_listing.id}/edit", headers=headers)).status_code == 200
     assert (await access_client.get(f"/listings/{other_listing.id}/edit", headers=headers)).status_code == 403

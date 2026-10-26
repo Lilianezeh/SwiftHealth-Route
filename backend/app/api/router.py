@@ -10,6 +10,7 @@ from app.api.routes import (
     dashboard,
     emergency,
     listings,
+    owner_requests,
     payments,
     providers,
     public,
@@ -25,7 +26,7 @@ api_router = APIRouter()
 
 all_route_modules = [
     public, auth, signup, two_factor, search, listings, emergency, blood, reports, verifications, providers,
-    payments, uploads, dashboard, admin, admin_accounts, account,
+    payments, uploads, dashboard, admin, admin_accounts, account, owner_requests,
 ]
 for route_module in all_route_modules:
     api_router.include_router(route_module.router)

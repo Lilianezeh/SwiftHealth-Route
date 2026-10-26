@@ -13,7 +13,7 @@ import type { ProviderListing } from "@/types/staff";
 
 type ProviderListingState = { status: "loading" | "slow" | "ready" | "error" | "none"; listing: ProviderListing | null };
 
-export function useProviderListing() {
+export function useProviderListing(listingId?: number) {
   const { call } = useStaff();
   const [state, setState] = useState<ProviderListingState>({ status: "loading", listing: null });
   const [attempt, setAttempt] = useState(0);
@@ -22,10 +22,14 @@ export function useProviderListing() {
     const controller = new AbortController();
     setState({ status: "loading", listing: null });
     call((token) =>
-      getProviderListing(token, {
-        signal: controller.signal,
-        onSlow: () => setState((current) => (current.status === "loading" ? { ...current, status: "slow" } : current)),
-      }),
+      getProviderListing(
+        token,
+        {
+          signal: controller.signal,
+          onSlow: () => setState((current) => (current.status === "loading" ? { ...current, status: "slow" } : current)),
+        },
+        listingId,
+      ),
     )
       .then((listing) => {
         if (!controller.signal.aborted) setState({ status: "ready", listing });
@@ -35,7 +39,7 @@ export function useProviderListing() {
         setState({ status: error instanceof ApiError && error.status === 404 ? "none" : "error", listing: null });
       });
     return () => controller.abort();
-  }, [call, attempt]);
+  }, [call, attempt, listingId]);
 
   const retry = useCallback(() => setAttempt((current) => current + 1), []);
 

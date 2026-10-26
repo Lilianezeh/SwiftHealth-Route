@@ -100,7 +100,7 @@ async def test_every_other_category_and_every_other_table_is_unchanged(
         if slug not in RENAMED:
             assert after[slug] == row, slug
     assert await count_rows_of_every_other_table(session) == tables_before
-    assert len(SQLModel.metadata.sorted_tables) == 9  # still the 9 tables
+    assert len(SQLModel.metadata.sorted_tables) == 10  # the 9 tables, and the owner links
 
 
 async def test_a_name_that_staff_changed_by_hand_is_not_overwritten(session: AsyncSession) -> None:

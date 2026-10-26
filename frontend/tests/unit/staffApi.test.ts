@@ -202,6 +202,46 @@ describe("the account decisions (accounts phase 4a and 4b)", () => {
   });
 });
 
+describe("the owner link calls (accounts phase 6)", () => {
+  it("list the queue, then approve with the note and reject with or without one, token in the header only", async () => {
+    const calls = stubFetch();
+
+    await staff.listOwnerRequests("tok");
+    await staff.approveOwnerRequest("tok", 4, "Mrs Eze, the matron");
+    await staff.rejectOwnerRequest("tok", 4, "Nobody knew them");
+    await staff.rejectOwnerRequest("tok", 5);
+
+    expect(calls.map((call) => [call.init.method ?? "GET", call.url.pathname])).toEqual([
+      ["GET", "/staff/owner-requests"],
+      ["POST", "/staff/owner-requests/4/approve"],
+      ["POST", "/staff/owner-requests/4/reject"],
+      ["POST", "/staff/owner-requests/5/reject"],
+    ]);
+    expect(JSON.parse(String(calls[1].init.body))).toEqual({ note: "Mrs Eze, the matron" });
+    expect(JSON.parse(String(calls[2].init.body))).toEqual({ note: "Nobody knew them" });
+    expect(JSON.parse(String(calls[3].init.body))).toEqual({});
+    expect(calls.every((call) => call.url.search === "")).toBe(true);
+    expect(calls.every((call) => headerOf(call.init, "Authorization") === "Bearer tok")).toBe(true);
+  });
+
+  it("list my facilities and read or change one of them by its id", async () => {
+    const calls = stubFetch();
+    const provider = await import("@/lib/api/provider");
+
+    await provider.listMyFacilities("tok");
+    await provider.getProviderListing("tok", {}, 12);
+    await provider.updateProviderListing("tok", { description: "New." }, {}, 12);
+    await provider.getProviderListing("tok");
+
+    expect(calls.map((call) => [call.init.method ?? "GET", call.url.pathname])).toEqual([
+      ["GET", "/provider/listings"],
+      ["GET", "/provider/listings/12"],
+      ["PATCH", "/provider/listings/12"],
+      ["GET", "/provider/listing"],
+    ]);
+  });
+});
+
 describe("the activity log call (accounts phase 4a and 4b)", () => {
   it("sends the filters under the API's names and a page", async () => {
     const calls = stubFetch();

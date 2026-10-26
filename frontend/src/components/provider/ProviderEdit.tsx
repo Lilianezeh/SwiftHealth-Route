@@ -27,10 +27,11 @@ function sentenceFor(error: unknown): string {
 
 const NOOP = () => {};
 
-export function ProviderEdit() {
+/** `listingId` is the facility chosen on "My facilities" (`?listing=` in the address); without it, the first approved one. */
+export function ProviderEdit({ listingId }: { listingId?: number }) {
   const { call } = useStaff();
   const { meta } = useMeta();
-  const { status, listing, retry } = useProviderListing();
+  const { status, listing, retry } = useProviderListing(listingId);
   const [form, setForm] = useState<ListingForm>(emptyForm);
   const [initialForm, setInitialForm] = useState<ListingForm>(emptyForm);
   const [problems, setProblems] = useState<string[]>([]);
@@ -68,7 +69,7 @@ export function ProviderEdit() {
     setBusy(true);
     try {
       // The form shows only the four fields a provider may change, so the patch holds no others.
-      const saved = await call((token) => updateProviderListing(token, patch as ProviderChanges));
+      const saved = await call((token) => updateProviderListing(token, patch as ProviderChanges, {}, listingId));
       setForm(formFromDetail(saved));
       setInitialForm(formFromDetail(saved));
       setMessage("Saved.");

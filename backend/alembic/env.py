@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
-import app.models  # noqa: F401  (registers all 9 tables)
+import app.models  # noqa: F401  (registers all 10 tables)
 from app.core.config import settings
 
 config = context.config

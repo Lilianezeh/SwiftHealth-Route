@@ -27,7 +27,7 @@ backend/            FastAPI + PostgreSQL
     services/       business rules
     repositories/   database queries
     integrations/   Paystack, Cloudinary, Resend, Termii
-    models/         the 9 database tables
+    models/         the 10 database tables
     core/           settings, database connection, security
     jobs/           scheduled tasks
   alembic/          migrations

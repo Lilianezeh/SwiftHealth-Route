@@ -109,6 +109,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/admin/listings/[id]", // phase 10, the editor of one listing
         "/admin/listings/[id]/checks", // phase 10, its verification log
         "/admin/listings/new", // phase 10, a new listing
+        "/admin/owner-requests", // accounts phase 6b, who asked to edit a facility (editor and admin)
         "/admin/recheck", // phase 11, listings past or near their check date
         "/admin/reports", // phase 11, the report queue
         "/admin/security", // accounts phase 2c, the authenticator app (FR-58)

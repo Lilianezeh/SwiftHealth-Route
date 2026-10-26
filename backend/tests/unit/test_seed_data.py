@@ -15,6 +15,7 @@ from app.core.security import hash_password
 from app.models import (
     AuditEntry,
     Category,
+    FacilityOwner,
     Listing,
     OpeningHours,
     PhoneNumber,
@@ -281,6 +282,10 @@ async def test_the_provider_owns_exactly_one_listing_and_the_verifier_created_al
     verifier = (await session.exec(select(User).where(User.role == Role.verifier))).one()
     owned = (await session.exec(select(Listing).where(Listing.owner_id == provider.id))).all()
     assert len(owned) == 1
+    # Since accounts phase 6a the access is an approved link, and the seed makes it too.
+    links = (await session.exec(select(FacilityOwner).where(FacilityOwner.user_id == provider.id))).all()
+    found = [(link.listing_id, link.role, link.status) for link in links]
+    assert found == [(owned[0].id, "owner", "approved")]
     assert all(listing.created_by == verifier.id for listing in (await session.exec(select(Listing))).all())
 
 

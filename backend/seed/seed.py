@@ -15,7 +15,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.core.database import engine, session_factory
 from app.core.security import hash_password
-from app.models import Category, Listing, OpeningHours, PhoneNumber, Service, User
+from app.models import Category, FacilityOwner, Listing, OpeningHours, PhoneNumber, Service, User
 from app.models.base import CheckMethod, CheckResult, Role, utcnow
 from app.repositories import audit_repository, category_repository, listing_repository, user_repository
 from seed.seed_data import CATEGORIES, LISTINGS, USERS, ListingSeed
@@ -132,6 +132,15 @@ async def add_demo_listing(
         for service in listing_seed.services
     ]
     await listing_repository.add_listing_with_details(session, listing, phones, opening_hours, services)
+
+    if listing_seed.owned_by_provider:  # the demo provider's access is an approved link (accounts phase 6a)
+        session.add(
+            FacilityOwner(
+                listing_id=listing.id, user_id=users[Role.provider].id, role="owner", status="approved",
+                approved_at=now, note="Demo data (fictional)",
+            )
+        )
+        await session.flush()
 
     if last_verified_at is not None:  # published listings carry a passing call and visit (publish rule)
         for method, checked_at in ((CheckMethod.call, last_verified_at - timedelta(days=1)),

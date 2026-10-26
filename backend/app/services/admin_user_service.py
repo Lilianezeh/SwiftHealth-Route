@@ -16,7 +16,12 @@ from app.core.passwords import check_password
 from app.core.security import hash_password
 from app.models import User
 from app.models.base import Role
-from app.repositories import audit_repository, listing_repository, user_repository
+from app.repositories import (
+    audit_repository,
+    facility_owner_repository,
+    listing_repository,
+    user_repository,
+)
 from app.schemas.admin_user import AdminUserCreate, AdminUserList, AdminUserRow, AdminUserUpdate
 from app.schemas.auth import UserRead
 
@@ -157,6 +162,10 @@ async def update_user(
             listing.updated_at = moment
             session.add(listing)
             changes.append(("owner_id", None, str(user.id), listing.id))
+        # Since accounts phase 6a the access is the link, not the column: make it approved (an admin decides).
+        await facility_owner_repository.add_approved(
+            session, listing.id, user.id, admin.id, moment, "linked by an admin"  # type: ignore[arg-type]
+        )
 
     await user_repository.save(session, user)
     for field, old_value, new_value, listing_id in changes:
