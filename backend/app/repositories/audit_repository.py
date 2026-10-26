@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import AuditEntry
+from app.models import AuditEntry, Listing, User
 
 PAYMENT_ACTION = "payment"  # the audit action of a confirmed Paystack payment (FR-46)
 
@@ -31,6 +31,46 @@ async def add_entry(
     session.add(entry)
     await session.flush()
     return entry
+
+
+# The entry, the name of who did it, the name of the listing.
+ActivityRow = tuple[AuditEntry, str | None, str | None]
+
+
+async def list_activity(
+    session: AsyncSession,
+    *,
+    user_id: int | None,
+    action: str | None,
+    start: datetime | None,
+    end: datetime | None,
+    limit: int,
+    offset: int,
+) -> tuple[list[ActivityRow], int]:
+    """One page of the audit log, newest first, and how many entries match (the admin's activity log, FR-55).
+
+    `start` is included and `end` is excluded (the caller turns "from day A to day B" into these two moments).
+    """
+    conditions = []
+    if user_id is not None:
+        conditions.append(col(AuditEntry.user_id) == user_id)
+    if action is not None:
+        conditions.append(col(AuditEntry.action) == action)
+    if start is not None:
+        conditions.append(col(AuditEntry.changed_at) >= start)
+    if end is not None:
+        conditions.append(col(AuditEntry.changed_at) < end)
+    total = (await session.exec(select(func.count()).select_from(AuditEntry).where(*conditions))).one()
+    query = (
+        select(AuditEntry, User.name, Listing.name)
+        .outerjoin(User, col(User.id) == col(AuditEntry.user_id))
+        .outerjoin(Listing, col(Listing.id) == col(AuditEntry.listing_id))
+        .where(*conditions)
+        .order_by(col(AuditEntry.changed_at).desc(), col(AuditEntry.id).desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    return [(entry, actor, listing) for entry, actor, listing in (await session.exec(query)).all()], total
 
 
 async def lock_reference(session: AsyncSession, reference: str) -> None:

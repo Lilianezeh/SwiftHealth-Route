@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import exists, or_
+from sqlalchemy import exists, func, or_
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -95,6 +95,60 @@ async def list_active_with_roles(session: AsyncSession, roles: set[Role]) -> lis
 async def list_all(session: AsyncSession) -> list[User]:
     """Every user, by id (the admin's staff list)."""
     return list((await session.exec(select(User).order_by(col(User.id)))).all())
+
+
+def _like_pattern(search_text: str) -> str:
+    """The text as a 'contains' pattern in which %, _ and the backslash mean themselves."""
+    escaped = search_text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
+
+
+async def list_filtered(
+    session: AsyncSession,
+    *,
+    role: Role | None,
+    approval_status: str | None,
+    is_active: bool | None,
+    search_text: str | None,
+    limit: int,
+    offset: int,
+) -> tuple[list[User], int]:
+    """One page of accounts, by id, and how many match the filters (the admin's account list, FR-55)."""
+    conditions = []
+    if role is not None:
+        conditions.append(col(User.role) == role)
+    if approval_status is not None:
+        conditions.append(col(User.approval_status) == approval_status)
+    if is_active is not None:
+        conditions.append(col(User.is_active).is_(is_active))
+    if search_text:
+        pattern = _like_pattern(search_text.strip())
+        conditions.append(
+            or_(col(User.name).ilike(pattern, escape="\\"), col(User.email).ilike(pattern, escape="\\"))
+        )
+    total = (await session.exec(select(func.count()).select_from(User).where(*conditions))).one()
+    query = select(User).where(*conditions).order_by(col(User.id)).limit(limit).offset(offset)
+    return list((await session.exec(query)).all()), total
+
+
+async def count_other_active_admins(session: AsyncSession, excluding_user_id: int) -> int:
+    """How many approved, active admins there are besides this account (the last can never be locked out)."""
+    query = select(func.count()).select_from(User).where(
+        col(User.role) == Role.admin,
+        col(User.is_active).is_(True),
+        col(User.approval_status) == ApprovalStatus.approved.value,
+        col(User.closed_at).is_(None),
+        col(User.id) != excluding_user_id,
+    )
+    return (await session.exec(query)).one()
+
+
+async def names_by_ids(session: AsyncSession, user_ids: set[int]) -> dict[int, str]:
+    """The name of each account, by id (for the activity log). Ids that do not exist are left out."""
+    if not user_ids:
+        return {}
+    rows = (await session.exec(select(User.id, User.name).where(col(User.id).in_(user_ids)))).all()
+    return {user_id: name for user_id, name in rows if user_id is not None}
 
 
 async def save(session: AsyncSession, user: User) -> None:

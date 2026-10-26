@@ -2,7 +2,7 @@
 services/admin_user_service.py. See specs/backend/api-spec.md, section 11 (admin only)."""
 
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel
@@ -20,11 +20,29 @@ from app.services import admin_user_service, csv_export_service, csv_import_serv
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
-@router.get("/users", response_model=AdminUserList, summary="Admin: every staff and provider account")
+@router.get(
+    "/users",
+    response_model=AdminUserList,
+    summary="Admin: the accounts, with filters and a page size (FR-55)",
+)
 async def list_users(
-    _admin: User = Depends(require_role(Role.admin)), session: AsyncSession = Depends(get_session)
+    role: Role | None = Query(default=None, description="Only accounts with this role."),
+    approval_status: Literal["pending", "approved", "rejected"] | None = Query(
+        default=None, description="Only accounts in this approval state."
+    ),
+    is_active: bool | None = Query(default=None, description="true: active accounts, false: suspended ones."),
+    search_text: str | None = Query(
+        default=None, alias="q", max_length=100, description="Part of the name or the email, any case."
+    ),
+    limit: int = Query(default=100, ge=1, le=200, description="Page size."),
+    offset: int = Query(default=0, ge=0),
+    _admin: User = Depends(require_role(Role.admin)),
+    session: AsyncSession = Depends(get_session),
 ) -> AdminUserList:
-    return await admin_user_service.list_users(session)
+    return await admin_user_service.list_users(
+        session, role=role, approval_status=approval_status, is_active=is_active,
+        search_text=search_text, limit=limit, offset=offset,
+    )
 
 
 @router.post(

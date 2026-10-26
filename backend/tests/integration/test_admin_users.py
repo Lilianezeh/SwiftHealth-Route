@@ -64,7 +64,10 @@ async def test_the_list_has_every_user_by_id_and_never_a_password_hash(
     body = response.json()
     assert body["total"] == 4
     assert [item["id"] for item in body["items"]] == sorted(item["id"] for item in body["items"])
+    # The old fields, and since Phase 4a the ones the admin screens need (api-spec section 11).
     shown = {"id", "name", "email", "phone", "role", "is_active", "two_factor_enabled"}
+    shown |= {"approval_status", "last_login_at", "created_at", "signup_note"}
+    shown |= {"email_verified_at", "phone_verified_at"}
     assert set(body["items"][0]) == shown
     assert "password" not in response.text
 

@@ -64,3 +64,42 @@ async def send_account_exists_notice(to: str) -> None:
         "If it was not you, ignore this email: nothing changes.\n"
     )
     await resend.send_email(to, f"You already have a {BRAND} account", body)
+
+
+def decision_text(decision: str, detail: str | None) -> tuple[str, str]:
+    """The subject and body of the email that tells a person what an admin decided about their account.
+
+    `decision` is approved, rejected, suspended or reactivated. `detail` is the role (approved) or the
+    admin's reason (rejected, suspended). Plain text: the app's name, what happened, what to do next. No
+    link, no code, no password, no address or number, no medical text. Plain `def`: only builds text.
+    """
+    if decision == "approved":
+        subject = f"Your {BRAND} account was approved"
+        body = (
+            f"An admin approved your {BRAND} staff account as {detail}. "
+            "You can log in now with the email you signed up with.\n"
+        )
+    elif decision == "rejected":
+        subject = f"Your {BRAND} sign-up was not approved"
+        body = f"An admin did not approve your {BRAND} sign-up.\n"
+        if detail:
+            body += f"\nReason: {detail}\n"
+        body += "\nIf you think this is a mistake, contact the team.\n"
+    elif decision == "suspended":
+        subject = f"Your {BRAND} account was suspended"
+        body = f"An admin suspended your {BRAND} account, so you cannot log in for now.\n\nReason: {detail}\n"
+        body += "\nIf you think this is a mistake, contact the team.\n"
+    elif decision == "reactivated":
+        subject = f"Your {BRAND} account is active again"
+        body = f"An admin turned your {BRAND} account back on. You can log in again.\n"
+    else:
+        raise ValueError(f"No email text for the decision {decision!r}.")
+    return subject, body
+
+
+async def send_decision_notice(to: str, decision: str, detail: str | None = None) -> None:
+    """Emails the person what an admin decided about their account. Best effort and not `required`: with
+    no Resend key nothing is sent; the caller catches `EmailSendError` and goes on, because the decision
+    is already saved."""
+    subject, body = decision_text(decision, detail)
+    await resend.send_email(to, subject, body)

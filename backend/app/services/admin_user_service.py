@@ -17,7 +17,7 @@ from app.core.security import hash_password
 from app.models import User
 from app.models.base import Role
 from app.repositories import audit_repository, listing_repository, user_repository
-from app.schemas.admin_user import AdminUserCreate, AdminUserList, AdminUserUpdate
+from app.schemas.admin_user import AdminUserCreate, AdminUserList, AdminUserRow, AdminUserUpdate
 from app.schemas.auth import UserRead
 
 CHANGED = "changed"
@@ -59,9 +59,22 @@ class NewPasswordNeededError(Exception):
     """A provider is being made staff without a new password (FR-56): a provider's password may be shorter."""
 
 
-async def list_users(session: AsyncSession) -> AdminUserList:
-    users = await user_repository.list_all(session)
-    return AdminUserList(items=[UserRead.model_validate(user) for user in users], total=len(users))
+async def list_users(
+    session: AsyncSession,
+    *,
+    role: Role | None = None,
+    approval_status: str | None = None,
+    is_active: bool | None = None,
+    search_text: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> AdminUserList:
+    """One page of accounts that match the filters, and how many match in all (FR-55)."""
+    users, total = await user_repository.list_filtered(
+        session, role=role, approval_status=approval_status, is_active=is_active,
+        search_text=search_text, limit=limit, offset=offset,
+    )
+    return AdminUserList(items=[AdminUserRow.model_validate(user) for user in users], total=total)
 
 
 async def create_user(

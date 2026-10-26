@@ -3,6 +3,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     admin,
+    admin_accounts,
     auth,
     blood,
     dashboard,
@@ -23,7 +24,7 @@ api_router = APIRouter()
 
 all_route_modules = [
     public, auth, signup, two_factor, search, listings, emergency, blood, reports, verifications, providers,
-    payments, uploads, dashboard, admin,
+    payments, uploads, dashboard, admin, admin_accounts,
 ]
 for route_module in all_route_modules:
     api_router.include_router(route_module.router)
