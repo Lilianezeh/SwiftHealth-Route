@@ -46,6 +46,16 @@ async def add_report(
     return report
 
 
+async def set_dates_for_listing(session: AsyncSession, listing_id: int, created_at: datetime) -> None:
+    """Gives every report of one listing the same date. Only for the local test fixture
+    (seed/whatsapp_fixture.py), whose "recently reported" note needs its two reports to stay
+    inside the last 7 days. The caller commits."""
+    reports = (await session.exec(select(UserReport).where(col(UserReport.listing_id) == listing_id))).all()
+    for report in reports:
+        report.created_at = created_at
+        session.add(report)
+
+
 async def count_different_not_working_reporters(
     session: AsyncSession, listing_id: int, *, since: datetime
 ) -> int:

@@ -12,6 +12,7 @@ from app.core.service_names import normalise_service_name
 from app.models.base import ReportReason
 from app.repositories import category_repository, service_repository
 from app.schemas.meta import MetaCategory, MetaResponse
+from app.services import signup_service
 
 
 def choose_service_names(names: Iterable[str], blood_groups: Sequence[str]) -> list[str]:
@@ -47,4 +48,5 @@ async def get_meta(session: AsyncSession) -> MetaResponse:
         blood_groups=list(BLOOD_GROUPS),
         report_reasons=[reason.value for reason in ReportReason],
         service_catalogue=catalogue_for_meta(),
+        signup_open=signup_service.signup_is_open(),
     )

@@ -32,7 +32,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.database import engine, session_factory
 from app.models import Listing, OpeningHours, PhoneNumber, Service, UserReport
 from app.models.base import ListingStatus, ReportReason, ReportStatus, utcnow
-from app.repositories import audit_repository, category_repository, listing_repository
+from app.repositories import audit_repository, category_repository, listing_repository, report_repository
 from seed.seed_data import AREA_CENTRES, CATEGORIES, HoursSeed, ServiceSeed, demo_phone
 
 logger = logging.getLogger("seed.whatsapp_fixture")
@@ -90,9 +90,17 @@ def environment_allows(environment: Mapping[str, str]) -> bool:
 
 
 async def seed_whatsapp_fixture(session: AsyncSession, now: datetime) -> dict[str, int]:
-    """Adds the fixture listing if missing ({"listings": 1}); if it is already there, {"listings": 0}."""
-    if await listing_repository.get_by_slug(session, FIXTURE_SLUG) is not None:
-        return {"listings": 0}  # already there: keep it as it is
+    """Adds the fixture listing if missing ({"listings": 1}); if it is already there, {"listings": 0}.
+
+    A listing that is already there is kept as it is, except for the dates of its two reports:
+    the "recently reported" note needs them in the last 7 days (FR-22), so they are renewed to
+    one day ago each time the command runs."""
+    existing = await listing_repository.get_by_slug(session, FIXTURE_SLUG)
+    if existing is not None:
+        reports_date = now - timedelta(days=FIXTURE_REPORT_DAYS_AGO)
+        await report_repository.set_dates_for_listing(session, existing.id, reports_date)
+        await session.commit()
+        return {"listings": 0}
 
     category_seed = next(category for category in CATEGORIES if category.slug == "clinic")
     category = await category_repository.get_by_slug(session, category_seed.slug)

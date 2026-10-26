@@ -122,7 +122,7 @@ describe("access", () => {
     stubApi();
     render(<AdminStaffPage />);
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
   });
 });
 

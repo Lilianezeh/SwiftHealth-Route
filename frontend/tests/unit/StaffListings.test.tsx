@@ -207,7 +207,7 @@ describe("the staff listings screen", () => {
     stubStaffApi(() => json({ detail: "Invalid or expired token" }, 401));
     await openPage();
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
     expect(window.sessionStorage.length).toBe(0);
   });
 
@@ -215,7 +215,7 @@ describe("the staff listings screen", () => {
     window.sessionStorage.clear();
     stubStaffApi();
     const first = render(await AdminListingsPage({ searchParams: Promise.resolve({}) }));
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
     expect(screen.queryByText("New listing")).toBeNull();
     first.unmount();
 

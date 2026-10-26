@@ -14,6 +14,7 @@ const META: MetaResponse = {
   blood_groups: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
   report_reasons: ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"],
   service_catalogue: ["Consultation", "X-ray"],
+  signup_open: false,
 };
 
 beforeEach(() => {
@@ -31,7 +32,7 @@ describe("getMeta", () => {
     const meta = await getMeta();
 
     expect(Object.keys(meta).sort()).toEqual([
-      "areas", "blood_groups", "categories", "report_reasons", "service_catalogue", "services",
+      "areas", "blood_groups", "categories", "report_reasons", "service_catalogue", "services", "signup_open",
     ]);
     expect(meta.categories[0]).toEqual({ slug: "pharmacy", name: "Pharmacy", is_emergency: false });
   });

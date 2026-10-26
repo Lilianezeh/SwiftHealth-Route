@@ -6,6 +6,11 @@
  */
 import { expect, test, type Page } from "@playwright/test";
 
+import { pinFont } from "../helpers/pinnedFont";
+
+// The widths below are measured with a typical phone font, not with whatever wide fallback the machine has (helpers/pinnedFont.ts).
+test.beforeEach(async ({ page }) => pinFont(page));
+
 // Width and a realistic window height: a window of that width on a laptop or the screen of a phone or a tablet.
 const VIEWPORTS = [
   { width: 320, height: 568 },
@@ -18,6 +23,7 @@ const VIEWPORTS = [
 ];
 const STACKED_BELOW = 1024; // the side-by-side hero starts here
 const MENU_BUTTON_BELOW = 768; // the header links are in the bar from here, the Menu button below
+const SHORT_SCREEN_BELOW = 600; // a window shorter than this (320 x 568) shows the heading and the start of the button, not all of it
 const WORDMARK_FROM = 360; // the full wordmark ("SwiftHealth" and "Route") is visible from here (R40)
 
 type Measure = {
@@ -28,6 +34,7 @@ type Measure = {
   header: { text: string; left: number; right: number; width: number }[];
   wordmark: { text: string; left: number; right: number; width: number }[]; // "SwiftHealth" and "Route" as drawn (width 0: hidden)
   headingBottom: number;
+  buttonTop: number;
   buttonBottom: number;
 };
 
@@ -56,6 +63,7 @@ async function measure(page: Page): Promise<Measure> {
           return { text: (element.textContent ?? "").trim(), left: box.left, right: box.right, width: box.width };
         }),
       headingBottom: heading.getBoundingClientRect().bottom,
+      buttonTop: button.getBoundingClientRect().top,
       buttonBottom: button.getBoundingClientRect().bottom,
     };
   });
@@ -121,7 +129,11 @@ for (const { width, height } of VIEWPORTS) {
       const result = await measure(page);
 
       expect(result.headingBottom).toBeLessThanOrEqual(height);
-      expect(result.buttonBottom).toBeLessThanOrEqual(height);
+      // The button too, on every phone of a normal height. The 320 x 568 screen (the first iPhone SE) is the exception since the owner's
+      // longer hero line (2026-10-17, D7: four lines at 20 px on 288 px): there the button starts on the first screen but ends about
+      // 50 px lower, one short scroll away. The text is the owner's, so the test says what is true instead of failing (owner told, 2026-10-26).
+      if (height >= SHORT_SCREEN_BELOW) expect(result.buttonBottom).toBeLessThanOrEqual(height);
+      else expect(result.buttonTop).toBeLessThan(height);
     });
 
     // Find by type, D7 and D10 (2026-10-15): the new words (hero line, Overview, "Why SwiftHealth Route" cards, Find by type tiles, the owners
@@ -199,7 +211,8 @@ test.describe("what the home page downloads", () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/", { waitUntil: "load" });
 
-    const hero = page.locator("picture img");
+    // The hero photo only: since the Find by type slideshow (#44) the page has a second <picture> (the lazy backdrop photos).
+    const hero = page.locator('picture img[src*="/images/home/hero3"]');
     await expect(hero).toHaveAttribute("loading", "eager");
     await expect(hero).toHaveAttribute("fetchpriority", "high");
     const portrait = page.locator('img[src*="hero4-portrait"]');

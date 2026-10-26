@@ -35,7 +35,7 @@ describe("who sees the dashboard", () => {
     const { requests } = stubStaffApi({});
     render(<AdminPage />);
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
     expect(requests).toHaveLength(0);
   });
 
@@ -185,7 +185,7 @@ describe("the states", () => {
     stubStaffApi({ "/dashboard/stats": () => json({ detail: "Invalid or expired token" }, 401) });
     render(<AdminPage />);
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
   });
 });
 

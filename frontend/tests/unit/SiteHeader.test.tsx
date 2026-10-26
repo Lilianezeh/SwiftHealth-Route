@@ -3,11 +3,13 @@
  * ring on a dark background), US-13. UI spec, "Layout" (the header redesigned on 2026-10-11).
  * The phone menu is tested in MobileMenu.test.tsx.
  */
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SiteHeader } from "@/components/layout/SiteHeader";
+
+import { stubSignupOpen } from "../helpers/api";
 
 // The header is a server component: the route group of the page tells it whether this is the home page (R44), and on the home page
 // it is transparent and hides "Find care" (R14, R18). Each test chooses the page it is on.
@@ -17,9 +19,11 @@ function HeaderOnPage() {
   return <SiteHeader isHomePage={address.pathname === "/"} />;
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   address.pathname = "/find";
+  await stubSignupOpen(false); // the header asks GET /meta whether sign-up is open; closed unless a test says otherwise
 });
+afterEach(() => vi.unstubAllGlobals());
 
 // A link's name as a screen reader says it: the logo is one image labelled "SwiftHealth Route"; the other links are their text.
 const nameOf = (link: HTMLElement) => link.querySelector('[role="img"]')?.getAttribute("aria-label") ?? link.textContent;
@@ -39,23 +43,28 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "For facilities" })).toHaveAttribute("href", "/list-your-facility");
   });
 
-  it("puts the links in the order Find care, SwiftRescue, For facilities, Log in, Sign up", () => {
+  it("puts the links in the order Find care, SwiftRescue, For facilities, Log in, Sign up (sign-up open)", async () => {
+    await stubSignupOpen(true);
     render(<HeaderOnPage />);
+    await screen.findByRole("link", { name: "Sign up" });
 
     const names = screen.getAllByRole("link").map(nameOf);
 
     expect(names).toEqual(["SwiftHealth Route", "Find care", "SwiftRescue", "For facilities", "Log in", "Sign up"]);
   });
 
-  it("has Log in to /log-in and Sign up to /sign-up (Phase 3b, D16)", () => {
+  it("has Log in to /log-in always, and Sign up to /sign-up while sign-up is open (Phase 3b, D16)", async () => {
+    await stubSignupOpen(true);
     render(<HeaderOnPage />);
 
     expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/log-in");
-    expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
+    expect(await screen.findByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
   });
 
-  it("shows Log in and Sign up in the bar from tablet width and leaves them to the menu on a phone", () => {
+  it("shows Log in and Sign up in the bar from tablet width and leaves them to the menu on a phone", async () => {
+    await stubSignupOpen(true);
     render(<HeaderOnPage />);
+    await screen.findByRole("link", { name: "Sign up" });
 
     for (const name of ["Log in", "Sign up"]) {
       expect(screen.getByRole("link", { name }).className, name).toMatch(/\bhidden\b.*\bmd:inline-flex\b/);
@@ -63,7 +72,9 @@ describe("SiteHeader", () => {
   });
 
   it("puts Log in and Sign up in the phone menu after For facilities, and SwiftRescue still outside it", async () => {
+    await stubSignupOpen(true);
     render(<HeaderOnPage />);
+    await screen.findByRole("link", { name: "Sign up" });
 
     await userEvent.click(screen.getByRole("button", { name: "Menu" }));
     const menu = screen.getByRole("navigation", { name: "Menu links" });
@@ -79,8 +90,26 @@ describe("SiteHeader", () => {
     expect(within(menu).queryByRole("link", { name: "SwiftRescue" })).not.toBeInTheDocument();
   });
 
-  it("does not make Log in or Sign up red: red is for SwiftRescue only", () => {
+  it.each([false, "fails"] as const)(
+    "shows no Sign up link while sign-up is closed (%s), in the bar or in the menu, and keeps Log in",
+    async (state) => {
+      await stubSignupOpen(state);
+      render(<HeaderOnPage />);
+      await waitFor(() => expect(fetch).toHaveBeenCalled());
+
+      expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/log-in");
+      expect(screen.queryByRole("link", { name: "Sign up" })).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+      const menu = screen.getByRole("navigation", { name: "Menu links" });
+      expect(within(menu).getByRole("link", { name: "Log in" })).toBeInTheDocument();
+      expect(within(menu).queryByRole("link", { name: "Sign up" })).not.toBeInTheDocument();
+    },
+  );
+
+  it("does not make Log in or Sign up red: red is for SwiftRescue only", async () => {
+    await stubSignupOpen(true);
     render(<HeaderOnPage />);
+    await screen.findByRole("link", { name: "Sign up" });
 
     for (const name of ["Log in", "Sign up"]) {
       expect(screen.getByRole("link", { name }).className, name).not.toMatch(/emergency|red/);
@@ -185,8 +214,7 @@ describe("SiteHeader", () => {
       "SwiftRescue",
       "For facilities",
       "Log in",
-      "Sign up",
-    ]);
+    ]); // sign-up is closed in these tests unless one says otherwise, so no Sign up
   });
 
   it("hides Find care on the home page in the phone menu too, and keeps For facilities there", async () => {
