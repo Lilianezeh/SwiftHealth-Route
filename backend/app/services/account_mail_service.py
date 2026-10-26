@@ -10,6 +10,7 @@ a 503.
 
 from app.core.security import (
     CHALLENGE_TOKEN_LIFETIME,
+    EMAIL_CHANGE_PURPOSE,
     EMAIL_CODE_LIFETIME,
     EMAIL_CONFIRM_PURPOSE,
     LOGIN_CODE_PURPOSE,
@@ -31,6 +32,12 @@ _TEXTS = {
         f"Reset your {BRAND} password",
         "to reset your password",
         PASSWORD_RESET_LIFETIME,
+    ),
+    # The code sent to the NEW address when a logged-in person changes their email (FR-54).
+    EMAIL_CHANGE_PURPOSE: (
+        f"Confirm your new email for {BRAND}",
+        "to confirm this as your new email address",
+        EMAIL_CODE_LIFETIME,
     ),
     # The login code by email, for a person with neither the app nor SMS (owner's answer D19).
     LOGIN_CODE_PURPOSE: (f"Your {BRAND} login code", "to log in", CHALLENGE_TOKEN_LIFETIME),
@@ -64,6 +71,33 @@ async def send_account_exists_notice(to: str) -> None:
         "If it was not you, ignore this email: nothing changes.\n"
     )
     await resend.send_email(to, f"You already have a {BRAND} account", body)
+
+
+def account_notice_text(kind: str) -> tuple[str, str]:
+    """The subject and body of a notice about the person's own account: the email was changed, or the account
+    was closed. Plain text, no link, no code, no password, no address or number. Plain `def`: only builds
+    text."""
+    if kind == "email_changed":
+        return (
+            f"Your {BRAND} email was changed",
+            f"The email address of your {BRAND} account was changed to a new one. "
+            "This address no longer works for the account.\n\n"
+            "If it was not you, contact the team at once.\n",
+        )
+    if kind == "account_closed":
+        return (
+            f"Your {BRAND} account was closed",
+            f"Your {BRAND} account was closed at your request. Your name, email and phone were removed.\n\n"
+            "If it was not you, contact the team at once.\n",
+        )
+    raise ValueError(f"No notice text for {kind!r}.")
+
+
+async def send_account_notice(to: str, kind: str) -> None:
+    """Emails a notice about the person's own account. Best effort and not `required`: the caller catches
+    `EmailSendError` and goes on, because the change is already saved."""
+    subject, body = account_notice_text(kind)
+    await resend.send_email(to, subject, body)
 
 
 def decision_text(decision: str, detail: str | None) -> tuple[str, str]:

@@ -101,6 +101,14 @@ totp_failure_limiter = RateLimiter(WRONG_APP_CODES_PER_HOUR, timedelta(hours=1))
 signup_limiter = RateLimiter(10, timedelta(hours=1))
 signup_email_limiter = RateLimiter(3, timedelta(hours=1))
 signup_code_failure_limiter = RateLimiter(10, timedelta(hours=1))
+# Account self-service (FR-54, Phase 5): "I forgot my password" is 3 an hour per email (an unknown email
+# counts too, so the limit says nothing about who has an account) and 10 an hour per client address; a
+# wrong current password is 10 per 15 minutes per account. The wrong codes of a new email, a new phone or
+# a reset use `signup_code_failure_limiter`
+# (10 an hour), with the keys "account:<id>" and "reset:<id>". In memory, like the others.
+forgot_email_limiter = RateLimiter(3, timedelta(hours=1))
+forgot_ip_limiter = RateLimiter(10, timedelta(hours=1))
+password_failure_limiter = RateLimiter(10, timedelta(minutes=15))
 # The public report form (NFR-06, api-spec "POST /reports"): 5 reports per client IP per hour.
 REPORT_MAX_CALLS = 5
 REPORT_WINDOW = timedelta(hours=1)

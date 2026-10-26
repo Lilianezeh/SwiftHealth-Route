@@ -27,6 +27,8 @@ CHALLENGE_PURPOSE = "login_challenge"
 EMAIL_CONFIRM_PURPOSE = "email_confirm"
 PHONE_CONFIRM_PURPOSE = "phone_confirm"
 PASSWORD_RESET_PURPOSE = "password_reset"
+EMAIL_CHANGE_PURPOSE = "email_change"  # a code sent to the NEW email of a logged-in person (FR-54)
+PHONE_CHANGE_PURPOSE = "phone_change"  # a code texted to the NEW phone of a logged-in person (FR-54)
 TOTP_CHALLENGE_PURPOSE = "login_totp"  # password step passed; the second step is a code from the app (FR-58)
 LOGIN_CODE_PURPOSE = "login_code"  # the text of the login code sent by email when there is no SMS (D19)
 EMAIL_CODE_LIFETIME = timedelta(minutes=15)
@@ -46,6 +48,13 @@ class ChallengeClaims:
     user_id: int
     code_hash: str
     sent_at: datetime  # when the code was sent (whole seconds, UTC)
+    new_value: str | None = None  # a new email or phone the code is for (FR-54); None for the others
+
+
+@dataclass(frozen=True)
+class AccessClaims:
+    user_id: int
+    issued_ms: int | None  # when the token was made (ms); None for a token made before this claim existed
 
 
 def hash_password(plain_password: str) -> str:
@@ -113,18 +122,35 @@ def _user_id_from(claims: dict) -> int:
 
 
 def create_access_token(user_id: int) -> str:
+    """The login token. `ims` is the moment it was made, in milliseconds: a token made before the
+    account's last password change is refused (decision D10). Our own claim, not the standard `iat`,
+    which has whole seconds only."""
+    issued_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
     return _encode(
-        {"sub": str(user_id), "purpose": ACCESS_PURPOSE}, timedelta(minutes=settings.jwt_minutes)
+        {"sub": str(user_id), "purpose": ACCESS_PURPOSE, "ims": issued_ms},
+        timedelta(minutes=settings.jwt_minutes),
     )
+
+
+def decode_access_claims(token: str) -> AccessClaims:
+    """The user id and when the token was made. Raises InvalidTokenError for any bad token."""
+    claims = _decode(token, ACCESS_PURPOSE)
+    issued = claims.get("ims")
+    return AccessClaims(user_id=_user_id_from(claims), issued_ms=issued if isinstance(issued, int) else None)
 
 
 def decode_access_token(token: str) -> int:
     """Returns the user id. Raises InvalidTokenError for any bad token."""
-    return _user_id_from(_decode(token, ACCESS_PURPOSE))
+    return decode_access_claims(token).user_id
 
 
 def create_code_token(
-    user_id: int, code: str, purpose: str, expires_delta: timedelta, sent_at: datetime | None = None
+    user_id: int,
+    code: str,
+    purpose: str,
+    expires_delta: timedelta,
+    sent_at: datetime | None = None,
+    new_value: str | None = None,
 ) -> str:
     """A signed token that proves a code was sent to a user, without storing the code (a keyed hash is in it).
 
@@ -134,15 +160,15 @@ def create_code_token(
     server clock cannot make the token invalid.
     """
     sent = sent_at or datetime.now(timezone.utc)
-    return _encode(
-        {
-            "sub": str(user_id),
-            "purpose": purpose,
-            "code_hash": hash_login_code(user_id, code),
-            "sent_at": int(sent.timestamp()),
-        },
-        expires_delta,
-    )
+    claims = {
+        "sub": str(user_id),
+        "purpose": purpose,
+        "code_hash": hash_login_code(user_id, code),
+        "sent_at": int(sent.timestamp()),
+    }
+    if new_value is not None:
+        claims["new"] = new_value  # the new email or phone: signed, so it cannot be swapped for another
+    return _encode(claims, expires_delta)
 
 
 def decode_code_token(token: str, purpose: str) -> ChallengeClaims:
@@ -154,7 +180,13 @@ def decode_code_token(token: str, purpose: str) -> ChallengeClaims:
     if "code_hash" not in claims:
         raise InvalidTokenError("Token has no code")
     sent_at = datetime.fromtimestamp(int(claims.get("sent_at", 0)), tz=timezone.utc)
-    return ChallengeClaims(user_id=_user_id_from(claims), code_hash=claims["code_hash"], sent_at=sent_at)
+    new_value = claims.get("new")
+    return ChallengeClaims(
+        user_id=_user_id_from(claims),
+        code_hash=claims["code_hash"],
+        sent_at=sent_at,
+        new_value=new_value if isinstance(new_value, str) else None,
+    )
 
 
 def create_challenge_token(
