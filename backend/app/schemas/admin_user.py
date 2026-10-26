@@ -3,6 +3,7 @@ Requirements: FR-41, NFR-06, NFR-07. Decision C10 in specs/2026-10-20-staff-scre
 """
 
 import re
+from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -88,6 +89,19 @@ class AdminUserUpdate(BaseModel):
         return self
 
 
+class AdminUserRow(UserRead):
+    """One account in the admin's list (FR-55): the usual user plus what the admin needs to decide.
+
+    Never a password, a hash, a code or the authenticator secret."""
+
+    approval_status: str  # pending, approved or rejected
+    last_login_at: datetime | None
+    created_at: datetime
+    email_verified_at: datetime | None
+    phone_verified_at: datetime | None
+    signup_note: str | None  # what a staff sign-up wrote about themselves
+
+
 class AdminUserList(BaseModel):
-    items: list[UserRead]
-    total: int
+    items: list[AdminUserRow]
+    total: int  # the accounts that match the filters, not only this page
