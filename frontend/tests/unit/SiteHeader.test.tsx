@@ -39,12 +39,52 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "For facilities" })).toHaveAttribute("href", "/list-your-facility");
   });
 
-  it("puts the links in the order Find care, SwiftRescue, For facilities", () => {
+  it("puts the links in the order Find care, SwiftRescue, For facilities, Log in, Sign up", () => {
     render(<HeaderOnPage />);
 
     const names = screen.getAllByRole("link").map(nameOf);
 
-    expect(names).toEqual(["SwiftHealth Route", "Find care", "SwiftRescue", "For facilities"]);
+    expect(names).toEqual(["SwiftHealth Route", "Find care", "SwiftRescue", "For facilities", "Log in", "Sign up"]);
+  });
+
+  it("has Log in to /log-in and Sign up to /sign-up (Phase 3b, D16)", () => {
+    render(<HeaderOnPage />);
+
+    expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/log-in");
+    expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
+  });
+
+  it("shows Log in and Sign up in the bar from tablet width and leaves them to the menu on a phone", () => {
+    render(<HeaderOnPage />);
+
+    for (const name of ["Log in", "Sign up"]) {
+      expect(screen.getByRole("link", { name }).className, name).toMatch(/\bhidden\b.*\bmd:inline-flex\b/);
+    }
+  });
+
+  it("puts Log in and Sign up in the phone menu after For facilities, and SwiftRescue still outside it", async () => {
+    render(<HeaderOnPage />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+    const menu = screen.getByRole("navigation", { name: "Menu links" });
+
+    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual([
+      "Find care",
+      "For facilities",
+      "Log in",
+      "Sign up",
+    ]);
+    expect(within(menu).getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/log-in");
+    expect(within(menu).getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
+    expect(within(menu).queryByRole("link", { name: "SwiftRescue" })).not.toBeInTheDocument();
+  });
+
+  it("does not make Log in or Sign up red: red is for SwiftRescue only", () => {
+    render(<HeaderOnPage />);
+
+    for (const name of ["Log in", "Sign up"]) {
+      expect(screen.getByRole("link", { name }).className, name).not.toMatch(/emergency|red/);
+    }
   });
 
   it("makes SwiftRescue red (the emergency colour, white text), and no other link is red (FR-02)", () => {
@@ -144,6 +184,8 @@ describe("SiteHeader", () => {
       "SwiftHealth Route",
       "SwiftRescue",
       "For facilities",
+      "Log in",
+      "Sign up",
     ]);
   });
 

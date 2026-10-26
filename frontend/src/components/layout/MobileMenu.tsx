@@ -10,11 +10,19 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
+import { siteConfig } from "@/config/site";
+import { useStaffUser } from "@/hooks/useStaffUser";
+import { homeAddressFor } from "@/lib/staff/roles";
 
 type MobileMenuProps = { links: readonly { label: string; href: string }[] };
 
 export function MobileMenu({ links }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  // After the page links: Log in and Sign up, or My account when a session exists in the tab (accounts phase 3b, D16).
+  const user = useStaffUser();
+  const allLinks = user
+    ? [...links, { label: siteConfig.myAccountLabel, href: homeAddressFor(user.role) }]
+    : [...links, siteConfig.logInLink, siteConfig.signUpLink];
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
 
@@ -51,7 +59,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
           className="absolute inset-x-0 top-full z-20 border-b-4 border-accent bg-forest px-4 pb-3"
         >
           <ul className="flex flex-col">
-            {links.map((link) => (
+            {allLinks.map((link) => (
               <li key={link.href}>
                 {/* No prefetch: the panel only exists once the visitor has opened it, and the home page must stay light (R43). */}
                 <Link

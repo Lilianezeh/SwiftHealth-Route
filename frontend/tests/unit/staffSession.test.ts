@@ -4,7 +4,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { STAFF_SESSION_KEY, clearStaffSession, readStaffSession, saveStaffSession } from "@/lib/staff/session";
+import { STAFF_SESSION_CHANGED, STAFF_SESSION_KEY, clearStaffSession, readStaffSession, saveStaffSession } from "@/lib/staff/session";
 import { homeAddressFor, canOpen } from "@/lib/staff/roles";
 import type { StaffUser } from "@/types/staff";
 
@@ -15,6 +15,21 @@ beforeEach(() => {
   window.localStorage.clear();
 });
 afterEach(() => vi.restoreAllMocks());
+
+describe("the header is told when the session changes (Phase 3b: My account)", () => {
+  it("announces a saved session and a cleared one in the same tab, where the storage event does not fire", () => {
+    const heard = vi.fn();
+    window.addEventListener(STAFF_SESSION_CHANGED, heard);
+    try {
+      saveStaffSession({ token: "t.o.k", user: USER });
+      clearStaffSession();
+    } finally {
+      window.removeEventListener(STAFF_SESSION_CHANGED, heard);
+    }
+
+    expect(heard).toHaveBeenCalledTimes(2);
+  });
+});
 
 describe("the staff session", () => {
   it("is saved in sessionStorage and read back", () => {

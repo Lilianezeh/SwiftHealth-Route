@@ -588,6 +588,69 @@ describe("a login code sent by email (no SMS yet, D19)", () => {
   });
 });
 
+describe("the login of the accounts pages (Phase 3b, UI spec 3.1c)", () => {
+  it("keeps the heading Staff login by default (the old address) and takes another heading for /log-in", () => {
+    stubAuth();
+    const { unmount } = render(<LoginForm />);
+    expect(screen.getByRole("heading", { level: 1, name: "Staff login" })).toBeInTheDocument();
+    unmount();
+
+    render(<LoginForm heading="Log in" />);
+
+    expect(screen.getByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
+  });
+
+  it.each([
+    "This account is waiting for approval by an admin.",
+    "Confirm your email address first.",
+    "Confirm your phone number first.",
+    "This account was not approved.",
+    "This account is closed.",
+    "This account is deactivated.",
+  ])("shows the API's own sentence for a 403: %s", async (sentence) => {
+    stubAuth({ login: () => json({ detail: sentence }, 403) });
+    render(<LoginForm />);
+
+    await logInTo(false);
+
+    expect(await screen.findByText(sentence)).toBeInTheDocument();
+  });
+
+  it("does not show a 403 sentence it does not know: it falls back to the deactivated one", async () => {
+    stubAuth({ login: () => json({ detail: "Something internal: stack trace" }, 403) });
+    render(<LoginForm />);
+
+    await logInTo(false);
+
+    expect(await screen.findByText("This account is deactivated.")).toBeInTheDocument();
+    expect(screen.queryByText(/stack trace/)).not.toBeInTheDocument();
+  });
+
+  it("offers a link to sign up under the first step only when asked to (the /log-in page)", async () => {
+    stubAuth();
+    const { unmount } = render(<LoginForm />);
+    expect(screen.queryByRole("link", { name: "Sign up" })).not.toBeInTheDocument();
+    unmount();
+
+    render(<LoginForm heading="Log in" showSignUpLink />);
+    expect(screen.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
+    await logInTo();
+
+    expect(screen.queryByRole("link", { name: "Sign up" })).not.toBeInTheDocument(); // gone on the code step
+  });
+
+  it("sends a provider to their own page after the code, as before", async () => {
+    stubAuth({ verify: () => tokenFor("provider") });
+    render(<LoginForm heading="Log in" />);
+    await logInTo();
+
+    await userEvent.type(screen.getByLabelText("6-digit code"), "482913");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/provider"));
+  });
+});
+
 describe("what is never kept", () => {
   it("puts neither the password nor the code in any storage, and the token in no address", async () => {
     stubAuth();

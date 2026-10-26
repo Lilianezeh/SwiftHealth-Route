@@ -10,6 +10,7 @@
  * and the user go to sessionStorage (lib/staff/session.ts) and the visitor goes to where their role starts. The messages are the
  * API's own meaning in plain words; a wrong email and a wrong password get the same one.
  */
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
@@ -30,10 +31,25 @@ const FIELD_CLASSES = "min-h-12 rounded-xl border border-line bg-white px-3 text
 
 type Step = "credentials" | "code";
 
+/** The sentences the API gives for an account that cannot log in (accounts phase 2 and 3). Only these are shown as they come: any
+ * other 403 text is replaced by the deactivated one, so nothing unexpected from the server reaches the screen. */
+const ACCOUNT_SENTENCES = [
+  "This account is waiting for approval by an admin.",
+  "Confirm your email address first.",
+  "Confirm your phone number first.",
+  "This account was not approved.",
+  "This account is closed.",
+  "This account is deactivated.",
+];
+
+function messageForAccount(error: ApiError): string {
+  return error.detail !== null && ACCOUNT_SENTENCES.includes(error.detail) ? error.detail : "This account is deactivated.";
+}
+
 function messageForLogin(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) return "Invalid email or password";
-    if (error.status === 403) return "This account is deactivated.";
+    if (error.status === 403) return messageForAccount(error);
     if (error.status === 400) return "This account has no phone number, so no code can be sent.";
     if (error.status === 429) return codeLimitSentence(error) ?? "Too many attempts. Try again in a few minutes.";
     if (error.status === 502) return "Could not send the code. Try again.";
@@ -49,7 +65,7 @@ function codeLimitSentence(error: ApiError): string | null {
 function messageForNewCode(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) return "The code has expired. Choose Start again to get a new one.";
-    if (error.status === 403) return "This account is deactivated.";
+    if (error.status === 403) return messageForAccount(error);
     if (error.status === 429 && error.detail) return error.detail;
     if (error.status === 502) return "Could not send the code. Try again.";
   }
@@ -59,7 +75,7 @@ function messageForNewCode(error: unknown): string {
 function messageForCode(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) return "Invalid or expired code";
-    if (error.status === 403) return "This account is deactivated.";
+    if (error.status === 403) return messageForAccount(error);
     if (error.status === 429) {
       // The lock after 10 wrong codes from the app has its own sentence (with the minutes); any other 429 is the general one.
       return error.detail?.startsWith("Too many wrong codes.") ? error.detail : "Too many attempts. Try again in a few minutes.";
@@ -72,14 +88,19 @@ function messageForCode(error: unknown): string {
 function messageForSmsInstead(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) return "The code has expired. Choose Start again to get a new one.";
-    if (error.status === 403) return "This account is deactivated.";
+    if (error.status === 403) return messageForAccount(error);
     if ((error.status === 409 || error.status === 429) && error.detail) return error.detail;
     if (error.status === 502) return "Could not send the code. Try again.";
   }
   return "We couldn't send an SMS code. Check your connection and try again.";
 }
 
-export function LoginForm() {
+type LoginFormProps = {
+  heading?: string; // "Staff login" at the old address /admin/login, "Log in" at /log-in
+  showSignUpLink?: boolean; // "No account yet? Sign up." under the first step (the /log-in page)
+};
+
+export function LoginForm({ heading = "Staff login", showSignUpLink = false }: LoginFormProps) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("credentials");
   const [email, setEmail] = useState("");
@@ -222,7 +243,7 @@ export function LoginForm() {
 
   return (
     <section className="mx-auto flex max-w-md flex-col gap-4 px-4 py-10">
-      <h1 className="text-2xl font-bold text-forest">Staff login</h1>
+      <h1 className="text-2xl font-bold text-forest">{heading}</h1>
 
       {step === "credentials" && (
         <form onSubmit={sendCode} className="flex flex-col gap-4">
@@ -254,6 +275,14 @@ export function LoginForm() {
           <button type="submit" disabled={busy} className={`${buttonClasses("primary")} disabled:opacity-60`}>
             {busy ? "Sending…" : "Send me a code"}
           </button>
+          {showSignUpLink && (
+            <p className="text-base text-ink">
+              No account yet?{" "}
+              <Link href="/sign-up" className="inline-flex min-h-12 items-center font-semibold text-forest underline">
+                Sign up
+              </Link>
+            </p>
+          )}
         </form>
       )}
 
