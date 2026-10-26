@@ -137,6 +137,36 @@ describe("the list", () => {
   });
 });
 
+describe("the shortcuts for a moved or closed facility (accounts phase 8a, FR-53)", () => {
+  it("shows Start a move on a 'moved' report and Close it on a 'closed' one, each to the right part of the editor", async () => {
+    stubStaffApi({
+      "/reports": queue([
+        reportItem({ id: 1, reason: "moved", listing: { id: 5, slug: "a", name: "Moved Clinic", area: "Ogui", status: "published" } }),
+        reportItem({ id: 2, reason: "closed", listing: { id: 6, slug: "b", name: "Closed Clinic", area: "Ogui", status: "published" } }),
+      ]),
+    });
+    render(<AdminReportsPage />);
+
+    const [first, second] = await screen.findAllByRole("article");
+
+    expect(within(first).getByRole("link", { name: "Start a move" })).toHaveAttribute("href", "/admin/listings/5#move");
+    expect(within(first).queryByRole("link", { name: "Close it" })).toBeNull();
+    expect(within(second).getByRole("link", { name: "Close it" })).toHaveAttribute("href", "/admin/listings/6#close");
+    expect(within(second).queryByRole("link", { name: "Start a move" })).toBeNull();
+    expect(within(first).getByRole("button", { name: "Resolve" })).toBeInTheDocument(); // the other buttons stay
+  });
+
+  it("shows neither on any other reason", async () => {
+    stubStaffApi({ "/reports": queue([reportItem({ id: 1, reason: "wrong_number" })]) });
+    render(<AdminReportsPage />);
+
+    const [card] = await screen.findAllByRole("article");
+
+    expect(within(card).queryByRole("link", { name: "Start a move" })).toBeNull();
+    expect(within(card).queryByRole("link", { name: "Close it" })).toBeNull();
+  });
+});
+
 describe("resolving and dismissing", () => {
   it.each([
     ["Resolve", "resolved", "Report resolved. The reporter's phone number, if any, was deleted."],

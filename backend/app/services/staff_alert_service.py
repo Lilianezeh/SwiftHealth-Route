@@ -28,7 +28,9 @@ class StaffAlert:
     listing_name: str
     editor_emails: list[str]
     admin_phones: list[str]
-    kind: str = "flag"  # "flag" (two reporters, FR-22) or "failed_check" (a failed re-check hid it, FR-36)
+    # "flag" (two reporters, FR-22), "failed_check" (a failed re-check hid it, FR-36), "moved" or
+    # "closed" (its owner moved or closed it, FR-53)
+    kind: str = "flag"
 
 
 def build_failed_check_texts(listing_name: str) -> tuple[str, str]:
@@ -73,6 +75,35 @@ async def load_failed_check_alert(session: AsyncSession, listing_name: str) -> S
         editor_emails=[user.email for user in staff],
         admin_phones=[],
         kind="failed_check",
+    )
+
+
+def build_owner_change_texts(listing_name: str, kind: str) -> tuple[str, str]:
+    """The email subject and body for a facility its owner moved or closed (FR-53). The name only."""
+    if kind == "moved":
+        subject = f"Facility moved: {listing_name}"
+        body = (
+            f"The owner of {listing_name} gave a new address. It is hidden from the public until it is "
+            "re-checked. Open the Re-checks screen, call or visit the new address, set the map pin, then "
+            "publish it again."
+        )
+    else:
+        subject = f"Facility closed: {listing_name}"
+        body = (
+            f"The owner of {listing_name} closed it. It is hidden from the public and nothing was deleted. "
+            "Open the listing to read the reason."
+        )
+    return subject, body
+
+
+async def load_owner_change_alert(session: AsyncSession, listing_name: str, kind: str) -> StaffAlert:
+    """The editors and admins by email only, for a move or a closure by an owner (kind moved or closed)."""
+    staff = await user_repository.list_active_with_roles(session, {Role.editor, Role.admin})
+    return StaffAlert(
+        listing_name=listing_name,
+        editor_emails=[user.email for user in staff],
+        admin_phones=[],
+        kind=kind,
     )
 
 
@@ -168,6 +199,9 @@ async def send_alerts(alert: StaffAlert) -> None:
     """Sends every message. One failure never stops the others, and nothing here raises."""
     if alert.kind == "failed_check":
         subject, body = build_failed_check_texts(alert.listing_name)
+        sms = ""
+    elif alert.kind in ("moved", "closed"):
+        subject, body = build_owner_change_texts(alert.listing_name, alert.kind)
         sms = ""
     else:
         subject, body, sms = build_alert_texts(alert.listing_name)

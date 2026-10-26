@@ -15,6 +15,7 @@ import { ListingActions } from "@/components/admin/ListingActions";
 import { ListingFormFields } from "@/components/admin/ListingFormFields";
 import { useStaff } from "@/components/admin/StaffGate";
 import { StatusBadge, STATUS_LABELS } from "@/components/admin/StatusBadge";
+import { MoveOrClose } from "@/components/facility/MoveOrClose";
 import { ListingNotFound } from "@/components/listing/ListingNotFound";
 import { ListingSkeleton } from "@/components/listing/ListingSkeleton";
 import { buttonClasses } from "@/components/ui/buttonStyles";
@@ -92,6 +93,23 @@ export function ListingEditor({ listingId }: ListingEditorProps) {
     setForm(formFromDetail(loaded));
     setInitialForm(formFromDetail(loaded));
   }, []);
+
+  // After a move or a closing: show the new status and, if nothing was typed, the new address in the form.
+  const refreshDetail = useCallback(() => {
+    if (listingId === null) return;
+    call((token) => getStaffListing(token, listingId))
+      .then((loaded) => (dirty ? setDetail(loaded) : takeDetail(loaded)))
+      .catch(() => {
+        // the change is saved anyway; the next load shows it
+      });
+  }, [call, listingId, dirty, takeDetail]);
+
+  // A link from the report queue ("Start a move", "Close it") ends in #move or #close: scroll there once the page is drawn.
+  useEffect(() => {
+    if (loadState !== "ready") return;
+    const target = window.location.hash.replace("#", "");
+    if (target === "move" || target === "close") document.getElementById(target)?.scrollIntoView?.();
+  }, [loadState]);
 
   async function save() {
     setMessage(null);
@@ -238,6 +256,19 @@ export function ListingEditor({ listingId }: ListingEditorProps) {
         onMove={(action: ListingMove) => void move(() => call((token) => moveListing(token, listingId as number, action)))}
         onHide={(reason) => void move(() => call((token) => hideListing(token, listingId as number, reason)))}
       />
+
+      {detail && listingId !== null && isEditorOrAdmin && (
+        <MoveOrClose
+          listingId={listingId}
+          listingName={detail.name}
+          current={{ address: detail.address, area: detail.area, landmark: detail.landmark }}
+          closedReason={detail.closed_reason}
+          isClosed={detail.closed_at !== null}
+          isStaff
+          call={call}
+          onChanged={refreshDetail}
+        />
+      )}
     </article>
   );
 }

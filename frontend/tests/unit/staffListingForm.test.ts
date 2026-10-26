@@ -19,6 +19,8 @@ function detail(overrides: Partial<StaffListingDetail> = {}): StaffListingDetail
     featured_until: null,
     map_pin_is_default: false,
     submission_details: null,
+    closed_at: null,
+    closed_reason: null,
     ...overrides,
   };
 }

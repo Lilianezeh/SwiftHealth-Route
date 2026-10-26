@@ -213,6 +213,16 @@ describe("edit my facility (/provider/edit)", () => {
     expect(screen.getByText("Changes to phone numbers or hours are re-verified by our team. Your listing stays visible until then.")).toBeInTheDocument();
   });
 
+  it("offers a move and a closing under the form, and the history without staff names (accounts phase 8a)", async () => {
+    await openEdit();
+
+    expect(screen.getByRole("heading", { level: 2, name: "Moved to a new address?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Closed for good?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Address history" })).toBeInTheDocument();
+    expect(screen.getByLabelText("New address")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close this facility" })).toBeInTheDocument();
+  });
+
   it("starts with the listing's own values", async () => {
     await openEdit();
 

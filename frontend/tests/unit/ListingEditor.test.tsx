@@ -31,6 +31,8 @@ function detail(overrides: Partial<StaffListingDetail> = {}): StaffListingDetail
     featured_until: null,
     map_pin_is_default: false,
     submission_details: null,
+    closed_at: null,
+    closed_reason: null,
     ...overrides,
   };
 }
@@ -86,6 +88,45 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+});
+
+describe("moves and closures (accounts phase 8a, FR-53)", () => {
+  it("shows an editor and an admin the move, close and history parts under an existing listing", async () => {
+    stubApi({ current: detail({ status: "published", address: "1 Example Road", area: "Ogui" }) });
+    await openEdit();
+
+    expect(await screen.findByRole("heading", { level: 2, name: "Moved to a new address?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Closed for good?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Address history" })).toBeInTheDocument();
+    expect(screen.getByLabelText("New address")).toHaveValue("1 Example Road");
+  });
+
+  it("shows a verifier none of it", async () => {
+    loginAs("verifier");
+    stubApi();
+    await openEdit();
+
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.queryByRole("heading", { level: 2, name: "Moved to a new address?" })).toBeNull();
+    expect(screen.queryByRole("heading", { level: 2, name: "Address history" })).toBeNull();
+  });
+
+  it("does not show it on a new listing", async () => {
+    stubApi();
+    render(<AdminNewListingPage />);
+
+    await screen.findByRole("heading", { level: 1, name: "New listing" });
+    expect(screen.queryByRole("heading", { level: 2, name: "Moved to a new address?" })).toBeNull();
+  });
+
+  it("says a closed facility is closed, with the reason, and offers no move or close", async () => {
+    stubApi({ current: detail({ status: "hidden", closed_at: "2026-10-27T09:00:00Z", closed_reason: "Closed down" }) });
+    await openEdit();
+
+    expect(await screen.findByRole("heading", { level: 2, name: "This facility is closed." })).toBeInTheDocument();
+    expect(screen.getByText("Reason: Closed down")).toBeInTheDocument();
+    expect(screen.queryByLabelText("New address")).toBeNull();
+  });
 });
 
 describe("a new listing", () => {

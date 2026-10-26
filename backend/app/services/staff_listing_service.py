@@ -100,6 +100,8 @@ async def get_staff_detail(session: AsyncSession, listing_id: int, moment: datet
         featured_until=listing.featured_until,
         map_pin_is_default=is_default_pin(listing.latitude, listing.longitude),
         submission_details=await audit_repository.latest_new_value(session, listing.id, SUBMISSION_ACTION),
+        closed_at=listing.closed_at,
+        closed_reason=listing.closed_reason,
     )
 
 

@@ -35,6 +35,7 @@ function detail(status = "draft") {
     services: [{ name: "Consultation", fee_min_naira: "1500.00", fee_max_naira: "3000.00", fee_collected_at: "2026-09-28" }],
     recently_reported_not_working: false, disclaimer: "Directory only.", owner_id: null, featured_until: null,
     map_pin_is_default: true, submission_details: "Contact: Dr. Example, owner@example.com.",
+    closed_at: null, closed_reason: null,
   };
 }
 

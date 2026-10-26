@@ -26,7 +26,7 @@ function mine(overrides: Record<string, unknown> = {}) {
     opening_hours: WEEK,
     services: [{ name: "Consultation", fee_min_naira: "1500.00", fee_max_naira: "3000.00", fee_collected_at: "2026-09-28" }],
     recently_reported_not_working: false, disclaimer: "Directory only.", status: "published", next_check_due: "2026-11-20T09:00:00Z",
-    owner_id: 3, created_by: null, featured_until: null, map_pin_is_default: false, submission_details: null, featured_price_naira: "5000.00",
+    owner_id: 3, created_by: null, featured_until: null, map_pin_is_default: false, submission_details: null, closed_at: null, closed_reason: null, featured_price_naira: "5000.00",
     ...overrides,
   };
 }

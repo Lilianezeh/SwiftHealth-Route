@@ -28,6 +28,8 @@ ACCOUNT_FOUNDATION_REVISION_FILE_PATTERN = "*_account_foundation.py"
 AUTHENTICATOR_APP_REVISION_FILE_PATTERN = "*_authenticator_app.py"
 # Phase 6a (the 10th table)
 FACILITY_OWNERS_REVISION_FILE_PATTERN = "*_facility_owners.py"
+# Phase 8a (listings.closed_at and closed_reason)
+LISTING_CLOSURE_REVISION_FILE_PATTERN = "*_listing_closure.py"
 
 
 def revision_file(pattern: str = REVISION_FILE_PATTERN) -> Path:
