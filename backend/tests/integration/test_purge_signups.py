@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.config import settings
 from app.jobs import purge_signups
 from app.models import AuditEntry, Listing, User, UserReport, VerificationCheck
 from app.models.base import CheckMethod, CheckResult, ReportReason, Role
@@ -65,10 +66,31 @@ async def test_an_account_unconfirmed_for_more_than_7_days_is_deleted_and_a_youn
     assert await emails(session) == {"young@example.test"}
 
 
-async def test_an_account_with_only_the_email_confirmed_is_deleted_too_after_7_days(
-    session: AsyncSession,
+async def test_with_termii_live_an_account_with_only_the_email_confirmed_is_deleted_too_after_7_days(
+    session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    monkeypatch.setattr(settings, "termii_api_key", "key-set-for-tests")
     await sign_up_days_ago(session, "half@example.test", 9, email_confirmed=True)
+
+    assert await signup_service.purge_unconfirmed(session, NOW) == 1
+
+
+async def test_without_termii_an_account_with_the_email_confirmed_is_kept_whatever_its_phone(
+    session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D20: its phone waits for an admin's call, so it is not unfinished (or every owner would be deleted)."""
+    monkeypatch.setattr(settings, "termii_api_key", "")
+    await sign_up_days_ago(session, "half@example.test", 30, email_confirmed=True)
+
+    assert await signup_service.purge_unconfirmed(session, NOW) == 0
+    assert await emails(session) == {"half@example.test"}
+
+
+async def test_without_termii_an_account_whose_email_was_never_confirmed_is_still_deleted(
+    session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "termii_api_key", "")
+    await sign_up_days_ago(session, "never@example.test", 8)
 
     assert await signup_service.purge_unconfirmed(session, NOW) == 1
 

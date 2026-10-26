@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 import pytest
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.config import settings
 from app.main import app
 from app.models import User
 from app.models.base import Role
@@ -33,6 +34,13 @@ STATES = {
     "closed": "This account is closed.",
     "deactivated": "This account is deactivated.",
 }
+
+
+@pytest.fixture(autouse=True)
+def termii_is_live(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The phone must be confirmed only when Termii is live (decision D20), so this file runs with it live.
+    Every test that could send an SMS also uses the `sms` fixture below, which replaces the sending."""
+    monkeypatch.setattr(settings, "termii_api_key", "key-set-for-tests")
 
 
 @pytest.fixture

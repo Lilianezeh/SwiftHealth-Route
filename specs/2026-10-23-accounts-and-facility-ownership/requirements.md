@@ -38,8 +38,8 @@ Constraints: **additive migrations only; all existing data kept.** Privacy page 
 
 | ID | Requirement | Phase |
 | --- | --- | --- |
-| FR-48 | Anyone can sign up as Staff or Facility owner. The account works only after the **email** (code by Resend) and the **phone** (code by SMS) are confirmed. A code is 6 digits, valid 15 minutes (email) or 5 minutes (SMS), and attempts and resends are rate-limited. Sign-up never says whether an email is already registered. | 2, 3 |
-| FR-49 | A staff sign-up is `pending`: it can confirm its email and phone and log in only to a page saying it waits. It has **no access** to any staff endpoint. An admin approves it with the role editor or verifier, or rejects it. Both are in the audit log; the person gets an email. | 3, 4 |
+| FR-48 | Anyone can sign up as Staff or Facility owner. The account works only after the **email** (code by Resend) is confirmed, and the **phone** (code by SMS) too **when Termii is live**; without Termii the phone stays not confirmed until an admin records a call, "phone confirmed by call" (D20). A code is 6 digits, valid 15 minutes (email) or 5 minutes (SMS), and attempts and resends are rate-limited. Sign-up never says whether an email is already registered. | 2, 3 |
+| FR-49 | A staff sign-up is `pending`: it can confirm its email and phone and log in only to a page saying it waits. It has **no access** to any staff endpoint. An admin approves it with the role editor or verifier (after the phone is confirmed, by SMS or by the admin's call, D20), or rejects it. Both are in the audit log; the person gets an email. | 3, 4 |
 | FR-50 | A provider can **register a new facility** or **claim an existing listing**. Either creates an owner link with status `pending` (role owner or manager). A provider with no approved link can see the request and its state and can edit nothing. An editor or admin phones the facility, writes who they reached, and approves or rejects the link. | 6, 7 |
 | FR-51 | `/list-your-facility` and its API need a logged-in, approved provider account. Visitors are sent to sign up or log in first and come back. Every submission is linked to the account that sent it (owner link + audit row), and the contact fields of the old form are taken from the account. Anonymous drafts already in the database stay as they are. Duplicates are caught before a new listing is made. | 7 |
 | FR-52 | A listing can have a parent listing (a **branch** of a facility): one level only, no branch of a branch. | 8 |
@@ -160,6 +160,23 @@ Two additions asked for by the owner, now approved. They are requirements FR-57 
 - **Linux with a desktop:** `openssl rand -base64 32 | tr '+/' '-_' | tr -d '\n' | xclip -selection clipboard` (or `wl-copy` on Wayland)
 
 Then, **in the Render dashboard**: the backend service, Environment, **Add Environment Variable**, name **`TOTP_ENCRYPTION_KEY`**, paste, Save (Render redeploys). Do **not** paste it into a chat, an issue, a pull request, `.env`, or any file. The shell stores the command (which holds no secret) and never the result. **Keep one copy in your password manager** (paste it there right after Render, before you copy anything else): if the key is lost, every stored authenticator secret becomes unreadable and each person has to set the app up again (backup codes and the SMS or email fallback still let them in); if it leaks, someone with a copy of the database could read the secrets (they would still need the password). Changing the key later is a planned job (every person sets up again), not a quick edit; the plan does not rotate it.
+
+### D20. The phone is confirmed by SMS only when Termii is live (owner, 2026-10-25)
+
+**The rule.** Confirming the phone by an SMS code is required **only when Termii is live** (`TERMII_API_KEY` is set). Without Termii:
+- sign-up needs only `SIGNUP_ENABLED=true` and Resend (outside development); Termii is no longer needed to open it;
+- sign-up asks for **one code, the email's**. The phone is stored and stays **not confirmed** (`phone_verified_at` empty); no SMS is sent;
+- the phone is confirmed **by a call**: an admin phones the person (for staff, during the approval; Phase 4) and records it with a new admin action, **"phone confirmed by call"** (`POST /admin/users/{id}/confirm-phone-by-call`). It sets `phone_verified_at` and writes an audit entry `phone_confirmed_by_call` (who, for which account, when);
+- an account with an unconfirmed phone **can log in** when Termii is off (the phone is not used for anything then: the login code goes by email, D19, or the person uses the authenticator app, FR-58), and **the authenticator app is offered at the first login** (it already is, to every account without it);
+- when Termii is live the old rule holds: both codes, and login says "Confirm your phone number first." until the phone is confirmed.
+
+**What it means for the other rules.**
+- A staff sign-up is still `pending` and can do nothing until an admin approves it (FR-49). The admin alert says whether the phone is confirmed; when it is not, it says to phone the person and record it. **Approving staff whose phone is not confirmed is refused until the call is recorded** (Phase 4a builds `approve`; the action exists from this change).
+- A provider is `approved` after the email code and can log in, but edits nothing until staff approve a link to a facility (FR-50), and staff phone the facility for that, so the phone is checked there too.
+- The 7-day clean-up (D8) deletes an account whose **email** was not confirmed, and one whose **phone** was not confirmed only while Termii is live (otherwise every owner would be deleted).
+- An account made while Termii was off and still unconfirmed when Termii goes live is refused at login with "Confirm your phone number first." until an admin records the call. This is a known limit; a code-by-SMS step for such accounts would come with the profile screens (Phase 5).
+- Development: with `TERMII_API_KEY` empty (the laptop), sign-up is the one-code road above; the email code is written to the API's log.
+- **Privacy:** nothing new is kept (`phone_verified_at` exists since Phase 2); the audit entry holds no number.
 
 ## 6. What the Privacy page and the Terms must change (NDPA 2023)
 

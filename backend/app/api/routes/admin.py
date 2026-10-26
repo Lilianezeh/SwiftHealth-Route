@@ -110,6 +110,36 @@ async def reset_two_factor(
     return EnabledResponse(enabled=False)
 
 
+class PhoneConfirmedResponse(BaseModel):
+    phone_confirmed: bool
+
+
+@router.post(
+    "/users/{user_id}/confirm-phone-by-call",
+    response_model=PhoneConfirmedResponse,
+    summary="Admin: record that you phoned the person and the phone is theirs (used when Termii is off)",
+    responses={
+        404: {"description": "User not found."},
+        409: {"description": "The email is not confirmed yet, or the account has no phone."},
+    },
+)
+async def confirm_phone_by_call(
+    user_id: int,
+    admin: User = Depends(require_role(Role.admin)),
+    moment: datetime = Depends(get_current_moment),
+    session: AsyncSession = Depends(get_session),
+) -> PhoneConfirmedResponse:
+    try:
+        await admin_user_service.confirm_phone_by_call(session, admin, user_id, moment)
+    except admin_user_service.UserNotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found") from None
+    except admin_user_service.EmailNotConfirmedError:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Confirm the email first.") from None
+    except admin_user_service.NoPhoneError:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This account has no phone number.") from None
+    return PhoneConfirmedResponse(phone_confirmed=True)
+
+
 class ImportRowError(BaseModel):
     row: int
     detail: str

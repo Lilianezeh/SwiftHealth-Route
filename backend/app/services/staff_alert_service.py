@@ -136,16 +136,26 @@ async def alert_two_factor_locked(session: AsyncSession, account_name: str) -> N
             logger.warning("Two-factor lock email failed: %s", error)
 
 
-async def alert_staff_signup_waiting(session: AsyncSession, applicant_name: str) -> None:
-    """Tells the admins that a staff sign-up has confirmed email and phone and waits for approval (FR-49).
+async def alert_staff_signup_waiting(
+    session: AsyncSession, applicant_name: str, phone_confirmed: bool
+) -> None:
+    """Tells the admins that a staff sign-up has confirmed its email and waits for approval (FR-49).
 
     Nothing raises. The text holds the applicant's name only: no email, no phone, no note, no password.
-    The admin reads the rest on the screen.
+    The admin reads the rest on the screen. Without Termii the phone is not confirmed (decision D20), and
+    the text says to phone the person and record it ("phone confirmed by call") before approving.
     """
     subject = "Someone is waiting for approval"
+    if phone_confirmed:
+        confirmed = "confirmed their email and phone."
+    else:
+        confirmed = (
+            "confirmed their email but has not confirmed their phone. Phone them, then record "
+            "'phone confirmed by call' on their account."
+        )
     body = (
-        f"{applicant_name} signed up as staff and confirmed their email and phone. They cannot use "
-        "anything until an admin approves them and chooses their role (editor or verifier), or rejects them."
+        f"{applicant_name} signed up as staff and {confirmed} They cannot use anything until an admin "
+        "approves them and chooses their role (editor or verifier), or rejects them."
     )
     for admin in await user_repository.list_active_with_roles(session, {Role.admin}):
         try:

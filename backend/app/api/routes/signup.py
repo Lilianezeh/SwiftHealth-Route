@@ -17,7 +17,14 @@ from app.api.dependencies import (
 )
 from app.api.limit_errors import code_too_soon, too_many_codes, too_many_wrong_codes
 from app.core.passwords import PasswordRuleError
-from app.schemas.signup import ConfirmRequest, ConfirmStep, ResendRequest, SignupDone, SignupRequest
+from app.schemas.signup import (
+    ConfirmRequest,
+    ConfirmStep,
+    EmailConfirmedResponse,
+    ResendRequest,
+    SignupDone,
+    SignupRequest,
+)
 from app.services import auth_service, signup_service
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -85,20 +92,27 @@ async def sign_up(
 
 @router.post(
     "/confirm-email",
-    response_model=ConfirmStep,
+    response_model=EmailConfirmedResponse,
+    response_model_exclude_none=True,  # the finished sign-up has no token and no hint
     dependencies=[Depends(verify_code_rate_limit)],
-    summary="The code of the email: confirms the email and texts a code to the phone",
+    summary="The code of the email: confirms the email; with Termii live a code is texted to the phone",
 )
 async def confirm_email(
     request: ConfirmRequest,
     moment: datetime = Depends(get_current_moment),
     session: AsyncSession = Depends(get_session),
-) -> ConfirmStep:
+) -> EmailConfirmedResponse:
     try:
-        step = await signup_service.confirm_email(session, request.confirm_token, request.code, moment)
+        result = await signup_service.confirm_email(session, request.confirm_token, request.code, moment)
     except EXPECTED as error:
         raise _problem(error) from None
-    return ConfirmStep(confirm_token=step.confirm_token, sent_to=step.sent_to)
+    if result.phone_step is None:  # no Termii: the sign-up is finished (decision D20)
+        return EmailConfirmedResponse(status=result.outcome)
+    return EmailConfirmedResponse(
+        status="phone_code_sent",
+        confirm_token=result.phone_step.confirm_token,
+        sent_to=result.phone_step.sent_to,
+    )
 
 
 @router.post(
