@@ -77,7 +77,8 @@ describe("the header and the footer are server components (R44)", () => {
       expect(source, file).not.toMatch(/usePathname|useEffect|useState|next\/navigation/);
     }
     // The two client parts of the header: the Menu button, and (accounts phase 3b) the Log in / Sign up / My account links,
-    // which only read the tab's own session and never call the API.
+    // which read the tab's own session and ask GET /meta once (through hooks) whether to show Sign up; the component itself
+    // imports no API code and calls nothing.
     expect(readSource("components/layout/MobileMenu.tsx")).toMatch(/^"use client";/);
     const accountLinks = readSource("components/layout/AccountLinks.tsx");
     expect(accountLinks).toMatch(/^"use client";/);
@@ -106,7 +107,6 @@ describe("the route groups choose the header and the footer, and no address chan
         "/admin/listings/[id]", // phase 10, the editor of one listing
         "/admin/listings/[id]/checks", // phase 10, its verification log
         "/admin/listings/new", // phase 10, a new listing
-        "/admin/login", // phase 10, the staff login
         "/admin/recheck", // phase 11, listings past or near their check date
         "/admin/reports", // phase 11, the report queue
         "/admin/security", // accounts phase 2c, the authenticator app (FR-58)
@@ -119,7 +119,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/how-we-verify",
         "/list-your-facility",
         "/listing/[slug]",
-        "/log-in", // accounts phase 3b, the login for everyone (the same form as /admin/login)
+        "/log-in", // accounts phase 3b, the login for everyone (/admin/login redirects here, next.config.ts)
         "/privacy",
         "/provider",
         "/provider/edit", // phase 12, my facility: change phones, hours, services, description

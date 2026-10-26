@@ -75,6 +75,6 @@ test("robots.txt keeps the staff areas out, and sitemap.xml lists the static pag
 });
 
 test("the staff pages say noindex", async ({ page }) => {
-  await page.goto("/admin/login", { waitUntil: "load" });
+  await page.goto("/log-in", { waitUntil: "load" });
   expect(await page.locator('meta[name="robots"]').getAttribute("content")).toContain("noindex");
 });

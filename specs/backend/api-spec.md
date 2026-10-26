@@ -154,9 +154,11 @@ Lists for filters and forms.
   "services": ["Consultation", "Malaria test", "X-ray"],
   "blood_groups": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
   "report_reasons": ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"],
-  "service_catalogue": ["Antenatal care", "Blood bank", "Consultation", "X-ray"]
+  "service_catalogue": ["Antenatal care", "Blood bank", "Consultation", "X-ray"],
+  "signup_open": false
 }
 ```
+`signup_open` (owner, 2026-10-26) is true when the sign-up routes of section 4c would answer, i.e. exactly when sign-up is open: `SIGNUP_ENABLED` is true and, outside development, Resend is set up. It is one boolean computed by the same function as the 503 rule of 4c (`signup_service.signup_is_open`), and it says nothing else about the configuration: no key, no address. The site's header and login page read it to show the **Sign up** link only while sign-up is open.
 `service_catalogue` is the fixed list of service names that staff may pick for a listing (phase 10, decision C1 in
 `specs/2026-10-20-staff-screens/requirements.md`): a list in `core/service_catalogue.py`, in alphabetical order, with the blood groups
 left out (they come from `blood_groups`). It is different from `services`, which are the names in use on published listings.

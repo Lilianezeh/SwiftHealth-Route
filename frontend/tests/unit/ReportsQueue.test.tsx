@@ -37,7 +37,7 @@ describe("who may open it", () => {
     const { requests } = stubStaffApi({});
     render(<AdminReportsPage />);
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
     expect(requests).toHaveLength(0);
   });
 
@@ -299,7 +299,7 @@ describe("paging and states", () => {
     stubStaffApi({ "/reports": () => json({ detail: "Invalid or expired token" }, 401) });
     render(<AdminReportsPage />);
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
   });
 });
 

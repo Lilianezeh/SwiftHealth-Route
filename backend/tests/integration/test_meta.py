@@ -37,7 +37,75 @@ async def test_meta_has_exactly_the_six_lists(client: AsyncClient) -> None:
     body = await get_meta(client)
     assert set(body) == {
         "areas", "categories", "services", "blood_groups", "report_reasons", "service_catalogue",
+        "signup_open",
     }
+
+
+async def test_meta_says_sign_up_is_closed_by_default(client: AsyncClient) -> None:
+    """Sign-up is off until the owner opens it (SIGNUP_ENABLED), so the header shows no Sign up link."""
+    assert (await get_meta(client))["signup_open"] is False
+
+
+async def test_meta_says_sign_up_is_open_when_the_setting_is_on_in_development(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "app_env", "development")
+    monkeypatch.setattr(settings, "signup_enabled", True)
+
+    assert (await get_meta(client))["signup_open"] is True
+
+
+@pytest.mark.parametrize(
+    ("resend_key", "resend_from", "expected"),
+    [
+        ("", "", False),
+        ("key", "", False),
+        ("", "no-reply@example.test", False),
+        ("key", "no-reply@example.test", True),
+    ],
+)
+async def test_meta_sign_up_outside_development_needs_resend(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch, resend_key: str, resend_from: str, expected: bool
+) -> None:
+    """The same answer as the 503 rule of the sign-up routes (api-spec 4c): one function decides both."""
+    monkeypatch.setattr(settings, "app_env", "production")
+    monkeypatch.setattr(settings, "signup_enabled", True)
+    monkeypatch.setattr(settings, "resend_api_key", resend_key)
+    monkeypatch.setattr(settings, "resend_from_email", resend_from)
+
+    assert (await get_meta(client))["signup_open"] is expected
+
+
+async def test_meta_sign_up_is_closed_when_the_setting_is_off_even_with_resend_set_up(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "app_env", "production")
+    monkeypatch.setattr(settings, "signup_enabled", False)
+    monkeypatch.setattr(settings, "resend_api_key", "key")
+    monkeypatch.setattr(settings, "resend_from_email", "no-reply@example.test")
+
+    assert (await get_meta(client))["signup_open"] is False
+
+
+async def test_meta_sign_up_flag_agrees_with_the_sign_up_route(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A closed flag and a 503 from the sign-up route go together."""
+    monkeypatch.setattr(settings, "signup_enabled", False)
+    assert (await get_meta(client))["signup_open"] is False
+    body = {
+        "name": "Ada Owner", "email": "ada@example.com", "phone": "08030000123",
+        "password": "river78!", "account_type": "provider",
+    }
+    assert (await client.post("/auth/signup", json=body)).status_code == 503
+
+
+async def test_meta_does_not_reveal_any_other_setting(client: AsyncClient) -> None:
+    """Only the one boolean: no key, no sender address, no environment name."""
+    text = (await client.get("/meta")).text.lower()
+
+    for word in ("resend", "termii", "api_key", "app_env", "production"):
+        assert word not in text
 
 
 async def test_meta_service_catalogue_is_the_fixed_list_staff_pick_from(client: AsyncClient) -> None:

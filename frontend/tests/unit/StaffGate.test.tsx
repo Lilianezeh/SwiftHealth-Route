@@ -41,7 +41,7 @@ describe("StaffGate", () => {
   it("sends a visitor with no session to the login screen and shows none of the page", async () => {
     render(<StaffGate area="listings"><p>Secret page</p></StaffGate>);
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
     expect(screen.queryByText("Secret page")).toBeNull();
   });
 
@@ -97,7 +97,7 @@ describe("StaffGate", () => {
     await userEvent.click(screen.getByRole("button", { name: "Log out" }));
 
     expect(readStaffSession()).toBeNull();
-    expect(replace).toHaveBeenCalledWith("/admin/login");
+    expect(replace).toHaveBeenCalledWith("/log-in");
   });
 
   it("gives the page the token, and a 401 from a call clears the session and goes to the login", async () => {
@@ -107,7 +107,7 @@ describe("StaffGate", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Expire" }));
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
     expect(readStaffSession()).toBeNull();
   });
 

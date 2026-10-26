@@ -30,6 +30,7 @@ export const META: MetaResponse = {
   blood_groups: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
   report_reasons: ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"],
   service_catalogue: ["Blood bank", "Consultation", "Malaria test", "X-ray"],
+  signup_open: false,
 };
 
 export function listing(overrides: Partial<ListingSummary> = {}): ListingSummary {
@@ -56,6 +57,21 @@ export function listing(overrides: Partial<ListingSummary> = {}): ListingSummary
 
 export function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status });
+}
+
+/** Puts a fake GET /meta behind fetch that says whether sign-up is open (the header and the login page read it, 2026-10-26).
+ * Forgets what the browser code kept from an earlier test. `"fails"` makes the call fail, as when the API is asleep. */
+export async function stubSignupOpen(state: boolean | "fails"): Promise<void> {
+  const { resetMetaCache } = await import("@/lib/api/meta");
+  resetMetaCache();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (address: string) => {
+      if (new URL(address).pathname !== "/meta") return json({ detail: "Not found" }, 404);
+      if (state === "fails") return Promise.reject(new TypeError("offline"));
+      return json({ ...META, signup_open: state });
+    }),
+  );
 }
 
 type SearchHandler = (parameters: URLSearchParams, signal?: AbortSignal) => Response | Promise<Response>;

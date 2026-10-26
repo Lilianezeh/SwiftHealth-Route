@@ -5,10 +5,15 @@
  */
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { siteConfig } from "@/config/site";
+
+import { stubSignupOpen } from "../helpers/api";
+
+beforeEach(async () => stubSignupOpen(false)); // the menu asks GET /meta whether to show Sign up (AccountLinks.test.tsx has that)
+afterEach(() => vi.unstubAllGlobals());
 
 function renderMenu() {
   return render(<MobileMenu links={siteConfig.menuLinks} />);

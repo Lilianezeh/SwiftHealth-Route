@@ -2,6 +2,8 @@
 Requirements: FR-47, FR-22, FR-09, US-06, NFR-07. Spec: specs/2026-10-13-listing-page/requirements.md D11.
 Runs on the PostgreSQL test database.
 """
+from datetime import timedelta
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import func
@@ -56,6 +58,27 @@ async def test_running_it_twice_changes_nothing_the_second_time(session: AsyncSe
 
     assert created == {"listings": 0}
     assert await table_counts(session) == after_first
+
+
+async def test_running_it_again_later_renews_the_two_reports_so_the_recently_reported_note_still_shows(
+    session: AsyncSession,
+) -> None:
+    """The note needs two reporters in the last 7 days (FR-22), so a fixture made weeks ago
+    stopped showing it and the real-browser check of the listing page failed. Running the
+    command again now renews the dates of its two reports."""
+    first_day = utcnow()
+    await seed_whatsapp_fixture(session, first_day)
+    after_first = await table_counts(session)
+    three_weeks_later = first_day + timedelta(days=21)
+
+    created = await seed_whatsapp_fixture(session, three_weeks_later)
+
+    assert created == {"listings": 0}
+    assert await table_counts(session) == after_first  # nothing added
+    reports = (await session.exec(select(UserReport))).all()
+    assert len(reports) == 2
+    for report in reports:
+        assert three_weeks_later - timedelta(days=2) <= report.created_at <= three_weeks_later
 
 
 async def test_the_listing_page_api_shows_what_the_owner_needs_to_look_at(

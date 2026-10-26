@@ -76,7 +76,7 @@ describe("the screen", () => {
     }
     window.sessionStorage.clear();
     render(<AdminImportExportPage />);
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/log-in"));
   });
 });
 

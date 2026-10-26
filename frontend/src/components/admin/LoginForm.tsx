@@ -16,6 +16,7 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { PasswordField } from "@/components/ui/PasswordField";
+import { useSignupOpen } from "@/hooks/useSignupOpen";
 import { askForSmsInstead, resendLoginCode, startLogin, verifyLoginCode } from "@/lib/api/staff";
 import { ApiError } from "@/lib/api/request";
 import { formatPhoneHint } from "@/lib/formatters/phone";
@@ -95,13 +96,9 @@ function messageForSmsInstead(error: unknown): string {
   return "We couldn't send an SMS code. Check your connection and try again.";
 }
 
-type LoginFormProps = {
-  heading?: string; // "Staff login" at the old address /admin/login, "Log in" at /log-in
-  showSignUpLink?: boolean; // "No account yet? Sign up." under the first step (the /log-in page)
-};
-
-export function LoginForm({ heading = "Staff login", showSignUpLink = false }: LoginFormProps) {
+export function LoginForm() {
   const router = useRouter();
+  const signUpIsOpen = useSignupOpen(); // "No account yet? Sign up." only while sign-up is open (GET /meta)
   const [step, setStep] = useState<Step>("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -243,7 +240,7 @@ export function LoginForm({ heading = "Staff login", showSignUpLink = false }: L
 
   return (
     <section className="mx-auto flex max-w-md flex-col gap-4 px-4 py-10">
-      <h1 className="text-2xl font-bold text-forest">{heading}</h1>
+      <h1 className="text-2xl font-bold text-forest">Log in</h1>
 
       {step === "credentials" && (
         <form onSubmit={sendCode} className="flex flex-col gap-4">
@@ -275,7 +272,7 @@ export function LoginForm({ heading = "Staff login", showSignUpLink = false }: L
           <button type="submit" disabled={busy} className={`${buttonClasses("primary")} disabled:opacity-60`}>
             {busy ? "Sending…" : "Send me a code"}
           </button>
-          {showSignUpLink && (
+          {signUpIsOpen && (
             <p className="text-base text-ink">
               No account yet?{" "}
               <Link href="/sign-up" className="inline-flex min-h-12 items-center font-semibold text-forest underline">

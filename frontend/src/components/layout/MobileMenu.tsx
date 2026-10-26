@@ -11,6 +11,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { siteConfig } from "@/config/site";
+import { useSignupOpen } from "@/hooks/useSignupOpen";
 import { useStaffUser } from "@/hooks/useStaffUser";
 import { homeAddressFor } from "@/lib/staff/roles";
 
@@ -19,10 +20,12 @@ type MobileMenuProps = { links: readonly { label: string; href: string }[] };
 export function MobileMenu({ links }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   // After the page links: Log in and Sign up, or My account when a session exists in the tab (accounts phase 3b, D16).
+  // "Sign up" only while sign-up is open (GET /meta, one shared request); "Log in" always.
   const user = useStaffUser();
+  const signUpIsOpen = useSignupOpen();
   const allLinks = user
     ? [...links, { label: siteConfig.myAccountLabel, href: homeAddressFor(user.role) }]
-    : [...links, siteConfig.logInLink, siteConfig.signUpLink];
+    : [...links, siteConfig.logInLink, ...(signUpIsOpen ? [siteConfig.signUpLink] : [])];
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
 

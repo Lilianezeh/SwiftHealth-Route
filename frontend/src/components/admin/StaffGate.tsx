@@ -45,13 +45,13 @@ export function StaffGate({ area, children }: StaffGateProps) {
   useEffect(() => {
     const saved = readStaffSession();
     setSession(saved);
-    if (saved === null) router.replace("/admin/login");
+    if (saved === null) router.replace("/log-in");
   }, [router]);
 
   const logout = useCallback(() => {
     clearStaffSession();
     setSession(null);
-    router.replace("/admin/login");
+    router.replace("/log-in");
   }, [router]);
 
   const updateUser = useCallback((changes: Partial<StaffUser>) => {
