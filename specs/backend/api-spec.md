@@ -264,6 +264,8 @@ FR-20 to FR-22, US-08. Report a problem. No login. Rate limited to 5 per IP per 
 **Tests:** creates report · reporter key is a hash, not the phone or IP · auto-flag after second report from a different reporter, not from the same one · an unpublished or unknown listing is 404 · bad reason, long comment, bad phone are 422 · the staff alert holds no personal data · rate limit returns 429.
 
 ### POST /facility-submissions
+**Replaced in accounts phase 7 (D14): this route now always answers 401 and writes nothing; use `POST /provider/facilities` (see "Phase 7" in section 7). The text below is the old behaviour, kept for the record.**
+
 FR-37. "List your facility" form. No login. Rate limited to 3 per IP per day.
 
 **Request:**
@@ -549,6 +551,27 @@ Feature `specs/2026-10-23-accounts-and-facility-ownership/`. A provider reaches 
 **Audit** (the listing in `listing_id`, the person asking in `reference` as `user:{id}`, so the activity log shows "About: name"): `owner_request` (new link, Phase 7), `owner_approve`, `owner_reject`, `owner_remove`, each with `field_changed` `status`, `old_value` and `new_value` the two states. No phone number is written. **`PATCH /admin/users/{id}` with `listing_id`** (Phase 10) now also creates an `approved` `owner` link and keeps its old audit row. **Closing an account** (Phase 5) marks all of the person's links `removed`.
 
 **Tests (written first):** the migration (an old owner is linked, nothing else changes, a second run adds nothing, the downgrade restores, up-down-up) · a pending link cannot edit, read the staff detail or pay · an approved manager can edit but not pay · many owners on a listing and one owner on many listings · a provider cannot see or edit another's listing (404) · approve needs the note, reject and remove, each audited · a verifier and a provider get 403 on the queue · a removed link is refused at once · asking again after a removal reuses the row · the old `/provider/listing` still works for one listing · closing an account removes the links · the table count is 10 and no other table was added.
+
+---
+
+### Phase 7: register or claim a facility (FR-50, FR-51, US-17; decisions D14 and D15)
+
+Feature `specs/2026-10-23-accounts-and-facility-ownership/`. A provider makes an owner link `pending` in one of two ways; staff decide it on `/admin/owner-requests` (Phase 6). Both need a provider account (an approved, confirmed one: a person who is not ready cannot log in). A staff account gets 403.
+
+| Route | Who | Answer |
+| --- | --- | --- |
+| `POST /provider/facilities` | provider | Body `{ "facility_name", "category", "area", "address", "phone", "role"?, "notes"? }` (`role` is `owner` or `manager`, default `owner`; `notes` at most 300 characters; the other fields as the old form, but **no contact name or email: they come from the account**). 201 `{ "message", "listing_id", "link_id" }` with `message` "Thanks. Our team will verify your facility before it is listed." Makes a `draft` listing exactly as the old form did (no `created_by`, the default pin, the phone as the primary number), a `pending` link with the chosen role (the `notes` are kept in the link's `note` while it waits), and two audit rows: `create` (`user_id` = the provider, `reference` `facility-registration`) and `owner_request` (see below). 409 on a duplicate (below). 422 for a bad field or an emergency category. 3 registrations per client IP per day (429). |
+| `GET /provider/claimable?q=` | provider | 200 `{ "items": [ { "id", "name", "area", "category": { "slug", "name" } } ] }`: listings whose status is **published or recheck_due** and whose name or area is trigram-similar to `q` (2 to 100 characters, else 422), best match first, at most 10. Nothing else is returned: **no phone number, no address, no description, and never a draft or a hidden listing**. 60 searches per client IP per hour (429). (The plan said `/listings/claimable`; that path would meet the staff route `/listings/{listing_id}`, so it lives under `/provider`.) |
+| `POST /provider/claims` | provider | Body `{ "listing_id", "role"?, "reason" }` (`reason` 3 to 300 characters, kept in the link's `note` while it waits). 201 `{ "message": "Thanks. Our team will phone the facility to check.", "link_id" }`. 404 if the listing is not published or recheck_due (nothing is revealed about others). 409 `"You already manage this facility."` for an approved link and `"Your request for this facility is waiting for our team."` for a pending one. A **removed** link goes back to `pending` (the same row). A listing that already has an approved owner still gets a `pending` request: staff decide. 10 claims per client IP per day (429). |
+| `POST /facility-submissions` | anyone | **Always 401** `"Sign up or log in to list your facility."` (D14). The body is not read. The anonymous drafts already in the database are untouched: they have no owner, and an admin can attach one (Phase 10 `listing_id`). |
+
+**Duplicate check (D15)** inside the registration, before anything is written. A listing of **any status** counts if (a) one of its phone numbers equals the normalised phone, or (b) it is in the same area and its name has trigram `similarity` of at least **0.6** (`DUPLICATE_NAME_SIMILARITY` in `core/config.py`) with the new name. A hit stops the registration with **409** and `detail` `{ "message", "listing_id" }`: for a published or recheck_due listing `message` is "A facility like this is already listed. You can ask to manage it instead." and `listing_id` is its id (so the person can claim it); for a draft or hidden one `message` is "This facility is already registered. Please contact us." and `listing_id` is `null`, so nothing about it leaks. Nothing is written on a 409.
+
+**Audit:** `owner_request` (listing in `listing_id`, the provider in `user_id` **and** in `reference` as `user:{id}`, `field_changed` `status`, `new_value` `pending`). No phone, note or reason is written to it.
+
+**Tests (written first):** anonymous 401 on all four routes; a staff account 403; a registration makes the draft, one pending link with the chosen role, the audit rows with the provider's user id, and the contact fields are never asked; the phone is stored as +234; an emergency category is 422; duplicate by phone (any status), by similar name in the same area, a different area is not a duplicate, a clearly different name is not; the 409 shows the id only for a published or recheck_due listing; nothing is written on a 409; claim search finds a published and a recheck_due listing, never a draft or hidden one, returns no phone number or address, rejects a 1-character `q`; claim creates a pending link and the audit row, 404 for a draft/hidden/unknown listing, 409 for approved and pending links, a removed link goes back to pending, a listing with an approved owner still gets a pending request; the three rate limits answer 429; `POST /facility-submissions` is 401 and writes nothing; the owner-requests queue shows the reason.
+
+**Queue change:** `GET /staff/owner-requests` items get `"reason"` (the link's `note` while it waits, or `null`). An approval or rejection replaces `note` with the staff member's own note.
 
 ---
 

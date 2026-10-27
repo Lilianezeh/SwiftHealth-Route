@@ -22,6 +22,7 @@ function request(id: number, overrides: Record<string, unknown> = {}) {
     id,
     role: "owner",
     requested_at: "2026-10-20T10:30:00Z",
+    reason: null,
     person: { id: 20 + id, name: `Ada ${id}`, email: `ada${id}@example.com`, phone: "+2348030000123" },
     listing: {
       id: 100 + id,
@@ -92,6 +93,16 @@ describe("the cards", () => {
     expect(within(second).getByText("Asked to be a manager")).toBeInTheDocument();
     expect(within(first).getByText(/Asked on 20 Oct 2026/)).toBeInTheDocument();
     expect(calls[0]).toMatchObject({ method: "GET", path: "/staff/owner-requests" });
+  });
+
+  it("shows the person's own reason when there is one, and nothing when there is none", async () => {
+    stubApi([request(1, { reason: "I run the front desk." }), request(2)]);
+    render(<OwnerRequestsPage />);
+
+    const [first, second] = await screen.findAllByRole("listitem");
+
+    expect(within(first).getByText("Their reason: I run the front desk.")).toBeInTheDocument();
+    expect(within(second).queryByText(/Their reason/)).toBeNull();
   });
 
   it("makes the facility's numbers tel: links in the international form, shown in the local form with the label", async () => {

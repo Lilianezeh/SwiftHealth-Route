@@ -14,6 +14,16 @@ export function homeAddressFor(role: StaffRole): string {
   return "/admin";
 }
 
+/** The one address a provider may be sent back to after logging in (the "List your facility" page sends them to the login with it
+ * as `next`). Anything else in `next` is ignored, so the login can never be turned into a redirect to another place. */
+export const LIST_YOUR_FACILITY_ADDRESS = "/list-your-facility";
+
+/** Where a person goes right after logging in: back to "List your facility" if a provider came from there, else their home. */
+export function addressAfterLogin(role: StaffRole, search: string): string {
+  const next = new URLSearchParams(search).get("next");
+  return role === "provider" && next === LIST_YOUR_FACILITY_ADDRESS ? next : homeAddressFor(role);
+}
+
 export function canOpen(role: StaffRole, area: StaffArea): boolean {
   if (area === "security") return true; // every account can switch the authenticator app on (FR-58)
   if (area === "account") return true; // every account can change its own details (FR-54)

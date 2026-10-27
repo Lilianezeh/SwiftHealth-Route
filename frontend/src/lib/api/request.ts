@@ -11,11 +11,13 @@ import { PUBLIC_API_URL } from "@/lib/api/client";
 /** The API answered with an error status (404, 422, 500...). */
 export class ApiError extends Error {
   /** `detail` is the API's own sentence when it sent one (the staff screens show it), else null.
-   * `retryAfterSeconds` is the `Retry-After` header when it is a whole number of seconds (the login code limits), else null. */
+   * `retryAfterSeconds` is the `Retry-After` header when it is a whole number of seconds (the login code limits), else null.
+   * `listingId` is set when the API's `detail` is an object with a `listing_id` (registering a facility that is already listed). */
   constructor(
     public readonly status: number,
     public readonly detail: string | null = null,
     public readonly retryAfterSeconds: number | null = null,
+    public readonly listingId: number | null = null,
   ) {
     super(`The API answered with status ${status}.`);
     this.name = "ApiError";
@@ -58,14 +60,23 @@ export type RequestOptions = {
   asText?: boolean; // return the answer as text, not as JSON (the staff CSV export)
 };
 
-/** The `detail` sentence of an error answer, if the API sent one as text. */
-async function readDetail(response: Response): Promise<string | null> {
+/** The `detail` sentence of an error answer, if the API sent one as text, or as an object with a `message` (and maybe a
+ * `listing_id`). */
+async function readDetail(response: Response): Promise<{ sentence: string | null; listingId: number | null }> {
   try {
     const body: unknown = await response.json();
     const detail = (body as { detail?: unknown } | null)?.detail;
-    return typeof detail === "string" ? detail : null;
+    if (typeof detail === "string") return { sentence: detail, listingId: null };
+    if (typeof detail === "object" && detail !== null) {
+      const { message, listing_id: listingId } = detail as { message?: unknown; listing_id?: unknown };
+      return {
+        sentence: typeof message === "string" ? message : null,
+        listingId: typeof listingId === "number" ? listingId : null,
+      };
+    }
+    return { sentence: null, listingId: null };
   } catch {
-    return null;
+    return { sentence: null, listingId: null };
   }
 }
 
@@ -105,7 +116,10 @@ export async function requestJson<T>(path: string, options: RequestOptions = {})
       credentials: "omit", // the API needs no cookies: the staff token travels in the header
       signal: controller.signal,
     });
-    if (!response.ok) throw new ApiError(response.status, await readDetail(response), readRetryAfter(response));
+    if (!response.ok) {
+      const { sentence, listingId } = await readDetail(response);
+      throw new ApiError(response.status, sentence, readRetryAfter(response), listingId);
+    }
     return (asText ? await response.text() : await response.json()) as T;
   } catch (error) {
     if (error instanceof ApiError) throw error;

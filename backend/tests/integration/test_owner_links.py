@@ -261,7 +261,7 @@ async def test_the_queue_shows_the_pending_links_oldest_first_with_the_numbers_t
         {"number": "+2340000000555", "label": None, "is_primary": True}
     ]
     assert (second_item["role"], second_item["person"]["id"]) == ("manager", other.id)
-    assert set(first_item) == {"id", "role", "requested_at", "person", "listing"}
+    assert set(first_item) == {"id", "role", "requested_at", "reason", "person", "listing"}
     assert "password" not in response.text and "hash" not in response.text
 
 

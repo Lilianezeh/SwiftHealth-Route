@@ -117,3 +117,7 @@ report_limiter = RateLimiter(REPORT_MAX_CALLS, REPORT_WINDOW)
 SUBMISSION_MAX_CALLS = 3
 SUBMISSION_WINDOW = timedelta(days=1)
 submission_limiter = RateLimiter(SUBMISSION_MAX_CALLS, SUBMISSION_WINDOW)
+# Claiming an existing listing (FR-50, Phase 7): 10 claims per client address per day, and 60 searches in the
+# claim search per client address per hour. In memory, like the others.
+claim_limiter = RateLimiter(10, timedelta(days=1))
+claimable_search_limiter = RateLimiter(60, timedelta(hours=1))

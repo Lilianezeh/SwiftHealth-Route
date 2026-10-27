@@ -144,7 +144,7 @@ Every listing moves through five statuses, and only Published listings are visib
 | FR-34 | Dashboard shows listings by status, re-checks due this week, overdue re-checks, and open reports | Must |
 | FR-35 | Report queue: view, assign, resolve, or dismiss reports; reports urgent-flagged by FR-22 appear at the top | Must |
 | FR-36 | When a published listing fails re-check, it moves to Hidden automatically and the editor is notified | Must |
-| FR-37 | Provider submissions from the "List your facility" form arrive as Drafts | Must |
+| FR-37 | Provider submissions from the "List your facility" form arrive as Drafts (since accounts phase 7 the form needs a provider account and also creates a pending owner link, FR-50, FR-51) | Must |
 | FR-38 | Audit log records who changed what and when, for every listing | Must |
 | FR-39 | Bulk import of listings from a spreadsheet (CSV) for starting data | Should |
 | FR-40 | Export listings and verification logs to CSV | Should |

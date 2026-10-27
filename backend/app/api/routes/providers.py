@@ -3,19 +3,105 @@ Contract: specs/backend/api-spec.md, section 7 (FR-43)."""
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.api.dependencies import get_current_moment, get_session, require_role
+from app.api.dependencies import (
+    claim_rate_limit,
+    claimable_search_rate_limit,
+    get_current_moment,
+    get_session,
+    require_role,
+    submission_rate_limit,
+)
 from app.models import User
 from app.models.base import Role
+from app.schemas.facility_registration import (
+    ClaimableList,
+    ClaimCreate,
+    ClaimCreated,
+    FacilityRegister,
+    FacilityRegistered,
+)
 from app.schemas.owner_link import OwnerList
 from app.schemas.provider import ProviderListing, ProviderListingUpdate
-from app.services import owner_link_service, provider_service
+from app.services import facility_registration_service, owner_link_service, provider_service
 
 router = APIRouter(prefix="/provider", tags=["Providers"])
 
 NO_LISTING = "No listing is linked to your account."
+
+
+@router.post(
+    "/facilities",
+    response_model=FacilityRegistered,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(submission_rate_limit)],
+    summary="Provider: register a new facility (a draft and a pending owner link for staff to check)",
+    responses={409: {"description": "A listing like this exists. `detail` has `message` and `listing_id`."}},
+)
+async def register_facility(
+    payload: FacilityRegister,
+    provider: User = Depends(require_role(Role.provider)),
+    moment: datetime = Depends(get_current_moment),
+    session: AsyncSession = Depends(get_session),
+) -> FacilityRegistered:
+    try:
+        return await facility_registration_service.register_facility(session, provider, payload, moment)
+    except facility_registration_service.RegistrationCategoryError:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "category: choose one of the everyday categories"
+        ) from None
+    except facility_registration_service.SimilarListingError as error:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, {"message": error.message, "listing_id": error.listing_id}
+        ) from None
+
+
+@router.get(
+    "/claimable",
+    response_model=ClaimableList,
+    dependencies=[Depends(claimable_search_rate_limit)],
+    summary="Provider: find a published facility to ask to manage (name, area and category only)",
+)
+async def find_claimable(
+    search_text: str = Query(
+        alias="q",
+        min_length=2,
+        max_length=100,
+        description="Part of the facility's name or its area. 'q' is the usual short name for a search text.",
+    ),
+    provider: User = Depends(require_role(Role.provider)),
+    session: AsyncSession = Depends(get_session),
+) -> ClaimableList:
+    return await facility_registration_service.find_claimable(session, search_text)
+
+
+@router.post(
+    "/claims",
+    response_model=ClaimCreated,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(claim_rate_limit)],
+    summary="Provider: ask to manage a published facility (a pending owner link for staff to check)",
+    responses={
+        404: {"description": "The facility is not published."},
+        409: {"description": "You already manage it, or your request is waiting."},
+    },
+)
+async def claim_facility(
+    payload: ClaimCreate,
+    provider: User = Depends(require_role(Role.provider)),
+    moment: datetime = Depends(get_current_moment),
+    session: AsyncSession = Depends(get_session),
+) -> ClaimCreated:
+    try:
+        return await facility_registration_service.claim_listing(session, provider, payload, moment)
+    except facility_registration_service.ListingNotClaimableError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Facility not found") from None
+    except facility_registration_service.AlreadyManagerError:
+        raise HTTPException(status.HTTP_409_CONFLICT, facility_registration_service.ALREADY_MANAGER) from None
+    except facility_registration_service.RequestWaitingError:
+        raise HTTPException(status.HTTP_409_CONFLICT, facility_registration_service.REQUEST_WAITING) from None
 
 
 @router.get(
