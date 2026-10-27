@@ -12,8 +12,9 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { siteConfig } from "@/config/site";
 
+// px-2 at tablet width, px-3 from desktop: with For facilities and the Theme button the bar is 3 px too wide in 768 px with px-3.
 const BAR_LINK =
-  "hidden min-h-12 items-center rounded-md px-3 text-base font-semibold hover:underline md:inline-flex";
+  "hidden min-h-12 items-center rounded-md px-2 text-base font-semibold hover:underline md:inline-flex lg:px-3";
 
 type HeaderNavigationProps = { isHomePage: boolean };
 

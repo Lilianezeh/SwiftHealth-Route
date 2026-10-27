@@ -94,7 +94,7 @@ describe("the first photo", () => {
     expect(html).not.toContain(BACKDROP_PHOTOS[1].src);
     expect(html.match(/<img/g)).toHaveLength(1);
     expect(html).toContain(MAGNIFIC_CREDIT.text);
-    expect(html).not.toMatch(/Pause|Play/);
+    expect(html).not.toMatch(/<button|Play/); // only an invisible, hidden place for Pause (see the test below), no control
     expect(html).toMatch(/loading="lazy"/);
     expect(html).toMatch(/width="800"/);
     expect(html).toMatch(/height="533"/);
@@ -458,6 +458,33 @@ describe("the layout of the section (revision 6)", () => {
     expect(row.className).toMatch(/\bflex-col\b/);
     expect(row.className).toMatch(/\bitems-start\b/);
     expect(row.className).toMatch(/\bmd:flex-row\b/);
+  });
+
+  it("keeps the place of the Pause button in the server's HTML, empty and hidden, so the credit does not move when Pause appears (CLS 0)", () => {
+    const html = renderToString(
+      <BackdropSlideshow>
+        <h2>x</h2>
+      </BackdropSlideshow>,
+    );
+
+    const place = html.match(/<span[^>]*data-pause-space=""[^>]*>.*?Pause<\/span>/)?.[0] ?? "";
+    expect(place).toMatch(/aria-hidden="true"/); // a screen reader does not meet it
+    expect(place).toMatch(/\binvisible\b/); // nobody sees it, and it cannot be clicked
+    expect(place).toMatch(/\bmin-h-12\b/);
+    expect(place).toContain("Pause"); // the same word in the same type: the place is exactly as wide as the button, in any font
+    expect(place).not.toMatch(/<button|<a /);
+  });
+
+  it("swaps that place for the Pause button once the browser says motion is welcome, and drops it when motion is reduced", () => {
+    const { container, unmount } = renderSlideshow();
+    expect(container.querySelector("[data-pause-space]")).toBeNull();
+    expect(screen.getByRole("button", { name: "Pause photos" })).toBeInTheDocument();
+    unmount();
+
+    stubReducedMotion(true);
+    const reduced = renderSlideshow();
+    expect(reduced.container.querySelector("[data-pause-space]")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 
   it("makes the cards 190 px high with 64 px icons and 20 px names, and a 16 px line under each name (the owner's words)", () => {

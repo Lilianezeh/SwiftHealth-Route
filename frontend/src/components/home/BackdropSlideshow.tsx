@@ -147,6 +147,18 @@ export function BackdropSlideshow({ children }: BackdropSlideshowProps) {
             appears after the script has run. The button says "Pause" or "Play" (its name for a screen reader is "Pause photos" / "Play photos"),
             so that it and the credit fit in one row on a phone. */}
         <div className="mt-4 flex min-h-12 flex-col items-start gap-2 md:mt-6 md:flex-row md:flex-wrap md:items-center md:gap-3">
+          {/* Until the browser has been asked about reduced motion, an invisible copy of the Pause button keeps its place (same words, same
+              type, so the same width in any font): the credit does not move when the button appears (CLS 0). */}
+          {reducedMotion === null && (
+            <span
+              data-pause-space=""
+              aria-hidden="true"
+              className="invisible inline-flex min-h-12 items-center gap-2 rounded-xl border border-line px-3 text-base font-semibold md:px-4"
+            >
+              <span className="h-5 w-5" />
+              Pause
+            </span>
+          )}
           {reducedMotion === false && (
             <button
               type="button"

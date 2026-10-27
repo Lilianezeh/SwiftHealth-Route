@@ -149,6 +149,16 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("button", { name: "Menu" }).closest("div")?.className).toMatch(/\bmd:hidden\b/);
   });
 
+  it("keeps the links of the bar close (px-2) at tablet width and roomier (lg:px-3) from desktop width, so the bar fits in 768 px (browser suite)", async () => {
+    render(<HeaderOnPage />);
+
+    for (const name of ["Find care", "For facilities"]) {
+      expect(screen.getByRole("link", { name }).className, name).toMatch(/\bpx-2\b.*\blg:px-3\b/);
+    }
+    expect((await screen.findByRole("link", { name: "Log in" })).className).toMatch(/\bpx-2\b.*\blg:px-3\b/);
+    expect(screen.getByRole("link", { name: "Find care" }).className).not.toMatch(/(^|\s)px-3\b/);
+  });
+
   it("has a forest background and the on-dark class, so the focus ring inside it is the light one", () => {
     render(<HeaderOnPage />);
 

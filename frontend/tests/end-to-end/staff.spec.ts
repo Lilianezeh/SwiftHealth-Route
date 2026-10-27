@@ -5,7 +5,7 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { allIsInsideTheScreen, fakeApi, logInAs, targetsAndTextAreBigEnough, type FakeRequest } from "../helpers/browserApi";
+import { allIsInsideTheScreen, answerSideCalls, fakeApi, logInAs, targetsAndTextAreBigEnough, type FakeRequest } from "../helpers/browserApi";
 
 const WIDTHS = [
   { width: 320, height: 640 },
@@ -256,7 +256,7 @@ for (const { width, height } of WIDTHS) {
       const seen = await fakeApi(page, (request: FakeRequest) => {
         if (request.path === "/listings/id/12") return { body: detail() };
         if (request.path === "/listings/12" && request.method === "PATCH") return { body: { ...detail(), ...(request.body as object) } };
-        return null;
+        return answerSideCalls(request);
       });
       await page.goto("/admin/listings/12", { waitUntil: "load" });
 
@@ -269,7 +269,7 @@ for (const { width, height } of WIDTHS) {
       await allIsInsideTheScreen(page, width);
       await targetsAndTextAreBigEnough(page);
 
-      await page.getByLabel("Landmark").fill("By the church");
+      await page.locator("#listing-landmark").fill("By the church"); // the move section has a Landmark field of its own
       await page.getByRole("button", { name: "Save", exact: true }).click();
       await expect(page.getByText("Saved.")).toBeVisible();
       const patch = seen.find((request) => request.method === "PATCH");
@@ -283,7 +283,7 @@ for (const { width, height } of WIDTHS) {
       await fakeApi(page, (request) => {
         if (request.path === "/listings/id/12") return { body: detail("published") };
         if (request.path === "/listings/12/hide") return { body: detail("hidden") };
-        return null;
+        return answerSideCalls(request);
       });
       await page.goto("/admin/listings/12", { waitUntil: "load" });
       await expect(page.getByRole("heading", { level: 1, name: "Place 12" })).toBeVisible({ timeout: 60_000 });

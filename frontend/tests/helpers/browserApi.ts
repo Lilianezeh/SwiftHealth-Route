@@ -58,12 +58,30 @@ export async function logInAs(page: Page, role: "verifier" | "editor" | "admin" 
   await page.addInitScript((value) => window.sessionStorage.setItem("swifthealth.staff-session", JSON.stringify(value)), session);
 }
 
+/** Answers for the calls that a screen makes on the side (the provider's list of facilities, a listing's address history and branches):
+ * an empty list. Without them the call goes to the real API, which answers 401 to the fake token, and the screen logs the person out.
+ * Use it as the last answer: `return answerSideCalls(request)`. */
+export function answerSideCalls(request: FakeRequest): FakeAnswer {
+  const isSideCall =
+    request.path === "/provider/listings" || /^\/listings\/\d+\/address-history$/.test(request.path) || /^\/provider\/facilities\/\d+\/branches$/.test(request.path);
+  return isSideCall ? { body: { items: [] } } : null;
+}
+
 /** The page's own part (`main`) does not run past the screen and every control fits inside it. The header is left out on purpose
- * (a known width problem of this machine's fallback font between 344 and 370 px, see LOG.md). */
+ * (a known width problem of this machine's fallback font between 344 and 370 px, see LOG.md). A control inside a row that scrolls
+ * sideways on purpose (the category shortcuts on /find) may reach past the screen: the row scrolls, the page does not. */
 export async function allIsInsideTheScreen(page: Page, width: number): Promise<void> {
   const overflow = await page.evaluate(() => (document.querySelector("main")?.scrollWidth ?? 0) - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
   for (const control of await page.locator("main h1, main h2, main button, main a, main input, main select, main textarea").all()) {
+    const isInScrollingRow = await control.evaluate((element) => {
+      for (let parent = element.parentElement; parent !== null && parent.tagName !== "MAIN"; parent = parent.parentElement) {
+        const overflowX = getComputedStyle(parent).overflowX;
+        if (overflowX === "auto" || overflowX === "scroll") return true;
+      }
+      return false;
+    });
+    if (isInScrollingRow) continue;
     const box = await control.boundingBox();
     if (!box) continue; // hidden (a screen-reader-only input)
     expect(box.x).toBeGreaterThanOrEqual(-0.5);
