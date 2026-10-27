@@ -263,6 +263,9 @@ export function LoginForm() {
               Password
             </label>
             <PasswordField id="staff-password" autoComplete="current-password" required value={password} onChange={setPassword} />
+            <Link href="/forgot-password" className="inline-flex min-h-12 items-center font-semibold text-forest underline">
+              Forgot your password?
+            </Link>
           </div>
           {problem && (
             <p role="alert" className="rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink">

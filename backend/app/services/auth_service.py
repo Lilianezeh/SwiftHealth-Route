@@ -19,7 +19,7 @@ from app.core.security import (
     create_access_token,
     create_challenge_token,
     create_totp_challenge_token,
-    decode_access_token,
+    decode_access_claims,
     decode_challenge_token,
     decode_totp_challenge_token,
     generate_login_code,
@@ -287,9 +287,13 @@ async def get_user_for_token(session: AsyncSession, access_token: str) -> User:
     Raises InvalidTokenError for a bad token or a deleted user, InactiveAccountError for a deactivated user,
     AccountNotReadyError for an account that is waiting, rejected, closed or not confirmed.
     """
-    user_id = decode_access_token(access_token)
-    user = await user_repository.get_by_id(session, user_id)
+    claims = decode_access_claims(access_token)
+    user = await user_repository.get_by_id(session, claims.user_id)
     if user is None:
         raise InvalidTokenError("User not found")
+    if user.password_changed_at is not None:
+        changed_ms = int(user.password_changed_at.timestamp() * 1000)
+        if claims.issued_ms is None or claims.issued_ms < changed_ms:
+            raise InvalidTokenError("The password was changed after this token was made")  # decision D10
     ensure_account_is_ready(user)
     return user

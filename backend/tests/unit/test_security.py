@@ -81,7 +81,26 @@ def test_expired_access_token_rejected(monkeypatch):
 def test_access_token_has_no_role_claim():
     claims = decode_without_checks(create_access_token(USER_ID))
     assert "role" not in claims
-    assert set(claims) == {"sub", "purpose", "exp"}
+    # `ims` is the moment the token was made, in milliseconds (a password change ends older tokens, D10).
+    assert set(claims) == {"sub", "purpose", "exp", "ims"}
+    assert isinstance(claims["ims"], int)
+
+
+def test_the_issue_time_is_read_back_and_an_old_token_without_it_reads_as_none():
+    import jwt
+
+    from app.core.config import settings
+    from app.core.security import decode_access_claims
+
+    fresh = decode_access_claims(create_access_token(USER_ID))
+    assert fresh.user_id == USER_ID and fresh.issued_ms is not None
+
+    old = jwt.encode(
+        {"sub": str(USER_ID), "purpose": "access", "exp": 4_102_444_800},
+        settings.jwt_secret,
+        algorithm="HS256",
+    )
+    assert decode_access_claims(old).issued_ms is None
 
 
 def test_challenge_token_does_not_contain_plain_code():

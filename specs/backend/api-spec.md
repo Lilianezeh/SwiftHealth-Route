@@ -392,6 +392,33 @@ Admin only (role read from the database row). The admin has phoned the person at
 
 ---
 
+## 4d. Account self-service (FR-54, US-21; Phase 5)
+
+Feature `specs/2026-10-23-accounts-and-facility-ownership/`. The routes under `/account` need a login and act on **the caller's own account only** (the id is never in the request; 401 with no login, 403 for an account that is not ready, as everywhere). `forgot-password` and `reset-password` are public.
+
+| Route | Request | Answer |
+| --- | --- | --- |
+| `GET /account` | none | 200 `{ id, name, email, phone, role, approval_status, email_confirmed, phone_confirmed, two_factor_enabled }` |
+| `PATCH /account` | `{ "name" }` (1 to 100 characters) | 200 the same shape. Audit `account_update`, `field_changed` `name`, old and new name. |
+| `POST /account/email/start` | `{ "email" }` | 200 `{ confirm_token, sent_to }`: a 6-digit code is **emailed to the new address** (Resend; 503 `"Email is not set up yet."` when it cannot be sent outside development, 502 when Resend fails). The old email keeps working. 409 `"That email is already used."` if another account has it (checked again at the confirm step). |
+| `POST /account/email/confirm` | `{ confirm_token, code }` | 200 the account. The email is replaced, `email_verified_at` set, the **old address gets a notice** ("your email was changed"; best effort). Audit `account_update`, `field_changed` `email`, `old_value`/`new_value` = `changed` (never the address). A wrong, expired, used or foreign code is **400** `"Invalid or expired code"` for every `/account` code route (not 401: a 401 means "log in again" and the screens would log the person out); the public `reset-password` keeps 401. |
+| `POST /account/phone/start` | `{ "phone" }` (Nigerian number) | With Termii live: 200 `{ confirm_token, sent_to }`, a code is texted to the **new** number (502 on failure). Without Termii: the number is replaced at once and left **not confirmed** until an admin records a call (D20): 200 `{ confirm_token: null, sent_to: null }`. Audit `account_update`, `field_changed` `phone`, `changed`. |
+| `POST /account/phone/confirm` | `{ confirm_token, code }` | 200 the account; the phone is replaced and confirmed. |
+| `POST /account/password` | `{ current_password, new_password }` | 200 `{ access_token, token_type, expires_in }`: a **new** token, because the old ones stop working. 403 `"The password is not right."` for a wrong current password (10 wrong in 15 minutes: 429). 422 plain sentence from the password rule of FR-56 (8 for a provider, 10 for staff and admin, nothing common, not the email); the new password must differ from the old one (422). Sets `password_changed_at`; audit `account_update`, `field_changed` `password`, `changed`. |
+| `POST /account/close` | `{ password, confirmation: "CLOSE" }` | 200 `{ closed: true }`. See below. 403 wrong password; 422 wrong confirmation; 409 `"This is the last active admin."` |
+| `POST /auth/forgot-password` | `{ "email" }` | **Always** 200 `{ reset_token, sent_to }`, whether the email is an account or not (a decoy token that can never be confirmed for an unknown one). Known limit: sending the email takes a little time that an unknown email does not, so the timing is not identical; the 3-an-hour limit counts both. For an account that is active and not closed or rejected, a 6-digit code is emailed (15 minutes). 3 requests an hour per email and 10 per address (429), every call counted. 503 when email is not set up outside development. |
+| `POST /auth/reset-password` | `{ reset_token, code, new_password }` | 200 `{ reset: true }`. 401 `"Invalid or expired code"` (10 wrong in an hour: 429). 422 password rule. Sets the password and `password_changed_at` (every older token stops working) and **does not log the person in**. Audit `account_update`, `password`, `changed`, user = the person. |
+
+**Old tokens stop working (D10).** Access tokens now carry their issue time (`iat`). A token issued before the account's `password_changed_at` (compared in whole seconds) is refused with 401 on every route; a token made before this change has no `iat` and is refused once the password has been changed. Changing the password returns a fresh token, so the person stays logged in.
+
+**Closing an account** keeps the row and every audit entry, and removes the personal data: name becomes `Closed account`, email becomes `closed-{id}@closed.invalid` (unusable, unique), phone and sign-up note are emptied, the password hash is replaced by that of a random value nobody knows, the authenticator app and backup codes are cleared, `closed_at` is set and `is_active` false. It needs the password and the typed word `CLOSE`, is refused for the **last active admin**, and sends the old address a notice first (best effort). Owner links are marked removed when they exist (Phase 6). Audit `account_close` (no personal data). A closed account cannot log in ("This account is closed.").
+
+**Limits and privacy.** Codes: 5 an hour per account (the same counter as login codes; a new "start" is not a resend, so there is no 60-second wait here), a wrong code is 401 and 10 wrong codes an hour lock that account's account-codes (429). Nothing here logs a password, a code, a token, an email address or a number.
+
+**Tests (written first):** each route with a wrong, an expired and a right code; the old email works until the new one is confirmed; an email already used is refused at both steps; the password rule; a wrong current password and its limit; the old token refused after a password change and the new one accepted; the answer of forgot-password identical for a known and an unknown email (shape, status, hint), and no email sent for the unknown one; reset sets `password_changed_at` and does not log in; close anonymises every personal column and keeps the audit rows; the last admin cannot close; a closed account cannot log in; no secret in a log, an audit entry or an answer; every route in the list of routes that need a login (Phase 2 test) except the two public ones.
+
+---
+
 ## 5. Staff: listings and verification
 
 ### GET /listings

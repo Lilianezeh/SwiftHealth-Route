@@ -58,6 +58,19 @@ new steps are in `release-checklist.md` step 3; the feature folder is `specs/202
 
 Housekeeping in the same pull request: `test-results/` (Playwright's output, one stray tracked file) is removed from git and ignored.
 
+## Decisions to review
+
+Normal design decisions that came up in the long run of 2026-10-27 (accounts phases 5 to 9, the business features, dark mode). I chose the
+recommended option and went on, as asked. Overrule any of them by telling me; each says where it lives.
+
+| # | Where | Decision | Why |
+| --- | --- | --- | --- |
+| P5-1 | Phase 5, `/account/*` code routes | A wrong or expired code is **400**, not 401 (the public `reset-password` keeps 401). | The staff screens log a person out on 401, so a typo in a code would have logged them out. |
+| P5-2 | Phase 5, forgot password | One page `/forgot-password` holds both steps (email, then code and new password); `/reset-password` redirects to it. No link is emailed, only a 6-digit code. | A code in the email cannot leak in a web address or a referrer (the same reasoning as the sign-up codes); one page is simpler to keep correct. |
+| P5-3 | Phase 5, closing | Closing also ends every login token (it sets `password_changed_at`), so an old token gets 401, not "closed". The closed email becomes `closed-{id}@closed.invalid`, which frees the real address for a new sign-up. | A closed person's data must go (NDPA); freeing the address is what "close" means to the person. |
+| P5-4 | Phase 5, new email or phone | Starting a change is not a "resend", so there is no 60-second wait; the 5 codes an hour per account still apply. | The wait only makes sense for a code the person did not get. |
+| P5-5 | Phase 5, forgot password | The email send time differs a little between a known and an unknown email (the answer is identical). Not hidden further. | Hiding it needs a background queue; the 3-an-hour limit per email counts both. Written as a known limit in api-spec 4d. |
+
 ## To do later
 
 ### The Render database expires about 2026-11-07: free options compared (written 2026-10-20, nothing in production was changed)

@@ -18,7 +18,10 @@ import app.models  # noqa: F401  (registers all 9 tables)
 from app.core.config import settings
 from app.core.database import get_session
 from app.core.rate_limit import (
+    forgot_email_limiter,
+    forgot_ip_limiter,
     login_limiter,
+    password_failure_limiter,
     report_limiter,
     signup_code_failure_limiter,
     signup_email_limiter,
@@ -102,6 +105,9 @@ def reset_rate_limiters() -> None:
     signup_limiter.reset()
     signup_email_limiter.reset()
     signup_code_failure_limiter.reset()
+    forgot_email_limiter.reset()
+    forgot_ip_limiter.reset()
+    password_failure_limiter.reset()
 
 
 @pytest.fixture

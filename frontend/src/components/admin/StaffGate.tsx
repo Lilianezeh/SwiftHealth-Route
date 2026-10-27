@@ -26,6 +26,8 @@ type StaffContextValue = {
   logout: () => void;
   /** Changes what the screens know about the logged-in user (for example that the authenticator app is now on). */
   updateUser: (changes: Partial<StaffUser>) => void;
+  /** Puts a new login token in the tab's session (after a password change, which ends the older ones). */
+  replaceToken: (token: string) => void;
 };
 
 const StaffContext = createContext<StaffContextValue | null>(null);
@@ -63,12 +65,22 @@ export function StaffGate({ area, children }: StaffGateProps) {
     });
   }, []);
 
+  const replaceToken = useCallback((token: string) => {
+    setSession((current) => {
+      if (!current) return current;
+      const next = { ...current, token };
+      saveStaffSession(next);
+      return next;
+    });
+  }, []);
+
   const value = useMemo<StaffContextValue | null>(() => {
     if (!session) return null;
     return {
       session,
       logout,
       updateUser,
+      replaceToken,
       call: async <T,>(operation: (token: string) => Promise<T>) => {
         try {
           return await operation(session.token);
@@ -78,7 +90,7 @@ export function StaffGate({ area, children }: StaffGateProps) {
         }
       },
     };
-  }, [session, logout, updateUser]);
+  }, [session, logout, updateUser, replaceToken]);
 
   if (!session || value === null) {
     return (

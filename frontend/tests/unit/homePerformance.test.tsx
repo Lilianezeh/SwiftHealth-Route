@@ -101,6 +101,7 @@ describe("the route groups choose the header and the footer, and no address chan
       [
         "/",
         "/about",
+        "/account", // accounts phase 5, my account (every role)
         "/admin",
         "/admin/activity", // accounts phase 4b, the activity log (admin only)
         "/admin/import-export", // phase 14, CSV import and export
@@ -117,6 +118,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/contact",
         "/emergency",
         "/find",
+        "/forgot-password", // accounts phase 5, a forgotten password (/reset-password redirects here)
         "/how-we-verify",
         "/list-your-facility",
         "/listing/[slug]",
