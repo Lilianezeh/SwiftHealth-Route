@@ -1,6 +1,7 @@
 /** Terms of use `/terms`. Requirements: FR-23, FR-13, FR-26, FR-11, NFR-13. UI spec 2.10; decision D1 in
- * specs/2026-10-20-info-pages/requirements.md. A plain statement of what the site is and is not, with the sentences of the
- * requirements. It has no legal clause and has not been reviewed by a lawyer (the notice says so). */
+ * specs/2026-10-20-info-pages/requirements.md; accounts phase 9 adds the rules for accounts, moves and closures (section 6 of
+ * specs/2026-10-23-accounts-and-facility-ownership/requirements.md). A plain statement of what the site is and is not, with the
+ * sentences of the requirements. It has no legal clause and has not been reviewed by a lawyer (the notice says so). */
 import type { Metadata } from "next";
 
 import { DraftNotice, InfoLink, InfoPage, InfoSection } from "@/components/info/InfoPage";
@@ -30,6 +31,22 @@ export default function TermsPage() {
           fees can still change between checks. Call before you go, and tell us when something is wrong with &ldquo;Report a problem&rdquo;.
         </p>
         <p>A listing marked &ldquo;Sponsored&rdquo; is paid for by the facility. It is labelled, and it is never in {siteConfig.emergencyName}.</p>
+      </InfoSection>
+      <InfoSection heading="Accounts">
+        <p>
+          Anyone can sign up for an account to list or manage a facility. It is one person, one account: do not share it. Keep your password and your
+          codes private. Give true details. Do not ask to manage a facility that is not yours.
+        </p>
+        <p>
+          Our team phones the facility to check a claim, and may refuse a request or remove access. An account that is used wrongly may be suspended or
+          closed.
+        </p>
+      </InfoSection>
+      <InfoSection heading="Moves and closures">
+        <p>
+          Tell us when a facility moves or closes. A moved facility is hidden until our team checks the new address; a closed facility is hidden, and
+          nothing is deleted.
+        </p>
       </InfoSection>
       <InfoSection heading="Fair use">
         <p>

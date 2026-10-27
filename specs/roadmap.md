@@ -332,6 +332,15 @@ documents: [release checklist](2026-10-20-launch-readiness/release-checklist.md)
   `REMOVE_DEMO_LISTINGS=true` in Render (already in the dashboard as `false`), redeploy, and confirm zero demo
   listings are left (`/search?q=DEMO` returns `total` 0), then set it back to `false` (see [decision 13](2026-10-09-search-backend/requirements.md))
 
+### Accounts and facility ownership (after the MVP phases). Phases 1 to 4b merged; 5 to 9 built (2026-10-27), draft PRs stacked, waiting for the owner
+Feature folder: [requirements](2026-10-23-accounts-and-facility-ownership/requirements.md), [plan](2026-10-23-accounts-and-facility-ownership/plan.md), [validation](2026-10-23-accounts-and-facility-ownership/validation.md). FR-48 to FR-58, US-17 to US-21.
+- 1 to 4b (merged): one password rule, account foundation, login code screen, authenticator app, sign-up (API and pages), admin approvals and screens
+- 5: my account, forgot password, close account (FR-54, FR-56)
+- 6: owner links, the 10th table `facility_owners` (FR-50, US-19)
+- 7: register or claim a facility with an account (FR-50, FR-51, US-17)
+- 8a, 8b: moves, closures and branches with address history (FR-52, FR-53, US-20)
+- 9: Privacy and Terms drafts, anonymity tests, hand-off. **Sign-up stays closed until the owner's steps in validation.md are done** (lawyer, Resend, Termii or calls, a schedule for the clean-up job, `SIGNUP_ENABLED`).
+
 ## After the MVP
 
 These are not phases. The numbered phases above are the MVP build order; the items below have no order and no
@@ -340,8 +349,8 @@ dates. All of them are out of scope for the MVP (see "Out of scope for the MVP" 
 
 ### Soon after launch
 
-- **Public accounts:** a decision on how visitors sign in, and an updated privacy policy (NDPA). Today `users`
-  holds staff and providers only.
+- **Public accounts:** a decision on how visitors sign in, and an updated privacy policy (NDPA). `users` holds staff
+  and providers only; provider sign-up is built but closed (see "Accounts and facility ownership" above).
 - **Reviews:** public accounts first, and a moderation process for editors.
 - **Native Android app:** a stable public API, and MVP usage numbers (see "Analytics" in
   [prd.md](prd.md#analytics)).
