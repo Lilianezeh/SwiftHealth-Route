@@ -31,6 +31,7 @@ export const META: MetaResponse = {
   report_reasons: ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"],
   service_catalogue: ["Blood bank", "Consultation", "Malaria test", "X-ray"],
   signup_open: false,
+  featured_price_naira: "5000.00",
 };
 
 export function listing(overrides: Partial<ListingSummary> = {}): ListingSummary {

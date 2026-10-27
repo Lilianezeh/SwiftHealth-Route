@@ -9,6 +9,7 @@ import { metadata as bloodMetadata } from "@/app/(public)/blood/page";
 import { metadata as donateMetadata } from "@/app/(public)/blood/donate/page";
 import { metadata as emergencyMetadata } from "@/app/(public)/emergency/page";
 import { metadata as findMetadata } from "@/app/(public)/find/page";
+import { metadata as forFacilitiesMetadata } from "@/app/(public)/for-facilities/page";
 import { metadata as listMetadata } from "@/app/(public)/list-your-facility/page";
 import { metadata as listingMetadata } from "@/app/(public)/listing/[slug]/page";
 import { metadata as reportMetadata } from "@/app/(public)/report/[slug]/page";
@@ -27,6 +28,7 @@ describe("every public page has its own title and a description", () => {
     ["search", searchMetadata, "Search"],
     ["emergency", emergencyMetadata, "SwiftRescue"],
     ["list your facility", listMetadata, "List your facility"],
+    ["for facilities", forFacilitiesMetadata, "For facilities"],
     ["blood", bloodMetadata, "Find blood"],
     ["donate blood", donateMetadata, "Donate blood"],
     ["listing", listingMetadata, "Listing"],

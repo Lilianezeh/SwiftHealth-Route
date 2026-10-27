@@ -20,7 +20,7 @@ export const siteConfig = {
   // The header bar from tablet width: Find care, then the red SwiftRescue, then For facilities.
   findCareLink: { label: "Find care", href: "/find" },
   emergencyLink: { label: brand.emergencyName, href: "/emergency" },
-  facilitiesLink: { label: "For facilities", href: "/list-your-facility" },
+  facilitiesLink: { label: "For facilities", href: "/for-facilities" },
   // After For facilities (accounts phase 3b, decision D16): Log in and Sign up, or My account when a session exists in the tab.
   // The footer does not get them.
   logInLink: { label: "Log in", href: "/log-in" },
@@ -30,7 +30,7 @@ export const siteConfig = {
   // Log in and Sign up, or My account.
   menuLinks: [
     { label: "Find care", href: "/find" },
-    { label: "For facilities", href: "/list-your-facility" },
+    { label: "For facilities", href: "/for-facilities" },
   ],
   footerLinks: [
     { label: "About", href: "/about" },

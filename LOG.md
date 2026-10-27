@@ -99,6 +99,9 @@ recommended option and went on, as asked. Overrule any of them by telling me; ea
 | S1 | Sponsored rules, "verified" | To start a payment and to take the sponsored slot a listing must be published, have a verification date and not be overdue for its re-check. An overdue listing stays visible with "Verification due" but is never sponsored. | Before this, a published listing with no verification date or an overdue one could pay and go first. Paying must not buy a place that verification has not earned. |
 | S2 | Sponsored rules, a late payment | A payment confirmed for a listing that is no longer eligible is still recorded (audit entry and `featured_until`) but shows nothing until the listing is eligible again. | The money was taken; the webhook must not refuse a real payment. Refunds are outside this change. |
 | S3 | Sponsored rules, the screens | "My facility" and "Get featured" say "Only a verified listing can be featured." before the person pays, with the same sentence as the API. | The refusal should not come after the click. |
+| F1 | For facilities, the price | `GET /meta` now carries `featured_price_naira` (public, a string like "5000.00", from `FEATURED_PRICE_NAIRA`); the page reads it and writes no amount itself. | The page cannot disagree with what a provider pays. |
+| F2 | For facilities, the header | The header and Menu link **For facilities** goes to `/for-facilities` (it went to `/list-your-facility`); the page has a **List your facility** button. The footer is unchanged. | "Linked from the header." |
+| F3 | For facilities, Sign up | The Sign up button shows only while `signup_open` is true; otherwise "Sign-up is not open yet." | Sign-up stays closed in production. |
 
 ## To do later
 
