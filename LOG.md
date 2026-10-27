@@ -25,6 +25,34 @@ phase is merged and Render has redeployed (the pages say so and keep 112 and the
 its branch locally (`git switch <branch>`, `docker compose up --build`). Because the phases are stacked, merge in table order and check
 production after each merge.
 
+### Production results for #60 to #69 (merged 2026-10-27)
+
+All ten pull requests are merged **into `main`**: each PR's base was `main`, and each has its own merge commit on `origin/main` (none went into an old branch). Frontend CI is green for every merge commit, including the head of `main`, `e2ff7b6`. Backend CI is green through `a5cb760`; the backend workflow only runs when `backend/**` changes, and #69 (dark mode) changed no backend file, so there is no backend run for `e2ff7b6`.
+
+**Suites on `main` at `e2ff7b6`** (run on 2026-10-27 on one laptop; the browser run had one worker and nothing else running):
+- Backend: `ruff check .` clean, **2148 passed**.
+- Frontend: `tsc` and lint clean, **132 files, 2128 tests passed**.
+- Real browser (Playwright): **368 passed, 27 failed, 4 skipped**. The failures were real, not load. Two were bugs in the app: the header bar was 3 px too wide at exactly 768 px (so the listing page scrolled sideways), and the photo credit on the home page moved when the Pause button appeared (CLS 0.0027). The rest were specs that did not answer newer calls, or a dev container without the `qrcode` package. All of it is fixed in draft PR #70 (`fix/browser-suite-on-main`): the full browser suite on that branch is **395 passed, 4 skipped, 0 failed**, and the frontend has 2131 tests (3 new). Merge #70 and `main` has the green result; until then `main` itself still has the 27 failing browser cases.
+
+**Render:** three of the ten pull requests carry a migration, and all are additive (a new table, new columns; nothing is deleted or rewritten): #61 `7d1c4b9e5a32` (the 10th table, `facility_owners`), #63 `b8a1c3d5e7f9` (moves and closures), #64 `c9d2e4f6a8b0` (branches). The container runs `alembic upgrade head` at start-up. **I have not seen the Render logs or the production `alembic_version`**, so I cannot say "migration applied" from the logs. What I saw from outside: after the merges the API's `/openapi.json` lists the new routes, and a public listing read (`/listings/demo-diagnostic-laboratory-uwani`) answers 200 with the new `branch_of` field. A missing column would make that read answer 500. Please look for the three migration lines in the Render deploy log of the last deploy and tell me if one is missing.
+
+"Read-only check" means GET requests to the live API and site on 2026-10-27 (nothing written, no setting changed, no login). "Live check on the phone" is what Lilian does by hand: **pending, Lilian checking on phone** for every row.
+
+| PR | What | Merged (UTC) | Read-only check of production | Live check on the phone |
+| --- | --- | --- | --- | --- |
+| #60 | Accounts phase 5: self-service (My account, change password, email and phone, two-step, close account) | 11:02 | `/account` and `/forgot-password` pages 200; API `/account`, `/account/password`, `/account/email/start`, `/account/two-factor` in `/openapi.json`; `GET /account` 401 without a token | pending, Lilian checking on phone |
+| #61 | Phase 6: owner links (10th table), owner requests screen, My facilities | 11:09 | API `/provider/listings` 401 and `/provider/claimable` 401 without a token (the routes exist and are protected); migration `7d1c4b9e5a32` (see Render above) | pending, Lilian checking on phone |
+| #62 | Phase 7: register or claim a facility | 11:50 | `/list-your-facility` 200; `/meta` says `signup_open: false` (sign-up stays closed, as decided) | pending, Lilian checking on phone |
+| #63 | Phase 8: move or close a facility, address history | 11:50 | public listing read 200 (needs the new columns); migration `b8a1c3d5e7f9` (see Render above) | pending, Lilian checking on phone |
+| #64 | Phase 8b: branches of a facility | 11:51 | public listing read 200 with `branch_of: null`; search 200; migration `c9d2e4f6a8b0` (see Render above) | pending, Lilian checking on phone |
+| #65 | Phase 9: Privacy and Terms drafts, anonymity tests | 11:52 | `/privacy` and `/terms` 200; the Privacy page says it was not reviewed by a lawyer | pending, Lilian checking on phone (a lawyer still has to read both texts before launch) |
+| #66 | Sponsored rules check | 11:52 | docs and rules only; `/emergency` 200 with 112 first. No migration | pending, Lilian checking on phone |
+| #67 | `/for-facilities` page | 11:54 | `/for-facilities` 200 and in `/sitemap.xml`; `/meta` returns `featured_price_naira: "5000.00"` (a string, as the rules say) | pending, Lilian checking on phone |
+| #68 | SwiftRescue contacts screen | 11:57 | `/admin/emergency-contacts` page 200; `GET /staff/emergency-contacts` 401 without a token | pending, Lilian checking on phone (adding a real contact needs an editor login; not done) |
+| #69 | Dark mode | 11:57 | production home page carries the theme script (`swifthealth.theme`), `data-theme` and the Theme button | pending, Lilian checking on phone (switch the phone to dark and look at the home page, `/find` and `/emergency`) |
+
+Also seen: `/meta`, `/emergency` and a search answered 200 in under a second; the first call, `/health`, took 53 seconds because the free Render service was asleep (the same cold start as before). Not checked by me: any logged-in screen, a real Paystack test payment, an email or SMS, the nightly job, the Render deploy log, the production Lighthouse score (Accessibility 100 on 15 pages in both modes was measured locally on the dark-mode branch, not on production).
+
 ### Production results for #25 to #33 (merged 2026-10-21)
 
 All nine pull requests are merged **into `main`** (each PR's base was `main`, and each branch tip is an ancestor of `main`). Backend CI and Frontend
