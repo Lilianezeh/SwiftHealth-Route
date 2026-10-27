@@ -676,3 +676,20 @@ Things the owner must do before real visitors use the site.
   (options and prices are in section 5b of the requirements; I buy and set up nothing yet).
 - **AI use:** Claude Code read the code and wrote the spec and, from Phase 1, the tests and code; I chose the answers D1 to D5, the password rule and what
   to do about the Resend domain.
+
+## Day 12 — 2026-10-26 and 2026-10-27
+- **Built (all as stacked draft pull requests, nothing merged; the table of PR numbers is in the last chat message and in each PR):** accounts Phases 5
+  to 9 (#60 to #65: my account and password reset; the 10th table with owner links and their staff screen; register or claim a facility with a duplicate
+  check; moves, closures and branches with address history; Privacy and Terms drafts and the anonymity tests), the Sponsored rules check (#66), the "For
+  facilities" page (#67), the SwiftRescue contacts screen (#68) and dark mode (#69).
+- **Found by the checks:** a featured listing that was never verified or was overdue could pay and take the sponsored slot (fixed, S1); `/search` and
+  `/blood` scored 98 in Lighthouse Accessibility ("heading order", in both modes; fixed); the Privacy page promises that unfinished sign-ups are removed
+  after 7 days but **no timer runs that job yet** (your step, in validation.md of the accounts feature); my own Theme button had a second `role="status"`
+  that broke nine browser tests (fixed).
+- **Not finished:** the real-browser suite (Playwright) for dark mode: a full run had 67 failures under a very busy machine, one real (fixed), and my re-run
+  was stopped for low memory. Please re-run it (how: `specs/2026-10-27-dark-mode/validation.md`). The whole accounts road with a real database and a real
+  browser was also not run end to end.
+- **Decisions:** the lists "Decisions to review" above (P5 to P9, S1 to S3, F1 to F3, E1 to E5, M1 to M6); the ones that need you are the legal ones (lawyer
+  for Privacy and Terms), the schedule of the clean-up job, and whether a dark map is worth another tile provider.
+- **AI use:** Claude Code wrote the specs, tests and code of all of the above from the plan you approved, ran the test suites and Lighthouse, and looked at
+  screenshots; I did not run, approve or merge anything, and added no phone number or personal data.
