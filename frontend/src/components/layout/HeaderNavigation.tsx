@@ -8,6 +8,7 @@ import Link from "next/link";
 
 import { AccountLinks } from "@/components/layout/AccountLinks";
 import { MobileMenu } from "@/components/layout/MobileMenu";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { siteConfig } from "@/config/site";
 
@@ -43,6 +44,8 @@ export function HeaderNavigation({ isHomePage }: HeaderNavigationProps) {
         </Link>
         {/* Log in and Sign up, or My account: the one small client part of the bar (accounts phase 3b, D16). */}
         <AccountLinks prefetch={prefetch} />
+        {/* The Theme button, an icon from tablet width (on a phone it is in the Menu): Light, Dark, System. */}
+        <ThemeToggle variant="bar" />
       </nav>
       <div className="md:hidden">
         <MobileMenu links={menuLinks} />

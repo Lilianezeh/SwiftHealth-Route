@@ -76,7 +76,7 @@ export function ImportExport() {
     <section className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6">
       <h1 className="text-2xl font-bold text-forest">Import and export</h1>
 
-      <section aria-labelledby="import-heading" className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+      <section aria-labelledby="import-heading" className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
         <h2 id="import-heading" className="text-xl font-bold text-forest">Import listings</h2>
         <p className="text-base text-ink">Columns: {COLUMNS}. Row 1 is the header. Up to 500 rows and 1 MB. Each good row becomes a draft; a row with a problem is skipped and listed below.</p>
         <div className="flex flex-col gap-1">
@@ -90,7 +90,7 @@ export function ImportExport() {
               setResult(null);
               setProblem(null);
             }}
-            className="min-h-12 w-full rounded-xl border border-line bg-white p-3 text-base text-ink"
+            className="min-h-12 w-full rounded-xl border border-line bg-surface p-3 text-base text-ink"
           />
         </div>
         <button type="button" onClick={() => void runImport()} disabled={importing} className={`${buttonClasses("primary")} disabled:opacity-60`}>
@@ -119,7 +119,7 @@ export function ImportExport() {
         )}
       </section>
 
-      <section aria-labelledby="export-heading" className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+      <section aria-labelledby="export-heading" className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
         <h2 id="export-heading" className="text-xl font-bold text-forest">Export</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button type="button" onClick={() => void download("listings")} disabled={downloading} className={`${buttonClasses("secondary")} disabled:opacity-60`}>

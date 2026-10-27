@@ -20,7 +20,7 @@ import { ROLE_LABELS, sentenceFor } from "@/lib/staff/accountText";
 import { minPasswordLength } from "@/lib/staff/roles";
 import type { AdminUserRow, StaffRole, StaffUser } from "@/types/staff";
 
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink disabled:bg-closed-bg";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink disabled:bg-closed-bg";
 const ROLES: StaffRole[] = ["verifier", "editor", "admin", "provider"];
 const passwordTooShort = (role: StaffRole) => `The password needs at least ${minPasswordLength(role)} characters.`;
 const WAITING_LIMIT = 200; // the API's largest page; a waiting list is never near it
@@ -57,7 +57,7 @@ function AddUserForm({ onAdded, onClose }: { onAdded: (user: StaffUser) => void;
   }
 
   return (
-    <form onSubmit={add} className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+    <form onSubmit={add} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
       <h2 className="text-xl font-bold text-forest">Add a user</h2>
       <div className="flex flex-col gap-1">
         <label htmlFor="new-name" className="text-base font-semibold text-ink">Name</label>
@@ -171,7 +171,7 @@ export function StaffAccounts() {
           aria-selected={tab === "waiting"}
           aria-controls="panel-accounts"
           onClick={() => setTab("waiting")}
-          className={`${TAB} ${tab === "waiting" ? "border-pine bg-pine text-white" : "border-pine bg-white text-forest"}`}
+          className={`${TAB} ${tab === "waiting" ? "border-pine bg-pine text-white" : "border-pine bg-surface text-forest"}`}
         >
           {waitingLabel}
         </button>
@@ -182,7 +182,7 @@ export function StaffAccounts() {
           aria-selected={tab === "all"}
           aria-controls="panel-accounts"
           onClick={() => setTab("all")}
-          className={`${TAB} ${tab === "all" ? "border-pine bg-pine text-white" : "border-pine bg-white text-forest"}`}
+          className={`${TAB} ${tab === "all" ? "border-pine bg-pine text-white" : "border-pine bg-surface text-forest"}`}
         >
           All accounts
         </button>
@@ -196,7 +196,7 @@ export function StaffAccounts() {
           </div>
         )}
         {tab === "waiting" && waitingLoad === "error" && (
-          <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+          <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
             <p className="text-base text-ink">We couldn&apos;t load this. Check your connection and try again.</p>
             <button type="button" onClick={() => setAttempt((current) => current + 1)} className={buttonClasses("primary")}>Retry</button>
           </div>

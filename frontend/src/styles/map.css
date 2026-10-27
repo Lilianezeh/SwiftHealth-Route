@@ -20,7 +20,7 @@
 }
 
 .map-pin__body {
-  fill: var(--color-forest);
+  fill: var(--color-pine); /* a constant blue: the tiles stay light in both modes, and forest turns light blue in the dark mode */
   stroke: var(--color-white);
   stroke-width: 2px;
 }
@@ -42,8 +42,16 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--color-ink);
+  background: var(--color-pine-dark); /* a constant dark blue, for the same reason as the pin */
   border: 3px solid var(--color-white);
+}
+
+/* The popup and the credit follow the page's surface and text colours, so in the dark mode they are dark with light text, over the
+   light tiles. (Leaflet draws them white with its own text colour.) */
+.leaflet-container .leaflet-popup-content-wrapper,
+.leaflet-container .leaflet-popup-tip {
+  background: var(--color-surface);
+  color: var(--color-ink);
 }
 
 /* Popups: 16 px text, and the buttons keep their own colours (Leaflet colours every link in the map, which would turn the
@@ -79,10 +87,10 @@
   font-size: 1.5rem;
 }
 
-/* The credit: 16 px, on a solid white background so it can always be read, with links in the same blue as the site. */
+/* The credit: 16 px, on a solid background of the page's surface so it can always be read, with links in the same blue as the site. */
 .leaflet-container .leaflet-control-attribution {
   padding: 2px 8px;
-  background: var(--color-white);
+  background: var(--color-surface);
   color: var(--color-ink);
 }
 

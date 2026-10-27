@@ -23,7 +23,7 @@ import {
 import { ApiError } from "@/lib/api/request";
 import type { TwoFactorStatus } from "@/types/staff";
 
-const FIELD = "min-h-12 rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD = "min-h-12 rounded-xl border border-line bg-surface px-3 text-base text-ink";
 const PROBLEM = "rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink";
 const LINK_BUTTON = "inline-flex min-h-12 items-center justify-center rounded-xl px-3 text-base font-semibold text-forest underline";
 const CODE_LENGTH = 6;

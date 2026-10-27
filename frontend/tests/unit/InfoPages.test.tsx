@@ -247,6 +247,14 @@ describe("Privacy", () => {
     expect(text).toMatch(/no analytics or tracking scripts/i);
   });
 
+  it("says the Light or Dark choice is the one thing kept for the look, in the browser, never sent, and System keeps nothing", () => {
+    const text = render(<PrivacyPage />).container.textContent ?? "";
+
+    expect(text).toMatch(/Light or Dark with the Theme button, your browser remembers that one word/);
+    expect(text).toMatch(/never sent to us/);
+    expect(text).toMatch(/Choosing System keeps nothing/);
+  });
+
   it("leaves speed of answers and what the law requires to a lawyer, in a sentence on the page", () => {
     const text = render(<PrivacyPage />).container.textContent ?? "";
 

@@ -43,7 +43,7 @@ export function MyFacilities() {
       <h2 id="my-facilities-heading" className="text-xl font-bold text-forest">My facilities</h2>
       <ul className="flex flex-col gap-3">
         {facilities.map((facility) => (
-          <li key={facility.link_id} className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
+          <li key={facility.link_id} className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
             <p className="text-lg font-bold text-forest">{facility.name}</p>
             <p className="text-base text-ink-soft">{`${facility.category.name} · ${facility.area} · ${ROLE_WORDS[facility.role]}`}</p>
             <p className="text-base font-semibold text-ink">{STATE_WORDS[facility.status]}</p>

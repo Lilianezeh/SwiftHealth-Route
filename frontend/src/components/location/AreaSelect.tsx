@@ -35,7 +35,7 @@ export function AreaSelect({ value, onChange }: AreaSelectProps) {
         onChange={(event) => {
           if (event.target.value) onChange(event.target.value);
         }}
-        className="min-h-[50px] w-full rounded-xl border border-line bg-white px-3 text-base text-ink"
+        className="min-h-[50px] w-full rounded-xl border border-line bg-surface px-3 text-base text-ink"
       >
         <option value="">{status === "loading" ? "Loading areas…" : "Choose an area…"}</option>
         {meta?.areas.map((area) => (

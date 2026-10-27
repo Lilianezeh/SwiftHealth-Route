@@ -16,7 +16,7 @@ type SavedBloodBankCardProps = { bank: SavedBloodBank; now?: Date };
 
 export function SavedBloodBankCard({ bank, now }: SavedBloodBankCardProps) {
   return (
-    <article className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4 shadow-card">
+    <article className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card">
       <div>
         <p className="text-base font-semibold text-ink-soft">{`${bank.category.name} · ${bank.area}`}</p>
         <h3 className="text-lg font-bold leading-snug text-forest">{bank.name}</h3>

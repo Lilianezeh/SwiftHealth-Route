@@ -19,7 +19,7 @@ import { sentenceFor } from "@/lib/staff/accountText";
 import type { OwnerRequest } from "@/types/staff";
 
 const NOTE_MAX_LENGTH = 300;
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
 const SECONDARY = `${buttonClasses("secondary")} disabled:opacity-60 sm:w-auto sm:px-6`;
 const PRIMARY = `${buttonClasses("primary")} disabled:opacity-60 sm:w-auto sm:px-6`;
 const PHONE_LINK = "inline-flex min-h-12 items-center text-base font-semibold text-forest underline underline-offset-4";
@@ -57,7 +57,7 @@ function RequestCard({ request, onDecided }: CardProps) {
   }
 
   return (
-    <li className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
+    <li className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
       <p className="text-lg font-bold text-forest">{person.name}</p>
       <p className="text-base text-ink-soft">{person.email}</p>
       {person.phone && <p className="text-base text-ink">{formatPhoneForReading(person.phone)}</p>}
@@ -160,7 +160,7 @@ export function OwnerRequests() {
         </div>
       )}
       {load === "error" && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
           <p className="text-base text-ink">We couldn&apos;t load this. Check your connection and try again.</p>
           <button type="button" onClick={() => setAttempt((current) => current + 1)} className={buttonClasses("primary")}>Retry</button>
         </div>

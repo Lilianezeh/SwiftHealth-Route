@@ -78,7 +78,7 @@ export function ReportsQueue() {
               setMessage(null);
             }}
             className={`inline-flex ${CONTROL_CLASSES} items-center justify-center rounded-xl border px-3 text-base font-semibold ${
-              choice.value === status ? "border-pine bg-pine text-white" : "border-pine bg-white text-forest"
+              choice.value === status ? "border-pine bg-pine text-white" : "border-pine bg-surface text-forest"
             }`}
           >
             {choice.label}
@@ -123,7 +123,7 @@ type ReportCardProps = {
 function ReportCard({ report, now, isBusy, onClose }: ReportCardProps) {
   const { listing } = report;
   return (
-    <article className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4 shadow-card">
+    <article className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4 shadow-card">
       <div className="flex flex-wrap items-center gap-2">
         {report.urgent && (
           <span className="inline-flex rounded-full bg-emergency px-3 py-1 text-base font-bold text-white">Urgent</span>

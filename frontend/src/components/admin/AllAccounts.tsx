@@ -16,7 +16,7 @@ import { ROLE_LABELS } from "@/lib/staff/accountText";
 import type { AdminUserQuery, AdminUserRow, StaffRole } from "@/types/staff";
 
 const PAGE_SIZE = 50;
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
 const ROLES: StaffRole[] = ["admin", "editor", "verifier", "provider"];
 
 /** The choices of "Filter by state", and what each one asks the API for. */
@@ -122,7 +122,7 @@ export function AllAccounts({ reloadKey }: Props) {
         </div>
       )}
       {load === "error" && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
           <p className="text-base text-ink">We couldn&apos;t load this. Check your connection and try again.</p>
           <button type="button" onClick={() => setAttempt((current) => current + 1)} className={buttonClasses("primary")}>Retry</button>
         </div>

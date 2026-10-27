@@ -23,8 +23,8 @@ import { formatNoticeDate } from "@/lib/formatters/dates";
 import type { CheckMethod, CheckRead, CheckResult, StaffListingDetail } from "@/types/staff";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
-const CHOICE = "flex min-h-12 flex-1 cursor-pointer items-center gap-3 rounded-xl border border-line bg-white px-4 text-base text-ink has-[:checked]:border-pine has-[:checked]:bg-pine-50";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
+const CHOICE = "flex min-h-12 flex-1 cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface px-4 text-base text-ink has-[:checked]:border-pine has-[:checked]:bg-pine-50";
 
 type LogProps = { listingId: number };
 type Load = "loading" | "ready" | "not-found" | "error";
@@ -146,7 +146,7 @@ export function VerificationLog({ listingId }: LogProps) {
   if (load === "error" || detail === null) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-6">
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
           <p className="text-base text-ink">We couldn&apos;t load this. Check your connection and try again.</p>
           <button type="button" onClick={() => setAttempt((current) => current + 1)} className={buttonClasses("primary")}>
             Retry
@@ -168,7 +168,7 @@ export function VerificationLog({ listingId }: LogProps) {
         </Link>
       </header>
 
-      <form onSubmit={save} className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-4">
+      <form onSubmit={save} className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 text-lg font-semibold text-ink">How did you check?</legend>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -202,7 +202,7 @@ export function VerificationLog({ listingId }: LogProps) {
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="check-notes" className="text-base font-semibold text-ink">Notes</label>
-          <textarea id="check-notes" value={notes} maxLength={1000} rows={3} onChange={(event) => setNotes(event.target.value)} className="w-full rounded-xl border border-line bg-white p-3 text-base text-ink" />
+          <textarea id="check-notes" value={notes} maxLength={1000} rows={3} onChange={(event) => setNotes(event.target.value)} className="w-full rounded-xl border border-line bg-surface p-3 text-base text-ink" />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -247,7 +247,7 @@ export function VerificationLog({ listingId }: LogProps) {
         {history.length > 0 && (
           <ul className="flex flex-col gap-3">
             {history.map((entry) => (
-              <li key={entry.id} className="flex flex-col gap-1 rounded-2xl border border-line bg-white p-4">
+              <li key={entry.id} className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
                 <p className="text-base font-semibold text-ink">
                   {entry.method === "call" ? "Call" : "Visit"} · {entry.result === "pass" ? "Passed" : "Failed"}
                 </p>

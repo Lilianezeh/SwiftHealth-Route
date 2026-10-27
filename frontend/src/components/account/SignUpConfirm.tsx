@@ -23,7 +23,7 @@ import { formatPhoneHint } from "@/lib/formatters/phone";
 const WAIT_FOR_NEW_CODE_SECONDS = 60;
 const CODE_LENGTH = 6;
 const LINK_BUTTON_CLASSES = "inline-flex min-h-12 items-center justify-center rounded-xl px-3 text-base font-semibold text-forest underline";
-const FIELD_CLASSES = "min-h-12 rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD_CLASSES = "min-h-12 rounded-xl border border-line bg-surface px-3 text-base text-ink";
 
 function messageForCode(error: unknown): string {
   if (error instanceof ApiError) {

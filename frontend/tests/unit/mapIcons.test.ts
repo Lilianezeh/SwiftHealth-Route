@@ -57,10 +57,10 @@ describe("the map styles (src/styles/map.css)", () => {
     return css.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
   }
 
-  it("paints the pin forest blue with a white plus, and the dot ink with a white ring", () => {
-    expect(rule(".map-pin__body")).toMatch(/fill:\s*var\(--color-forest\)/);
+  it("paints the pin pine blue with a white plus, and the dot dark blue with a white ring (constants: the tiles stay light in the dark mode)", () => {
+    expect(rule(".map-pin__body")).toMatch(/fill:\s*var\(--color-pine\)/);
     expect(rule(".map-pin__plus")).toMatch(/fill:\s*var\(--color-white\)/);
-    expect(rule(".map-position-dot")).toMatch(/background:\s*var\(--color-ink\)/);
+    expect(rule(".map-position-dot")).toMatch(/background:\s*var\(--color-pine-dark\)/);
     expect(rule(".map-position-dot")).toMatch(/border:[^;]*var\(--color-white\)/);
     expect(rule(".map-position-dot")).toMatch(/border-radius:\s*50%/);
   });

@@ -7,24 +7,35 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import { contrast, tokenColour } from "../helpers/contrast";
 
 describe("buttonClasses", () => {
-  it("has an on-dark button: white background, pine-dark text, for the dark hero where the pine button would vanish", () => {
+  it("has an on-dark button: white (snow, which stays white in the dark mode) background, pine-dark text, for the dark hero where the pine button would vanish", () => {
     const classes = buttonClasses("onDark");
 
-    expect(classes).toMatch(/\bbg-white\b/);
+    expect(classes).toMatch(/\bbg-snow\b/);
     expect(classes).toMatch(/\btext-pine-dark\b/);
-    expect(classes).toMatch(/\bhover:bg-pine-50\b/);
-    expect(classes).toMatch(/\bactive:bg-pine-100\b/);
+    expect(classes).toMatch(/\bhover:bg-sky-pale\b/); // constant tints, so the hover reads in both modes
+    expect(classes).toMatch(/\bactive:bg-sky-pale\b/);
+    expect(classes).not.toMatch(/\b(?:hover|active):bg-pine-(?:50|100)\b/); // those two change in the dark mode
     expect(contrast(tokenColour("pine-dark"), "#ffffff")).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(tokenColour("pine-dark"), tokenColour("pine-50"))).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(tokenColour("pine-dark"), tokenColour("pine-100"))).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(tokenColour("pine-dark"), tokenColour("sky-pale"))).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("has the WhatsApp button (owner's Option A): white, a #075E54 border, ink text, the light green hover; never white text on green", () => {
+  it("has the secondary button: a card surface, forest text, a pine edge that goes light (not dark) on hover in the dark mode", () => {
+    const classes = buttonClasses("secondary");
+
+    expect(classes).toMatch(/\bbg-surface\b/);
+    expect(classes).toMatch(/\bborder-pine\b/);
+    expect(classes).toMatch(/\btext-forest\b/);
+    expect(classes).toMatch(/\bhover:border-pine-dark\b/);
+    expect(classes).toMatch(/\bdark:hover:border-forest\b/);
+    expect(classes).toMatch(/\bdark:active:border-forest\b/);
+  });
+
+  it("has the WhatsApp button (owner's Option A): a card surface, a #075E54 border, ink text, the light green hover; never white text on green", () => {
     const classes = buttonClasses("whatsapp");
 
     expect(classes).toMatch(/\bborder-2\b/);
     expect(classes).toMatch(/\bborder-whatsapp-dark\b/);
-    expect(classes).toMatch(/\bbg-white\b/);
+    expect(classes).toMatch(/\bbg-surface\b/);
     expect(classes).toMatch(/\btext-ink\b/);
     expect(classes).toMatch(/\bhover:bg-open-bg\b/);
     expect(classes).toMatch(/\bactive:bg-open-bg\b/);

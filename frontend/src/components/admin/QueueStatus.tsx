@@ -21,7 +21,7 @@ export function QueueStatus({ status, onRetry }: QueueStatusProps) {
 
   if (status === "error") {
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+      <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
         <p className="text-base text-ink">We couldn&apos;t load this. Check your connection and try again.</p>
         <button type="button" onClick={onRetry} className={buttonClasses("primary")}>
           Retry

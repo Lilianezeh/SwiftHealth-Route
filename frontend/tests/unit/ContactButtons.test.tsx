@@ -81,7 +81,7 @@ describe("WhatsAppButton (the owner's Option A)", () => {
     const className = screen.getByRole("link").className;
     expect(className).toMatch(/\bborder-whatsapp-dark\b/);
     expect(className).toMatch(/\btext-ink\b/);
-    expect(className).toMatch(/\bbg-white\b/);
+    expect(className).toMatch(/\bbg-surface\b/);
     expect(className).toMatch(/min-h-\[50px\]/);
     expect(className).toMatch(/\btext-base\b/);
     expect(className).not.toMatch(/\btext-white\b/); // never white text on green

@@ -15,7 +15,7 @@ import { registerFacility, type FacilityRole } from "@/lib/api/facility";
 import { ApiError } from "@/lib/api/request";
 import { toE164 } from "@/lib/formatters/phone";
 
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
 const CHOICE = "flex min-h-12 items-center gap-3 text-base text-ink";
 const MAX_NOTES = 300;
 const COUNTER_FROM = 250;
@@ -146,7 +146,7 @@ export function RegisterFacility({ call, onAskToManage }: Props) {
         </fieldset>
         <div className="flex flex-col gap-1">
           <label htmlFor="facility-notes" className="text-base font-semibold text-ink">Notes (optional)</label>
-          <textarea id="facility-notes" rows={3} maxLength={MAX_NOTES} value={form.notes} onChange={(event) => set("notes", event.target.value)} className="w-full rounded-xl border border-line bg-white p-3 text-base text-ink" />
+          <textarea id="facility-notes" rows={3} maxLength={MAX_NOTES} value={form.notes} onChange={(event) => set("notes", event.target.value)} className="w-full rounded-xl border border-line bg-surface p-3 text-base text-ink" />
           {form.notes.length >= COUNTER_FROM && <p className="text-base text-ink-soft">{MAX_NOTES - form.notes.length} characters left</p>}
         </div>
         {problems.length > 0 && (

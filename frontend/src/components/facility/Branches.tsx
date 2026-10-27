@@ -14,8 +14,8 @@ import { addBranch, listBranches, type BranchItem } from "@/lib/api/listingChang
 import { ApiError } from "@/lib/api/request";
 import { toE164 } from "@/lib/formatters/phone";
 
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
-const SECTION = "flex flex-col gap-3 rounded-2xl border border-line bg-white p-4";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
+const SECTION = "flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4";
 const MAX_NOTES = 300;
 const STATUS_WORDS: Record<string, string> = {
   draft: "Waiting for our team to verify it",
@@ -135,7 +135,7 @@ export function Branches({ mainId, call }: Props) {
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="branch-notes" className="text-base font-semibold text-ink">Notes (optional)</label>
-          <textarea id="branch-notes" rows={2} maxLength={MAX_NOTES} value={form.notes} onChange={(event) => set("notes", event.target.value)} className="w-full rounded-xl border border-line bg-white p-3 text-base text-ink" />
+          <textarea id="branch-notes" rows={2} maxLength={MAX_NOTES} value={form.notes} onChange={(event) => set("notes", event.target.value)} className="w-full rounded-xl border border-line bg-surface p-3 text-base text-ink" />
         </div>
         {problems.length > 0 && (
           <div role="alert" className="rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink">

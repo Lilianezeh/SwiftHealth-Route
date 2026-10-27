@@ -40,11 +40,11 @@ export function Dashboard() {
                 <Link
                   href={card.href}
                   prefetch={false}
-                  className="flex min-h-24 flex-col justify-center gap-1 rounded-2xl border border-line bg-white p-4 shadow-card"
+                  className="flex min-h-24 flex-col justify-center gap-1 rounded-2xl border border-line bg-surface p-4 shadow-card"
                 >
                   <span className="text-3xl font-bold text-forest">{card.count}</span>
                   <span className="text-base font-semibold text-ink">{card.label}</span>
-                  {card.urgent ? <span className="text-base font-bold text-emergency">{`${card.urgent} urgent`}</span> : null}
+                  {card.urgent ? <span className="text-base font-bold text-alert">{`${card.urgent} urgent`}</span> : null}
                 </Link>
               </li>
             ))}

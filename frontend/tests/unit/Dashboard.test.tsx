@@ -106,7 +106,7 @@ describe("the stat cards", () => {
     await openDashboard({ urgent_reports: 1 });
 
     const urgent = screen.getByText("1 urgent");
-    expect(urgent.className).toMatch(/text-emergency/);
+    expect(urgent.className).toMatch(/text-alert/); // red as text: lighter red in the dark mode
     expect(screen.getByRole("link", { name: /Open reports/ })).toContainElement(urgent);
   });
 

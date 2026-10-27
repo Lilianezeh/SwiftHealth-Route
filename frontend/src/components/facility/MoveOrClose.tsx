@@ -19,8 +19,8 @@ import {
 import { ApiError } from "@/lib/api/request";
 import { formatLagosDateTime } from "@/lib/formatters/dates";
 
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
-const SECTION = "flex flex-col gap-3 rounded-2xl border border-line bg-white p-4";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
+const SECTION = "flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4";
 const ALERT = "rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink";
 const FIELD_NAMES = { address: "Address", area: "Area", landmark: "Landmark" } as const;
 const REASON_MIN = 3;

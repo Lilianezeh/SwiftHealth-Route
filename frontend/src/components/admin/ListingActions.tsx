@@ -47,7 +47,7 @@ export function ListingActions({ listingId, status, role, canEdit, dirty, busy, 
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
       {exists && (canSubmit || canPublish || canHide) && dirty && (
         <p className="text-base text-ink-soft">Save your changes before you submit, publish or hide.</p>
       )}
@@ -102,7 +102,7 @@ export function ListingActions({ listingId, status, role, canEdit, dirty, busy, 
             value={reason}
             maxLength={200}
             onChange={(event) => setReason(event.target.value)}
-            className="min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink"
+            className="min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink"
           />
           {reasonProblem && (
             <p role="alert" className="text-base font-semibold text-amber-ink">

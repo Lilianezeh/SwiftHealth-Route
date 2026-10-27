@@ -9,7 +9,7 @@ type BloodBankCardProps = { bank: BloodBank; now?: Date };
 
 export function BloodBankCard({ bank, now }: BloodBankCardProps) {
   return (
-    <article className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4 shadow-card">
+    <article className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card">
       <BloodCardHeading listing={bank} />
 
       <div className="flex flex-col gap-2">

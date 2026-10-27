@@ -99,6 +99,12 @@ recommended option and went on, as asked. Overrule any of them by telling me; ea
 | S1 | Sponsored rules, "verified" | To start a payment and to take the sponsored slot a listing must be published, have a verification date and not be overdue for its re-check. An overdue listing stays visible with "Verification due" but is never sponsored. | Before this, a published listing with no verification date or an overdue one could pay and go first. Paying must not buy a place that verification has not earned. |
 | S2 | Sponsored rules, a late payment | A payment confirmed for a listing that is no longer eligible is still recorded (audit entry and `featured_until`) but shows nothing until the listing is eligible again. | The money was taken; the webhook must not refuse a real payment. Refunds are outside this change. |
 | S3 | Sponsored rules, the screens | "My facility" and "Get featured" say "Only a verified listing can be featured." before the person pays, with the same sentence as the API. | The refusal should not come after the click. |
+| M1 | Dark mode, tokens | Role tokens change in the dark (page, surface, ink, ink-soft, line, forest, the tints, label colours, alert); constant tokens never do (pine, pine-dark, accent, sky, paper, amber, on-amber, snow, emergency). `bg-white` is now `bg-surface` everywhere; `bg-forest` is `bg-pine`. A source test keeps the old names out. | The blue bars, hero, buttons, logo and red buttons look the same in both modes; no per-component dark rules. |
+| M2 | Dark mode, the 112 card | A red border (lighter red in the dark) on a dark card, and the same red Call 112 button with white text in both modes. | "Stays clearly red". |
+| M3 | Dark mode, the map | The map tiles stay light in both modes (the pin and dot are constant blues; popups and credit follow the theme). | A dark map needs another tile provider (a new outside service, maybe paid): your decision, not mine. |
+| M4 | Dark mode, the choice | Light and Dark are kept in the browser (`localStorage` key `swifthealth.theme`); System keeps nothing. The Privacy page says so. | Without it every page would forget. |
+| M5 | Dark mode, the Find page | The first button of the Find page's blue band is now the white (`snow`) button of the home hero, not the outline button. | The outline button turned dark on the blue band in the dark mode. |
+| M6 | Dark mode, the header at 768 px | The header's links already wrapped onto two lines at 768 px before this work ("Find care", "For facilities", "Log in"); the Theme icon fits at the right edge and does not make it worse. I left the wrapping as it was. | Not part of this change; a separate small fix if you want it. |
 | E1 | SwiftRescue contacts screen, who | Editors and admins (the "review" area), not only admins. | Editors already publish, hide and reopen listings; one line to make it admin only. |
 | E2 | SwiftRescue contacts screen, Remove | Remove is hiding, with a reason and a question; nothing is deleted and Edit stays on the card. | "No deletes"; and a closed contact must leave the public list at once. |
 | E3 | SwiftRescue contacts screen, Add | Opens the normal new-listing editor with the group's category chosen. A new contact is a draft and appears in SwiftRescue only after it is verified and published. | The trust rule applies to every listing, SwiftRescue included. |
@@ -670,3 +676,20 @@ Things the owner must do before real visitors use the site.
   (options and prices are in section 5b of the requirements; I buy and set up nothing yet).
 - **AI use:** Claude Code read the code and wrote the spec and, from Phase 1, the tests and code; I chose the answers D1 to D5, the password rule and what
   to do about the Resend domain.
+
+## Day 12 — 2026-10-26 and 2026-10-27
+- **Built (all as stacked draft pull requests, nothing merged; the table of PR numbers is in the last chat message and in each PR):** accounts Phases 5
+  to 9 (#60 to #65: my account and password reset; the 10th table with owner links and their staff screen; register or claim a facility with a duplicate
+  check; moves, closures and branches with address history; Privacy and Terms drafts and the anonymity tests), the Sponsored rules check (#66), the "For
+  facilities" page (#67), the SwiftRescue contacts screen (#68) and dark mode (#69).
+- **Found by the checks:** a featured listing that was never verified or was overdue could pay and take the sponsored slot (fixed, S1); `/search` and
+  `/blood` scored 98 in Lighthouse Accessibility ("heading order", in both modes; fixed); the Privacy page promises that unfinished sign-ups are removed
+  after 7 days but **no timer runs that job yet** (your step, in validation.md of the accounts feature); my own Theme button had a second `role="status"`
+  that broke nine browser tests (fixed).
+- **Not finished:** the real-browser suite (Playwright) for dark mode: a full run had 67 failures under a very busy machine, one real (fixed), and my re-run
+  was stopped for low memory. Please re-run it (how: `specs/2026-10-27-dark-mode/validation.md`). The whole accounts road with a real database and a real
+  browser was also not run end to end.
+- **Decisions:** the lists "Decisions to review" above (P5 to P9, S1 to S3, F1 to F3, E1 to E5, M1 to M6); the ones that need you are the legal ones (lawyer
+  for Privacy and Terms), the schedule of the clean-up job, and whether a dark map is worth another tile provider.
+- **AI use:** Claude Code wrote the specs, tests and code of all of the above from the plan you approved, ran the test suites and Lighthouse, and looked at
+  screenshots; I did not run, approve or merge anything, and added no phone number or personal data.

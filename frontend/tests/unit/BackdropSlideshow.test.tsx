@@ -350,7 +350,7 @@ describe("the credit", () => {
     expect(credit.getAttribute("rel")).toContain("noreferrer");
     expect(credit.className).toMatch(/\btext-base\b/);
     expect(credit.className).toMatch(/\bmin-h-12\b/);
-    expect(credit.className).toMatch(/\bbg-white\b/); // never on a photo
+    expect(credit.className).toMatch(/\bbg-surface\b/); // never on a photo
     expect(credit.className).not.toMatch(/\babsolute\b/);
     expect(screen.getByRole("link", { name: "A tile" }).compareDocumentPosition(credit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
@@ -373,11 +373,11 @@ describe("all text passes WCAG AA, even over the darkest possible photo pixel", 
   // the worst case under any text that is not on a white surface.
   const WORST_BACKGROUND = laidOver(tokenColour("pine-100"), laidOver("#000000", tokenColour("pine-50"), BACKDROP_STRENGTH), 0.4);
 
-  it("has the heading of Find by type on a soft white backing (bg-white/90) in its own forest colour, at least 4.5:1 on the worst case", () => {
+  it("has the heading of Find by type on a soft white backing (bg-surface/90) in its own forest colour, at least 4.5:1 on the worst case", () => {
     render(<FindByType />);
 
     const heading = screen.getByRole("heading", { level: 2, name: "Find by type" });
-    const backing = Number(/\bbg-white\/(\d+)\b/.exec(heading.className)?.[1]) / 100;
+    const backing = Number(/\bbg-surface\/(\d+)\b/.exec(heading.className)?.[1]) / 100;
     expect(backing).toBeGreaterThanOrEqual(0.9);
     expect(heading.className).toMatch(/\btext-forest\b/);
     expect(heading.className).toMatch(/\brounded-xl\b/);
@@ -389,9 +389,9 @@ describe("all text passes WCAG AA, even over the darkest possible photo pixel", 
     const { container } = render(<FindByType />);
 
     expect(container.querySelector("section")?.className).toMatch(/\bbg-pine-50\b/); // not the grey-white of the first version of revision 5
-    expect(container.querySelector("section")?.className).not.toMatch(/\bbg-white\b/);
+    expect(container.querySelector("section")?.className).not.toMatch(/\bbg-surface\b/);
     for (const tile of screen.getAllByRole("link", { name: /Hospital|Clinic|Maternity|Pharmacy|Laboratory/ })) {
-      expect(tile.className).toMatch(/\bbg-white\b/);
+      expect(tile.className).toMatch(/\bbg-surface\b/);
     }
     expect(contrast(tokenColour("forest"), "#ffffff")).toBeGreaterThanOrEqual(4.5);
     expect(WORST_BACKGROUND).not.toBe("#ffffff"); // the photo is really visible: the worst case is clearly darker than white
@@ -402,7 +402,7 @@ describe("all text passes WCAG AA, even over the darkest possible photo pixel", 
     renderSlideshow();
 
     for (const control of [screen.getByRole("link", { name: /Designed by Magnific/ }), screen.getByRole("button", { name: "Pause photos" })]) {
-      expect(control.className).toMatch(/\bbg-white\b/);
+      expect(control.className).toMatch(/\bbg-surface\b/);
       expect(control.className).toMatch(/\btext-forest\b/);
     }
   });

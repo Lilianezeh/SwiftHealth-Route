@@ -40,7 +40,7 @@ export function FindByType() {
         {/* A soft white backing, like the Pause button and the credit: the heading is on a white surface whatever photo is behind it. */}
         <h2
           id="find-by-type-heading"
-          className="inline-block rounded-xl bg-white/90 px-4 py-2 text-2xl font-bold text-forest"
+          className="inline-block rounded-xl bg-surface/90 px-4 py-2 text-2xl font-bold text-forest"
         >
           {HOME_WORDS.findByType.heading}
         </h2>
@@ -57,7 +57,7 @@ export function FindByType() {
                 prefetch={false}
                 aria-labelledby={`type-name-${category.slug}`}
                 aria-describedby={`type-line-${category.slug}`}
-                className="flex h-[190px] flex-col items-center justify-center gap-1 rounded-2xl border border-line bg-white p-3 text-center shadow-card transition duration-200 hover:-translate-y-1 hover:border-pine hover:shadow-lg focus-visible:-translate-y-1 focus-visible:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-visible:translate-y-0 md:gap-2 md:p-4"
+                className="flex h-[190px] flex-col items-center justify-center gap-1 rounded-2xl border border-line bg-surface p-3 text-center shadow-card transition duration-200 hover:-translate-y-1 hover:border-pine hover:shadow-lg focus-visible:-translate-y-1 focus-visible:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-visible:translate-y-0 md:gap-2 md:p-4"
               >
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-pine-100 text-forest md:h-16 md:w-16">
                   <DecorativeIcon icon={TILE_ICONS[category.slug]} className="h-7 w-7 md:h-8 md:w-8" />

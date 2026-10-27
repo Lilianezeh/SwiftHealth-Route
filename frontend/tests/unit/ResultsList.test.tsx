@@ -18,6 +18,19 @@ describe("ResultsList", () => {
     ]);
   });
 
+  it("has a hidden h2 before the cards (which have an h3), so the heading order is h1, h2, h3 (Lighthouse heading-order)", () => {
+    const { container } = render(<ResultsList items={manyListings(2)} />);
+
+    const levels = [...container.querySelectorAll("h1, h2, h3")].map((heading) => heading.tagName);
+    expect(levels).toEqual(["H2", "H3", "H3"]);
+    expect(screen.getByRole("heading", { level: 2, name: "Places found" }).className).toMatch(/\bsr-only\b/);
+  });
+
+  it("draws nothing, not even the hidden heading, when there are no results", () => {
+    const { container } = render(<ResultsList items={[]} />);
+    expect(container.innerHTML).toBe("");
+  });
+
   it("keeps a sponsored card where the API put it (first) and tags it", () => {
     render(<ResultsList items={[listing({ id: 9, name: "Paid Clinic", sponsored: true }), ...manyListings(2)]} />);
 

@@ -46,7 +46,7 @@ describe("the hero", () => {
     expect(links).toHaveLength(1);
     expect(links[0]).toHaveTextContent("Find care near me");
     expect(links[0]).toHaveAttribute("href", "/find");
-    expect(links[0].className).toMatch(/\bbg-white\b/); // the pine button would vanish on the dark gradient
+    expect(links[0].className).toMatch(/\bbg-snow\b/); // white, also in the dark mode: the pine button would vanish on the dark gradient
     expect(links[0].className).toMatch(/\btext-pine-dark\b/);
     expect(links[0].className).not.toMatch(/(^|\s)bg-pine(\s|$)/); // the plain pine background (hover tints are fine)
     expect(contrast(tokenColour("pine-dark"), "#ffffff")).toBeGreaterThanOrEqual(4.5);
@@ -411,7 +411,7 @@ describe("Why SwiftHealth Route (was Benefits)", () => {
     const { container } = render(<WhySwiftHealth />);
 
     const section = container.querySelector("section");
-    expect(section?.className).toMatch(/\bbg-forest\b/); // the section itself is full width: no max-w on it
+    expect(section?.className).toMatch(/\bbg-pine\b/); // the same blue as the header (bg-pine stays in the dark mode; forest becomes a text colour)
     expect(section?.className).toMatch(/\bon-dark\b/);
     expect(section?.className).not.toMatch(/\bmax-w-/);
     expect(container.querySelector("section > div")?.className).toMatch(/\bmax-w-6xl\b/); // the content keeps the page width
@@ -433,7 +433,7 @@ describe("Why SwiftHealth Route (was Benefits)", () => {
     expect(container.querySelectorAll("li")).toHaveLength(4);
     expect(contrast("#ffffff", tokenColour("forest"))).toBeGreaterThanOrEqual(4.5);
     expect(contrast("#ffffff", tokenColour("pine-dark"))).toBeGreaterThanOrEqual(4.5);
-    expect(container.innerHTML).not.toMatch(/text-forest|text-ink|bg-white\b/); // no dark text left on the blue
+    expect(container.innerHTML).not.toMatch(/text-forest|text-ink|bg-white\b|bg-surface\b/); // no dark text and no card left on the blue
   });
 
   it("says the places are open right now, including late-night and 24-hour services", () => {

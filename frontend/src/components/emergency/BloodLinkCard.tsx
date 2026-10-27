@@ -9,7 +9,7 @@ export function BloodLinkCard() {
     <Link
       href="/blood"
       prefetch={false}
-      className="flex min-h-14 flex-col justify-center gap-1 rounded-2xl border border-line bg-white p-4 shadow-card"
+      className="flex min-h-14 flex-col justify-center gap-1 rounded-2xl border border-line bg-surface p-4 shadow-card"
     >
       <span className="text-lg font-bold text-forest underline underline-offset-4">Need blood urgently?</span>
       <span className="text-base text-ink">Find blood banks and the blood groups they list.</span>

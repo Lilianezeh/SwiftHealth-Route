@@ -17,7 +17,7 @@ import { formatPhoneForReading } from "@/lib/formatters/phone";
 import { sentenceFor, withArticle } from "@/lib/staff/accountText";
 import type { AdminUserRow } from "@/types/staff";
 
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
 const REASON_MAX_LENGTH = 500;
 const SECONDARY = `${buttonClasses("secondary")} disabled:opacity-60 sm:w-auto sm:px-6`;
 const PRIMARY = `${buttonClasses("primary")} disabled:opacity-60 sm:w-auto sm:px-6`;
@@ -78,7 +78,7 @@ function WaitingCard({ user, onDecided, onUpdated }: CardProps) {
     });
 
   return (
-    <li className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
+    <li className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
       <p className="text-lg font-bold text-forest">{user.name}</p>
       <p className="text-base text-ink-soft">{user.email}</p>
       {phoneText && <p className="text-base text-ink">{phoneText}</p>}

@@ -32,7 +32,7 @@ export function MapPopup({ listing }: MapPopupProps) {
       <div className="flex flex-wrap items-center gap-2">
         <OpenNowBadge isOpenNow={listing.is_open_now} is24Hours={listing.is_24_hours} />
         {listing.sponsored && (
-          <span className="inline-flex rounded-full bg-amber px-3 py-1 text-base font-semibold text-ink">Sponsored</span>
+          <span className="inline-flex rounded-full bg-amber px-3 py-1 text-base font-semibold text-on-amber">Sponsored</span>
         )}
       </div>
 

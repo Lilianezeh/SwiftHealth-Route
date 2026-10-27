@@ -74,7 +74,7 @@ export function ReportForm({ listingId, listingName, listingSlug }: ReportFormPr
           {REPORT_REASONS.map((option) => (
             <label
               key={option.value}
-              className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line bg-white px-4 text-base text-ink has-[:checked]:border-pine has-[:checked]:bg-pine-50"
+              className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface px-4 text-base text-ink has-[:checked]:border-pine has-[:checked]:bg-pine-50"
             >
               <input
                 type="radio"
@@ -99,7 +99,7 @@ export function ReportForm({ listingId, listingName, listingSlug }: ReportFormPr
             onChange={(event) => setComment(event.target.value)}
             maxLength={MAX_COMMENT_LENGTH}
             rows={3}
-            className="rounded-xl border border-line bg-white p-3 text-base text-ink"
+            className="rounded-xl border border-line bg-surface p-3 text-base text-ink"
           />
           {comment.length >= COMMENT_COUNTER_FROM && (
             <p className="text-base text-ink-soft">{charactersLeft} characters left</p>
@@ -117,7 +117,7 @@ export function ReportForm({ listingId, listingName, listingSlug }: ReportFormPr
             autoComplete="tel"
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
-            className="min-h-12 rounded-xl border border-line bg-white px-3 text-base text-ink"
+            className="min-h-12 rounded-xl border border-line bg-surface px-3 text-base text-ink"
           />
           <p className="text-base text-ink-soft">Only if you want us to follow up. We delete it when the report is closed.</p>
         </div>

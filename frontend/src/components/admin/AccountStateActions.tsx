@@ -13,7 +13,7 @@ import { reactivateAdminUser, suspendAdminUser } from "@/lib/api/staff";
 import { sentenceFor } from "@/lib/staff/accountText";
 import type { AdminUserRow } from "@/types/staff";
 
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
 const REASON_MAX_LENGTH = 500;
 const SECONDARY = `${buttonClasses("secondary")} disabled:opacity-60 sm:w-auto sm:px-6`;
 const PRIMARY = `${buttonClasses("primary")} disabled:opacity-60 sm:w-auto sm:px-6`;

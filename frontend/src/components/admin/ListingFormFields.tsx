@@ -13,9 +13,9 @@ import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { DAY_NAMES, type ListingForm, type PhoneRow, type ServiceRow } from "@/lib/staff/listingForm";
 import type { MetaResponse } from "@/types/api";
 
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink disabled:bg-closed-bg";
-const SECTION = "flex flex-col gap-3 rounded-2xl border border-line bg-white p-4";
-const SMALL_BUTTON = "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-pine bg-white px-4 text-base font-semibold text-forest disabled:opacity-50";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink disabled:bg-closed-bg";
+const SECTION = "flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4";
+const SMALL_BUTTON = "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-pine bg-surface px-4 text-base font-semibold text-forest disabled:opacity-50";
 
 type FieldProps = { id: string; label: string; children: ReactNode };
 
@@ -238,7 +238,7 @@ export function ListingFormFields({
       <section className={SECTION} aria-labelledby="description-heading">
         <h2 id="description-heading" className="text-xl font-bold text-forest">Description</h2>
         <Field id="listing-description" label="Description (shown to the public)">
-          <textarea id="listing-description" rows={3} value={form.description} onChange={(event) => set("description", event.target.value)} className="w-full rounded-xl border border-line bg-white p-3 text-base text-ink disabled:bg-closed-bg" />
+          <textarea id="listing-description" rows={3} value={form.description} onChange={(event) => set("description", event.target.value)} className="w-full rounded-xl border border-line bg-surface p-3 text-base text-ink disabled:bg-closed-bg" />
         </Field>
       </section>
 

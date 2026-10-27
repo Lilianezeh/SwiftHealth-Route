@@ -29,7 +29,7 @@ describe("the Sponsored label in the results list", () => {
     const { rerender } = render(<ResultsList items={[{ ...first, sponsored: true }, second]} />);
     const tag = screen.getByText("Sponsored");
     expect(tag.className).toMatch(/bg-amber/);
-    expect(tag.className).toMatch(/text-ink/);
+    expect(tag.className).toMatch(/text-on-amber/); // dark text on amber in both modes (ink turns light in the dark mode)
 
     rerender(<ResultsList items={[first, second]} />);
 

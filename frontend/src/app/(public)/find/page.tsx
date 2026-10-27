@@ -15,11 +15,12 @@ export const metadata: Metadata = {
 export default function FindPage() {
   return (
     <>
-      <section className="on-dark bg-forest text-paper">
+      <section className="on-dark bg-pine text-paper">
         <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-8">
           <h1 className="text-3xl font-bold leading-tight">What do you need?</h1>
           <div className="grid gap-3 sm:grid-cols-2">
-            <a href="#search" className={buttonClasses("secondary")}>
+            {/* The white button of a blue band (as on the home page): it stays white in the dark mode too. */}
+            <a href="#search" className={buttonClasses("onDark")}>
               Find a healthcare facility
             </a>
             <Link href="/emergency" className={buttonClasses("emergency")}>
