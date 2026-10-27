@@ -6,7 +6,7 @@ import Link from "next/link";
 import { BLOOD_SHORTCUT, CATEGORY_SHORTCUTS } from "@/config/search";
 
 const SHORTCUT_CLASSES =
-  "inline-flex min-h-12 items-center whitespace-nowrap rounded-full border border-line bg-white px-4 text-base font-semibold text-forest";
+  "inline-flex min-h-12 items-center whitespace-nowrap rounded-full border border-line bg-surface px-4 text-base font-semibold text-forest";
 
 export function CategoryShortcuts() {
   const shortcuts = [

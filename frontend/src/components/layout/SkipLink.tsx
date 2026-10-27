@@ -6,7 +6,7 @@ export function SkipLink() {
   return (
     <a
       href="#main"
-      className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:inline-flex focus:min-h-12 focus:items-center focus:rounded-xl focus:bg-white focus:px-4 focus:text-base focus:font-semibold focus:text-forest focus:shadow-card"
+      className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:inline-flex focus:min-h-12 focus:items-center focus:rounded-xl focus:bg-surface focus:px-4 focus:text-base focus:font-semibold focus:text-forest focus:shadow-card"
     >
       Skip to main content
     </a>

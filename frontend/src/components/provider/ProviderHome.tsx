@@ -26,7 +26,7 @@ export function ProviderHome() {
       <MyFacilities />
 
       {listing && (
-        <article className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4 shadow-card">
+        <article className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card">
           <h2 className="text-xl font-bold text-forest">{listing.name}</h2>
           <p className="text-base text-ink-soft">
             {listing.category.name} · {listing.area}

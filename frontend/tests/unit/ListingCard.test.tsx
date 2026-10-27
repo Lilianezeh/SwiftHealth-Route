@@ -151,11 +151,11 @@ describe("ListingCard", () => {
     }
   });
 
-  it("uses a white card with a line border and the card shadow, made of tokens", () => {
+  it("uses a card (surface) with a line border and the card shadow, made of tokens", () => {
     renderCard();
 
     const className = screen.getByRole("article").className;
-    expect(className).toMatch(/\bbg-white\b/);
+    expect(className).toMatch(/\bbg-surface\b/);
     expect(className).toMatch(/\bborder-line\b/);
     expect(className).toMatch(/\bshadow-card\b/);
   });

@@ -20,7 +20,7 @@ export function ListingCard({ listing, now }: ListingCardProps) {
   const eyebrow = distance ? `${listing.category.name} · ${distance}` : listing.category.name;
 
   return (
-    <article className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4 shadow-card">
+    <article className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card">
       <div>
         <p className="text-base font-semibold text-ink-soft">{eyebrow}</p>
         <h3 className="text-lg font-bold leading-snug text-forest">
@@ -37,7 +37,7 @@ export function ListingCard({ listing, now }: ListingCardProps) {
           </p>
         )}
         {listing.sponsored && (
-          <span className="mt-1 inline-flex rounded-full bg-amber px-3 py-1 text-base font-semibold text-ink">
+          <span className="mt-1 inline-flex rounded-full bg-amber px-3 py-1 text-base font-semibold text-on-amber">
             Sponsored
           </span>
         )}

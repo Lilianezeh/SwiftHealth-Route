@@ -11,7 +11,7 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import { claimFacility, findClaimableFacilities, type ClaimableFacility, type FacilityRole } from "@/lib/api/facility";
 import { ApiError } from "@/lib/api/request";
 
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
 const CHOICE = "flex min-h-12 items-center gap-3 text-base text-ink";
 const MAX_REASON = 300;
 const SEARCH_PAUSE_MS = 300;
@@ -114,7 +114,7 @@ export function ClaimFacility({ call, initialTarget = null }: Props) {
           {results !== null && results.length > 0 && (
             <ul className="flex flex-col gap-3">
               {results.map((facility) => (
-                <li key={facility.id} className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
+                <li key={facility.id} className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
                   <p className="text-lg font-bold text-forest">{facility.name}</p>
                   <p className="text-base text-ink-soft">{`${facility.category.name}, ${facility.area}`}</p>
                   <button
@@ -146,7 +146,7 @@ export function ClaimFacility({ call, initialTarget = null }: Props) {
           </fieldset>
           <div className="flex flex-col gap-1">
             <label htmlFor="claim-reason" className="text-base font-semibold text-ink">How are you connected to this facility?</label>
-            <textarea id="claim-reason" rows={3} maxLength={MAX_REASON} value={reason} onChange={(event) => setReason(event.target.value)} className="w-full rounded-xl border border-line bg-white p-3 text-base text-ink" />
+            <textarea id="claim-reason" rows={3} maxLength={MAX_REASON} value={reason} onChange={(event) => setReason(event.target.value)} className="w-full rounded-xl border border-line bg-surface p-3 text-base text-ink" />
           </div>
           {problem && <p role="alert" className="rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink">{problem}</p>}
           <button type="submit" disabled={sending} className={`${buttonClasses("primary")} disabled:opacity-60`}>

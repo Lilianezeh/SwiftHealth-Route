@@ -115,6 +115,10 @@ export default function PrivacyPage() {
           When you log in, your browser keeps your login in the tab only; it is gone when you close the tab. We set no cookies and run no analytics or
           tracking scripts.
         </p>
+        <p>
+          If you choose Light or Dark with the Theme button, your browser remembers that one word so the next page looks the same. It is never sent to
+          us. Choosing System keeps nothing, and the page then follows your device.
+        </p>
       </InfoSection>
       <InfoSection heading="What we do not do">
         <p>We do not sell personal data. Visitors do not need an account, and we do not ask for one.</p>

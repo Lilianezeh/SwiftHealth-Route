@@ -22,7 +22,7 @@ export function BloodTabs({ current }: BloodTabsProps) {
                 href={tab.href}
                 aria-current={isCurrent ? "page" : undefined}
                 className={`inline-flex min-h-12 w-full items-center justify-center rounded-xl border px-4 text-base font-semibold ${
-                  isCurrent ? "border-pine bg-pine text-white" : "border-pine bg-white text-forest"
+                  isCurrent ? "border-pine bg-pine text-white" : "border-pine bg-surface text-forest"
                 }`}
               >
                 {tab.label}

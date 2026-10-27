@@ -57,7 +57,7 @@ export function PasswordField({ id, value, onChange, autoComplete, required, nam
         required={required}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-12 w-full rounded-xl border border-line bg-white pl-3 pr-14 text-base text-ink"
+        className="min-h-12 w-full rounded-xl border border-line bg-surface pl-3 pr-14 text-base text-ink"
       />
       <button
         type="button"

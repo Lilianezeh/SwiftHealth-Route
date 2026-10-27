@@ -39,7 +39,7 @@ export function EmergencyGroups({ response, now }: EmergencyGroupsProps) {
           </h2>
           <GroupPhoto slug={group.category.slug} />
           {group.contacts.length === 0 ? (
-            <p className="rounded-2xl border border-line bg-white p-4 text-base text-ink">{NO_CONTACTS}</p>
+            <p className="rounded-2xl border border-line bg-surface p-4 text-base text-ink">{NO_CONTACTS}</p>
           ) : (
             group.contacts.map((contact) => <EmergencyContactCard key={contact.id} contact={neverSponsored(contact)} now={now} />)
           )}

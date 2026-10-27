@@ -28,7 +28,7 @@ export function SearchBox({ defaultValue = "", filters = {}, view = "list" }: Se
         defaultValue={defaultValue}
         maxLength={100}
         placeholder="Search hospitals, pharmacies, labs…"
-        className="min-h-14 w-full rounded-xl border border-line bg-white px-4 text-base text-ink"
+        className="min-h-14 w-full rounded-xl border border-line bg-surface px-4 text-base text-ink"
       />
       {otherFilters.map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />

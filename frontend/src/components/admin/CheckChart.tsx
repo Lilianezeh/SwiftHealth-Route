@@ -12,7 +12,9 @@ import type { DashboardStats } from "@/types/staff";
 
 // The design tokens (src/styles/globals.css), so no colour is written by hand here.
 const PASSED_COLOUR = "var(--color-open)";
-const FAILED_COLOUR = "var(--color-emergency)";
+const FAILED_COLOUR = "var(--color-alert)"; // red that is lighter in the dark mode, so the bars show on a dark card
+const GRID_COLOUR = "var(--color-line)";
+const AXIS_TEXT = { fontSize: 16, fill: "var(--color-ink-soft)" };
 const CHART_HEIGHT = 240;
 
 type CheckChartProps = { days: DashboardStats["checks_last_30_days"] };
@@ -22,7 +24,7 @@ export function CheckChart({ days }: CheckChartProps) {
   const bars = days.map((day) => ({ ...day, dayOfMonth: String(Number(day.date.slice(8))) }));
 
   return (
-    <section aria-labelledby="checks-heading" className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+    <section aria-labelledby="checks-heading" className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
       <h2 id="checks-heading" className="text-xl font-bold text-forest">
         Checks in the last 30 days
       </h2>
@@ -32,7 +34,7 @@ export function CheckChart({ days }: CheckChartProps) {
           Passed
         </li>
         <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-emergency" />
+          <span aria-hidden="true" className="h-3 w-3 rounded-sm bg-alert" />
           Failed
         </li>
       </ul>
@@ -40,9 +42,9 @@ export function CheckChart({ days }: CheckChartProps) {
       <div role="img" aria-label="Bar chart of the checks passed and failed per day in the last 30 days. The numbers are in the table below.">
         <ResponsiveContainer width="100%" height={CHART_HEIGHT} initialDimension={{ width: 320, height: CHART_HEIGHT }}>
           <BarChart data={bars} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="dayOfMonth" interval="preserveStartEnd" tick={{ fontSize: 16 }} />
-            <YAxis allowDecimals={false} tick={{ fontSize: 16 }} width={44} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={GRID_COLOUR} />
+            <XAxis dataKey="dayOfMonth" interval="preserveStartEnd" tick={AXIS_TEXT} stroke={GRID_COLOUR} />
+            <YAxis allowDecimals={false} tick={AXIS_TEXT} width={44} stroke={GRID_COLOUR} />
             <Bar dataKey="passed" stackId="checks" fill={PASSED_COLOUR} isAnimationActive={false} />
             <Bar dataKey="failed" stackId="checks" fill={FAILED_COLOUR} isAnimationActive={false} />
           </BarChart>

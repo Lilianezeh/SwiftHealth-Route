@@ -25,7 +25,7 @@ export function BloodGroupChips({ selected, onSelect }: BloodGroupChipsProps) {
             aria-pressed={isSelected}
             onClick={() => onSelect(choice.group)}
             className={`inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border px-4 text-base font-semibold ${
-              isSelected ? "border-pine bg-pine text-white" : "border-pine bg-white text-forest"
+              isSelected ? "border-pine bg-pine text-white" : "border-pine bg-surface text-forest"
             }`}
           >
             {choice.label}

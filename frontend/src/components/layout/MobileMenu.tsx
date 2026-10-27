@@ -9,6 +9,7 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { siteConfig } from "@/config/site";
 import { useSignupOpen } from "@/hooks/useSignupOpen";
@@ -59,7 +60,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
         <nav
           id={panelId}
           aria-label="Menu links"
-          className="absolute inset-x-0 top-full z-20 border-b-4 border-accent bg-forest px-4 pb-3"
+          className="absolute inset-x-0 top-full z-20 border-b-4 border-accent bg-pine px-4 pb-3"
         >
           <ul className="flex flex-col">
             {allLinks.map((link) => (
@@ -75,6 +76,10 @@ export function MobileMenu({ links }: MobileMenuProps) {
                 </Link>
               </li>
             ))}
+            {/* The Theme button (Light, Dark, System) is the last row of the panel; in the bar it is an icon from tablet width. */}
+            <li>
+              <ThemeToggle variant="menu" />
+            </li>
           </ul>
         </nav>
       )}

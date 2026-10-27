@@ -13,7 +13,7 @@ import { setMainFacility } from "@/lib/api/listingChanges";
 import { ApiError } from "@/lib/api/request";
 import type { StaffListingDetail } from "@/types/staff";
 
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
 
 type Props = {
   listingId: number;
@@ -52,7 +52,7 @@ export function BranchOf({ listingId, parentId, parentName, call, onChanged }: P
   const numberOk = /^[0-9]+$/.test(number.trim()) && wanted > 0;
 
   return (
-    <section aria-labelledby="branch-of-heading" className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+    <section aria-labelledby="branch-of-heading" className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
       <h2 id="branch-of-heading" className="text-xl font-bold text-forest">Branch of a bigger facility?</h2>
       {parentId !== null ? (
         <p className="text-base text-ink">

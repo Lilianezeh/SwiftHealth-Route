@@ -48,7 +48,7 @@ describe("CategoryShortcuts", () => {
     render(<CategoryShortcuts />);
 
     const className = screen.getAllByRole("link")[0].className;
-    expect(className).toMatch(/\bbg-white\b/);
+    expect(className).toMatch(/\bbg-surface\b/);
     expect(className).toMatch(/\btext-forest\b/);
   });
 });

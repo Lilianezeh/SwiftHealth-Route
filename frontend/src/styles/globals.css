@@ -29,11 +29,35 @@
   --color-amber-ink: #8b5c00;
   --color-amber-wash: #fff4d6;
 
+  /* Dark mode (2026-10-27, specs/2026-10-27-dark-mode/): four tokens that give a colour its ROLE. `page` is the page and `surface` the cards,
+     fields and dialogs (it replaces bg-white); `alert` is red as text and as the border of the 112 card; `on-amber` is the text on the
+     Sponsored tag, which stays dark on amber in both modes; `snow` is a white that stays white. `paper` is no longer the page: it stays the
+   cream text of the blue bars. */
+  --color-page: #f6f3ec;
+  --color-surface: #ffffff;
+  --color-alert: #b3261e;
+  --color-on-amber: #1d2421;
+  --color-snow: #ffffff; /* a white that stays white in the dark mode: the white button on the hero */
+
   --shadow-card: 0 2px 12px color-mix(in srgb, var(--color-forest) 7%, transparent);
 }
 
+/* Tailwind's `dark:` variant follows the page's data-theme (set before the first paint by lib/theme/themeScript.ts), not the system's
+   setting directly, so the Theme button can choose against it. Most of dark mode is not a `dark:` class at all: the role tokens below change
+   their value and every class that uses them follows. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* The browser's own parts (fields, scrollbars, the date picker) follow the scheme. With no data-theme (no script) the system decides. */
+:root {
+  color-scheme: light dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
 body {
-  background: var(--color-paper);
+  background: var(--color-page);
   color: var(--color-ink);
 }
 
@@ -46,6 +70,53 @@ body {
 
 .on-dark :focus-visible {
   outline-color: var(--color-paper);
+}
+
+/* DARK MODE (2026-10-27, owner's request; specs/frontend/ui-spec.md "Dark mode", checked pair by pair in tests/unit/darkMode.test.ts).
+   Only the ROLE tokens change; the constant ones (pine, pine-dark, accent, sky, sky-pale, paper, amber, on-amber, emergency) do not, so
+   the blue bars, the hero, the buttons, the logo and the red buttons look the same in both modes. The same values are written twice:
+   under data-theme="dark" (the choice, or the system's, set before the first paint) and under prefers-color-scheme for a browser that
+   runs no script. A test keeps the two blocks equal. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-page: #0b1110;
+  --color-surface: #121b1a;
+  --color-ink: #e7eceb;
+  --color-ink-soft: #a7b6b3;
+  --color-line: #2d3c3a;
+  --color-forest: #7fc6e8;
+  --color-pine-100: #1c4256;
+  --color-pine-50: #152f3b;
+  --color-open: #6fd6a0;
+  --color-open-bg: #12301f;
+  --color-closed: #b9c6c2;
+  --color-closed-bg: #232d2b;
+  --color-amber-ink: #f2c668;
+  --color-amber-wash: #3a2c0a;
+  --color-whatsapp-dark: #3fb59f;
+  --color-alert: #ff8a80;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-page: #0b1110;
+    --color-surface: #121b1a;
+    --color-ink: #e7eceb;
+    --color-ink-soft: #a7b6b3;
+    --color-line: #2d3c3a;
+    --color-forest: #7fc6e8;
+    --color-pine-100: #1c4256;
+    --color-pine-50: #152f3b;
+    --color-open: #6fd6a0;
+    --color-open-bg: #12301f;
+    --color-closed: #b9c6c2;
+    --color-closed-bg: #232d2b;
+    --color-amber-ink: #f2c668;
+    --color-amber-wash: #3a2c0a;
+    --color-whatsapp-dark: #3fb59f;
+    --color-alert: #ff8a80;
+  }
 }
 
 /* The section of the home page that holds the background slideshow ("Find by type", specs/2026-10-22-home-photos/) waits until it is near the

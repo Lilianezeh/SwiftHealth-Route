@@ -17,7 +17,7 @@ import { ACTION_CHOICES, actionWords } from "@/lib/staff/accountText";
 import type { ActivityItem, ActivityQuery, StaffUser } from "@/types/staff";
 
 const PAGE_SIZE = 50;
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
 
 function EntryCard({ entry }: { entry: ActivityItem }) {
   const who = entry.user_name ?? "The system";
@@ -25,7 +25,7 @@ function EntryCard({ entry }: { entry: ActivityItem }) {
     ? `${entry.field_changed}: ${entry.old_value !== null ? `${entry.old_value} → ` : ""}${entry.new_value ?? ""}`
     : null;
   return (
-    <li className="flex flex-col gap-1 rounded-2xl border border-line bg-white p-4">
+    <li className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
       <p className="text-lg font-bold text-forest">{`${who} ${actionWords(entry.action)}`}</p>
       <p className="text-base text-ink-soft">{formatLagosDateTime(entry.at)}</p>
       {entry.target_user_name && <p className="text-base text-ink">{`About: ${entry.target_user_name}`}</p>}
@@ -126,7 +126,7 @@ export function ActivityLog() {
         </div>
       )}
       {load === "error" && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
           <p className="text-base text-ink">We couldn&apos;t load this. Check your connection and try again.</p>
           <button type="button" onClick={() => setAttempt((current) => current + 1)} className={buttonClasses("primary")}>Retry</button>
         </div>

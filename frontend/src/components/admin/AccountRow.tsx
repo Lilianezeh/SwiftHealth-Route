@@ -19,7 +19,7 @@ import { lastLoginWords, ROLE_LABELS, sentenceFor, stateWords } from "@/lib/staf
 import { minPasswordLength } from "@/lib/staff/roles";
 import type { AdminUserChanges, AdminUserRow, StaffRole } from "@/types/staff";
 
-const FIELD = "min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink disabled:bg-closed-bg";
+const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink disabled:bg-closed-bg";
 const ROLES: StaffRole[] = ["verifier", "editor", "admin", "provider"];
 const passwordTooShort = (role: StaffRole) => `The password needs at least ${minPasswordLength(role)} characters.`;
 const STAFF_NEEDS_NEW_PASSWORD = `To make a provider staff, type a new password of at least ${minPasswordLength("editor")} characters.`;
@@ -81,7 +81,7 @@ export function AccountRow({ user, isMe, onSaved }: RowProps) {
   }
 
   return (
-    <li className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4">
+    <li className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4">
       <p className="text-lg font-bold text-forest">{user.name}</p>
       <p className="text-base text-ink-soft">{user.email}</p>
       <p className="text-base text-ink">

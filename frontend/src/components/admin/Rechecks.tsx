@@ -52,7 +52,7 @@ export function Rechecks({ due }: RechecksProps) {
                   prefetch={false}
                   aria-current={isCurrent ? "page" : undefined}
                   className={`inline-flex min-h-12 w-full items-center justify-center rounded-xl border px-3 text-base font-semibold ${
-                    isCurrent ? "border-pine bg-pine text-white" : "border-pine bg-white text-forest"
+                    isCurrent ? "border-pine bg-pine text-white" : "border-pine bg-surface text-forest"
                   }`}
                 >
                   {entry.label}
@@ -77,7 +77,7 @@ export function Rechecks({ due }: RechecksProps) {
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {list.items.map((item) => (
-          <article key={item.id} className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4 shadow-card">
+          <article key={item.id} className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4 shadow-card">
             <p className="text-base font-semibold text-ink-soft">
               {item.category.name} · {item.area}
             </p>

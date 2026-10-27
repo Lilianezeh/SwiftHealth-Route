@@ -70,7 +70,7 @@ export function ShareButtons({ slug, facilityName }: ShareButtonsProps) {
             readOnly
             value={link}
             onFocus={(event) => event.currentTarget.select()}
-            className="min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink"
+            className="min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink"
           />
         </div>
       )}

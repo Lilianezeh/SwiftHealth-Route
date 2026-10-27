@@ -152,7 +152,7 @@ export function BackdropSlideshow({ children }: BackdropSlideshowProps) {
               type="button"
               onClick={() => setPaused((before) => !before)}
               aria-label={paused ? "Play photos" : "Pause photos"}
-              className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-line bg-white px-3 text-base font-semibold text-forest md:px-4"
+              className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-base font-semibold text-forest md:px-4"
             >
               <DecorativeIcon icon={paused ? Play : Pause} className="h-5 w-5" />
               {paused ? "Play" : "Pause"}
@@ -162,7 +162,7 @@ export function BackdropSlideshow({ children }: BackdropSlideshowProps) {
             href={MAGNIFIC_CREDIT.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-12 items-center rounded-xl bg-white px-3 text-base font-semibold text-forest underline md:px-4"
+            className="inline-flex min-h-12 items-center rounded-xl bg-surface px-3 text-base font-semibold text-forest underline md:px-4"
           >
             {MAGNIFIC_CREDIT.text}
             <span className="sr-only"> (opens in a new tab)</span>

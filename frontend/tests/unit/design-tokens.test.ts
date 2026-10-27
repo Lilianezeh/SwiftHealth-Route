@@ -34,11 +34,20 @@ const SPEC_TOKENS: Record<string, string> = {
   "closed-bg": "#edf1f0",
   "amber-ink": "#8b5c00",
   "amber-wash": "#fff4d6",
+  // Dark mode (2026-10-27): the light value of the tokens that change, and the constant text colour on the Sponsored tag.
+  page: "#f6f3ec", // the page; `paper` stays the cream that text on the blue bars uses in both modes
+  surface: "#ffffff", // cards, fields, dialogs (it was `bg-white`)
+  alert: "#b3261e", // red as text and as the border of the 112 card
+  "on-amber": "#1d2421",
+  snow: "#ffffff", // a white that stays white in the dark mode (the white button on the hero)
 };
 
+/** The light tokens: the `@theme` block only. The dark values (accounts of 2026-10-27, `darkMode.test.ts`) are in other blocks and
+ * must not overwrite these. */
 function readTokens(): Record<string, string> {
+  const themeBlock = GLOBALS_CSS.match(/@theme\s*\{([\s\S]*?)\n\}/)?.[1] ?? "";
   const tokens: Record<string, string> = {};
-  for (const match of GLOBALS_CSS.matchAll(/--color-([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)) {
+  for (const match of themeBlock.matchAll(/--color-([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)) {
     tokens[match[1]] = match[2].toLowerCase();
   }
   return tokens;

@@ -27,6 +27,7 @@ export function OfflineBloodBanks({ copy, bloodGroup, onTryAgain }: OfflineBlood
           <p className="text-base font-semibold text-ink">
             {banks.length} saved {banks.length === 1 ? "blood bank" : "blood banks"}, A to Z
           </p>
+          <h2 className="sr-only">Saved blood banks</h2>
           <div className="flex flex-col gap-4">
             {banks.map((bank) => (
               <SavedBloodBankCard key={bank.id} bank={bank} />

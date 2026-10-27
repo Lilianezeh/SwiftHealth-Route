@@ -83,6 +83,10 @@ describe("the header and the footer are server components (R44)", () => {
     const accountLinks = readSource("components/layout/AccountLinks.tsx");
     expect(accountLinks).toMatch(/^"use client";/);
     expect(accountLinks).not.toMatch(/lib\/api|fetch\(/);
+    // And the Theme button (Light, Dark, System; dark mode, 2026-10-27): it keeps one word in the browser's storage and calls nothing.
+    const themeToggle = readSource("components/layout/ThemeToggle.tsx");
+    expect(themeToggle).toMatch(/^"use client";/);
+    expect(themeToggle).not.toMatch(/lib\/api|fetch\(|document\.cookie/);
   });
 
   it("sends no JavaScript from the home page's own components either, except the background slideshow (owner, 2026-10-23)", () => {
@@ -151,7 +155,7 @@ describe("the route groups choose the header and the footer, and no address chan
   it("draws the header and the footer in the layouts of the groups, not in the root layout", () => {
     const root = readSource("app/layout.tsx");
     expect(root).not.toMatch(/SiteHeader|SiteFooter|PageFrame/);
-    expect(root).toMatch(/<html lang="en">/);
+    expect(root).toMatch(/<html lang="en" suppressHydrationWarning>/); // the theme script sets data-theme before React looks (dark mode)
     expect(readSource("app/(home)/layout.tsx")).toMatch(/<PageFrame isHomePage>/);
     for (const layout of ["app/(public)/layout.tsx", "app/(dashboards)/layout.tsx", "app/not-found.tsx"]) {
       const source = readSource(layout);

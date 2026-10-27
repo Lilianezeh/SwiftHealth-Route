@@ -10,7 +10,7 @@ type DonationCentreCardProps = { centre: DonationCentre; now?: Date };
 
 export function DonationCentreCard({ centre, now = new Date() }: DonationCentreCardProps) {
   return (
-    <article className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4 shadow-card">
+    <article className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card">
       <BloodCardHeading listing={centre} />
       <BloodCardStatus listing={centre} now={now} />
 

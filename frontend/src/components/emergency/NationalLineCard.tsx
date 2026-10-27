@@ -8,7 +8,7 @@ import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 
 export function NationalLineCard() {
   return (
-    <section aria-labelledby="national-line-heading" className="rounded-2xl border-2 border-emergency bg-white p-4">
+    <section aria-labelledby="national-line-heading" className="rounded-2xl border-2 border-alert bg-surface p-4">
       <h2 id="national-line-heading" className="text-xl font-bold text-ink">
         National emergency number — 112
       </h2>

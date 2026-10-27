@@ -48,6 +48,7 @@ export function DonateBlood() {
         </div>
       )}
 
+      {list.items.length > 0 && <h2 className="sr-only">Donation centres</h2>}
       <div className="flex flex-col gap-4">
         {list.items.map((centre) => (
           <DonationCentreCard key={centre.id} centre={centre} />

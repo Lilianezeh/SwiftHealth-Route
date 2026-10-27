@@ -22,9 +22,9 @@ import type { AccountType } from "@/types/account";
 
 const WAIT_FOR_NEW_CODE_SECONDS = 60;
 const NOTE_MAX_LENGTH = 500;
-const FIELD_CLASSES = "min-h-12 rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD_CLASSES = "min-h-12 rounded-xl border border-line bg-surface px-3 text-base text-ink";
 const CHOICE_CLASSES =
-  "flex min-h-12 w-full flex-col items-start gap-1 rounded-2xl border border-line bg-white p-4 text-left text-base text-ink hover:border-forest";
+  "flex min-h-12 w-full flex-col items-start gap-1 rounded-2xl border border-line bg-surface p-4 text-left text-base text-ink hover:border-forest";
 const LINK_CLASSES = "inline-flex min-h-12 items-center font-semibold text-forest underline";
 
 const KIND_NAMES: Record<AccountType, string> = { staff: "Staff", provider: "Facility owner" };

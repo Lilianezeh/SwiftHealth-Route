@@ -153,7 +153,7 @@ describe("SiteHeader", () => {
     render(<HeaderOnPage />);
 
     const header = screen.getByRole("banner");
-    expect(header.className).toMatch(/\bbg-forest\b/);
+    expect(header.className).toMatch(/\bbg-pine\b/); // the header blue stays in the dark mode
     expect(header.className).toMatch(/\bon-dark\b/);
   });
 
@@ -195,7 +195,7 @@ describe("SiteHeader", () => {
       const { unmount } = render(<HeaderOnPage />);
 
       const header = screen.getByRole("banner");
-      expect(header.className, pathname).toMatch(/\bbg-forest\b/);
+      expect(header.className, pathname).toMatch(/\bbg-pine\b/);
       expect(header.className, pathname).toMatch(/\bborder-b-4\b/);
       expect(header.className, pathname).toMatch(/\bborder-accent\b/);
       expect(header.className, pathname).toMatch(/\brelative\b/);

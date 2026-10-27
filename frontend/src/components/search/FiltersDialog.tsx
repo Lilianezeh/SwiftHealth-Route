@@ -34,7 +34,7 @@ type FormProps = {
   onClose: () => void;
 };
 
-const FIELD_CLASSES = "min-h-[50px] w-full rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD_CLASSES = "min-h-[50px] w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
 
 /** The choices of a list, with the value from a shared link added when it is not in the list (so it stays selected). */
 function withCurrentValue(choices: Choice[], current: string, isLoaded: boolean): Choice[] {
@@ -221,7 +221,7 @@ export function FiltersDialog({ filters, hasPosition, view = "list" }: FiltersDi
           pressStartedOnBackdrop.current = false;
           if (closesSheet) closeSheet();
         }}
-        className="mx-auto mb-0 mt-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-paper p-0 text-ink backdrop:bg-ink/50"
+        className="mx-auto mb-0 mt-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-page p-0 text-ink backdrop:bg-black/50"
       >
         <div className="p-4">
           <h2 id={titleId} className="mb-4 text-2xl font-bold text-forest">

@@ -15,7 +15,7 @@ import { useStaffListings } from "@/hooks/useStaffListings";
 import { formatNoticeDate } from "@/lib/formatters/dates";
 import type { ListingStatus } from "@/types/staff";
 
-const FIELD_CLASSES = "min-h-12 rounded-xl border border-line bg-white px-3 text-base text-ink";
+const FIELD_CLASSES = "min-h-12 rounded-xl border border-line bg-surface px-3 text-base text-ink";
 const SEARCH_DELAY_MS = 300;
 const STATUSES = Object.keys(STATUS_LABELS) as ListingStatus[];
 
@@ -97,7 +97,7 @@ export function StaffListings({ initialMine, initialStatus = "" }: StaffListings
       )}
 
       {loadStatus === "error" && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+        <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
           <p className="text-base text-ink">We couldn&apos;t load this. Check your connection and try again.</p>
           <button type="button" onClick={retry} className={buttonClasses("primary")}>Retry</button>
         </div>
@@ -112,7 +112,7 @@ export function StaffListings({ initialMine, initialStatus = "" }: StaffListings
           <p className="text-base font-semibold text-ink">{total} {total === 1 ? "listing" : "listings"}</p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {items.map((item) => (
-              <article key={item.id} className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4 shadow-card">
+              <article key={item.id} className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4 shadow-card">
                 <p className="text-base font-semibold text-ink-soft">{item.category.name} · {item.area}</p>
                 <h2 className="text-lg font-bold leading-snug text-forest">
                   <Link href={`/admin/listings/${item.id}`} prefetch={false} className="inline-flex min-h-12 items-center underline">

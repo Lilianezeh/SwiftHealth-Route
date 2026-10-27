@@ -15,7 +15,7 @@ type SiteFooterProps = { isHomePage: boolean };
 
 export function SiteFooter({ isHomePage }: SiteFooterProps) {
   return (
-    <footer className={isHomePage ? "text-base" : "mt-16 border-t border-black/10 text-base"}>
+    <footer className={isHomePage ? "text-base" : "mt-16 border-t border-line text-base"}>
       <div className="mx-auto max-w-6xl px-4 py-8">
         <nav aria-label="Footer" className="flex flex-wrap gap-x-6">
           {siteConfig.footerLinks.map((link) => (

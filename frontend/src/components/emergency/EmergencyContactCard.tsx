@@ -14,7 +14,7 @@ export function EmergencyContactCard({ contact, now }: EmergencyContactCardProps
   const distance = formatDistance(contact.distance_km);
 
   return (
-    <article className="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4 shadow-card">
+    <article className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4 shadow-card">
       <h3 className="text-lg font-bold leading-snug text-forest">
         <Link href={`/listing/${contact.slug}`} prefetch={false} className="inline-flex min-h-12 items-center underline">
           {contact.name}

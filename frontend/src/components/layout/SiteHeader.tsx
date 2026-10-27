@@ -17,7 +17,7 @@ import { HeaderNavigation } from "@/components/layout/HeaderNavigation";
 import { Logo } from "@/components/layout/Logo";
 
 const HOME_HEADER = "on-dark absolute inset-x-0 top-0 z-20 text-white";
-const BAR_HEADER = "on-dark relative border-b-4 border-accent bg-forest text-paper";
+const BAR_HEADER = "on-dark relative border-b-4 border-accent bg-pine text-paper";
 
 type SiteHeaderProps = { isHomePage: boolean };
 

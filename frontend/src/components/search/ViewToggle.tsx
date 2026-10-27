@@ -25,7 +25,7 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
               if (!isCurrent) onChange(choice.view);
             }}
             className={`min-h-12 flex-1 px-4 text-base font-semibold ${
-              isCurrent ? "bg-pine text-white" : "bg-white text-forest hover:bg-pine-50 active:bg-pine-100"
+              isCurrent ? "bg-pine text-white" : "bg-surface text-forest hover:bg-pine-50 active:bg-pine-100"
             }`}
           >
             {choice.label}

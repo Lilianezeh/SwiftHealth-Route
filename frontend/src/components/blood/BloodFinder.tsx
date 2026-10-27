@@ -99,6 +99,7 @@ export function BloodFinder() {
             </div>
           )}
 
+          {list.items.length > 0 && <h2 className="sr-only">Blood banks</h2>}
           <div className="flex flex-col gap-4">
             {list.items.map((bank) => (
               <BloodBankCard key={bank.id} bank={bank} />

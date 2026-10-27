@@ -19,7 +19,7 @@ export function OtherPhones({ phones, facilityName }: OtherPhonesProps) {
       </h2>
       <ul className="mt-3 flex flex-col gap-3">
         {phones.map((phone) => (
-          <li key={phone.number} className="rounded-2xl border border-line bg-white p-4">
+          <li key={phone.number} className="rounded-2xl border border-line bg-surface p-4">
             <p className="text-base font-semibold text-ink">{phone.label ?? "Other number"}</p>
             <p className="text-base text-ink-soft">{formatPhoneForReading(phone.number)}</p>
             <div className="mt-3 flex flex-wrap gap-3">

@@ -58,7 +58,7 @@ export function GetFeatured() {
       {status === "none" && <NoLinkedFacility />}
 
       {listing && (
-        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-4 shadow-card">
+        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4 shadow-card">
           <p className="text-base text-ink">
             Featured listings appear first in matching searches with a Sponsored label for 30 days. They are never shown in
             SwiftRescue.

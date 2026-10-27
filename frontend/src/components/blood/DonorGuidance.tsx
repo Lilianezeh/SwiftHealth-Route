@@ -10,7 +10,7 @@ export function DonorGuidance() {
   const isReviewed = points.length > 0 && reviewedOn !== null; // never show guidance without its review line
 
   return (
-    <section aria-labelledby="donor-guidance-heading" className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4">
+    <section aria-labelledby="donor-guidance-heading" className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
       <h2 id="donor-guidance-heading" className="text-xl font-bold text-forest">
         Before you donate
       </h2>
