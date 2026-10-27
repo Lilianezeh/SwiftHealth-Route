@@ -140,6 +140,18 @@ describe("my facility (/provider)", () => {
     expect(within(mainSection()).getByRole("link", { name: "Edit my facility" })).toBeInTheDocument();
   });
 
+  it.each([
+    ["never verified", { last_verified_at: null }],
+    ["overdue for its re-check", { verification_due: true }],
+  ] as const)("offers no Get featured button for a listing that is %s, and says why (Sponsored rules)", async (_name, overrides) => {
+    withMeta({ "/provider/listing": mine(overrides) });
+    render(<ProviderPage />);
+    await screen.findByRole("heading", { level: 1, name: "My facility" });
+
+    expect(mainSection()).toHaveTextContent("Only a verified listing can be featured.");
+    expect(within(mainSection()).queryByRole("link", { name: "Get featured" })).toBeNull();
+  });
+
   it("says no facility is linked on an answer 404, and offers nothing else", async () => {
     withMeta({ "/provider/listing": () => json({ detail: "No listing is linked to your account." }, 404) });
     render(<ProviderPage />);
@@ -408,6 +420,17 @@ describe("get featured (/provider/featured)", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not start the payment. Try again.");
     expect(document.body.textContent).not.toContain("Traceback");
+  });
+
+  it.each([
+    ["never verified", { last_verified_at: null }],
+    ["overdue for its re-check", { verification_due: true }],
+  ] as const)("offers no payment for a listing that is %s, says why, and calls nothing (Sponsored rules)", async (_name, overrides) => {
+    const { on } = await openFeatured(overrides);
+
+    expect(await screen.findByText("Only a verified listing can be featured.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Pay with Paystack" })).toBeNull();
+    expect(on("/payments/featured", "POST")).toHaveLength(0);
   });
 
   it("offers no payment for a listing that is not published, and calls nothing", async () => {

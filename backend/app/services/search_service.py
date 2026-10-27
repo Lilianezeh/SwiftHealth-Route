@@ -15,7 +15,7 @@ from app.repositories.search_repository import SearchCandidate
 from app.schemas.listing import CategorySummary, ListingSummary, MainFacilityRef
 from app.schemas.search import SearchParams, SearchResponse
 from app.services.hours import hours_note, is_open_at
-from app.services.verification import is_verification_due
+from app.services.verification import is_verification_due, is_verified_and_current
 
 REPORT_WINDOW = timedelta(days=7)  # FR-22
 REPORTS_TO_EXCLUDE = 2  # FR-22: different reporters saying "not working"
@@ -137,13 +137,21 @@ def first_sponsorable(
 ) -> tuple[SearchCandidate, float | None, bool] | None:
     """The first result, in the normal order, that may take the sponsored slot, or None (decision I11).
 
-    It needs a featured period that has not ended (`featured_until` after `moment`) and a category that
-    is not an emergency one: SwiftRescue never shows sponsored placement (FR-19). The results here already
-    match every filter and the radius, and are published and not flagged.
+    It needs a featured period that has not ended (`featured_until` after `moment`), a category that
+    is not an emergency one (SwiftRescue never shows sponsored placement, FR-19), and a listing that has
+    been verified and is not overdue for its re-check (paying never buys verification, api-spec section 8,
+    "Sponsored rules"). The results here already match every filter and the radius, and are published and
+    not flagged.
     """
     for result in results:
         candidate = result[0]
-        featured_until = candidate.listing.featured_until
-        if featured_until is not None and featured_until > moment and not candidate.category.is_emergency:
+        listing = candidate.listing
+        featured_until = listing.featured_until
+        if (
+            featured_until is not None
+            and featured_until > moment
+            and not candidate.category.is_emergency
+            and is_verified_and_current(listing.last_verified_at, listing.next_check_due, moment)
+        ):
             return result
     return None

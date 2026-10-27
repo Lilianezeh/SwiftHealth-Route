@@ -221,7 +221,11 @@ async def test_paging_total_counts_all_matches_before_limit_and_offset(session: 
 
 async def test_a_featured_listing_takes_the_one_sponsored_slot_and_goes_first(session: AsyncSession) -> None:
     # FR-45, phase 12. The full rules are tested through HTTP in test_search_sponsored.py.
-    await add_listing(session, "Zulu Pharmacy", featured_until=NOW_IN_UTC + timedelta(days=10))
+    # verified 2 days ago: a featured listing takes the slot only when verified (api-spec 8, Sponsored rules)
+    await add_listing(
+        session, "Zulu Pharmacy", featured_until=NOW_IN_UTC + timedelta(days=10),
+        last_verified_at=NOW_IN_UTC - timedelta(days=2),
+    )
     await add_listing(session, "Alpha Pharmacy")
     await session.commit()
     response = await search_listings(session, SearchParams(), NOW_IN_UTC)

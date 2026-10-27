@@ -48,6 +48,10 @@ async def start_featured_payment(
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, "Only a published listing can be featured."
         ) from None
+    except payment_service.ListingNotVerifiedError:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Only a verified listing can be featured."
+        ) from None
     except paystack.PaymentsNotSetUpError:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Payments are not set up yet.") from None
     except paystack.LiveKeyRefusedError:

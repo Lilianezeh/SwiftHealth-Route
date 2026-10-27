@@ -1,0 +1,11 @@
+# Sponsored rules check: validation
+
+Requirements: [requirements.md](requirements.md). Plan: [plan.md](plan.md). Rules: `specs/backend/api-spec.md` section 8, "Sponsored rules".
+
+## Results (2026-10-27)
+- Backend: **2132 passed**, ruff clean. New: `test_sponsored_rules.py` (17): only the slot is sponsored and it is first; no other answer says `sponsored: true` (listing page, `/emergency`, blood banks, staff list); a confirmed payment changes only `featured_until` and its audit entry; a paid listing shows the same verified date and the same "Verification due" (an overdue paid listing stays overdue); paying does not move a listing in the normal order; `/emergency` is identical with or without a paid listing and 112 is first; a paid emergency listing is never the sponsored one; a published, verified listing can start a payment; one never verified, one overdue (400 "Only a verified listing can be featured.") and one not published (400 "Only a published listing can be featured.") cannot, and Paystack is not called; the slot skips an unverified or an overdue featured listing; a payment for a listing that is no longer eligible is recorded but shows nothing until it is eligible again.
+- Frontend: 126 files, 1988 tests; lint and `tsc` clean. New: `featured.test.ts` (5) and 4 cases in `ProviderScreens.test.tsx` ("My facility" and "Get featured" say why before the person pays). One run showed a load flake in `ProviderScreens` ("starts with the listing's own values"); it passes alone and in the re-run.
+- Existing tests changed on purpose: the sponsored and payment fixtures now make verified listings (`test_search_sponsored.py`, `test_payments_featured.py`, one unit test in `test_search_service.py`), because the old fixtures relied on the looser rule.
+- Already covered before, found by this check and left as they are: the frontend shows "Sponsored" only on an API-marked result (`SponsoredLabel.test.tsx`, `MapPopup.test.tsx`) and forces `sponsored: false` in SwiftRescue (`EmergencyGroups`, `EmergencyPage.test.tsx`).
+- **Render / Netlify:** nothing to change. No migration, no variable.
+- Not checked by me: a real Paystack test payment end to end (the Paystack calls are tested with a mock transport only, as in Phase 12).

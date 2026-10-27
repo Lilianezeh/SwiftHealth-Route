@@ -46,6 +46,10 @@ def sponsored(body: dict) -> list[str]:
 
 async def place(session: AsyncSession, name: str, km_north: float, **kwargs: object):
     """A pharmacy `km_north` kilometres north of HERE (0.009 degrees of latitude is about 1 km)."""
+    # A featured listing takes the slot only when it was verified and is not overdue (api-spec section 8,
+    # "Sponsored rules"), so the default listing here is verified two days ago. The rules are in
+    # test_sponsored_rules.py.
+    kwargs.setdefault("last_verified_at", NOW - timedelta(days=2))
     return await add_listing(session, name, latitude=HERE[0] + km_north * 0.009, longitude=HERE[1], **kwargs)
 
 
