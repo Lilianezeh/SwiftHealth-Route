@@ -137,7 +137,9 @@ for (const { width, height } of WIDTHS) {
 
     test("a verifier cannot open the three screens", async ({ page }) => {
       await logInAs(page, "verifier");
-      await fakeApi(page, () => null);
+      // The verifier's own start (/admin/listings) asks for its list: without an answer the real API says 401 to the fake token
+      // and the screen logs the person out before the address can be checked.
+      await fakeApi(page, (request) => (request.path === "/listings" ? { body: { items: [], total: 0 } } : null));
       for (const address of ["/admin/reports", "/admin/recheck"]) {
         await page.goto(address, { waitUntil: "load" });
         await expect(page.getByText("Your role cannot open this page.")).toBeVisible({ timeout: 60_000 });

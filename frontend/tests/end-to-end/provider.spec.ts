@@ -5,7 +5,7 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { allIsInsideTheScreen, fakeApi, logInAs, targetsAndTextAreBigEnough, type FakeRequest } from "../helpers/browserApi";
+import { allIsInsideTheScreen, answerSideCalls, fakeApi, logInAs, targetsAndTextAreBigEnough, type FakeRequest } from "../helpers/browserApi";
 
 const WIDTHS = [
   { width: 320, height: 640 },
@@ -37,7 +37,9 @@ for (const { width, height } of WIDTHS) {
 
     test("my facility: the card, the status and both buttons fit the screen", async ({ page }) => {
       await logInAs(page, "provider");
-      await fakeApi(page, (request) => (request.path === "/provider/listing" ? { body: mine({ featured_until: "2026-11-06T09:00:00Z" }) } : null));
+      await fakeApi(page, (request) =>
+        request.path === "/provider/listing" ? { body: mine({ featured_until: "2026-11-06T09:00:00Z" }) } : answerSideCalls(request),
+      );
       await page.goto("/provider", { waitUntil: "load" });
       await expect(page.getByRole("heading", { level: 1, name: "My facility" })).toBeVisible({ timeout: 60_000 });
       await expect(page.getByText("Featured until 6 Nov 2026")).toBeVisible({ timeout: 60_000 });
@@ -57,7 +59,7 @@ for (const { width, height } of WIDTHS) {
           patches.push(request);
           return { body: mine({ description: (request.body as { description: string }).description }) };
         }
-        return request.path === "/provider/listing" ? { body: mine() } : null;
+        return request.path === "/provider/listing" ? { body: mine() } : answerSideCalls(request);
       });
       await page.goto("/provider/edit", { waitUntil: "load" });
       await expect(page.getByRole("heading", { level: 1, name: "Edit my facility" })).toBeVisible({ timeout: 60_000 });
@@ -72,7 +74,7 @@ for (const { width, height } of WIDTHS) {
       await targetsAndTextAreBigEnough(page);
 
       await page.getByLabel("Description (shown to the public)").fill("Open every weekday.");
-      await page.getByRole("button", { name: "Save" }).click();
+      await page.getByRole("button", { name: "Save", exact: true }).click(); // not "Save the new address" of the move section
 
       await expect(page.getByText("Saved.")).toBeVisible();
       expect(patches).toHaveLength(1);

@@ -17,7 +17,7 @@ import { useStaffUser } from "@/hooks/useStaffUser";
 import { homeAddressFor } from "@/lib/staff/roles";
 
 // The same classes as the other bar links (HeaderNavigation): hidden on a phone, shown from tablet width.
-const BAR_LINK = "hidden min-h-12 items-center rounded-md px-3 text-base font-semibold hover:underline md:inline-flex";
+const BAR_LINK = "hidden min-h-12 items-center rounded-md px-2 text-base font-semibold hover:underline md:inline-flex lg:px-3";
 const SAME_CELL = "col-start-1 row-start-1 flex items-center";
 
 type AccountLinksProps = { prefetch?: boolean };
