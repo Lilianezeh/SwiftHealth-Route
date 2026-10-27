@@ -143,6 +143,28 @@ export type AdminUserQuery = {
   offset?: number;
 };
 
+/** One of a provider's own facility links (GET /provider/listings, accounts phase 6). */
+export type MyFacility = {
+  link_id: number;
+  listing_id: number;
+  name: string;
+  area: string;
+  category: { slug: string; name: string };
+  role: "owner" | "manager";
+  status: "pending" | "approved" | "removed";
+  requested_at: string;
+};
+
+/** A request that waits for staff to phone the facility (GET /staff/owner-requests). */
+export type OwnerRequest = {
+  id: number;
+  role: "owner" | "manager";
+  requested_at: string;
+  person: { id: number; name: string; email: string; phone: string | null };
+  listing: { id: number; name: string; area: string; phones: { number: string; label: string | null; is_primary: boolean }[] };
+};
+export type OwnerRequestList = { items: OwnerRequest[]; total: number };
+
 /** One entry of the activity log (GET /admin/activity). The Paystack reference column is never sent. */
 export type ActivityItem = {
   id: number;

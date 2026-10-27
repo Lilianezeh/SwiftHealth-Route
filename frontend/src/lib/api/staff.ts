@@ -18,6 +18,7 @@ import type {
   DashboardStats,
   ListingInput,
   LoginStarted,
+  OwnerRequestList,
   ReportItem,
   ReportList,
   ReportStatus,
@@ -158,6 +159,20 @@ export function reactivateAdminUser(token: string, userId: number, options: Opti
 /** The admin phoned the person and the phone is theirs (used while Termii is off, decision D20). */
 export function confirmPhoneByCall(token: string, userId: number, options: Options = {}): Promise<{ phone_confirmed: boolean }> {
   return requestJson<{ phone_confirmed: boolean }>(`/admin/users/${userId}/confirm-phone-by-call`, { ...options, token, method: "POST" });
+}
+
+/** The owner requests that wait for a phone call (accounts phase 6). */
+export function listOwnerRequests(token: string, options: Options = {}): Promise<OwnerRequestList> {
+  return requestJson<OwnerRequestList>("/staff/owner-requests", { ...options, token });
+}
+
+/** Approve after phoning the facility; the note (who was reached) is needed and goes in the body. */
+export function approveOwnerRequest(token: string, requestId: number, note: string, options: Options = {}): Promise<unknown> {
+  return requestJson<unknown>(`/staff/owner-requests/${requestId}/approve`, { ...options, token, body: { note } });
+}
+
+export function rejectOwnerRequest(token: string, requestId: number, note?: string, options: Options = {}): Promise<unknown> {
+  return requestJson<unknown>(`/staff/owner-requests/${requestId}/reject`, { ...options, token, body: note ? { note } : {} });
 }
 
 /** The activity log, newest first. Only the filters that were given are sent. */

@@ -48,7 +48,8 @@ async def start_featured_payment(session: AsyncSession, provider: User, moment: 
     Raises provider_service.NoLinkedListingError, ListingNotPublishedError, and the errors of
     integrations/paystack.py (not set up, live key, could not start).
     """
-    listing = await provider_service.get_own_listing(session, provider)
+    # Only an owner link pays: a manager gets NotAnOwnerError (decision D4).
+    listing = await provider_service.get_own_listing(session, provider, owner_only=True)
     if listing.status != ListingStatus.published:
         raise ListingNotPublishedError
     started = await paystack.initialize_transaction(
@@ -157,7 +158,7 @@ class ReferenceNotFoundError(Exception):
 
 async def verify_payment(session: AsyncSession, provider: User, reference: str) -> PaymentVerified:
     """Has the webhook for this reference been applied? It does not ask Paystack (decision I9)."""
-    listing = await provider_service.get_own_listing(session, provider)
+    listing = await provider_service.get_own_listing(session, provider, owner_only=True)
     if listing_id_of(reference) != listing.id:
         raise ReferenceNotFoundError
     entry = await audit_repository.find_payment(session, reference)

@@ -29,8 +29,8 @@ One line each, with the reason.
   ([Netlify Next.js docs](https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/)).
 - **Layered architecture: route, service, repository or integration.** Each layer has one job and only calls
   the layer below it. The rules are in [CLAUDE.md](../CLAUDE.md).
-- **Exactly 9 database tables, and areas are a fixed list in `core/config.py`.** It keeps the model small.
-  Adding, merging or removing a table needs approval.
+- **Exactly 10 database tables, and areas are a fixed list in `core/config.py`.** It keeps the model small.
+  Adding, merging or removing a table needs approval (the 10th, `facility_owners`, was approved on 2026-10-24).
 - **Money is `Decimal` in Python and a string like "1500.00" in JSON, never `float`.** Floats round badly.
   Convert to kobo only when calling Paystack.
 - **Leaflet with OpenStreetMap.** No map API key and no per-load cost.

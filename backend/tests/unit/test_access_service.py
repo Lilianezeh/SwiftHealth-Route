@@ -66,8 +66,10 @@ def test_verifier_owning_a_listing_does_not_help():
 
 
 @pytest.mark.parametrize("status", list(ListingStatus))
-def test_provider_can_edit_their_own_listing_in_any_status(status):
-    assert is_allowed(Role.provider, make_listing(status, owner_id=USER_ID))
+def test_provider_is_not_allowed_by_the_role_only_check_even_as_the_old_owner(status):
+    # Since accounts phase 6a a provider's access comes from an approved link in the database, which the async
+    # `ensure_can_edit` looks up (tests/integration/test_owner_links.py); `owner_id` is no longer read.
+    assert not is_allowed(Role.provider, make_listing(status, owner_id=USER_ID))
 
 
 def test_provider_cannot_edit_someone_elses_listing():

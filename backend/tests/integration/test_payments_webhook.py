@@ -25,7 +25,7 @@ from app.models import AuditEntry, Listing, User
 from app.models.base import Role
 from app.services import payment_service
 from tests.conftest import TEST_DATABASE_URL
-from tests.factories import add_listing
+from tests.factories import add_listing, add_owner_link
 from tests.staff_helpers import bearer_for
 
 pytestmark = pytest.mark.anyio
@@ -364,6 +364,7 @@ async def own_listing(session: AsyncSession, provider: User, name: str = "Provid
     listing = await add_listing(session, name)
     listing.owner_id = provider.id
     session.add(listing)
+    await add_owner_link(session, listing, provider)  # since phase 6a the approved link gives the access
     await session.commit()
     return listing
 

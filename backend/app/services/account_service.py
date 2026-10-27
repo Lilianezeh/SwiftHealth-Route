@@ -48,7 +48,7 @@ from app.integrations.resend import EmailNotConfiguredError, EmailSendError, mas
 from app.integrations.termii import SmsSendError, mask_phone, send_sms
 from app.models import User
 from app.models.base import ApprovalStatus, Role
-from app.repositories import audit_repository, user_repository
+from app.repositories import audit_repository, facility_owner_repository, user_repository
 from app.schemas.account import AccountRead
 from app.services import account_mail_service
 from app.services.account_decision_service import LastAdminError
@@ -443,6 +443,7 @@ async def close_account(session: AsyncSession, user: User, password: str, moment
     user.closed_at = moment
     user.is_active = False
     await user_repository.save(session, user)
+    await facility_owner_repository.remove_all_for_user(session, user.id, moment)  # type: ignore[arg-type]
     await _audit(session, user, "account_close", "account", None, "closed", moment)
     await session.commit()
     await _tell(old_email, "account_closed")

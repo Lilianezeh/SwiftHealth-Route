@@ -7,8 +7,17 @@ from datetime import datetime, time
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import Category, Listing, OpeningHours, PhoneNumber, Service, UserReport
-from app.models.base import ListingStatus, ReportReason, ReportStatus
+from app.models import (
+    Category,
+    FacilityOwner,
+    Listing,
+    OpeningHours,
+    PhoneNumber,
+    Service,
+    User,
+    UserReport,
+)
+from app.models.base import ListingStatus, ReportReason, ReportStatus, utcnow
 from app.repositories import category_repository, listing_repository
 
 FICTIONAL_PHONE = "+2340000000001"  # +234 then a zero: never a real number
@@ -65,6 +74,25 @@ async def add_listing(
     return await listing_repository.add_listing_with_details(
         session, listing, phones, opening_hours or [], services
     )
+
+
+async def add_owner_link(
+    session: AsyncSession,
+    listing: Listing,
+    user: User,
+    *,
+    role: str = "owner",
+    status: str = "approved",
+) -> FacilityOwner:
+    """A link between a provider and a listing (the table `facility_owners`). An `approved` one is what lets a
+    provider edit the listing; set `status` to "pending" or "removed" for the other states."""
+    link = FacilityOwner(
+        listing_id=listing.id, user_id=user.id, role=role, status=status,
+        approved_at=utcnow() if status == "approved" else None,
+    )
+    session.add(link)
+    await session.flush()
+    return link
 
 
 async def add_report(

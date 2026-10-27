@@ -31,7 +31,7 @@ Backend (backend/app/):
 - `services/` business rules (search, verification, auto-flag, payments). No HTTP, no raw queries.
 - `repositories/` the only code that queries the database. One file per table group.
 - `integrations/` the only code that calls outside services (Paystack, Cloudinary, Resend, Termii).
-- `models/` the 9 database tables. `core/` settings, database connection, security. `jobs/` scheduled tasks.
+- `models/` the 10 database tables. `core/` settings, database connection, security. `jobs/` scheduled tasks.
 - Flow: route → service → repository / integration → database or outside service.
 
 Frontend (frontend/src/):
@@ -42,9 +42,11 @@ Frontend (frontend/src/):
 - `hooks/` reusable client logic · `types/` API types matching the spec · `config/` site constants · `styles/`.
 - Flow: page → components → hooks → lib/api → backend.
 
-## Data model: exactly 9 tables
+## Data model: exactly 10 tables
 users, categories, listings, phone_numbers, opening_hours, services, verification_checks,
-user_reports, audit_entries. Models live in backend/app/models/ (one file per table).
+user_reports, audit_entries, facility_owners. Models live in backend/app/models/ (one file per table).
+`facility_owners` is the 10th table, added in accounts phase 6 after the owner's yes to decision D1 (2026-10-24): it links
+a provider account to a listing (owner or manager, pending, approved or removed). Nothing else was added.
 - NEVER add, merge or remove a table without asking me first.
 - Areas are a fixed list in backend/app/core/config.py, not a table.
 - Paystack payments set listings.featured_until and write an audit_entries row (reference field).

@@ -15,7 +15,7 @@ from app.api.dependencies import get_current_moment
 from app.main import app
 from app.models import AuditEntry, Listing, OpeningHours, PhoneNumber, Service, User
 from app.models.base import ListingStatus, Role
-from tests.factories import add_listing
+from tests.factories import add_listing, add_owner_link
 from tests.staff_helpers import bearer_for
 
 pytestmark = pytest.mark.anyio
@@ -45,6 +45,7 @@ async def own_listing(
     )
     listing.owner_id = provider.id
     session.add(listing)
+    await add_owner_link(session, listing, provider)  # since phase 6a the approved link gives the access
     await session.commit()
     return listing
 

@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-import app.models  # noqa: F401  (registers all 9 tables)
+import app.models  # noqa: F401  (registers all 10 tables)
 from app.core.config import settings
 from app.core.database import get_session
 from app.core.rate_limit import (

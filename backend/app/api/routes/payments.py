@@ -42,6 +42,8 @@ async def start_featured_payment(
         return await payment_service.start_featured_payment(session, provider, moment)
     except provider_service.NoLinkedListingError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No listing is linked to your account.") from None
+    except provider_service.NotAnOwnerError:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only an owner can pay.") from None
     except payment_service.ListingNotPublishedError:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, "Only a published listing can be featured."
@@ -69,7 +71,11 @@ async def verify_payment(
 ) -> PaymentVerified:
     try:
         return await payment_service.verify_payment(session, provider, reference)
-    except (provider_service.NoLinkedListingError, payment_service.ReferenceNotFoundError):
+    except (
+        provider_service.NoLinkedListingError,
+        provider_service.NotAnOwnerError,
+        payment_service.ReferenceNotFoundError,
+    ):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Payment not found") from None
 
 

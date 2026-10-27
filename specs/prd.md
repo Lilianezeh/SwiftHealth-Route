@@ -194,7 +194,9 @@ The MVP needs nine core entities. A Listing covers both health facilities and em
 | User | id, name, email, phone, password\_hash, role (verifier, editor, admin, provider), is\_active, created\_at, last\_login\_at | Staff and provider accounts; no public user accounts in the MVP |
 | Audit entry | id, user\_id, listing\_id, action, field\_changed, old\_value, new\_value, reference, changed\_at | Written on every change; also records Paystack payments by reference |
 
-Areas (e.g. Independence Layout, New Haven, Trans-Ekulu) are a fixed list in the API settings so search by area stays consistent. The code for all 9 tables is in `backend/app/models/`.
+| Facility owner link | id, listing\_id, user\_id, role (owner, manager), status (pending, approved, removed), requested\_at, approved\_by, approved\_at, removed\_at, removed\_by, note | The 10th table (accounts phase 6, approved by the owner on 2026-10-24). One row per listing and person; a provider edits or pays only through an approved link. The note is who staff reached on the phone |
+
+Areas (e.g. Independence Layout, New Haven, Trans-Ekulu) are a fixed list in the API settings so search by area stays consistent. The code for all 10 tables is in `backend/app/models/`.
 
 ## Non-functional requirements
 

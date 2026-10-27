@@ -21,6 +21,21 @@ class ApprovalStatus(str, Enum):
     rejected = "rejected"
 
 
+class OwnerRole(str, Enum):
+    """What a provider may do through a facility link (decision D4). Plain text in `facility_owners.role`."""
+
+    owner = "owner"  # edit the listing and pay for Featured
+    manager = "manager"  # edit the listing only
+
+
+class LinkStatus(str, Enum):
+    """Where a facility link is. Plain text in `facility_owners.status`."""
+
+    pending = "pending"  # asked for; staff have not phoned the facility yet
+    approved = "approved"
+    removed = "removed"  # rejected, or taken away later
+
+
 class ListingStatus(str, Enum):
     draft = "draft"
     pending_review = "pending_review"
