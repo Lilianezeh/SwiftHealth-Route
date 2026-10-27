@@ -145,6 +145,15 @@ function ReportCard({ report, now, isBusy, onClose }: ReportCardProps) {
         {report.status !== "open" && ` · ${report.status === "resolved" ? "Resolved" : "Dismissed"}`}
       </p>
 
+      {report.status === "open" && (report.reason === "moved" || report.reason === "closed") && (
+        <Link
+          href={`/admin/listings/${listing.id}#${report.reason === "moved" ? "move" : "close"}`}
+          prefetch={false}
+          className={buttonClasses("secondary")}
+        >
+          {report.reason === "moved" ? "Start a move" : "Close it"}
+        </Link>
+      )}
       {report.status === "open" && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <Link href={`/admin/listings/${listing.id}`} prefetch={false} className={buttonClasses("secondary")}>

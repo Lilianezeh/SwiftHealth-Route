@@ -13,6 +13,8 @@ export function providerListing(overrides: Partial<ProviderListing> = {}): Provi
     featured_until: null,
     map_pin_is_default: false,
     submission_details: null,
+    closed_at: null,
+    closed_reason: null,
     featured_price_naira: "5000.00",
     ...overrides,
   };

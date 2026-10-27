@@ -73,6 +73,26 @@ async def list_activity(
     return [(entry, actor, listing) for entry, actor, listing in (await session.exec(query)).all()], total
 
 
+ADDRESS_FIELDS = ("address", "area", "landmark")
+
+
+async def list_address_history(session: AsyncSession, listing_id: int) -> list[tuple[AuditEntry, str | None]]:
+    """The changes of a listing's address, area and landmark with the name of who made each: the `move`
+    rows of accounts phase 8a and the older plain `update` rows of the same fields. Newest day first; the
+    rows of one move keep the order they were written in (FR-53)."""
+    query = (
+        select(AuditEntry, User.name)
+        .outerjoin(User, col(User.id) == col(AuditEntry.user_id))
+        .where(
+            col(AuditEntry.listing_id) == listing_id,
+            col(AuditEntry.action).in_(("move", "update")),
+            col(AuditEntry.field_changed).in_(ADDRESS_FIELDS),
+        )
+        .order_by(col(AuditEntry.changed_at).desc(), col(AuditEntry.id))
+    )
+    return [(entry, name) for entry, name in (await session.exec(query)).all()]
+
+
 async def lock_reference(session: AsyncSession, reference: str) -> None:
     """Waits for a Postgres advisory lock on this reference, held until the transaction ends (FR-46).
 

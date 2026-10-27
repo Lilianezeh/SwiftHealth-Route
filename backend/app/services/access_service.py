@@ -6,7 +6,7 @@ APPROVED owner link to (`facility_owners`, accounts phase 6a); `listings.owner_i
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Listing, User
-from app.models.base import ListingStatus, Role
+from app.models.base import ListingStatus, OwnerRole, Role
 from app.repositories import facility_owner_repository, listing_repository
 
 
@@ -40,6 +40,27 @@ async def ensure_can_edit(session: AsyncSession, user: User, listing: Listing) -
             return
         raise NotAllowedError
     ensure_can_edit_listing(user, listing)
+
+
+async def ensure_can_close(session: AsyncSession, user: User, listing: Listing) -> None:
+    """Who may close a facility: an editor or admin, or a provider with an approved link whose role is `owner`
+    (a manager may edit and move a facility but not close it, accounts phase 8a)."""
+    if user.role == Role.provider:
+        found = await facility_owner_repository.approved_link_for(session, user.id, listing.id)  # type: ignore[arg-type]
+        if found is None or found[0].role != OwnerRole.owner.value:
+            raise NotAllowedError
+        return
+    ensure_can_edit_listing(user, listing)
+
+
+async def ensure_can_read_history(session: AsyncSession, user: User, listing: Listing) -> None:
+    """Who may read the address history: any staff role, or a provider with an approved link."""
+    if user.role == Role.provider:
+        if not await facility_owner_repository.has_approved_link(session, listing.id, user.id):  # type: ignore[arg-type]
+            raise NotAllowedError
+        return
+    if user.role not in (Role.verifier, Role.editor, Role.admin):
+        raise NotAllowedError
 
 
 async def load_listing_for_editing(session: AsyncSession, user: User, listing_id: int) -> Listing:

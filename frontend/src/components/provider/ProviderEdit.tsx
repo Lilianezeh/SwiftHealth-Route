@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { ListingFormFields } from "@/components/admin/ListingFormFields";
 import { QueueStatus } from "@/components/admin/QueueStatus";
 import { useStaff } from "@/components/admin/StaffGate";
+import { MoveOrClose } from "@/components/facility/MoveOrClose";
 import { NoLinkedFacility } from "@/components/provider/NoLinkedFacility";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useMeta } from "@/hooks/useMeta";
@@ -123,6 +124,16 @@ export function ProviderEdit({ listingId }: { listingId?: number }) {
           <button type="button" onClick={() => void save()} disabled={busy} className={`${buttonClasses("primary")} disabled:opacity-60`}>
             Save
           </button>
+
+          <MoveOrClose
+            listingId={listing.id}
+            listingName={listing.name}
+            current={{ address: listing.address, area: listing.area, landmark: listing.landmark }}
+            closedReason={null}
+            isClosed={listing.closed_at !== null}
+            isStaff={false}
+            call={call}
+          />
         </>
       )}
     </section>

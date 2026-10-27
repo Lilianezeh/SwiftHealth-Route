@@ -455,6 +455,13 @@ FR-50, US-19. **API:** `GET /staff/owner-requests`, `POST /staff/owner-requests/
 
 **Phase 7 addition:** a card also shows **"Their reason: …"** when the request carries one (the person's own words, from `reason`), above the note box.
 
+### 3.11 Moves and closures (accounts phase 8a, FR-53, US-20) — on the listing editor and on "Edit my facility"
+**API:** `POST /listings/{id}/move`, `POST /listings/{id}/close`, `GET /listings/{id}/address-history` (api-spec 7, "Phase 8a"). One component, `MoveOrClose`, under the form of an existing listing, for an editor or admin (staff editor) and for a provider (`/provider/edit`). A verifier does not see it. Three parts, each a plain section with an `h2`:
+- **"Moved to a new address?"** (`id="move"`): address, area (from `/meta`) and landmark (optional), filled with the current values; **Save the new address** is off until something differs. It first asks: "Move {name}? It will be hidden from the public until our team re-checks it." with **Yes, move it** and **Cancel**. The answer's `message` is shown; for staff, when `pin_needs_setting` is true: "Set the map pin in the form above." A provider is told "Our team will set the map pin when they re-check it." Nothing is sent without the question being answered.
+- **"Closed for good?"** (`id="close"`): one field "Why is it closing?" (3 to 200 characters) and **Close this facility**, which asks: "Close {name} for good? It will be hidden from the public. Nothing is deleted, and our team can reopen it." with **Yes, close it** and **Cancel**. A 403 says "Only the owner of a facility can close it."
+- **"Address history"**: the changes newest first as "{date}: {Address|Area|Landmark} {old or 'none'} to {new or 'none'}", with "by {name}" for staff only; "No changes yet." when empty.
+When the listing is closed the editor and the provider page say "This facility is closed." (with the reason for staff) and the forms are replaced by that sentence; an editor or admin reopens it with the existing Reopen button. After a move or a closing the page reloads the listing. The staff **report queue** (3.6) shows, on an open report whose reason is "Moved", a link **Start a move** to `/admin/listings/{id}#move`, and on one whose reason is "Closed", a link **Close it** to `/admin/listings/{id}#close`; the report's other buttons stay. All text 16 px or more, buttons at least 48 px.
+
 ### 4.3 Get featured — `/provider/featured`
 **API:** `POST /payments/featured`. Explains: "Featured listings appear first in matching searches with a Sponsored label for 30 days. Never shown in SwiftRescue." Price, then **Pay with Paystack** → redirect to `authorization_url`.
 

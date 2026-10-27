@@ -69,6 +69,8 @@ class StaffListingDetail(ListingDetail):
     featured_until: datetime | None
     map_pin_is_default: bool  # the pin is still the default centre, so the editor can warn (decision C5)
     submission_details: str | None  # the text of a "List your facility" draft, for staff only (decision C6)
+    closed_at: datetime | None  # set when the facility was closed (accounts phase 8a)
+    closed_reason: str | None
 
 
 class PhoneInput(BaseModel):

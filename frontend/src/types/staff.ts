@@ -44,6 +44,8 @@ export type StaffListingDetail = ListingDetail & {
   featured_until: string | null;
   map_pin_is_default: boolean;
   submission_details: string | null;
+  closed_at: string | null; // set when the facility was closed (accounts phase 8a)
+  closed_reason: string | null;
 };
 
 export type StaffListParams = {

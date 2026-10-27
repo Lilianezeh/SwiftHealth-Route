@@ -85,8 +85,10 @@ async def hide(session: AsyncSession, user: User, listing: Listing, reason: str,
 
 
 async def reopen(session: AsyncSession, user: User, listing: Listing, moment: datetime) -> None:
-    """Hidden to draft, so it can be checked again."""
+    """Hidden to draft, so it can be checked again. A closed facility's closure is cleared."""
     if listing.status != ListingStatus.hidden:
         raise InvalidMoveError("Only a hidden listing can be reopened.")
+    listing.closed_at = None
+    listing.closed_reason = None
     await _move(session, user, listing, ListingStatus.draft, "reopen", moment)
     await session.commit()

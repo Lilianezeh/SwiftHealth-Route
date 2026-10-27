@@ -22,7 +22,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => router }));
 const PHOTO = "https://res.cloudinary.com/demo-cloud/image/upload/v1/swifthealth/entrances/front.jpg";
 
 function detail(status: StaffListingDetail["status"] = "draft"): StaffListingDetail {
-  return { ...makeListing(), status, next_check_due: null, owner_id: null, created_by: 3, featured_until: null, map_pin_is_default: false, submission_details: null };
+  return { ...makeListing(), status, next_check_due: null, owner_id: null, created_by: 3, featured_until: null, map_pin_is_default: false, submission_details: null, closed_at: null, closed_reason: null };
 }
 
 function check(id: number, overrides: Partial<CheckRead> = {}): CheckRead {
