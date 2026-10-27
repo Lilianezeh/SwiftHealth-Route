@@ -105,6 +105,16 @@ export function ListingEditor({ listingId }: ListingEditorProps) {
       });
   }, [call, listingId, dirty, takeDetail]);
 
+  // The SwiftRescue contacts screen links to a new listing with `?category=<slug>` ("Add a contact to Police"): select that
+  // category at once. It is set in both copies of the form, so choosing it is not an unsaved change.
+  useEffect(() => {
+    if (listingId !== null) return;
+    const slug = new URLSearchParams(window.location.search).get("category")?.trim();
+    if (!slug) return;
+    setForm((current) => ({ ...current, category: slug }));
+    setInitialForm((current) => ({ ...current, category: slug }));
+  }, [listingId]);
+
   // A link from the report queue ("Start a move", "Close it") ends in #move or #close: scroll there once the page is drawn.
   useEffect(() => {
     if (loadState !== "ready") return;

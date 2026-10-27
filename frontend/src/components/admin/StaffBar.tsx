@@ -49,6 +49,9 @@ export function StaffBar({ user, onLogout }: StaffBarProps) {
             <Link href="/admin/owner-requests" prefetch={false} className={LINK_CLASSES}>
               Owner requests
             </Link>
+            <Link href="/admin/emergency-contacts" prefetch={false} className={LINK_CLASSES}>
+              SwiftRescue contacts
+            </Link>
           </>
         )}
         {canOpen(user.role, "listings") && (
