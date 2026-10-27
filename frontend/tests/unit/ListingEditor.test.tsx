@@ -90,6 +90,28 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("a new listing from the SwiftRescue contacts screen (?category=)", () => {
+  afterEach(() => window.history.pushState({}, "", "/"));
+
+  it("selects the category named in the address, and that choice is not an unsaved change", async () => {
+    window.history.pushState({}, "", "/admin/listings/new?category=police");
+    stubApi();
+    render(<AdminNewListingPage />);
+
+    const category = await screen.findByLabelText("Category");
+    await waitFor(() => expect(category).toHaveValue("police"));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(push).toHaveBeenCalledWith("/admin/listings"); // no "unsaved changes" question for the preselected category
+  });
+
+  it("leaves the category empty when the address names none", async () => {
+    stubApi();
+    render(<AdminNewListingPage />);
+
+    expect(await screen.findByLabelText("Category")).toHaveValue("");
+  });
+});
+
 describe("moves and closures (accounts phase 8a, FR-53)", () => {
   it("shows an editor and an admin the move, close and history parts under an existing listing", async () => {
     stubApi({ current: detail({ status: "published", address: "1 Example Road", area: "Ogui" }) });

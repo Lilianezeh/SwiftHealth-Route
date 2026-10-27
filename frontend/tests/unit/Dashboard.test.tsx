@@ -198,15 +198,16 @@ describe("the staff bar", () => {
   it("shows an editor the dashboard, reports, re-checks and listings", () => {
     // "Security" (the authenticator app, FR-58) is in every role's bar, last.
     expect(barFor("editor")).toEqual([
-      "Dashboard", "Reports", "Re-checks", "Owner requests", "Listings", "Security", "Account",
+      "Dashboard", "Reports", "Re-checks", "Owner requests", "SwiftRescue contacts", "Listings", "Security",
+      "Account",
     ]);
   });
 
   it("shows an admin the same, and also staff and import and export", () => {
     // Activity (the activity log) is for the admin only, accounts phase 4b.
     expect(barFor("admin")).toEqual([
-      "Dashboard", "Reports", "Re-checks", "Owner requests", "Listings", "Staff", "Activity", "Import and export",
-      "Security", "Account",
+      "Dashboard", "Reports", "Re-checks", "Owner requests", "SwiftRescue contacts", "Listings", "Staff",
+      "Activity", "Import and export", "Security", "Account",
     ]);
   });
 

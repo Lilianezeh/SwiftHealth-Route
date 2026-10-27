@@ -16,6 +16,7 @@ import type {
   CheckList,
   CheckRead,
   DashboardStats,
+  EmergencyContactGroups,
   ListingInput,
   LoginStarted,
   OwnerRequestList,
@@ -104,6 +105,11 @@ export function updateListing(
 }
 
 export type ListingMove = "submit" | "publish" | "reopen";
+
+/** The contacts of every SwiftRescue group, of every status (editor and admin). Adding and editing use the listing calls. */
+export function listEmergencyContacts(token: string, options: Options = {}): Promise<EmergencyContactGroups> {
+  return requestJson<EmergencyContactGroups>("/staff/emergency-contacts", { ...options, token });
+}
 
 export function moveListing(token: string, listingId: number, move: ListingMove, options: Options = {}): Promise<StaffListingDetail> {
   return requestJson<StaffListingDetail>(`/listings/${listingId}/${move}`, { ...options, token, method: "POST" });

@@ -104,6 +104,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/account", // accounts phase 5, my account (every role)
         "/admin",
         "/admin/activity", // accounts phase 4b, the activity log (admin only)
+        "/admin/emergency-contacts", // 2026-10-27, add, edit and remove the SwiftRescue contacts (editor and admin)
         "/admin/import-export", // phase 14, CSV import and export
         "/admin/listings", // phase 10, the staff list
         "/admin/listings/[id]", // phase 10, the editor of one listing

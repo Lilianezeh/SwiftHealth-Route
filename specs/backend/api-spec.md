@@ -498,6 +498,16 @@ Editor, admin. `hidden` → `draft`, so it can be re-verified.
 
 ---
 
+### SwiftRescue contacts for staff (2026-10-27)
+
+`GET /staff/emergency-contacts` (editor, admin; a verifier or a provider gets 403, no token 401) returns the contacts of **every SwiftRescue group, of every status**, so staff can add, edit and remove them from one screen:
+```json
+{ "groups": [ { "category": { "slug": "ambulance", "name": "Ambulance" }, "contacts": [ /* StaffListingSummary: the staff list item, with status */ ], "total": 3 } ] }
+```
+The groups are the nine of `emergency_service.GROUPS`, in that order (the order of the SwiftRescue page); the national line `112` is not a listing and is not here. `contacts` holds the group's listings by name, at most 100 (`total` is the real number). A draft, a hidden one and one waiting for a re-check are included, with their `status`, so a contact that was removed can still be found. Nothing here changes what the public sees (`GET /emergency` is unchanged).
+**Adding, editing and removing use the routes that exist:** a new contact is `POST /listings` with the group's category (a draft that is verified and published like any listing, so it appears in SwiftRescue only after that); editing is `PATCH /listings/{id}`; **removing is hiding** (`POST /listings/{id}/hide` with a reason, editor or admin): the listing and its history stay and `reopen` brings it back as a draft. **Nothing is deleted.** The seed adds no real phone number.
+**Tests:** access (401, 403 for verifier and provider, 200 for editor and admin) · the nine groups in the page's order · contacts of every status, by name · only the group's own category · `total` and the 100 limit · a draft or hidden contact is still absent from `GET /emergency` · the primary phone is in the item · hiding one removes it from the public list and leaves it on this screen.
+
 ## 6. Staff: reports
 
 ### GET /reports

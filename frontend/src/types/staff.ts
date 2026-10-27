@@ -36,6 +36,11 @@ export type StaffListingSummary = ListingSummary & {
 };
 export type StaffListingList = { items: StaffListingSummary[]; total: number };
 
+/** GET /staff/emergency-contacts: the nine SwiftRescue groups in the page's order, each with its contacts of every status. */
+export type EmergencyContactGroups = {
+  groups: { category: { slug: string; name: string }; contacts: StaffListingSummary[]; total: number }[];
+};
+
 export type StaffListingDetail = ListingDetail & {
   status: ListingStatus;
   next_check_due: string | null;
