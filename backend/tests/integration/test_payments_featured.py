@@ -5,7 +5,7 @@ Paystack is replaced by a recorder: nothing here calls Paystack. Every key, addr
 """
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import pytest
@@ -51,7 +51,12 @@ def started(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
 async def provider_listing(
     session: AsyncSession, provider: User, status: ListingStatus = ListingStatus.published
 ) -> Listing:
-    listing = await add_listing(session, "Provider Clinic", status=status)
+    # Verified two days ago and not due: a listing must be verified to be featured (api-spec section 8,
+    # "Sponsored rules"; test_sponsored_rules.py has the refusals).
+    listing = await add_listing(
+        session, "Provider Clinic", status=status,
+        last_verified_at=NOW - timedelta(days=2), next_check_due=NOW + timedelta(days=30),
+    )
     listing.owner_id = provider.id
     session.add(listing)
     await add_owner_link(session, listing, provider)  # since phase 6a the approved link gives the access

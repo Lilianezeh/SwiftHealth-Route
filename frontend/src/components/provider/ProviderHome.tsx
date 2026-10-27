@@ -12,6 +12,7 @@ import { NoLinkedFacility } from "@/components/provider/NoLinkedFacility";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useProviderListing } from "@/hooks/useProviderListing";
 import { formatNoticeDate } from "@/lib/formatters/dates";
+import { whyNotFeatured } from "@/lib/staff/featured";
 
 export function ProviderHome() {
   const { status, listing, retry } = useProviderListing();
@@ -44,12 +45,12 @@ export function ProviderHome() {
             <Link href="/provider/edit" prefetch={false} className={buttonClasses("secondary")}>
               Edit my facility
             </Link>
-            {listing.status === "published" ? (
+            {whyNotFeatured(listing) === null ? (
               <Link href="/provider/featured" prefetch={false} className={buttonClasses("primary")}>
                 Get featured
               </Link>
             ) : (
-              <p className="text-base text-ink">Only a published listing can be featured.</p>
+              <p className="text-base text-ink">{whyNotFeatured(listing)}</p>
             )}
           </div>
         </article>

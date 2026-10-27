@@ -17,6 +17,7 @@ import { useProviderListing } from "@/hooks/useProviderListing";
 import { formatNaira } from "@/lib/formatters/fees";
 import { startFeaturedPayment } from "@/lib/api/provider";
 import { ApiError } from "@/lib/api/request";
+import { whyNotFeatured } from "@/lib/staff/featured";
 
 const COULD_NOT_START = "Could not start the payment. Try again.";
 // The statuses whose sentence the API wrote for the provider (api-spec, POST /payments/featured). Any other failure gets the plain one.
@@ -67,12 +68,12 @@ export function GetFeatured() {
             You pay on Paystack&apos;s own page, in test mode for now. No card detail passes through SwiftHealth.
           </p>
 
-          {listing.status === "published" ? (
+          {whyNotFeatured(listing) === null ? (
             <button type="button" onClick={() => void pay()} disabled={busy} className={`${buttonClasses("primary")} disabled:opacity-60`}>
               Pay with Paystack
             </button>
           ) : (
-            <p className="text-base font-semibold text-ink">Only a published listing can be featured.</p>
+            <p className="text-base font-semibold text-ink">{whyNotFeatured(listing)}</p>
           )}
           {problem && (
             <p role="alert" className="rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink">

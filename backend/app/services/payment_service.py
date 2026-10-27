@@ -21,6 +21,7 @@ from app.models.base import ListingStatus
 from app.repositories import audit_repository, listing_repository
 from app.schemas.payment import FeaturedStarted, PaymentVerified
 from app.services import provider_service
+from app.services.verification import is_verified_and_current
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,10 @@ REFERENCE_SHAPE = re.compile(r"SH-(\d+)-(\d+)")  # decision I5
 
 class ListingNotPublishedError(Exception):
     """Only a published listing can be featured."""
+
+
+class ListingNotVerifiedError(Exception):
+    """Only a verified listing that is not overdue for its re-check can be featured (paying never buys it)."""
 
 
 def amount_in_kobo() -> int:
@@ -45,13 +50,15 @@ def reference_for(listing_id: int, moment: datetime) -> str:
 async def start_featured_payment(session: AsyncSession, provider: User, moment: datetime) -> FeaturedStarted:
     """Asks Paystack for a checkout page for the provider's own listing. Nothing is saved: no money moved.
 
-    Raises provider_service.NoLinkedListingError, ListingNotPublishedError, and the errors of
-    integrations/paystack.py (not set up, live key, could not start).
+    Raises provider_service.NoLinkedListingError, ListingNotPublishedError, ListingNotVerifiedError and the
+    errors of integrations/paystack.py (not set up, live key, could not start).
     """
     # Only an owner link pays: a manager gets NotAnOwnerError (decision D4).
     listing = await provider_service.get_own_listing(session, provider, owner_only=True)
     if listing.status != ListingStatus.published:
         raise ListingNotPublishedError
+    if not is_verified_and_current(listing.last_verified_at, listing.next_check_due, moment):
+        raise ListingNotVerifiedError
     started = await paystack.initialize_transaction(
         email=provider.email,
         amount_kobo=amount_in_kobo(),

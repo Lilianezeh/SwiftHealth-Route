@@ -155,9 +155,11 @@ Lists for filters and forms.
   "blood_groups": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
   "report_reasons": ["not_working", "wrong_number", "closed", "moved", "wrong_hours", "other"],
   "service_catalogue": ["Antenatal care", "Blood bank", "Consultation", "X-ray"],
-  "signup_open": false
+  "signup_open": false,
+  "featured_price_naira": "5000.00"
 }
 ```
+`featured_price_naira` (the "For facilities" page, 2026-10-27) is the price of 30 days as featured, from the setting `FEATURED_PRICE_NAIRA`, as a string with 2 decimals (the same value as `featured_price_naira` in `/provider/listing` and the amount sent to Paystack). It is public: a price list is not a secret, and the page shows it before anyone has an account.
 `signup_open` (owner, 2026-10-26) is true when the sign-up routes of section 4c would answer, i.e. exactly when sign-up is open: `SIGNUP_ENABLED` is true and, outside development, Resend is set up. It is one boolean computed by the same function as the 503 rule of 4c (`signup_service.signup_is_open`), and it says nothing else about the configuration: no key, no address. The site's header and login page read it to show the **Sign up** link only while sign-up is open.
 `service_catalogue` is the fixed list of service names that staff may pick for a listing (phase 10, decision C1 in
 `specs/2026-10-20-staff-screens/requirements.md`): a list in `core/service_catalogue.py`, in alphabetical order, with the blood groups
@@ -636,6 +638,16 @@ FR-44, FR-46. Called by Paystack only. No login.
 - **`POST /payments/webhook`** reads the raw body first. A missing or wrong signature is 401 and nothing changes (the comparison is constant-time). A valid signature with a body that is not JSON is 400. A valid event that is not `charge.success` is ignored (200). For `charge.success` the call is applied only when `data.status` is `success`, `data.reference` has the shape `SH-<id>-<digits>` with the same `<id>` as `data.metadata.listing_id`, the listing exists, and `data.amount` is an integer of at least `int(FEATURED_PRICE_NAIRA * 100)`; otherwise it is ignored (200) and only the reference is logged. Applying: take a Postgres advisory lock on the reference, return 200 without a change if an audit entry with action `payment` and this reference exists, else set `featured_until` to the later of now and its current value plus 30 days, and write the audit entry (no user, action `payment`, field `featured_until`, old and new value as ISO times, reference = the Paystack reference), in one transaction. The answer is `{ "status": "ok" }`. Nothing of the body, the email or the card is logged or stored.
 - **`GET /payments/verify/{reference}`**: provider only; the reference must start with `SH-<caller's listing id>-` (else 404). `{ "status": "success", "featured_until": "..." }` once an audit entry with this reference exists, else `{ "status": "pending", "featured_until": null }`. It does not call Paystack.
 - **Tests:** only a provider (403 for others, 401 without a token) · amount in kobo `int(price*100)` in the request to Paystack and the price as a string in the answer · a live key and a missing key (503) · an unpublished listing 400 · Paystack failing is 502 without the key or email in the message · bad signature 401 and nothing changes · valid `charge.success` extends 30 days from now, or from the end of a running period · the audit entry holds the reference and no user · the same event twice applies once · an event for another type, a status that is not success, a reference that does not match its metadata, a too-small amount and an unknown listing are ignored with 200 and change nothing · verify says pending, then success, and 404 for another provider's reference.
+
+---
+
+### Sponsored rules (one place; the owner's check of 2026-10-27; FR-19, FR-44, FR-45)
+
+Four rules, each with tests in `backend/tests/integration/test_sponsored_rules.py` and in the frontend tests named below.
+1. **Always labelled.** The one featured listing that takes the sponsored slot in `GET /search` has `sponsored: true`; no other answer of the API has it true (the listing page, `/emergency`, the blood lists, the staff lists are all false). Wherever the web app draws a result whose `sponsored` is true (the result card and the map popup) it shows the word **Sponsored**, and it shows the word on nothing else.
+2. **Paying never changes verification.** A confirmed payment changes `featured_until` and writes its audit entry, and nothing else: `status`, `last_verified_at` and `next_check_due` stay, so a paid listing is re-checked on the same cycle, shows the same "Verified" date and the same "Verification due", and an overdue one stays overdue.
+3. **Nothing paid in SwiftRescue or above 112.** `GET /emergency` is the same with or without `featured_until`: the national line `112` is first, no contact is moved, none is sponsored. A listing of an emergency category is never sponsored in search either (existing rule, FR-45).
+4. **Only published, verified listings can be featured.** *Starting a payment* needs a `published` listing (else 400 `"Only a published listing can be featured."`) that has a `last_verified_at` and is **not overdue** (`next_check_due` not passed; else 400 `"Only a verified listing can be featured."`). *The slot in search* needs the same: published (as every search result), a `last_verified_at`, and not overdue; otherwise the next featured listing in the normal order takes the slot, or nobody does. *A payment confirmed for a listing that is no longer eligible* (it was hidden or went overdue after the person paid) is still recorded, with its audit entry and `featured_until`, because the money was taken; it shows nothing until the listing is eligible again. The web app shows "Get featured" only for an eligible listing and says why when it is not.
 
 ---
 
