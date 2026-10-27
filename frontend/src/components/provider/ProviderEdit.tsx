@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { ListingFormFields } from "@/components/admin/ListingFormFields";
 import { QueueStatus } from "@/components/admin/QueueStatus";
 import { useStaff } from "@/components/admin/StaffGate";
+import { Branches } from "@/components/facility/Branches";
 import { MoveOrClose } from "@/components/facility/MoveOrClose";
 import { NoLinkedFacility } from "@/components/provider/NoLinkedFacility";
 import { buttonClasses } from "@/components/ui/buttonStyles";
@@ -124,6 +125,8 @@ export function ProviderEdit({ listingId }: { listingId?: number }) {
           <button type="button" onClick={() => void save()} disabled={busy} className={`${buttonClasses("primary")} disabled:opacity-60`}>
             Save
           </button>
+
+          {(listing.parent_id ?? null) === null && <Branches mainId={listing.id} call={call} />}
 
           <MoveOrClose
             listingId={listing.id}

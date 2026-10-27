@@ -121,3 +121,5 @@ submission_limiter = RateLimiter(SUBMISSION_MAX_CALLS, SUBMISSION_WINDOW)
 # claim search per client address per hour. In memory, like the others.
 claim_limiter = RateLimiter(10, timedelta(days=1))
 claimable_search_limiter = RateLimiter(60, timedelta(hours=1))
+# Adding a branch to a facility (FR-52, Phase 8b): 10 per client address per day.
+branch_limiter = RateLimiter(10, timedelta(days=1))

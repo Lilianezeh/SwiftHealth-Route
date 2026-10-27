@@ -27,6 +27,9 @@ class Listing(SQLModel, table=True):
     featured_until: datetime | None = None  # set by Paystack webhook
     last_verified_at: datetime | None = None
     next_check_due: datetime | None = Field(default=None, index=True)
+    # The main facility this listing is a branch of (accounts phase 8b, FR-52). One level only; NULL for every
+    # main facility, which is every listing that existed before this column.
+    parent_id: int | None = Field(default=None, foreign_key="listings.id", index=True)
     # A closed listing is a hidden one with these two set (accounts phase 8a, FR-53). Nothing is deleted.
     closed_at: datetime | None = None
     closed_reason: str | None = Field(default=None, max_length=200)

@@ -5,7 +5,7 @@ the contact name and email are no longer asked, they come from the account.
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.core.config import settings
 from app.core.phone import normalise_nigerian_phone
@@ -54,6 +54,55 @@ class FacilityRegistered(BaseModel):
     message: str
     listing_id: int
     link_id: int
+
+
+class BranchCreate(BaseModel):
+    """A new branch of a main facility (Phase 8b). No category: the branch takes its main facility's. Any
+    other field is refused, so a category sent by mistake is a 422 and not silently ignored."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    facility_name: str = Field(min_length=2, max_length=120)
+    area: str
+    address: str = Field(min_length=3, max_length=200)
+    phone: str = Field(max_length=30)
+    notes: str | None = Field(default=None, max_length=NOTES_MAX_LENGTH)
+
+    @field_validator("facility_name", "address")
+    @classmethod
+    def trim(cls, text: str) -> str:
+        return text.strip()
+
+    @field_validator("area")
+    @classmethod
+    def area_is_in_the_fixed_list(cls, area: str) -> str:
+        if area not in settings.areas:
+            raise ValueError("area must be one of the areas in /meta")
+        return area
+
+    @field_validator("phone")
+    @classmethod
+    def phone_is_nigerian(cls, phone: str) -> str:
+        normalised = normalise_nigerian_phone(phone)
+        if normalised is None:
+            raise ValueError("phone must be a Nigerian phone number")
+        return normalised
+
+
+class BranchCreated(BaseModel):
+    message: str
+    listing_id: int
+
+
+class BranchItem(BaseModel):
+    id: int
+    name: str
+    area: str
+    status: str
+
+
+class BranchList(BaseModel):
+    items: list[BranchItem]
 
 
 class ClaimCreate(BaseModel):

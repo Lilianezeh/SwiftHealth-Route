@@ -84,6 +84,43 @@ describe("the page while it loads", () => {
   });
 });
 
+describe("branches (accounts phase 8b, FR-52)", () => {
+  it("names the main facility with a link above the badges when the listing is a branch", async () => {
+    answerWith(200, makeListing({ branch_of: { name: "Night Pharmacy Main", slug: "night-pharmacy-main" } }));
+    render(<ListingDetailView slug="night-pharmacy-a" />);
+    await screen.findByRole("heading", { level: 1 });
+
+    expect(screen.getByText(/^Branch of/)).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: "Night Pharmacy Main" });
+    expect(link).toHaveAttribute("href", "/listing/night-pharmacy-main");
+    expect(link.className).toMatch(/min-h-12/);
+  });
+
+  it("lists the published branches of a main facility under a 'Branches' heading, each linked", async () => {
+    answerWith(200, makeListing({
+      branches: [
+        { name: "Alpha Annex", slug: "alpha-annex", area: "Ogui" },
+        { name: "Zeta Annex", slug: "zeta-annex", area: "GRA" },
+      ],
+    }));
+    render(<ListingDetailView slug="night-pharmacy-a" />);
+    await screen.findByRole("heading", { level: 1 });
+
+    expect(screen.getByRole("heading", { level: 2, name: "Branches" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Alpha Annex, Ogui" })).toHaveAttribute("href", "/listing/alpha-annex");
+    expect(screen.getByRole("link", { name: "Zeta Annex, GRA" })).toHaveAttribute("href", "/listing/zeta-annex");
+  });
+
+  it("shows neither part for an ordinary listing", async () => {
+    answerWith(200, makeListing());
+    render(<ListingDetailView slug="night-pharmacy-a" />);
+    await screen.findByRole("heading", { level: 1 });
+
+    expect(screen.queryByText(/^Branch of/)).toBeNull();
+    expect(screen.queryByRole("heading", { level: 2, name: "Branches" })).toBeNull();
+  });
+});
+
 describe("a listing that is there", () => {
   it("asks the API for /listings/<slug> with no query string, and shows one h1 with the name", async () => {
     answerWith(200, makeListing());

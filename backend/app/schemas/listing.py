@@ -17,6 +17,19 @@ class CategorySummary(BaseModel):
     name: str
 
 
+class MainFacilityRef(BaseModel):
+    name: str
+    slug: str
+
+
+class BranchRef(BaseModel):
+    """A published branch, as the main facility's page lists it."""
+
+    name: str
+    slug: str
+    area: str
+
+
 class ListingSummary(BaseModel):
     """One result in a list. No status, owner or money fields: the public sees only what the spec lists."""
 
@@ -38,6 +51,10 @@ class ListingSummary(BaseModel):
     # The next change in opening hours, in English and Lagos time ("Closes 9:00 PM", "Opens Monday 7:30 AM").
     # null for a 24-hour listing, a listing with no hours recorded, and the lists that do not fill it yet.
     hours_note: str | None = None
+    # "Branch of {name}" (FR-52): set in search results and on the listing page when this listing is a
+    # branch whose main facility is published; null otherwise, and always null in the SwiftRescue and
+    # blood lists.
+    branch_of: MainFacilityRef | None = None
 
 
 class PhoneRead(BaseModel):
@@ -75,3 +92,4 @@ class ListingDetail(ListingSummary):
     # The FR-22 rule that hides a listing from search. The listing is still shown, so the page can warn.
     recently_reported_not_working: bool
     disclaimer: str  # FR-13
+    branches: list[BranchRef] = []  # the published branches of this facility, by name (FR-52)

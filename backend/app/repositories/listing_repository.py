@@ -316,6 +316,58 @@ async def search_claimable(
     return [(listing, category) for listing, category in (await session.exec(query)).all()]
 
 
+async def published_main_facilities(
+    session: AsyncSession, parent_ids: set[int]
+) -> dict[int, tuple[str, str]]:
+    """The (name, slug) of each of these listings that is PUBLISHED. A main facility that is hidden, a
+    draft or due for a re-check is left out, so its name is never shown through a branch (FR-52)."""
+    if not parent_ids:
+        return {}
+    query = select(Listing.id, Listing.name, Listing.slug).where(
+        col(Listing.id).in_(parent_ids), col(Listing.status) == ListingStatus.published
+    )
+    return {listing_id: (name, slug) for listing_id, name, slug in (await session.exec(query)).all()}
+
+
+async def list_branches(session: AsyncSession, parent_id: int, *, published_only: bool) -> list[Listing]:
+    """The branches of a main facility: the public page lists the published ones by name, the owner all."""
+    query = select(Listing).where(col(Listing.parent_id) == parent_id)
+    if published_only:
+        query = query.where(col(Listing.status) == ListingStatus.published).order_by(
+            col(Listing.name), col(Listing.id)
+        )
+    else:
+        query = query.order_by(col(Listing.id))
+    return list((await session.exec(query)).all())
+
+
+async def has_branches(session: AsyncSession, listing_id: int) -> bool:
+    query = select(func.count()).select_from(Listing).where(col(Listing.parent_id) == listing_id)
+    return (await session.exec(query)).one() > 0
+
+
+async def find_in_facility_by_phone_or_address(
+    session: AsyncSession, main_id: int, number: str, address: str
+) -> Listing | None:
+    """The main facility or one of its branches that has this phone number, or this address (compared without
+    case and with the spaces collapsed). Nothing outside the facility is looked at (FR-52)."""
+
+    def squeeze(text: ColumnElement[str] | str) -> ColumnElement[str]:
+        return func.regexp_replace(func.lower(func.trim(text)), r"\s+", " ", "g")
+
+    wanted_address = " ".join(address.lower().split())
+    in_facility = or_(col(Listing.id) == main_id, col(Listing.parent_id) == main_id)
+    with_the_phone = select(PhoneNumber.listing_id).where(col(PhoneNumber.number) == number)
+    has_the_phone = col(Listing.id).in_(with_the_phone)
+    query = (
+        select(Listing)
+        .where(in_facility, or_(has_the_phone, squeeze(col(Listing.address)) == wanted_address))
+        .order_by(col(Listing.id))
+        .limit(1)
+    )
+    return (await session.exec(query)).first()
+
+
 def _name_or_area_matches(text: str, match_threshold: float) -> ColumnElement[bool]:
     return or_(
         text_matches(text, col(Listing.name), match_threshold),

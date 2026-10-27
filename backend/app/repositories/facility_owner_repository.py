@@ -5,7 +5,7 @@ Accounts phase 6a. A link is one row per (listing, person); its `status` is pend
 
 from datetime import datetime
 
-from sqlalchemy import func
+from sqlalchemy import ColumnElement, func, or_
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -27,10 +27,20 @@ async def get_for(session: AsyncSession, listing_id: int, user_id: int) -> Facil
     return (await session.exec(query)).first()
 
 
-async def has_approved_link(session: AsyncSession, listing_id: int, user_id: int) -> bool:
-    """One query: may this person edit this listing through a link?"""
-    query = select(func.count()).select_from(FacilityOwner).where(
+def _link_on_listing_or_its_main_facility(listing_id: int) -> ColumnElement[bool]:
+    """The link is on this listing, or on the main facility this listing is a branch of (decision D5: access
+    inherits, one way). A main facility has no parent, so for it only the first part can be true."""
+    parent_of_listing = select(Listing.parent_id).where(col(Listing.id) == listing_id).scalar_subquery()
+    return or_(
         col(FacilityOwner.listing_id) == listing_id,
+        col(FacilityOwner.listing_id) == parent_of_listing,
+    )
+
+
+async def has_approved_link(session: AsyncSession, listing_id: int, user_id: int) -> bool:
+    """One query: may this person edit this listing through a link (their own, or its main facility's)?"""
+    query = select(func.count()).select_from(FacilityOwner).where(
+        _link_on_listing_or_its_main_facility(listing_id),
         col(FacilityOwner.user_id) == user_id,
         col(FacilityOwner.status) == LinkStatus.approved.value,
     )
@@ -71,14 +81,17 @@ async def first_approved_listing(
 async def approved_link_for(
     session: AsyncSession, user_id: int, listing_id: int
 ) -> tuple[FacilityOwner, Listing] | None:
+    """The person's approved link that gives access to the listing, and THE LISTING ASKED FOR: their own
+    link on it, or (for a branch) their link on its main facility. A link of their own comes first."""
     query = (
         select(FacilityOwner, Listing)
-        .join(Listing, col(Listing.id) == col(FacilityOwner.listing_id))
+        .join(Listing, col(Listing.id) == listing_id)
         .where(
+            _link_on_listing_or_its_main_facility(listing_id),
             col(FacilityOwner.user_id) == user_id,
-            col(FacilityOwner.listing_id) == listing_id,
             col(FacilityOwner.status) == LinkStatus.approved.value,
         )
+        .order_by((col(FacilityOwner.listing_id) == listing_id).desc())
     )
     first = (await session.exec(query)).first()
     return (first[0], first[1]) if first else None

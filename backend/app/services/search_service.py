@@ -10,9 +10,9 @@ from math import asin, cos, radians, sin, sqrt
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.repositories import search_repository
+from app.repositories import listing_repository, search_repository
 from app.repositories.search_repository import SearchCandidate
-from app.schemas.listing import CategorySummary, ListingSummary
+from app.schemas.listing import CategorySummary, ListingSummary, MainFacilityRef
 from app.schemas.search import SearchParams, SearchResponse
 from app.services.hours import hours_note, is_open_at
 from app.services.verification import is_verification_due
@@ -114,13 +114,22 @@ async def search_listings(session: AsyncSession, params: SearchParams, moment: d
         results.remove(sponsored_result)
         results.insert(0, sponsored_result)
     page = results[params.offset:params.offset + params.limit]
-    return SearchResponse(
-        items=[
-            to_summary(candidate, distance, is_open, moment, sponsored=candidate.listing.id == sponsored_id)
-            for candidate, distance, is_open in page
-        ],
-        total=len(results),
-    )
+    items = [
+        to_summary(candidate, distance, is_open, moment, sponsored=candidate.listing.id == sponsored_id)
+        for candidate, distance, is_open in page
+    ]
+    # "Branch of {name}" (FR-52), for the page of results only, and only while the main facility is published.
+    parent_ids = {
+        candidate.listing.parent_id for candidate, _distance, _open in page
+        if candidate.listing.parent_id is not None
+    }
+    main_facilities = await listing_repository.published_main_facilities(session, parent_ids)
+    for item, (candidate, _distance, _open) in zip(items, page, strict=True):
+        parent_id = candidate.listing.parent_id
+        if parent_id is not None and parent_id in main_facilities:
+            name, slug = main_facilities[parent_id]
+            item.branch_of = MainFacilityRef(name=name, slug=slug)
+    return SearchResponse(items=items, total=len(results))
 
 
 def first_sponsorable(
