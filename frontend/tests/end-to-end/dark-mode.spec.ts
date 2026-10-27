@@ -1,6 +1,7 @@
 /** Dark mode in a real browser. Requirements: NFR-10, FR-02; the owner's request of 2026-10-26. Spec: ui-spec "Dark mode"
- * (specs/2026-10-27-dark-mode/). It follows the system by default, has no flash, the Theme button cycles Light, Dark, System and keeps
- * only Light and Dark, the 112 card stays clearly red, and nothing runs off the screen at 320, 360, 768 and 1024 px in the dark.
+ * (specs/2026-10-27-dark-mode/, specs/2026-10-27-light-default-theme/). Light is the default for everyone, even on a dark device; Dark
+ * comes only from the Theme button (or System, chosen with it); no flash; the button cycles Light, Dark, System and keeps each choice;
+ * the 112 card stays clearly red, and nothing runs off the screen at 320, 360, 768 and 1024 px in the dark.
  * It needs the site running (playwright.config.ts); GET /meta goes to the real API.
  */
 import { expect, test } from "@playwright/test";
@@ -20,10 +21,10 @@ const background = (page: import("@playwright/test").Page) =>
 const theme = (page: import("@playwright/test").Page) =>
   page.evaluate(() => document.documentElement.getAttribute("data-theme"));
 
-test.describe("the system decides by default", () => {
+test.describe("Light is the default, even on a dark device", () => {
   test.use({ colorScheme: "dark", viewport: { width: 1024, height: 768 } });
 
-  test("a dark system gives a dark page, with the theme set before the page is drawn (no flash)", async ({ page }) => {
+  test("a dark device with nothing chosen gives the light page, with the theme set before the page is drawn (no flash)", async ({ page }) => {
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
         (window as unknown as { themeAtLoad: string | null }).themeAtLoad = document.documentElement.getAttribute("data-theme");
@@ -31,10 +32,18 @@ test.describe("the system decides by default", () => {
     });
     await page.goto("/find", { waitUntil: "load" });
 
-    expect(await page.evaluate(() => (window as unknown as { themeAtLoad: string | null }).themeAtLoad)).toBe("dark");
-    expect(await theme(page)).toBe("dark");
-    expect(await background(page)).toBe("rgb(11, 17, 16)");
+    expect(await page.evaluate(() => (window as unknown as { themeAtLoad: string | null }).themeAtLoad)).toBe("light");
+    expect(await theme(page)).toBe("light");
+    expect(await background(page)).toBe("rgb(246, 243, 236)"); // the paper colour, unchanged
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe("light"); // fields and scrollbars too
     expect(await page.evaluate(() => window.localStorage.getItem("swifthealth.theme"))).toBeNull(); // nothing kept for a person who never chose
+  });
+
+  test("the same dark device gets the dark page once the visitor has chosen System", async ({ page }) => {
+    await page.addInitScript(() => window.localStorage.setItem("swifthealth.theme", "system"));
+    await page.goto("/find", { waitUntil: "load" });
+
+    expect(await theme(page)).toBe("dark");
   });
 });
 
@@ -60,15 +69,10 @@ test.describe("a light system", () => {
 test.describe("the Theme button in the bar (from tablet width)", () => {
   test.use({ colorScheme: "light", viewport: { width: 1024, height: 768 } });
 
-  test("cycles Light, Dark, System, applies each at once, and keeps only Light and Dark", async ({ page }) => {
+  test("starts on Light, cycles Dark, System, Light, applies each at once, and keeps each choice", async ({ page }) => {
     await page.goto("/find", { waitUntil: "load" });
     const button = () => page.getByRole("button", { name: /^Colour theme:/ });
-    await expect(button()).toHaveAccessibleName("Colour theme: System. Change to Light.", { timeout: 30_000 });
-
-    await button().click();
-    await expect(button()).toHaveAccessibleName("Colour theme: Light. Change to Dark.");
-    expect(await theme(page)).toBe("light");
-    expect(await page.evaluate(() => window.localStorage.getItem("swifthealth.theme"))).toBe("light");
+    await expect(button()).toHaveAccessibleName("Colour theme: Light. Change to Dark.", { timeout: 30_000 });
 
     await button().click();
     await expect(button()).toHaveAccessibleName("Colour theme: Dark. Change to System.");
@@ -82,11 +86,17 @@ test.describe("the Theme button in the bar (from tablet width)", () => {
 
     await button().click();
     await expect(button()).toHaveAccessibleName("Colour theme: System. Change to Light.");
-    expect(await theme(page)).toBe("light"); // the system is light here
-    expect(await page.evaluate(() => window.localStorage.getItem("swifthealth.theme"))).toBeNull();
+    expect(await theme(page)).toBe("light"); // the device is light here
+    expect(await page.evaluate(() => window.localStorage.getItem("swifthealth.theme"))).toBe("system");
+
+    await button().click();
+    await expect(button()).toHaveAccessibleName("Colour theme: Light. Change to Dark.");
+    expect(await theme(page)).toBe("light");
+    expect(await page.evaluate(() => window.localStorage.getItem("swifthealth.theme"))).toBe("light");
   });
 
-  test("follows the system when it changes while System is chosen", async ({ page }) => {
+  test("follows the device when it changes while System is chosen", async ({ page }) => {
+    await page.addInitScript(() => window.localStorage.setItem("swifthealth.theme", "system"));
     await page.goto("/find", { waitUntil: "load" });
     expect(await theme(page)).toBe("light");
 
@@ -103,15 +113,16 @@ test.describe("the Theme button in the Menu (a phone)", () => {
     await page.goto("/find", { waitUntil: "load" });
     await page.getByRole("button", { name: "Menu" }).click({ timeout: 30_000 });
 
-    const row = page.getByRole("button", { name: "Theme: System" });
+    const row = page.getByRole("button", { name: "Theme: Light" });
     await expect(row).toBeVisible();
     const box = await row.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(48);
     await row.click();
-    await expect(page.getByRole("button", { name: "Theme: Light" })).toBeVisible();
-    await page.getByRole("button", { name: "Theme: Light" }).click();
     await expect(page.getByRole("button", { name: "Theme: Dark" })).toBeVisible();
     expect(await theme(page)).toBe("dark");
+    await page.getByRole("button", { name: "Theme: Dark" }).click();
+    await expect(page.getByRole("button", { name: "Theme: System" })).toBeVisible();
+    expect(await theme(page)).toBe("light"); // the device is light here
   });
 });
 
@@ -120,8 +131,9 @@ test.describe("the 112 card stays clearly red", () => {
 
   for (const scheme of ["light", "dark"] as const) {
     test(`in the ${scheme} mode: a red border and the red Call 112 button with white text`, async ({ page }) => {
-      await page.emulateMedia({ colorScheme: scheme });
+      await page.addInitScript((kept) => window.localStorage.setItem("swifthealth.theme", kept), scheme); // the Theme button's choice
       await page.goto("/emergency", { waitUntil: "load" });
+      expect(await theme(page)).toBe(scheme);
 
       const card = page.getByRole("region", { name: /National emergency number/ });
       const border = await card.evaluate((element) => getComputedStyle(element).borderTopColor);
@@ -137,10 +149,11 @@ test.describe("the 112 card stays clearly red", () => {
 
 for (const { width, height } of WIDTHS) {
   test.describe(`the dark mode at ${width} px`, () => {
-    test.use({ viewport: { width, height }, colorScheme: "dark" });
+    test.use({ viewport: { width, height } });
 
     for (const path of ["/", "/find", "/emergency", "/privacy", "/for-facilities", "/log-in"]) {
       test(`${path}: nothing runs off the screen and the text stays 16 px or more`, async ({ page }) => {
+        await page.addInitScript(() => window.localStorage.setItem("swifthealth.theme", "dark")); // chosen with the Theme button
         await fakeApi(page, () => null);
         await page.goto(path, { waitUntil: "load" });
         await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 60_000 });

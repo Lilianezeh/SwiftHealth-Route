@@ -63,38 +63,40 @@ describe("the choice", () => {
     expect(nextChoice("system")).toBe("light");
   });
 
-  it("is System when nothing is kept, and Light or Dark when that is kept", () => {
-    expect(readChoice()).toBe("system");
+  it("is Light when nothing is kept (the default for everyone, whatever the device says), and what is kept otherwise", () => {
+    expect(readChoice()).toBe("light");
     window.localStorage.setItem(THEME_KEY, "dark");
     expect(readChoice()).toBe("dark");
+    window.localStorage.setItem(THEME_KEY, "system");
+    expect(readChoice()).toBe("system");
     window.localStorage.setItem(THEME_KEY, "light");
     expect(readChoice()).toBe("light");
   });
 
-  it("is System when what is kept is anything else", () => {
-    for (const value of ["", "blue", "System", "1", "{}"]) {
+  it("is Light when what is kept is anything else", () => {
+    for (const value of ["", "blue", "System", "DARK", "1", "{}"]) {
       window.localStorage.setItem(THEME_KEY, value);
-      expect(readChoice(), value).toBe("system");
+      expect(readChoice(), value).toBe("light");
     }
   });
 
-  it("keeps Light and Dark under one key and keeps nothing for System", () => {
-    saveChoice("dark");
-    expect(window.localStorage.getItem(THEME_KEY)).toBe("dark");
-    saveChoice("system");
-    expect(window.localStorage.getItem(THEME_KEY)).toBeNull();
-    expect(window.localStorage.length).toBe(0);
+  it("keeps each of the three choices under one key (System too, or it could not be told from never having chosen)", () => {
+    for (const choice of THEME_CHOICES) {
+      saveChoice(choice);
+      expect(window.localStorage.getItem(THEME_KEY), choice).toBe(choice);
+      expect(window.localStorage.length).toBe(1);
+    }
     expect(THEME_KEY).toBe("swifthealth.theme");
   });
 
-  it("copes with a browser whose storage throws (private mode): it reads System and keeps nothing", () => {
+  it("copes with a browser whose storage throws (private mode): it reads Light and keeps nothing", () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
       throw new Error("blocked");
     });
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new Error("blocked");
     });
-    expect(readChoice()).toBe("system");
+    expect(readChoice()).toBe("light");
     expect(() => saveChoice("dark")).not.toThrow();
     vi.restoreAllMocks();
   });
@@ -126,19 +128,30 @@ describe("the script in the head (no flash)", () => {
     expect(THEME_SCRIPT).toContain(THEME_KEY);
   });
 
-  it("follows a dark system when nothing is chosen", () => {
+  it("is Light on a dark device when nothing is chosen: the site starts in Light until the owner approves the dark mode", () => {
     fakeSystem(true);
     runScript();
-    expect(theme()).toBe("dark");
+    expect(theme()).toBe("light");
   });
 
-  it("follows a light system when nothing is chosen", () => {
+  it("is Light on a light device when nothing is chosen", () => {
     fakeSystem(false);
     runScript();
     expect(theme()).toBe("light");
   });
 
-  it("uses the kept choice over the system", () => {
+  it("follows the device only when System was chosen", () => {
+    window.localStorage.setItem(THEME_KEY, "system");
+    fakeSystem(true);
+    runScript();
+    expect(theme()).toBe("dark");
+
+    fakeSystem(false);
+    runScript();
+    expect(theme()).toBe("light");
+  });
+
+  it("uses the kept choice over the device", () => {
     fakeSystem(true);
     window.localStorage.setItem(THEME_KEY, "light");
     runScript();
@@ -150,15 +163,16 @@ describe("the script in the head (no flash)", () => {
     expect(theme()).toBe("dark");
   });
 
-  it("ignores a kept value that is not light or dark", () => {
+  it("ignores a kept value that is not light, dark or system: Light, even on a dark device", () => {
     fakeSystem(true);
     window.localStorage.setItem(THEME_KEY, "purple");
     runScript();
-    expect(theme()).toBe("dark");
+    expect(theme()).toBe("light");
   });
 
   it("follows the system while the choice is System, and stops following when Light or Dark is chosen", () => {
     const system = fakeSystem(false);
+    window.localStorage.setItem(THEME_KEY, "system");
     runScript();
     expect(theme()).toBe("light");
 
@@ -175,7 +189,7 @@ describe("the script in the head (no flash)", () => {
     for (const choice of THEME_CHOICES) {
       for (const systemDark of [true, false]) {
         window.localStorage.clear();
-        if (choice !== "system") window.localStorage.setItem(THEME_KEY, choice);
+        window.localStorage.setItem(THEME_KEY, choice);
         fakeSystem(systemDark);
         runScript();
         const fromScript = theme();

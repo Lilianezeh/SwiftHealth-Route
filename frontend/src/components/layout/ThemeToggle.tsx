@@ -3,9 +3,10 @@
 /** The Theme button: Light, Dark, System. Requirements: NFR-10, NFR-04, FR-02. Spec: specs/frontend/ui-spec.md, "Dark mode".
  * One button that goes to the next choice each time it is pressed (Light, then Dark, then System) and applies it at once. It shows
  * the choice it is on with an icon (a sun, a moon, a screen) and says it in words: in the bar from tablet width it is an icon with a
- * name ("Colour theme: System. Change to Light."); in the phone Menu it is a row with the words "Theme: System". A polite live
- * region (no `role="status"`: the page's own status messages stay the only ones) tells a screen reader the new choice. The first render is System whatever is kept, so the server's page and the browser's agree;
- * the kept choice is read once the page is drawn. Light and Dark are kept in the browser, System keeps nothing (lib/theme/theme.ts).
+ * name ("Colour theme: Light. Change to Dark."); in the phone Menu it is a row with the words "Theme: Light". A polite live
+ * region (no `role="status"`: the page's own status messages stay the only ones) tells a screen reader the new choice. The first
+ * render is Light whatever is kept, so the server's page and the browser's agree; the kept choice is read once the page is drawn.
+ * Everyone starts on Light, even on a dark device, until the owner approves the dark mode. The choice is kept in the browser (lib/theme/theme.ts).
  */
 import { Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -19,7 +20,7 @@ const ICONS: Record<ThemeChoice, LucideIcon> = { light: Sun, dark: Moon, system:
 type ThemeToggleProps = { variant: "bar" | "menu" };
 
 export function ThemeToggle({ variant }: ThemeToggleProps) {
-  const [choice, setChoice] = useState<ThemeChoice>("system");
+  const [choice, setChoice] = useState<ThemeChoice>("light");
   const [announcement, setAnnouncement] = useState("");
 
   useEffect(() => {

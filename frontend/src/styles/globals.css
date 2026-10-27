@@ -47,9 +47,10 @@
    their value and every class that uses them follows. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* The browser's own parts (fields, scrollbars, the date picker) follow the scheme. With no data-theme (no script) the system decides. */
+/* The browser's own parts (fields, scrollbars, the date picker) follow the page's theme, never the device's: Light is the default for
+   everyone, even on a dark device or with no script, until the owner approves the dark mode (request of 2026-10-27). */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 :root[data-theme="light"] {
@@ -74,9 +75,9 @@ body {
 
 /* DARK MODE (2026-10-27, owner's request; specs/frontend/ui-spec.md "Dark mode", checked pair by pair in tests/unit/darkMode.test.ts).
    Only the ROLE tokens change; the constant ones (pine, pine-dark, accent, sky, sky-pale, paper, amber, on-amber, emergency) do not, so
-   the blue bars, the hero, the buttons, the logo and the red buttons look the same in both modes. The same values are written twice:
-   under data-theme="dark" (the choice, or the system's, set before the first paint) and under prefers-color-scheme for a browser that
-   runs no script. A test keeps the two blocks equal. */
+   the blue bars, the hero, the buttons, the logo and the red buttons look the same in both modes. The values are written once, under
+   data-theme="dark" (the visitor's choice, set before the first paint). There is no prefers-color-scheme block on purpose: Light is the
+   default for everyone, even on a dark device or with no script, until the owner approves the dark mode (request of 2026-10-27). */
 :root[data-theme="dark"] {
   color-scheme: dark;
   --color-page: #0b1110;
@@ -95,28 +96,6 @@ body {
   --color-amber-wash: #3a2c0a;
   --color-whatsapp-dark: #3fb59f;
   --color-alert: #ff8a80;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    color-scheme: dark;
-    --color-page: #0b1110;
-    --color-surface: #121b1a;
-    --color-ink: #e7eceb;
-    --color-ink-soft: #a7b6b3;
-    --color-line: #2d3c3a;
-    --color-forest: #7fc6e8;
-    --color-pine-100: #1c4256;
-    --color-pine-50: #152f3b;
-    --color-open: #6fd6a0;
-    --color-open-bg: #12301f;
-    --color-closed: #b9c6c2;
-    --color-closed-bg: #232d2b;
-    --color-amber-ink: #f2c668;
-    --color-amber-wash: #3a2c0a;
-    --color-whatsapp-dark: #3fb59f;
-    --color-alert: #ff8a80;
-  }
 }
 
 /* The section of the home page that holds the background slideshow ("Find by type", specs/2026-10-22-home-photos/) waits until it is near the
