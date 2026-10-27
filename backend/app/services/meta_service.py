@@ -49,4 +49,5 @@ async def get_meta(session: AsyncSession) -> MetaResponse:
         report_reasons=[reason.value for reason in ReportReason],
         service_catalogue=catalogue_for_meta(),
         signup_open=signup_service.signup_is_open(),
+        featured_price_naira=settings.featured_price,
     )

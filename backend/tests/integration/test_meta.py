@@ -3,6 +3,8 @@
 The contract is specs/backend/api-spec.md, "GET /meta". Decisions 1, 2, 3 and 8 in
 specs/2026-10-09-meta-endpoint/requirements.md.
 """
+from decimal import Decimal
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import event
@@ -13,7 +15,7 @@ from app.core.service_names import normalise_service_name
 from app.main import app
 from app.models.base import ListingStatus
 from app.repositories import category_repository
-from app.services import meta_service
+from app.services import meta_service, payment_service
 from tests.factories import add_listing
 
 pytestmark = pytest.mark.anyio
@@ -33,12 +35,41 @@ async def test_meta_needs_no_login(client: AsyncClient) -> None:
     assert response.status_code == 200
 
 
-async def test_meta_has_exactly_the_six_lists(client: AsyncClient) -> None:
+async def test_meta_has_exactly_the_six_lists_the_sign_up_flag_and_the_featured_price(
+    client: AsyncClient,
+) -> None:
     body = await get_meta(client)
     assert set(body) == {
         "areas", "categories", "services", "blood_groups", "report_reasons", "service_catalogue",
-        "signup_open",
+        "signup_open", "featured_price_naira",
     }
+
+
+async def test_meta_gives_the_featured_price_as_a_string_with_two_decimals(client: AsyncClient) -> None:
+    """The "For facilities" page shows it before anyone has an account (api-spec section 3, /meta)."""
+    price = (await get_meta(client))["featured_price_naira"]
+    assert isinstance(price, str)
+    assert price == f"{settings.featured_price:.2f}" == "5000.00"
+
+
+async def test_the_featured_price_follows_the_setting_and_is_never_a_float(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "featured_price_naira", Decimal("7500.5"))
+
+    response = await client.get("/meta")
+
+    assert response.json()["featured_price_naira"] == "7500.50"
+    assert '"featured_price_naira":"7500.50"' in response.text.replace(" ", "")  # a string in the JSON text
+
+
+async def test_the_featured_price_is_the_one_paystack_gets(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "featured_price_naira", Decimal("12345.67"))
+
+    assert (await get_meta(client))["featured_price_naira"] == "12345.67"
+    assert payment_service.amount_in_kobo() == 1234567
 
 
 async def test_meta_says_sign_up_is_closed_by_default(client: AsyncClient) -> None:

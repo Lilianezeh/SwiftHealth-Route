@@ -18,6 +18,7 @@ const PAGES = [
   { path: "/privacy", h1: "Privacy policy", title: "Privacy policy | SwiftHealth Route" },
   { path: "/terms", h1: "Terms of use", title: "Terms of use | SwiftHealth Route" },
   { path: "/contact", h1: "Contact us", title: "Contact us | SwiftHealth Route" },
+  { path: "/for-facilities", h1: "For facilities", title: "For facilities | SwiftHealth Route" },
 ];
 
 for (const { width, height } of WIDTHS) {
@@ -68,7 +69,7 @@ test("robots.txt keeps the staff areas out, and sitemap.xml lists the static pag
   expect(robots).toContain("Sitemap: https://swifthealth-ng.netlify.app/sitemap.xml");
 
   const sitemap = await (await request.get("/sitemap.xml")).text();
-  for (const path of ["/about", "/how-we-verify", "/privacy", "/terms", "/contact", "/emergency", "/find", "/list-your-facility"]) {
+  for (const path of ["/about", "/how-we-verify", "/privacy", "/terms", "/contact", "/emergency", "/find", "/list-your-facility", "/for-facilities"]) {
     expect(sitemap).toContain(`https://swifthealth-ng.netlify.app${path}`);
   }
   expect(sitemap).not.toContain("/admin");

@@ -35,12 +35,12 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "SwiftHealth Route" })).toHaveAttribute("href", "/");
   });
 
-  it("has Find care to /find, red SwiftRescue to /emergency, and For facilities to /list-your-facility", () => {
+  it("has Find care to /find, red SwiftRescue to /emergency, and For facilities to /for-facilities", () => {
     render(<HeaderOnPage />);
 
     expect(screen.getByRole("link", { name: "Find care" })).toHaveAttribute("href", "/find");
     expect(screen.getByRole("link", { name: "SwiftRescue" })).toHaveAttribute("href", "/emergency");
-    expect(screen.getByRole("link", { name: "For facilities" })).toHaveAttribute("href", "/list-your-facility");
+    expect(screen.getByRole("link", { name: "For facilities" })).toHaveAttribute("href", "/for-facilities");
   });
 
   it("puts the links in the order Find care, SwiftRescue, For facilities, Log in, Sign up (sign-up open)", async () => {

@@ -50,7 +50,7 @@ describe("MobileMenu", () => {
     const panel = screen.getByRole("navigation", { name: "Menu links" });
     expect(button).toHaveAttribute("aria-controls", panel.id);
     expect(within(panel).getByRole("link", { name: "Find care" })).toHaveAttribute("href", "/find");
-    expect(within(panel).getByRole("link", { name: "For facilities" })).toHaveAttribute("href", "/list-your-facility");
+    expect(within(panel).getByRole("link", { name: "For facilities" })).toHaveAttribute("href", "/for-facilities");
   });
 
   it("makes every link of the panel at least 48 px high", async () => {

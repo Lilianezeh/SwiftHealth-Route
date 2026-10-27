@@ -119,6 +119,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/contact",
         "/emergency",
         "/find",
+        "/for-facilities", // the page for owners who have not decided yet (2026-10-27)
         "/forgot-password", // accounts phase 5, a forgotten password (/reset-password redirects here)
         "/how-we-verify",
         "/list-your-facility",
