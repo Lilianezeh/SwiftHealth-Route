@@ -74,6 +74,14 @@ export function ListingDetailView({ slug }: ListingDetailViewProps) {
         <p className="text-base text-ink-soft">
           {listing.category.name} · {listing.area}
         </p>
+        {listing.branch_of && (
+          <p className="text-base text-ink">
+            Branch of{" "}
+            <Link href={`/listing/${listing.branch_of.slug}`} className="inline-flex min-h-12 items-center font-semibold underline">
+              {listing.branch_of.name}
+            </Link>
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <OpenNowBadge isOpenNow={listing.is_open_now} is24Hours={listing.is_24_hours} />
         </div>
@@ -96,6 +104,23 @@ export function ListingDetailView({ slug }: ListingDetailViewProps) {
       <OtherPhones phones={otherPhones} facilityName={listing.name} />
       <HoursTable openingHours={listing.opening_hours} is24Hours={listing.is_24_hours} />
       <ServicesFees services={listing.services} />
+
+      {listing.branches && listing.branches.length > 0 && (
+        <section aria-labelledby="branches-heading" className="flex flex-col gap-2">
+          <h2 id="branches-heading" className="text-xl font-bold text-forest">
+            Branches
+          </h2>
+          <ul className="flex flex-col">
+            {listing.branches.map((branch) => (
+              <li key={branch.slug}>
+                <Link href={`/listing/${branch.slug}`} className="inline-flex min-h-12 items-center text-base font-semibold text-forest underline">
+                  {`${branch.name}, ${branch.area}`}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section aria-labelledby="share-heading" className="flex flex-col gap-3">
         <h2 id="share-heading" className="text-xl font-bold text-forest">

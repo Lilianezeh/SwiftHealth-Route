@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.api.dependencies import (
+    branch_rate_limit,
     claim_rate_limit,
     claimable_search_rate_limit,
     get_current_moment,
@@ -17,6 +18,9 @@ from app.api.dependencies import (
 from app.models import User
 from app.models.base import Role
 from app.schemas.facility_registration import (
+    BranchCreate,
+    BranchCreated,
+    BranchList,
     ClaimableList,
     ClaimCreate,
     ClaimCreated,
@@ -25,7 +29,13 @@ from app.schemas.facility_registration import (
 )
 from app.schemas.owner_link import OwnerList
 from app.schemas.provider import ProviderListing, ProviderListingUpdate
-from app.services import facility_registration_service, owner_link_service, provider_service
+from app.services import (
+    branch_rules,
+    branch_service,
+    facility_registration_service,
+    owner_link_service,
+    provider_service,
+)
 
 router = APIRouter(prefix="/provider", tags=["Providers"])
 
@@ -56,6 +66,52 @@ async def register_facility(
         raise HTTPException(
             status.HTTP_409_CONFLICT, {"message": error.message, "listing_id": error.listing_id}
         ) from None
+
+
+@router.post(
+    "/facilities/{main_id}/branches",
+    response_model=BranchCreated,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(branch_rate_limit)],
+    summary="Provider: add a branch to my facility (a draft for staff to verify)",
+    responses={
+        404: {"description": "No approved link on this facility."},
+        409: {"description": "The phone number or the address is already in this facility."},
+        422: {"description": "A rule for branches is broken (for example the facility is itself a branch)."},
+    },
+)
+async def add_branch(
+    main_id: int,
+    payload: BranchCreate,
+    provider: User = Depends(require_role(Role.provider)),
+    moment: datetime = Depends(get_current_moment),
+    session: AsyncSession = Depends(get_session),
+) -> BranchCreated:
+    try:
+        return await branch_service.create_branch(session, provider, main_id, payload, moment)
+    except branch_service.NoAccessToMainFacilityError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, NO_LISTING) from None
+    except branch_rules.BranchRuleError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from None
+    except branch_service.BranchDuplicateError:
+        raise HTTPException(status.HTTP_409_CONFLICT, branch_service.BRANCH_ALREADY_REGISTERED) from None
+
+
+@router.get(
+    "/facilities/{main_id}/branches",
+    response_model=BranchList,
+    summary="Provider: the branches of my facility, of every status",
+    responses={404: {"description": "No approved link on this facility."}},
+)
+async def list_my_branches(
+    main_id: int,
+    provider: User = Depends(require_role(Role.provider)),
+    session: AsyncSession = Depends(get_session),
+) -> BranchList:
+    try:
+        return await branch_service.list_branches(session, provider, main_id)
+    except branch_service.NoAccessToMainFacilityError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, NO_LISTING) from None
 
 
 @router.get(

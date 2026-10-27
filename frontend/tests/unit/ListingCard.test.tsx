@@ -41,6 +41,20 @@ describe("ListingCard", () => {
     expect(screen.getByText("New Haven")).toBeInTheDocument();
   });
 
+  it("shows 'Branch of {name}' with a link to the main facility when the API sends branch_of (FR-52)", () => {
+    renderCard({ branch_of: { name: "Night Pharmacy Main", slug: "night-pharmacy-main" } });
+
+    expect(screen.getByText(/^Branch of/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Night Pharmacy Main" })).toHaveAttribute("href", "/listing/night-pharmacy-main");
+  });
+
+  it("shows no 'Branch of' line for a main facility", () => {
+    renderCard();
+    expect(screen.queryByText(/^Branch of/)).toBeNull();
+    renderCard({ branch_of: null });
+    expect(screen.queryByText(/^Branch of/)).toBeNull();
+  });
+
   it("shows the open label and the verified label", () => {
     renderCard();
 

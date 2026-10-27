@@ -101,6 +101,14 @@ describe("moves and closures (accounts phase 8a, FR-53)", () => {
     expect(screen.getByLabelText("New address")).toHaveValue("1 Example Road");
   });
 
+  it("shows an editor 'Branch of a bigger facility?' with the main facility named when the listing is a branch (accounts phase 8b)", async () => {
+    stubApi({ current: detail({ status: "published", parent_id: 7, parent_name: "Eze Clinic" }) });
+    await openEdit();
+
+    expect(await screen.findByRole("heading", { level: 2, name: "Branch of a bigger facility?" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Eze Clinic" })).toHaveAttribute("href", "/admin/listings/7");
+  });
+
   it("shows a verifier none of it", async () => {
     loginAs("verifier");
     stubApi();
@@ -109,6 +117,7 @@ describe("moves and closures (accounts phase 8a, FR-53)", () => {
     await screen.findByRole("heading", { level: 1 });
     expect(screen.queryByRole("heading", { level: 2, name: "Moved to a new address?" })).toBeNull();
     expect(screen.queryByRole("heading", { level: 2, name: "Address history" })).toBeNull();
+    expect(screen.queryByRole("heading", { level: 2, name: "Branch of a bigger facility?" })).toBeNull();
   });
 
   it("does not show it on a new listing", async () => {

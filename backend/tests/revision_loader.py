@@ -30,6 +30,8 @@ AUTHENTICATOR_APP_REVISION_FILE_PATTERN = "*_authenticator_app.py"
 FACILITY_OWNERS_REVISION_FILE_PATTERN = "*_facility_owners.py"
 # Phase 8a (listings.closed_at and closed_reason)
 LISTING_CLOSURE_REVISION_FILE_PATTERN = "*_listing_closure.py"
+# Phase 8b (listings.parent_id)
+LISTING_BRANCHES_REVISION_FILE_PATTERN = "*_listing_branches.py"
 
 
 def revision_file(pattern: str = REVISION_FILE_PATTERN) -> Path:

@@ -11,6 +11,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { BranchOf } from "@/components/admin/BranchOf";
 import { ListingActions } from "@/components/admin/ListingActions";
 import { ListingFormFields } from "@/components/admin/ListingFormFields";
 import { useStaff } from "@/components/admin/StaffGate";
@@ -256,6 +257,16 @@ export function ListingEditor({ listingId }: ListingEditorProps) {
         onMove={(action: ListingMove) => void move(() => call((token) => moveListing(token, listingId as number, action)))}
         onHide={(reason) => void move(() => call((token) => hideListing(token, listingId as number, reason)))}
       />
+
+      {detail && listingId !== null && isEditorOrAdmin && (
+        <BranchOf
+          listingId={listingId}
+          parentId={detail.parent_id ?? null}
+          parentName={detail.parent_name ?? null}
+          call={call}
+          onChanged={setDetail}
+        />
+      )}
 
       {detail && listingId !== null && isEditorOrAdmin && (
         <MoveOrClose

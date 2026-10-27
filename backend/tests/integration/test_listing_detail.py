@@ -29,13 +29,14 @@ DETAIL_FIELDS = {
     # ListingSummary
     "id", "slug", "name", "category", "area", "address", "latitude", "longitude", "distance_km",
     "is_open_now", "is_24_hours", "primary_phone", "last_verified_at", "verification_due", "sponsored",
-    "hours_note",
+    "hours_note", "branch_of",
     # ListingDetail
     "landmark", "description", "entrance_photo_url", "phones", "opening_hours", "services",
-    "recently_reported_not_working", "disclaimer",
+    "recently_reported_not_working", "disclaimer", "branches",
 }
 INTERNAL_WORDS = (
-    "status", "next_check_due", "owner_id", "created_by", "featured_until", "reporter_key", "reporter_phone",
+    "parent_id", "closed_at", "closed_reason", "status", "next_check_due", "owner_id", "created_by",
+    "featured_until", "reporter_key", "reporter_phone",
     "created_at", "updated_at", "category_id",
 )
 

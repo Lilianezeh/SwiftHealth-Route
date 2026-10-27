@@ -2,7 +2,7 @@
 /** The provider screens: my facility, edit, get featured, payment complete. Requirements: FR-43, FR-44, FR-46, NFR-06, NFR-10.
  * UI spec 4.1 to 4.4 and "Phase 12 details"; decisions I1, I2 and I10 to I13 in specs/2026-10-20-providers-payments/requirements.md.
  */
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -221,6 +221,16 @@ describe("edit my facility (/provider/edit)", () => {
     expect(screen.getByRole("heading", { level: 2, name: "Address history" })).toBeInTheDocument();
     expect(screen.getByLabelText("New address")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Close this facility" })).toBeInTheDocument();
+  });
+
+  it("shows 'Branches' with the Add a branch form on a main facility and not on a branch (accounts phase 8b)", async () => {
+    await openEdit();
+    expect(screen.getByRole("heading", { level: 2, name: "Branches" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Add a branch" })).toBeInTheDocument();
+    cleanup();
+
+    await openEdit({ parent_id: 7, parent_name: "Eze Clinic" });
+    expect(screen.queryByRole("heading", { level: 2, name: "Branches" })).toBeNull();
   });
 
   it("starts with the listing's own values", async () => {

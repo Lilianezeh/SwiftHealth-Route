@@ -3,6 +3,7 @@
  * who may do what (an editor or admin, or an approved owner; only an owner may close); a refusal reaches the caller as an ApiError.
  */
 import { requestJson } from "@/lib/api/request";
+import type { StaffListingDetail } from "@/types/staff";
 
 export type AddressChange = { address: string; area: string; landmark: string | null };
 
@@ -30,6 +31,35 @@ export function moveListingAddress(token: string, listingId: number, change: Add
     token,
     body: { address: change.address.trim(), area: change.area, landmark: change.landmark?.trim() || null },
   });
+}
+
+export type BranchInput = { facility_name: string; area: string; address: string; phone: string; notes: string };
+export type BranchItem = { id: number; name: string; area: string; status: string };
+
+/** The branches of a facility the logged-in provider manages, of every status (FR-52). */
+export async function listBranches(token: string, mainId: number): Promise<BranchItem[]> {
+  const answer = await requestJson<{ items?: BranchItem[] }>(`/provider/facilities/${mainId}/branches`, { token });
+  return Array.isArray(answer.items) ? answer.items : [];
+}
+
+/** Adds a branch: a draft for staff to verify. A 409 (already registered) and a 422 (a rule) carry the API's sentence. */
+export function addBranch(token: string, mainId: number, branch: BranchInput): Promise<{ message: string; listing_id: number }> {
+  const notes = branch.notes.trim();
+  return requestJson(`/provider/facilities/${mainId}/branches`, {
+    token,
+    body: {
+      facility_name: branch.facility_name.trim(),
+      area: branch.area,
+      address: branch.address.trim(),
+      phone: branch.phone.trim(),
+      ...(notes ? { notes } : {}),
+    },
+  });
+}
+
+/** Staff (editor, admin): make a listing a branch of another (a number) or a main facility again (null). */
+export function setMainFacility(token: string, listingId: number, parentId: number | null): Promise<StaffListingDetail> {
+  return requestJson<StaffListingDetail>(`/listings/${listingId}`, { token, method: "PATCH", body: { parent_id: parentId } });
 }
 
 export function closeListing(token: string, listingId: number, reason: string): Promise<CloseResult> {

@@ -21,7 +21,7 @@ from app.schemas.staff_listing import (
     StaffListingList,
     StaffListParams,
 )
-from app.services import access_service, listing_service, staff_listing_service
+from app.services import access_service, branch_rules, listing_service, staff_listing_service
 from app.services.listing_service import ListingNotFoundError
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
@@ -94,6 +94,8 @@ async def update_listing(
 ) -> StaffListingDetail:
     try:
         listing = await access_service.load_listing_for_editing(session, user, listing_id)
+        if "parent_id" in payload.model_fields_set and user.role not in (Role.editor, Role.admin):
+            raise access_service.NotAllowedError  # only an editor or admin makes a branch (Phase 8b)
         await staff_listing_service.update_listing(session, user, listing, payload, moment)
     except access_service.ListingNotFoundError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Listing not found") from None
@@ -101,6 +103,8 @@ async def update_listing(
         raise HTTPException(status.HTTP_403_FORBIDDEN, NO_PERMISSION_MESSAGE) from None
     except staff_listing_service.UnknownCategoryError:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "category: no such category") from None
+    except branch_rules.BranchRuleError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from None
     return await staff_listing_service.get_staff_detail(session, listing_id, moment)
 
 

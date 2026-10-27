@@ -14,7 +14,15 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models import OpeningHours, PhoneNumber, Service
 from app.repositories import listing_repository
 from app.repositories.listing_repository import ListingDetailRows
-from app.schemas.listing import CategorySummary, ListingDetail, OpeningHoursRead, PhoneRead, ServiceRead
+from app.schemas.listing import (
+    BranchRef,
+    CategorySummary,
+    ListingDetail,
+    MainFacilityRef,
+    OpeningHoursRead,
+    PhoneRead,
+    ServiceRead,
+)
 from app.services.hours import has_usable_times, hours_note, is_open_at
 from app.services.search_service import REPORT_WINDOW, REPORTS_TO_EXCLUDE
 from app.services.verification import is_verification_due
@@ -119,4 +127,16 @@ async def get_published_listing(session: AsyncSession, slug: str, moment: dateti
     recently_reported = await listing_repository.is_reported_not_working(
         session, rows.listing.id, reports_since=moment - REPORT_WINDOW, reports_to_flag=REPORTS_TO_EXCLUDE
     )
-    return to_detail(rows, recently_reported=recently_reported, moment=moment)
+    detail = to_detail(rows, recently_reported=recently_reported, moment=moment)
+    # Branches (FR-52): the main facility is named only while it is published, and the page lists the
+    # published branches.
+    listing = rows.listing
+    if listing.parent_id is not None:
+        main_facilities = await listing_repository.published_main_facilities(session, {listing.parent_id})
+        if listing.parent_id in main_facilities:
+            name, slug = main_facilities[listing.parent_id]
+            detail.branch_of = MainFacilityRef(name=name, slug=slug)
+    listing_id: int = listing.id  # type: ignore[assignment]
+    branches = await listing_repository.list_branches(session, listing_id, published_only=True)
+    detail.branches = [BranchRef(name=branch.name, slug=branch.slug, area=branch.area) for branch in branches]
+    return detail

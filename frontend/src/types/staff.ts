@@ -46,6 +46,8 @@ export type StaffListingDetail = ListingDetail & {
   submission_details: string | null;
   closed_at: string | null; // set when the facility was closed (accounts phase 8a)
   closed_reason: string | null;
+  parent_id?: number | null; // the main facility this listing is a branch of (accounts phase 8b)
+  parent_name?: string | null;
 };
 
 export type StaffListParams = {

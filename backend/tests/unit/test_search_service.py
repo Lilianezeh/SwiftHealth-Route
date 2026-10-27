@@ -246,6 +246,6 @@ async def test_the_summary_has_only_the_fields_in_the_api_spec(session: AsyncSes
     assert set(response.items[0].model_dump()) == {
         "id", "slug", "name", "category", "area", "address", "latitude", "longitude", "distance_km",
         "is_open_now", "is_24_hours", "primary_phone", "last_verified_at", "verification_due", "sponsored",
-        "hours_note",
+        "hours_note", "branch_of",  # branch_of: accounts phase 8b, null for every main facility
     }
     assert response.items[0].category.model_dump() == {"slug": "pharmacy", "name": "Pharmacy"}

@@ -26,7 +26,7 @@ from app.schemas.staff_listing import (
     StaffListingSummary,
     StaffListParams,
 )
-from app.services import listing_service
+from app.services import branch_rules, listing_service
 from app.services.hours import is_open_at
 from app.services.search_service import REPORT_WINDOW, REPORTS_TO_EXCLUDE, to_summary
 
@@ -91,6 +91,9 @@ async def get_staff_detail(session: AsyncSession, listing_id: int, moment: datet
         session, listing.id, reports_since=moment - REPORT_WINDOW, reports_to_flag=REPORTS_TO_EXCLUDE
     )
     public = listing_service.to_detail(rows, recently_reported=recently_reported, moment=moment)
+    parent = None
+    if listing.parent_id is not None:
+        parent = await listing_repository.get_by_id(session, listing.parent_id)
     return StaffListingDetail(
         **public.model_dump(),
         status=listing.status,
@@ -102,6 +105,8 @@ async def get_staff_detail(session: AsyncSession, listing_id: int, moment: datet
         submission_details=await audit_repository.latest_new_value(session, listing.id, SUBMISSION_ACTION),
         closed_at=listing.closed_at,
         closed_reason=listing.closed_reason,
+        parent_id=listing.parent_id,
+        parent_name=parent.name if parent else None,
     )
 
 
@@ -268,6 +273,12 @@ async def update_listing(
             raise UnknownCategoryError(payload.category)
         listing.category_id = category.id
         changes.append(("category", rows.category.slug, category.slug))
+
+    if "parent_id" in payload.model_fields_set and payload.parent_id != listing.parent_id:
+        if payload.parent_id is not None:
+            await branch_rules.ensure_can_be_branch_of(session, listing, payload.parent_id)
+        changes.append(("parent_id", _text(listing.parent_id), _text(payload.parent_id)))
+        listing.parent_id = payload.parent_id
 
     new_phones = old_phones = new_hours = old_hours = new_services = old_services = None
     if payload.phones is not None:

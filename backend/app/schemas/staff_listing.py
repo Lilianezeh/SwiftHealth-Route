@@ -71,6 +71,8 @@ class StaffListingDetail(ListingDetail):
     submission_details: str | None  # the text of a "List your facility" draft, for staff only (decision C6)
     closed_at: datetime | None  # set when the facility was closed (accounts phase 8a)
     closed_reason: str | None
+    parent_id: int | None  # the main facility this listing is a branch of (accounts phase 8b)
+    parent_name: str | None
 
 
 class PhoneInput(BaseModel):
@@ -217,6 +219,9 @@ class ListingUpdate(_ListingFields):
     phones: list[PhoneInput] | None = None
     opening_hours: list[HoursInput] | None = None
     services: list[ServiceInput] | None = None
+    # The main facility of a branch (accounts phase 8b): a number sets it, null clears it. Editors and
+    # admins only (the route checks), and not a field a provider may send (api-spec 7, "Phase 8b").
+    parent_id: int | None = None
 
     @model_validator(mode="after")
     def required_values_are_not_null(self) -> Self:

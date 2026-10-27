@@ -28,6 +28,14 @@ export function ListingCard({ listing, now }: ListingCardProps) {
             {listing.name}
           </Link>
         </h3>
+        {listing.branch_of && (
+          <p className="text-base text-ink-soft">
+            Branch of{" "}
+            <Link href={`/listing/${listing.branch_of.slug}`} className="inline-flex min-h-12 items-center underline">
+              {listing.branch_of.name}
+            </Link>
+          </p>
+        )}
         {listing.sponsored && (
           <span className="mt-1 inline-flex rounded-full bg-amber px-3 py-1 text-base font-semibold text-ink">
             Sponsored

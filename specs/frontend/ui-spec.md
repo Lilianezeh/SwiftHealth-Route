@@ -462,6 +462,13 @@ FR-50, US-19. **API:** `GET /staff/owner-requests`, `POST /staff/owner-requests/
 - **"Address history"**: the changes newest first as "{date}: {Address|Area|Landmark} {old or 'none'} to {new or 'none'}", with "by {name}" for staff only; "No changes yet." when empty.
 When the listing is closed the editor and the provider page say "This facility is closed." (with the reason for staff) and the forms are replaced by that sentence; an editor or admin reopens it with the existing Reopen button. After a move or a closing the page reloads the listing. The staff **report queue** (3.6) shows, on an open report whose reason is "Moved", a link **Start a move** to `/admin/listings/{id}#move`, and on one whose reason is "Closed", a link **Close it** to `/admin/listings/{id}#close`; the report's other buttons stay. All text 16 px or more, buttons at least 48 px.
 
+### 3.12 Branches (accounts phase 8b, FR-52, US-20)
+**API:** `GET` and `POST /provider/facilities/{id}/branches`, `PATCH /listings/{id}` with `parent_id`, and the new `branch_of` and `branches` fields (api-spec 7, "Phase 8b").
+- **Public.** A search result card and the listing page show, under the name, the line **"Branch of {main name}"** (a link to the main facility's page) when `branch_of` is set. The listing page of a main facility has an `h2` **"Branches"** with a link for each published branch ("{name}, {area}"); it is left out when there are none. Nothing changes on SwiftRescue pages.
+- **Provider, "Edit my facility".** Under the form, an `h2` **"Branches"** shows the branches with their status in words and an **Edit** link to `/provider/edit?listing={id}` for each, and a form **"Add a branch"**: name, area, address, phone, notes (optional), **Send** (the branch takes the main facility's category). Success: "Thanks. Our team will verify the branch before it is listed." A 409 shows the API's sentence. The section is shown only when the listing is a main facility.
+- **Staff editor.** For an editor or admin, a small part **"Branch of a bigger facility?"** shows the main facility's name (link) or "This is a main facility.", a field "Main facility number" (the number in its editor address), and the buttons **Make it a branch** and **Make it a main facility**; the API's sentence is shown when a rule refuses.
+All text 16 px or more, buttons at least 48 px.
+
 ### 4.3 Get featured — `/provider/featured`
 **API:** `POST /payments/featured`. Explains: "Featured listings appear first in matching searches with a Sponsored label for 30 days. Never shown in SwiftRescue." Price, then **Pay with Paystack** → redirect to `authorization_url`.
 

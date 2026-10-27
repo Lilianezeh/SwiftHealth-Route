@@ -24,7 +24,15 @@ export type ListingSummary = {
   // The next opening or closing time as English text from the API, in Lagos time ("Closes 9:00 PM", "Opens Monday 7:30 AM").
   // null for a 24-hour listing and for a listing with no hours recorded.
   hours_note: string | null;
+  // "Branch of {name}" (FR-52): set when this listing is a branch whose main facility is published; absent or null otherwise.
+  branch_of?: MainFacilityRef | null;
 };
+
+/** The main facility a branch belongs to, as the public sees it (published ones only). */
+export type MainFacilityRef = { name: string; slug: string };
+
+/** A published branch, as the main facility's page lists it. */
+export type BranchRef = { name: string; slug: string; area: string };
 
 /** One phone number of a listing page (api-spec, "ListingDetail"). `is_whatsapp` is only true when staff or the provider said so (FR-47). */
 export type PhoneRead = { number: string; label: string | null; is_primary: boolean; is_whatsapp: boolean };
@@ -55,6 +63,7 @@ export type ListingDetail = ListingSummary & {
   services: ServiceRead[];
   recently_reported_not_working: boolean; // the FR-22 rule: the listing is still shown, so the page can warn
   disclaimer: string; // FR-13
+  branches?: BranchRef[]; // the published branches of this facility, by name (FR-52)
 };
 
 /** One group of GET /emergency (api-spec). `contacts` may be empty: the page hides an empty group. */
