@@ -46,7 +46,7 @@ export function HomeHero() {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="on-dark relative flex flex-col bg-linear-to-tr from-pine-dark to-sky text-white lg:min-h-[85svh]"
+      className="on-dark relative flex flex-col bg-linear-to-tr from-hero-from to-hero-to text-white lg:min-h-[85svh]"
     >
       <div className="relative h-64 shrink-0 [clip-path:polygon(0_0,100%_0,100%_85%,0_100%)] md:h-72 lg:absolute lg:inset-y-0 lg:right-0 lg:h-auto lg:w-1/2 lg:[clip-path:polygon(15%_0,100%_0,100%_100%,0_100%)]">
         <picture className="block h-full">
@@ -55,11 +55,15 @@ export function HomeHero() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img {...heroImage} alt={hero.alt} className="h-full w-full object-cover" />
         </picture>
-        {/* The veil: decoration only, behind the header's white links. 6 rem high, solid (80%) for the first 3 rem, which covers
-            the header's text (it ends at 2.75 rem), then a gentle fade out over the other 3 rem. */}
+        {/* The photo is as bright in the dark mode as in the light mode (owner, 2026-10-28): no filter on it and nothing laid over it,
+            except the veil below. A test compares its pixels in both modes. */}
+        {/* The veil: decoration only, behind the header's white links. 6 rem high, solid (85%) for the first 4.5 rem, which covers
+            everything the header draws (its items end at about 3.5 rem), then a fade out over the last 1.5 rem. It was solid for 3 rem and
+            80%; measured on the real pixels, the lower part of the items was then over a fading veil and a white sheet of the photo gave
+            3.8:1 to 4.3:1, under the 4.5:1 that text needs (tests/end-to-end/hero-header-contrast.spec.ts). */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-pine-dark/80 via-pine-dark/80 via-50% to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-veil/85 via-veil/85 via-75% to-transparent"
         />
       </div>
 

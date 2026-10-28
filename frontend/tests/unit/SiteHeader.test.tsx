@@ -163,7 +163,7 @@ describe("SiteHeader", () => {
     render(<HeaderOnPage />);
 
     const header = screen.getByRole("banner");
-    expect(header.className).toMatch(/\bbg-pine\b/); // the header blue stays in the dark mode
+    expect(header.className).toMatch(/\bbg-bar\b/); // the header blue (a navy in the dark mode: the bar token)
     expect(header.className).toMatch(/\bon-dark\b/);
   });
 
@@ -205,7 +205,7 @@ describe("SiteHeader", () => {
       const { unmount } = render(<HeaderOnPage />);
 
       const header = screen.getByRole("banner");
-      expect(header.className, pathname).toMatch(/\bbg-pine\b/);
+      expect(header.className, pathname).toMatch(/\bbg-bar\b/);
       expect(header.className, pathname).toMatch(/\bborder-b-4\b/);
       expect(header.className, pathname).toMatch(/\bborder-accent\b/);
       expect(header.className, pathname).toMatch(/\brelative\b/);
@@ -285,7 +285,8 @@ describe("SiteHeader", () => {
   it("is compact on a phone so the full wordmark fits from 360 px: a smaller SwiftRescue button and an icon-only Menu (R40)", () => {
     render(<HeaderOnPage />);
 
-    expect(screen.getByRole("link", { name: "SwiftRescue" }).className).toMatch(/\bpx-2\.5\b.*\bsm:px-4\b/);
+    // px-2 and the 2 px white edge together are the 10 px of side space it had (px-2.5); sm:px-3.5 and the edge are the 16 px of sm:px-4
+    expect(screen.getByRole("link", { name: "SwiftRescue" }).className).toMatch(/\bborder-2\b.*\bpx-2\b.*\bsm:px-3\.5\b/);
     const menu = screen.getByRole("button", { name: "Menu" });
     expect(menu).toHaveAttribute("aria-label", "Menu");
     expect(menu.textContent).toBe(""); // the icon only

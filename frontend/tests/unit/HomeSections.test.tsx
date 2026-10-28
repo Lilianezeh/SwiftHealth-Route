@@ -16,7 +16,7 @@ import { WhySwiftHealth } from "@/components/home/WhySwiftHealth";
 import { brand } from "@/config/brand";
 import { HOME_PHOTOS, HOME_WORDS } from "@/config/home";
 
-import { contrast, tokenColour } from "../helpers/contrast";
+import { contrast, darkTokenColour, tokenColour } from "../helpers/contrast";
 import { readSource } from "../helpers/source";
 
 const HERO_LINE = "Verified hospitals, clinics, pharmacies and labs, with phone numbers, opening hours and directions.";
@@ -67,8 +67,8 @@ describe("the hero", () => {
 
     const section = container.querySelector("section");
     expect(section?.className).toMatch(/\bbg-linear-to-tr\b|\bbg-gradient-to-tr\b/);
-    expect(section?.className).toMatch(/\bfrom-pine-dark\b/); // bottom left, where the text is
-    expect(section?.className).toMatch(/\bto-sky\b/); // top right
+    expect(section?.className).toMatch(/\bfrom-hero-from\b/); // bottom left, where the text is (pine-dark in the light mode, a deep navy in the dark)
+    expect(section?.className).toMatch(/\bto-hero-to\b/); // top right (sky in the light mode)
     expect(section?.className).not.toMatch(/\bbg-(sky|pine-100|pine|white)\b/);
   });
 
@@ -218,38 +218,43 @@ describe("the hero", () => {
     expect(photoBox.querySelector("img")?.className).not.toMatch(/(^|\s)(px|mx)-/);
   });
 
-  it("has a short, soft dark veil over the top of the photo: 6 rem, 80%, solid for 3 rem, then a fade (R21, R27)", () => {
+  it("has a short, soft dark veil over the top of the photo: 6 rem, 85%, solid for 4.5 rem, then a fade (R21, R27; measured again on 2026-10-28)", () => {
     const { container } = render(<HomeHero />);
 
     const veil = photoBoxOf(container).querySelector('[aria-hidden="true"]') as HTMLElement;
     expect(veil).not.toBeNull();
+    expect(photoBoxOf(container).querySelectorAll('[aria-hidden="true"]')).toHaveLength(1); // the veil is the only thing laid over the photo
+    expect(photoBoxOf(container).querySelector("img")?.className).toBe("h-full w-full object-cover"); // the photo itself: no filter, in either mode
     expect(veil.className).toMatch(/\babsolute\b/);
     expect(veil.className).toMatch(/\btop-0\b/);
     expect(veil.className).toMatch(/\bh-24\b/); // 6 rem (it was 8 rem)
-    expect(veil.className).toMatch(/\bfrom-pine-dark\/80\b/);
-    expect(veil.className).toMatch(/\bvia-pine-dark\/80\b/);
-    expect(veil.className).toMatch(/\bvia-50%/); // solid to 3 rem, then 3 rem of fade
+    expect(veil.className).toMatch(/\bfrom-veil\/85\b/); // the veil token: pine-dark in the light mode, a deep navy in the dark
+    expect(veil.className).toMatch(/\bvia-veil\/85\b/);
+    expect(veil.className).toMatch(/\bvia-75%/); // solid to 4.5 rem, then 1.5 rem of fade
     expect(veil.className).toMatch(/\bto-transparent\b/);
-    expect(veil.className).not.toMatch(/\b(from|via)-pine-dark\/85\b|\bh-32\b|\bvia-60%/); // the old, heavier veil
+    expect(veil.className).not.toMatch(/\bh-32\b|\bvia-60%|pine-dark/); // the old, heavier veil, and the old colour token
     expect(veil.className).toMatch(/\bpointer-events-none\b/);
     expect(veil.textContent).toBe(""); // decoration only
   });
 
-  it("keeps the header's text inside the solid part of the veil (the first 3 rem), so the white links stay readable", () => {
+  it("keeps everything the header draws inside the solid part of the veil (the first 4.5 rem), so the white links stay readable", () => {
     const { container } = render(<HomeHero />);
 
     const veilClasses = (photoBoxOf(container).querySelector('[aria-hidden="true"]') as HTMLElement).className;
     const heightRem = Number(/\bh-(\d+)\b/.exec(veilClasses)?.[1]) / 4; // Tailwind: h-24 = 6 rem
     const solidRem = (Number(/\bvia-(\d+)%/.exec(veilClasses)?.[1]) / 100) * heightRem;
-    // The header: 0.5 rem of padding, then a 3 rem (48 px) link box with one 1.5 rem line of text, centred: it ends at 2.75 rem.
-    const headerTextEndsRem = 0.5 + 3 / 2 + 1.5 / 2;
+    // The header: 0.5 rem of padding, then a 3 rem (48 px) link box: its items end at 3.5 rem. (A veil that was solid only to 3 rem left
+    // the lower part of the items on a fading veil: 3.8:1 to 4.3:1 over a white sheet of the photo, measured on the real pixels.)
+    const headerItemsEndRem = 0.5 + 3;
 
-    expect(solidRem).toBeGreaterThanOrEqual(headerTextEndsRem);
-    // The veil is darker than 4.5:1 for white over a pure white photo (pine-dark at 80%): 5.26:1.
-    const [red, green, blue] = [1, 3, 5].map((start) => parseInt(tokenColour("pine-dark").slice(start, start + 2), 16));
-    const overWhite = [red, green, blue].map((channel) => Math.round(0.8 * channel + 0.2 * 255));
-    const blended = `#${overWhite.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
-    expect(contrast("#ffffff", blended)).toBeGreaterThanOrEqual(4.5);
+    expect(solidRem).toBeGreaterThanOrEqual(headerItemsEndRem);
+    // White over a pure white photo under the veil at 85%, in the light mode and in the dark mode: at least 4.5:1.
+    for (const token of [tokenColour("veil"), darkTokenColour("veil")]) {
+      const [red, green, blue] = [1, 3, 5].map((start) => parseInt(token.slice(start, start + 2), 16));
+      const overWhite = [red, green, blue].map((channel) => Math.round(0.85 * channel + 0.15 * 255));
+      const blended = `#${overWhite.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
+      expect(contrast("#ffffff", blended), token).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it("does not overlap the next part: no negative margin, no z-index above the header, nothing cut off by overflow", () => {
@@ -411,7 +416,7 @@ describe("Why SwiftHealth Route (was Benefits)", () => {
     const { container } = render(<WhySwiftHealth />);
 
     const section = container.querySelector("section");
-    expect(section?.className).toMatch(/\bbg-pine\b/); // the same blue as the header (bg-pine stays in the dark mode; forest becomes a text colour)
+    expect(section?.className).toMatch(/\bbg-bar\b/); // the same blue as the header (the bar token: navy in the dark mode; forest is a text colour)
     expect(section?.className).toMatch(/\bon-dark\b/);
     expect(section?.className).not.toMatch(/\bmax-w-/);
     expect(container.querySelector("section > div")?.className).toMatch(/\bmax-w-6xl\b/); // the content keeps the page width
