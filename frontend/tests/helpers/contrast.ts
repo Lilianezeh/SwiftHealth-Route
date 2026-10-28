@@ -27,7 +27,16 @@ export function laidOver(top: string, bottom: string, opacity: number): string {
   return `#${channels.map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
 }
 
-/** The value of a colour token of globals.css, for example `tokenColour("pine-dark")` is "#134f6a". */
+/** The value of a colour token in the dark block of globals.css (`:root[data-theme="dark"]`), for example `darkTokenColour("veil")`. */
+export function darkTokenColour(name: string): string {
+  const css = readFileSync(join(process.cwd(), "src", "styles", "globals.css"), "utf8");
+  const block = css.match(/:root\[data-theme="dark"\]\s*\{([^}]*)\}/)?.[1] ?? "";
+  const match = block.match(new RegExp(`--color-${name}:\\s*(#[0-9a-fA-F]{6})`));
+  if (!match) throw new Error(`colour token ${name} not found in the dark block of globals.css`);
+  return match[1].toLowerCase();
+}
+
+/** The value of a colour token of globals.css (its light value), for example `tokenColour("pine-dark")` is "#134f6a". */
 export function tokenColour(name: string): string {
   const css = readFileSync(join(process.cwd(), "src", "styles", "globals.css"), "utf8");
   const match = css.match(new RegExp(`--color-${name}:\\s*(#[0-9a-fA-F]{6})`));

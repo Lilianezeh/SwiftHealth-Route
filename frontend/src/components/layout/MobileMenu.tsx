@@ -51,7 +51,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
         aria-expanded={isOpen}
         aria-controls={isOpen ? panelId : undefined}
         onClick={() => setIsOpen((current) => !current)}
-        className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-md border border-paper/60"
+        className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-md border border-paper"
       >
         <DecorativeIcon icon={isOpen ? X : Menu} className="h-6 w-6" />
       </button>
@@ -60,7 +60,7 @@ export function MobileMenu({ links }: MobileMenuProps) {
         <nav
           id={panelId}
           aria-label="Menu links"
-          className="absolute inset-x-0 top-full z-20 border-b-4 border-accent bg-pine px-4 pb-3"
+          className="absolute inset-x-0 top-full z-20 border-b-4 border-accent bg-bar px-4 pb-3"
         >
           <ul className="flex flex-col">
             {allLinks.map((link) => (

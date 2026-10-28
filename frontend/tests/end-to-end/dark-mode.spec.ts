@@ -62,7 +62,7 @@ test.describe("a light system", () => {
     await page.goto("/find", { waitUntil: "load" });
 
     expect(await theme(page)).toBe("dark");
-    expect(await background(page)).toBe("rgb(11, 17, 16)");
+    expect(await background(page)).toBe("rgb(6, 13, 24)");
   });
 });
 
@@ -77,7 +77,7 @@ test.describe("the Theme button in the bar (from tablet width)", () => {
     await button().click();
     await expect(button()).toHaveAccessibleName("Colour theme: Dark. Change to System.");
     expect(await theme(page)).toBe("dark");
-    expect(await background(page)).toBe("rgb(11, 17, 16)");
+    expect(await background(page)).toBe("rgb(6, 13, 24)"); // near-black navy, #060d18
     expect(await page.evaluate(() => window.localStorage.getItem("swifthealth.theme"))).toBe("dark");
 
     await page.reload({ waitUntil: "load" });
