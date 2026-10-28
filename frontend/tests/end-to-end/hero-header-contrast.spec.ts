@@ -244,3 +244,66 @@ for (const mode of MODES) {
     });
   }
 }
+
+/** How different two pictures of the same size are: the largest and the mean difference of a colour channel (0 to 255). */
+async function difference(page: Page, first: Buffer, second: Buffer): Promise<{ largest: number; mean: number; pixels: number }> {
+  const blank = await page.context().newPage();
+  try {
+    return await blank.evaluate(
+      async ({ one, two }) => {
+        const read = async (base64: string) => {
+          const image = new Image();
+          image.src = `data:image/png;base64,${base64}`;
+          await image.decode();
+          const canvas = document.createElement("canvas");
+          canvas.width = image.width;
+          canvas.height = image.height;
+          const context = canvas.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D;
+          context.drawImage(image, 0, 0);
+          return context.getImageData(0, 0, image.width, image.height).data;
+        };
+        const [left, right] = [await read(one), await read(two)];
+        let largest = 0;
+        let total = 0;
+        for (let index = 0; index < left.length; index += 4) {
+          for (let channel = 0; channel < 3; channel++) {
+            const gap = Math.abs(left[index + channel] - right[index + channel]);
+            largest = Math.max(largest, gap);
+            total += gap;
+          }
+        }
+        return { largest, mean: total / (left.length / 4 * 3), pixels: left.length / 4 };
+      },
+      { one: first.toString("base64"), two: second.toString("base64") },
+    );
+  } finally {
+    await blank.close();
+  }
+}
+
+for (const { width, height } of WIDTHS) {
+  test.describe(`the hero photo at ${width} px`, () => {
+    test(`is exactly as bright in the dark mode as in the light mode (owner, 2026-10-28)`, async ({ browser }) => {
+      const pictures: Partial<Record<"light" | "dark", Buffer>> = {};
+      let helper: Page | undefined;
+      for (const mode of MODES) {
+        const context = await browser.newContext({ viewport: { width, height } });
+        const page = await context.newPage();
+        helper ??= await (await browser.newContext()).newPage();
+        await openHome(page, mode);
+        const box = (await page.locator('section[aria-labelledby="hero-heading"] picture').boundingBox())!;
+        // The photo below the shade under the header (that is 6 rem = 96 px high), and away from the slanted cut-out edges, where the
+        // hero's own gradient shows through (the left fifth from 1024 px, the bottom fifth on a phone and a tablet).
+        const top = Math.max(box.y, 110);
+        const left = box.x + (width >= 1024 ? box.width * 0.25 : 0);
+        const bottom = box.y + box.height * (width >= 1024 ? 0.97 : 0.8);
+        pictures[mode] = await page.screenshot({ clip: { x: left, y: top, width: box.x + box.width - left, height: bottom - top }, type: "png" });
+        await context.close();
+      }
+      const gap = await difference(helper!, pictures.light!, pictures.dark!);
+      expect(gap.pixels).toBeGreaterThan(10_000); // it really compared a picture, not a sliver
+      expect(gap.largest, `largest colour difference ${gap.largest} of 255, mean ${gap.mean.toFixed(2)}`).toBeLessThanOrEqual(2);
+      expect(gap.mean).toBeLessThan(0.5);
+    });
+  });
+}

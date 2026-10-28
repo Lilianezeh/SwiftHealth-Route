@@ -99,16 +99,18 @@ describe("the navy bars, the hero and the home sections (Option A, 2026-10-28)",
     expect(hero).not.toMatch(/\b(?:from|to|via)-(?:pine-dark|sky)\b/);
   });
 
-  it("tints the hero photo in the dark mode only (a see-through navy over it, hidden in the light mode), so it does not glare on a dark page", () => {
+  it("leaves the hero photo exactly as it is in the dark mode: no dark: filter on it, no tint over it (owner, 2026-10-28)", () => {
     const hero = code(join(SRC, "components/home/HomeHero.tsx"));
-    expect(hero).toMatch(/data-hero-tint=""[^>]*\bhidden\b[^>]*\bdark:block\b/);
-    expect(hero).toMatch(/dark:brightness-\d+/);
+    expect(hero).not.toMatch(/\bdark:/); // nothing in the hero changes with the theme through a dark: class
+    expect(hero).not.toMatch(/data-hero-tint|\bbrightness-|\bcontrast-|\bsaturate-|\bopacity-|\bmix-blend-|\bbackdrop-/);
+    // the photo's own classes are the same in both modes
+    expect(hero).toMatch(/<img \{\.\.\.heroImage\} alt=\{hero\.alt\} className="h-full w-full object-cover" \/>/);
   });
 
-  it("darkens the hero photo well (brightness 60%, a veil-colour tint from 80% to 55%), so the stethoscope's white sheets are not bright (2026-10-28)", () => {
+  it("keeps the only shade over the hero photo: the veil under the header (the veil token, 85%, solid for 4.5 rem)", () => {
     const hero = code(join(SRC, "components/home/HomeHero.tsx"));
-    expect(hero).toMatch(/\bdark:brightness-60\b/);
-    expect(hero).toMatch(/\bfrom-veil\/80 to-veil\/55\b/);
+    expect(hero.match(/\bfrom-veil\/\d+/g)).toEqual(["from-veil/85"]); // one shade only
+    expect(hero).toMatch(/\bvia-veil\/85 via-75%/);
   });
 
   it("gives the section under the hero and the owners section the band token (the hero's colour in the dark mode, white in the light mode)", () => {

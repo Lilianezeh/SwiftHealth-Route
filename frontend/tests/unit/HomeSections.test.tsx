@@ -221,8 +221,10 @@ describe("the hero", () => {
   it("has a short, soft dark veil over the top of the photo: 6 rem, 85%, solid for 4.5 rem, then a fade (R21, R27; measured again on 2026-10-28)", () => {
     const { container } = render(<HomeHero />);
 
-    const veil = photoBoxOf(container).querySelector('[aria-hidden="true"]:not([data-hero-tint])') as HTMLElement;
+    const veil = photoBoxOf(container).querySelector('[aria-hidden="true"]') as HTMLElement;
     expect(veil).not.toBeNull();
+    expect(photoBoxOf(container).querySelectorAll('[aria-hidden="true"]')).toHaveLength(1); // the veil is the only thing laid over the photo
+    expect(photoBoxOf(container).querySelector("img")?.className).toBe("h-full w-full object-cover"); // the photo itself: no filter, in either mode
     expect(veil.className).toMatch(/\babsolute\b/);
     expect(veil.className).toMatch(/\btop-0\b/);
     expect(veil.className).toMatch(/\bh-24\b/); // 6 rem (it was 8 rem)
@@ -238,7 +240,7 @@ describe("the hero", () => {
   it("keeps everything the header draws inside the solid part of the veil (the first 4.5 rem), so the white links stay readable", () => {
     const { container } = render(<HomeHero />);
 
-    const veilClasses = (photoBoxOf(container).querySelector('[aria-hidden="true"]:not([data-hero-tint])') as HTMLElement).className;
+    const veilClasses = (photoBoxOf(container).querySelector('[aria-hidden="true"]') as HTMLElement).className;
     const heightRem = Number(/\bh-(\d+)\b/.exec(veilClasses)?.[1]) / 4; // Tailwind: h-24 = 6 rem
     const solidRem = (Number(/\bvia-(\d+)%/.exec(veilClasses)?.[1]) / 100) * heightRem;
     // The header: 0.5 rem of padding, then a 3 rem (48 px) link box: its items end at 3.5 rem. (A veil that was solid only to 3 rem left

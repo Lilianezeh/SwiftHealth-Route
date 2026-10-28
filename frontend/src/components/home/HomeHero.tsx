@@ -53,15 +53,10 @@ export function HomeHero() {
           <source media={PHONE_SCREENS} srcSet={`${heroPhone.src} ${heroPhone.width}w`} sizes="100vw" />
           {/* A plain <img> on purpose: it is the fallback of the <picture> above, with the attributes of next/image. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img {...heroImage} alt={hero.alt} className="h-full w-full object-cover dark:brightness-60" />
+          <img {...heroImage} alt={hero.alt} className="h-full w-full object-cover" />
         </picture>
-        {/* The dark mode only: a see-through navy over the whole photo (the stethoscope's white sheets would glare on a dark page), on
-            top of the photo being a little dimmer. Hidden in the light mode, which keeps the photo as it was. */}
-        <div
-          data-hero-tint=""
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden bg-linear-to-r from-veil/80 to-veil/55 dark:block"
-        />
+        {/* The photo is as bright in the dark mode as in the light mode (owner, 2026-10-28): no filter on it and nothing laid over it,
+            except the veil below. A test compares its pixels in both modes. */}
         {/* The veil: decoration only, behind the header's white links. 6 rem high, solid (85%) for the first 4.5 rem, which covers
             everything the header draws (its items end at about 3.5 rem), then a fade out over the last 1.5 rem. It was solid for 3 rem and
             80%; measured on the real pixels, the lower part of the items was then over a fading veil and a white sheet of the photo gave
