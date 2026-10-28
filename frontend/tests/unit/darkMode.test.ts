@@ -1,6 +1,7 @@
 /** Dark mode: the colours. Requirements: NFR-10 (contrast and readable text), FR-06; the owner's request of 2026-10-26.
  * Spec: specs/frontend/ui-spec.md, "Dark mode" (specs/2026-10-27-dark-mode/). The tokens of src/styles/globals.css, in the light `@theme`
- * block and in the two dark blocks (`html[data-theme="dark"]`, and the same under `prefers-color-scheme: dark` for a browser with no script).
+ * block and in the dark block (`html[data-theme="dark"]`). There is no `prefers-color-scheme` block: Light is the default for everyone
+ * until the owner approves the dark mode (request of 2026-10-27), and Dark comes only from the Theme button.
  * WCAG AA in both modes: 4.5:1 for text, 3:1 for a button edge, the focus ring and the 112 card's border.
  */
 import { readFileSync } from "node:fs";
@@ -19,7 +20,6 @@ const LIGHT = Object.fromEntries(
   Object.entries(declarations(CSS.match(/@theme\s*\{([\s\S]*?)\n\}/)?.[1] ?? "")).map(([name, value]) => [name.replace("--color-", ""), value]),
 );
 const ATTRIBUTE_BLOCK = CSS.match(/:root\[data-theme="dark"\]\s*\{([^}]*)\}/)?.[1] ?? "";
-const MEDIA_BLOCK = CSS.match(/@media \(prefers-color-scheme: dark\)\s*\{\s*:root:not\(\[data-theme\]\)\s*\{([^}]*)\}\s*\}/)?.[1] ?? "";
 const DARK_RAW = declarations(ATTRIBUTE_BLOCK);
 const DARK = { ...LIGHT, ...Object.fromEntries(Object.entries(DARK_RAW).map(([name, value]) => [name.replace("--color-", ""), value])) };
 
@@ -51,13 +51,11 @@ describe("the white that stays white", () => {
 });
 
 describe("the dark blocks", () => {
-  it("exist twice: under data-theme=dark, and under prefers-color-scheme for a browser with no script", () => {
+  it("exist once, under data-theme=dark, and never under prefers-color-scheme: until the owner approves the dark mode, a device that is dark, or a browser with no script, gets Light", () => {
     expect(ATTRIBUTE_BLOCK).not.toBe("");
-    expect(MEDIA_BLOCK).not.toBe("");
-  });
-
-  it("hold exactly the same values, so the two ways to get the dark mode cannot differ", () => {
-    expect(declarations(MEDIA_BLOCK)).toEqual(declarations(ATTRIBUTE_BLOCK));
+    const code = CSS.replace(/\/\*[\s\S]*?\*\//g, ""); // the comments may name it; the rules may not
+    expect(code).not.toMatch(/prefers-color-scheme/);
+    expect(code).not.toMatch(/:root:not\(\[data-theme\]\)/);
   });
 
   it("change exactly the role tokens, tell the browser it is dark, and touch no constant token", () => {
@@ -174,8 +172,10 @@ describe("the Tailwind dark variant and the page", () => {
     expect(body).toMatch(/color:\s*var\(--color-ink\)/);
   });
 
-  it("tells the browser which schemes it can draw, so its own fields and scrollbars follow", () => {
-    expect(CSS).toMatch(/:root\s*\{[^}]*color-scheme:\s*light dark/);
+  it("tells the browser it is Light unless the page is dark, so its own fields and scrollbars follow the page, never the device", () => {
+    expect(CSS).toMatch(/:root\s*\{[^}]*color-scheme:\s*light;/);
+    expect(CSS).not.toMatch(/color-scheme:\s*light dark/);
     expect(CSS).toMatch(/:root\[data-theme="light"\]\s*\{[^}]*color-scheme:\s*light/);
+    expect(DARK_RAW["color-scheme"]).toBe("dark");
   });
 });

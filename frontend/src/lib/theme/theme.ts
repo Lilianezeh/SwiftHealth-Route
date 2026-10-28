@@ -1,6 +1,6 @@
 /** The colour theme choice: Light, Dark or System. Requirements: NFR-10, NFR-07. Spec: specs/frontend/ui-spec.md, "Dark mode".
- * The choice is the only thing kept, in the browser (`localStorage`, one key); System keeps nothing. The page has a `data-theme`
- * attribute on `<html>` that is `light` or `dark`: the choice, or the system's when the choice is System. A few lines of script in the
+ * The choice is the only thing kept, in the browser (`localStorage`, one key); with nothing kept the choice is Light. The page has a
+ * `data-theme` attribute on `<html>` that is `light` or `dark`: the choice, or the system's when the choice is System. A few lines of script in the
  * `<head>` (`themeScript.ts`) set it before the first paint; this file does the same when the person presses the Theme button.
  * Every function copes with a browser whose storage throws (private mode).
  */
@@ -17,21 +17,21 @@ export function nextChoice(choice: ThemeChoice): ThemeChoice {
   return THEME_CHOICES[(THEME_CHOICES.indexOf(choice) + 1) % THEME_CHOICES.length];
 }
 
-/** What is kept: Light or Dark, else System. */
+/** What is kept, else Light: the site starts in Light for everyone, whatever the device says, until the owner approves the dark mode
+ * (request of 2026-10-27). System is only the choice of a person who pressed the button to it. */
 export function readChoice(): ThemeChoice {
   try {
     const kept = window.localStorage.getItem(THEME_KEY);
-    return kept === "light" || kept === "dark" ? kept : "system";
+    return kept === "dark" || kept === "system" ? kept : "light";
   } catch {
-    return "system";
+    return "light";
   }
 }
 
-/** Keeps Light and Dark; System removes the key, so nothing is kept for a person who never chose. */
+/** Keeps the choice. System is kept too: without it, System could not be told from never having chosen (which is Light). */
 export function saveChoice(choice: ThemeChoice): void {
   try {
-    if (choice === "system") window.localStorage.removeItem(THEME_KEY);
-    else window.localStorage.setItem(THEME_KEY, choice);
+    window.localStorage.setItem(THEME_KEY, choice);
   } catch {
     // nothing to do: without storage the choice lasts until the page is closed
   }
