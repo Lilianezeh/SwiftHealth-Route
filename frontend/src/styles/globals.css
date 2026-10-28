@@ -39,6 +39,15 @@
   --color-on-amber: #1d2421;
   --color-snow: #ffffff; /* a white that stays white in the dark mode: the white button on the hero */
 
+  /* Navy dark mode, Option A "Midnight Navy" (owner's choice, 2026-10-28, specs/2026-10-28-dark-palette-navy/): the blue bars and the hero
+     get a token of their own, so the dark mode can give them a navy while the light mode keeps today's blue. In the light mode each says
+     exactly the colour the class used before: `bar` is the header, the Menu and the bands (it was `pine`), `hero-from` and `hero-to` are the
+     ends of the hero's gradient (they were `pine-dark` and `sky`), `veil` is the shade under the header over the hero photo (it was `pine-dark`). */
+  --color-bar: #1b6f93;
+  --color-hero-from: #134f6a;
+  --color-hero-to: #1a7cad;
+  --color-veil: #134f6a;
+
   --shadow-card: 0 2px 12px color-mix(in srgb, var(--color-forest) 7%, transparent);
 }
 
@@ -73,29 +82,39 @@ body {
   outline-color: var(--color-paper);
 }
 
-/* DARK MODE (2026-10-27, owner's request; specs/frontend/ui-spec.md "Dark mode", checked pair by pair in tests/unit/darkMode.test.ts).
-   Only the ROLE tokens change; the constant ones (pine, pine-dark, accent, sky, sky-pale, paper, amber, on-amber, emergency) do not, so
-   the blue bars, the hero, the buttons, the logo and the red buttons look the same in both modes. The values are written once, under
-   data-theme="dark" (the visitor's choice, set before the first paint). There is no prefers-color-scheme block on purpose: Light is the
-   default for everyone, even on a dark device or with no script, until the owner approves the dark mode (request of 2026-10-27). */
+/* DARK MODE, Option A "Midnight Navy" (owner's choice of 2026-10-28; specs/2026-10-28-dark-palette-navy/ and ui-spec "Dark mode", checked
+   pair by pair in tests/unit/darkMode.test.ts). Deep navy page, cards a little lighter, light-blue headings and links, royal-blue buttons.
+   Only the ROLE tokens change: the page and its panels, the text, the blue of the bars, the hero and the buttons (bar, hero-from, hero-to,
+   veil, pine, pine-dark, accent), the status colours. The constant ones (amber, paper, on-amber, emergency, sky, sky-pale, snow) do not:
+   the red buttons, the Sponsored tag, the logo and the cream text of the bars look the same in both modes. The light values above are
+   untouched. The values are written once, under data-theme="dark" (the visitor's choice, set before the first paint). There is no
+   prefers-color-scheme block on purpose: Light is the default for everyone, even on a dark device or with no script, until the owner
+   approves the dark mode (request of 2026-10-27, approved as Option A on 2026-10-28 for the build; the default stays Light). */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-page: #0b1110;
-  --color-surface: #121b1a;
-  --color-ink: #e7eceb;
-  --color-ink-soft: #a7b6b3;
-  --color-line: #2d3c3a;
-  --color-forest: #7fc6e8;
-  --color-pine-100: #1c4256;
-  --color-pine-50: #152f3b;
+  --color-page: #0a1628;
+  --color-surface: #11233f;
+  --color-ink: #eaf1fa;
+  --color-ink-soft: #aebfd6;
+  --color-line: #2a4262;
+  --color-forest: #8ec9f5;
+  --color-pine-100: #17355a;
+  --color-pine-50: #102a4a;
   --color-open: #6fd6a0;
-  --color-open-bg: #12301f;
-  --color-closed: #b9c6c2;
-  --color-closed-bg: #232d2b;
+  --color-open-bg: #0f2f2c;
+  --color-closed: #b9c6d6;
+  --color-closed-bg: #1a2c47;
   --color-amber-ink: #f2c668;
-  --color-amber-wash: #3a2c0a;
-  --color-whatsapp-dark: #3fb59f;
-  --color-alert: #ff8a80;
+  --color-amber-wash: #33290f;
+  --color-whatsapp-dark: #4cc4ae;
+  --color-alert: #ff6b60;
+  --color-pine: #2b6fc4;
+  --color-pine-dark: #1f58a2;
+  --color-accent: #3fa9ee;
+  --color-bar: #12305a;
+  --color-hero-from: #0b2547;
+  --color-hero-to: #1f5fa8;
+  --color-veil: #0a1f3d;
 }
 
 /* The section of the home page that holds the background slideshow ("Find by type", specs/2026-10-22-home-photos/) waits until it is near the

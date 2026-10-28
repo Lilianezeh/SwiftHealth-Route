@@ -1,0 +1,246 @@
+/** The header over the hero photo, and the text over the slideshow photos, measured on the real pixels, in both modes.
+ * Requirements: NFR-10 (WCAG AA: 4.5:1 for text, 3:1 for an icon and for a button's edge), FR-02. Owner's request of 2026-10-28.
+ * Spec: specs/2026-10-28-dark-palette-navy/. It needs the site running (playwright.config.ts); GET /meta goes to the real API.
+ *
+ * How it measures: it reads where each item of the header is and what colour it has, hides the items (so only the photo and the veil
+ * are left), takes a picture of the header strip, and looks at every pixel behind each item. The worst pixel decides: for white text
+ * that is the lightest one. The whole strip is checked too, so the answer does not depend on where an item happens to sit on the photo.
+ */
+import { expect, test, type Locator, type Page } from "@playwright/test";
+
+import { BACKDROP_PHOTOS } from "../../src/config/sitePhotos";
+
+const WIDTHS = [
+  { width: 360, height: 740 },
+  { width: 768, height: 1024 },
+  { width: 1280, height: 800 },
+];
+const MODES = ["light", "dark"] as const;
+const TEXT = 4.5;
+const GRAPHIC = 3; // an icon, and the edge of a button (WCAG 1.4.11)
+
+type Colour = [number, number, number, number]; // red, green, blue (0 to 255), alpha (0 to 1)
+/** `ignoreShare` is the share of pixels (0 to 1) that may be worse than the rest: 0 for every item; a little for the strip across the
+ * whole width, because the photo's slanted cut-out edge (clip-path) has one anti-aliased pixel per row that is a blend of photo and
+ * gradient, and no text sits on a 1 px seam. */
+type Item = { name: string; x: number; y: number; width: number; height: number; colour: Colour; need: number; ignoreShare?: number };
+type Result = { name: string; worst: number; need: number };
+
+/** Turns any CSS colour the browser reports (rgb, oklab, color-mix...) into plain red, green, blue and alpha. */
+async function readColour(page: Page, css: string): Promise<Colour> {
+  return page.evaluate((value) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D;
+    context.clearRect(0, 0, 1, 1);
+    context.fillStyle = value;
+    context.fillRect(0, 0, 1, 1);
+    const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data;
+    return [red, green, blue, alpha / 255] as [number, number, number, number];
+  }, css);
+}
+
+/** What an element really draws: its words (the line boxes of its text) and its icons or pictures, not the padding or the rounded
+ * corners around them. In the coordinates of the screen, or of the whole page when `onThePage` is true. null if it draws nothing. */
+async function drawnBounds(control: Locator, onThePage = false): Promise<{ x: number; y: number; width: number; height: number } | null> {
+  return control.evaluate((element, page) => {
+    const rectangles: DOMRect[] = [];
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if ((node.textContent ?? "").trim() === "") continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      rectangles.push(range.getBoundingClientRect());
+    }
+    for (const graphic of element.querySelectorAll("svg, img")) rectangles.push(graphic.getBoundingClientRect());
+    if (rectangles.length === 0) return null;
+    const left = Math.min(...rectangles.map((rectangle) => rectangle.left));
+    const right = Math.max(...rectangles.map((rectangle) => rectangle.right));
+    const upper = Math.min(...rectangles.map((rectangle) => rectangle.top));
+    const lower = Math.max(...rectangles.map((rectangle) => rectangle.bottom));
+    return { x: left + (page ? window.scrollX : 0), y: upper + (page ? window.scrollY : 0), width: right - left, height: lower - upper };
+  }, onThePage);
+}
+
+/** Looks at the pixels of a picture behind each item and returns the worst contrast of the item's colour against them. */
+async function measure(page: Page, picture: Buffer, items: Item[]): Promise<Result[]> {
+  const blank = await page.context().newPage();
+  try {
+    return await blank.evaluate(
+      async ({ base64, regions }) => {
+        const image = new Image();
+        image.src = `data:image/png;base64,${base64}`;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D;
+        context.drawImage(image, 0, 0);
+        const linear = (channel: number) => {
+          const value = channel / 255;
+          return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+        };
+        const luminance = (red: number, green: number, blue: number) => 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue);
+        return regions.map((region) => {
+          const left = Math.max(0, Math.floor(region.x));
+          const top = Math.max(0, Math.floor(region.y));
+          const width = Math.max(1, Math.min(image.width - left, Math.ceil(region.width)));
+          const height = Math.max(1, Math.min(image.height - top, Math.ceil(region.height)));
+          const { data } = context.getImageData(left, top, width, height);
+          const [red, green, blue, alpha] = region.colour;
+          const ratios: number[] = [];
+          for (let index = 0; index < data.length; index += 4) {
+            // the item's colour over this pixel (a see-through colour, like a border at 60%, is blended first)
+            const seen = [0, 1, 2].map((channel) => alpha * [red, green, blue][channel] + (1 - alpha) * data[index + channel]);
+            const first = luminance(seen[0], seen[1], seen[2]);
+            const second = luminance(data[index], data[index + 1], data[index + 2]);
+            ratios.push((Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05));
+          }
+          ratios.sort((smaller, larger) => smaller - larger);
+          const worst = ratios[Math.floor(ratios.length * (region.ignoreShare ?? 0))];
+          return { name: region.name, worst, need: region.need };
+        });
+      },
+      { base64: picture.toString("base64"), regions: items },
+    );
+  } finally {
+    await blank.close();
+  }
+}
+
+function expectAll(results: Result[]): void {
+  expect(results.length).toBeGreaterThan(0);
+  for (const result of results) expect(result.worst, `${result.name}: ${result.worst.toFixed(2)}:1, needs ${result.need}:1`).toBeGreaterThanOrEqual(result.need);
+}
+
+async function openHome(page: Page, mode: "light" | "dark"): Promise<void> {
+  await page.addInitScript((kept) => window.localStorage.setItem("swifthealth.theme", kept), mode);
+  await page.goto("/", { waitUntil: "load" });
+  await page.waitForSelector("h1", { timeout: 60_000 });
+  await page.waitForFunction(() => {
+    const photo = document.querySelector<HTMLImageElement>('section[aria-labelledby="hero-heading"] img');
+    return photo !== null && photo.complete && photo.naturalWidth > 0;
+  }, undefined, { timeout: 60_000 });
+  await page.addStyleTag({ content: ".section-lazy { content-visibility: visible !important; } nextjs-portal { display: none; }" });
+  await page.evaluate(() => document.fonts.ready);
+}
+
+for (const mode of MODES) {
+  for (const { width, height } of WIDTHS) {
+    test.describe(`the ${mode} mode at ${width} px`, () => {
+      test.use({ viewport: { width, height } });
+
+      test("the header items stay clearly visible on every part of the hero photo", async ({ page }) => {
+        await openHome(page, mode);
+
+        const bottom = await page.evaluate(() => Math.ceil(document.querySelector("header")!.getBoundingClientRect().bottom));
+        const items: Item[] = [];
+        let top = Infinity;
+        let lowest = 0;
+
+        const controls = await page.locator("header a, header button").all();
+        for (const control of controls) {
+          const outer = await control.boundingBox();
+          if (!outer || outer.width === 0) continue; // hidden at this width (the bar links on a phone, the Menu button on a tablet)
+          // what is drawn: the words (their line boxes) and the icons, not the padding around them
+          const box = (await drawnBounds(control)) ?? outer;
+          top = Math.min(top, box.y);
+          lowest = Math.max(lowest, box.y + box.height);
+          const label = ((await control.getAttribute("aria-label")) ?? (await control.innerText()) ?? "").trim() || "the logo";
+          const style = await control.evaluate((element) => {
+            const computed = getComputedStyle(element);
+            return { colour: computed.color, background: computed.backgroundColor, edge: computed.borderTopColor, edgeWidth: parseFloat(computed.borderTopWidth) };
+          });
+          const hasOwnBackground = (await readColour(page, style.background))[3] > 0.5; // the red SwiftRescue button: its text is on its own red
+          if (!hasOwnBackground) {
+            items.push({ name: `${label} (${box.width < 60 ? "icon" : "text"})`, x: box.x, y: box.y, width: box.width, height: box.height, colour: await readColour(page, style.colour), need: box.width < 60 ? GRAPHIC : TEXT });
+          }
+          if (style.edgeWidth >= 1 || hasOwnBackground) {
+            // the edge of the button against what is just outside it: a band of 3 px around the box. A button with a border has that
+            // border as its edge; a button with only a fill (the red SwiftRescue) has the fill as its edge.
+            const edge = await readColour(page, style.edgeWidth >= 1 ? style.edge : style.background);
+            const band = 3;
+            for (const [side, x, y, bandWidth, bandHeight] of [
+              ["above", outer.x - band, outer.y - band, outer.width + 2 * band, band],
+              ["below", outer.x - band, outer.y + outer.height, outer.width + 2 * band, band],
+              ["left of", outer.x - band, outer.y, band, outer.height],
+              ["right of", outer.x + outer.width, outer.y, band, outer.height],
+            ] as const) {
+              items.push({ name: `the edge of ${label}, ${side} it`, x, y, width: bandWidth, height: bandHeight, colour: edge, need: GRAPHIC });
+            }
+          }
+        }
+
+        // the rows the items sit in, across the whole width: white text must be readable on any part of the photo under those rows,
+        // so the answer does not depend on where an item happens to sit
+        items.unshift({ name: "the rows of the header items, across the whole width, for white text", x: 0, y: top, width, height: lowest - top, colour: [255, 255, 255, 1], need: TEXT, ignoreShare: 0.002 });
+
+        // only the photo and the veil are left: every item of the header is hidden, so what is measured is what is behind them
+        await page.addStyleTag({ content: "header * { visibility: hidden !important; }" });
+        const picture = await page.screenshot({ clip: { x: 0, y: 0, width, height: bottom + 8 }, type: "png" });
+        expectAll(await measure(page, picture, items));
+      });
+
+      // Under 768 px the home header is 11 px too wide on this machine's fallback font (a known width problem between 344 and 370 px,
+      // see LOG.md): it is the same with and without the navy palette, so it is not asserted here.
+      // (the condition is on creating the test: a `test.skip(...)` in this block would skip the contrast test above it too)
+      (width >= 768 ? test : test.skip)("the page does not scroll sideways and the header still fits", async ({ page }) => {
+        await openHome(page, mode);
+
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        expect(overflow).toBeLessThanOrEqual(0);
+        const edgeOfHeader = await page.evaluate(() => Math.max(...[...document.querySelectorAll("header a, header button")].map((element) => element.getBoundingClientRect().right)));
+        expect(edgeOfHeader).toBeLessThanOrEqual(width);
+      });
+    });
+  }
+}
+
+for (const mode of MODES) {
+  for (const { width, height } of [WIDTHS[0], WIDTHS[2]]) {
+    test.describe(`the slideshow text in the ${mode} mode at ${width} px, on every slideshow photo`, () => {
+      test.use({ viewport: { width, height } });
+
+      BACKDROP_PHOTOS.forEach((photo, index) => {
+        test(`photo ${index + 1} (${photo.src.split("/").pop()}): the heading, Pause and the credit stay readable`, async ({ page }) => {
+          await openHome(page, mode);
+          const section = page.locator("section", { has: page.getByRole("heading", { level: 2, name: "Find by type" }) });
+          await section.scrollIntoViewIfNeeded();
+          await page.getByRole("button", { name: /Pause photos|Play photos/ }).waitFor({ timeout: 30_000 });
+
+          // show this photo in the first slide (the slideshow itself changes slowly and only adds photos while it plays)
+          await page.evaluate(async (file) => {
+            const slide = document.querySelector("[data-backdrop-slide]") as HTMLElement;
+            for (const other of document.querySelectorAll<HTMLElement>("[data-backdrop-slide]")) other.style.opacity = other === slide ? "1" : "0";
+            const source = slide.querySelector("source");
+            const image = slide.querySelector("img") as HTMLImageElement;
+            if (source) source.srcset = file.src;
+            image.srcset = `${file.srcLarge} ${file.widthLarge}w`;
+            image.src = file.src;
+            await image.decode();
+          }, { src: photo.src, srcLarge: photo.srcLarge, widthLarge: photo.widthLarge });
+
+          const targets = [
+            section.getByRole("heading", { level: 2, name: "Find by type" }),
+            section.getByRole("button", { name: /Pause photos|Play photos/ }),
+            section.getByRole("link", { name: /^Designed by Magnific/ }),
+          ];
+          // the colour of each text first, then the text is made see-through: the surface behind it (white or navy, a little see-through
+          // for the heading) stays, and that is what the text sits on
+          const colours: Colour[] = [];
+          for (const target of targets) colours.push(await readColour(page, await target.evaluate((element) => getComputedStyle(element).color)));
+          await page.addStyleTag({ content: "section *, section *::before { color: transparent !important; }" });
+
+          // positions on the whole page (not on the screen), because the picture is of the whole page
+          const items: Item[] = [];
+          for (const [position, target] of targets.entries()) {
+            const box = (await drawnBounds(target, true))!;
+            items.push({ name: ["the heading", "the Pause button", "the credit"][position], ...box, colour: colours[position], need: TEXT });
+          }
+          const full = await page.screenshot({ fullPage: true, type: "png" });
+          expectAll(await measure(page, full, items));
+        });
+      });
+    });
+  }
+}

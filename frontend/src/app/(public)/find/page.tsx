@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function FindPage() {
   return (
     <>
-      <section className="on-dark bg-pine text-paper">
+      <section className="on-dark bg-bar text-paper">
         <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-8">
           <h1 className="text-3xl font-bold leading-tight">What do you need?</h1>
           <div className="grid gap-3 sm:grid-cols-2">

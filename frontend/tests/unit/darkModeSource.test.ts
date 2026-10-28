@@ -38,7 +38,7 @@ describe("no class takes the wrong side of a role", () => {
     expect(offenders.map(name)).toEqual([]);
   });
 
-  it("has no bg-forest: forest is the text blue and changes, a bar with white text is bg-pine", () => {
+  it("has no bg-forest: forest is the text blue and changes, a bar with white text is bg-bar and a button is bg-pine", () => {
     const offenders = FILES.filter((path) => /\bbg-forest\b/.test(code(path)));
     expect(offenders.map(name)).toEqual([]);
   });
@@ -63,11 +63,11 @@ describe("no class takes the wrong side of a role", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("puts only constant text on a constant background: text on bg-pine, bg-emergency or bg-amber is white, paper or on-amber", () => {
+  it("puts only white or cream text on a blue bar or button: text on bg-pine, bg-pine-dark, bg-bar, bg-emergency or bg-amber is white, paper or on-amber", () => {
     const flippingText = /\btext-(?:ink|ink-soft|forest|alert|open|closed|amber-ink)\b/;
     const offenders = FILES.flatMap((path) =>
       classStrings(path)
-        .filter((classes) => /\bbg-(?:pine|pine-dark|emergency|amber)(?![-\w])/.test(classes) && flippingText.test(classes))
+        .filter((classes) => /\bbg-(?:pine|pine-dark|bar|emergency|amber)(?![-\w])/.test(classes) && flippingText.test(classes))
         .map((classes) => `${name(path)}: ${classes}`),
     );
     expect(offenders).toEqual([]);
@@ -78,6 +78,46 @@ describe("no class takes the wrong side of a role", () => {
       const tag = classStrings(join(SRC, file)).find((classes) => /\bbg-amber\b/.test(classes));
       expect(tag, file).toMatch(/\btext-on-amber\b/);
     }
+  });
+});
+
+describe("the navy bars, the hero and the home sections (Option A, 2026-10-28)", () => {
+  it("paints the header bar, the Menu panel, the Why band and the Find band with bg-bar, never with the button blue", () => {
+    expect(code(join(SRC, "components/layout/SiteHeader.tsx"))).toMatch(/BAR_HEADER = "[^"]*\bbg-bar\b/);
+    expect(code(join(SRC, "components/layout/MobileMenu.tsx"))).toMatch(/border-accent bg-bar\b/);
+    expect(code(join(SRC, "components/home/WhySwiftHealth.tsx"))).toMatch(/on-dark bg-bar text-white/);
+    expect(code(join(SRC, "app/(public)/find/page.tsx"))).toMatch(/on-dark bg-bar text-paper/);
+    for (const file of ["components/layout/SiteHeader.tsx", "components/layout/MobileMenu.tsx", "components/home/WhySwiftHealth.tsx", "app/(public)/find/page.tsx"]) {
+      expect(code(join(SRC, file)), file).not.toMatch(/\bbg-pine(?![-\w])/);
+    }
+  });
+
+  it("draws the hero's gradient and the veil under the header with the hero tokens, so the dark mode has its own navy", () => {
+    const hero = code(join(SRC, "components/home/HomeHero.tsx"));
+    expect(hero).toMatch(/from-hero-from to-hero-to/);
+    expect(hero).toMatch(/from-veil\/\d+ via-veil\/\d+/);
+    expect(hero).not.toMatch(/\b(?:from|to|via)-(?:pine-dark|sky)\b/);
+  });
+
+  it("tints the hero photo in the dark mode only (a see-through navy over it, hidden in the light mode), so it does not glare on a dark page", () => {
+    const hero = code(join(SRC, "components/home/HomeHero.tsx"));
+    expect(hero).toMatch(/data-hero-tint=""[^>]*\bhidden\b[^>]*\bdark:block\b/);
+    expect(hero).toMatch(/dark:brightness-\d+/);
+  });
+
+  it("gives the Why band's icon circles bg-pine-dark and the home panels role tokens (a surface, a tint), not constants", () => {
+    expect(code(join(SRC, "components/home/WhySwiftHealth.tsx"))).toMatch(/bg-pine-dark text-white/);
+    for (const file of ["components/home/Overview.tsx", "components/home/FacilityOwners.tsx"]) {
+      expect(code(join(SRC, file)), file).toMatch(/bg-surface/);
+    }
+    expect(code(join(SRC, "components/home/FindByType.tsx"))).toMatch(/bg-pine-50/);
+  });
+
+  it("draws the SwiftRescue button with a white edge (2 px) in the bar and over the hero, so its edge shows against the dark bar and the veil (3:1)", () => {
+    const rescue = code(join(SRC, "components/layout/HeaderNavigation.tsx")).match(/className="([^"]*\bbg-emergency\b[^"]*)"/)?.[1] ?? "";
+    expect(rescue).toMatch(/\bborder-2\b/);
+    expect(rescue).toMatch(/\bborder-white\b/);
+    expect(rescue).toMatch(/\bmin-h-12\b/);
   });
 });
 
