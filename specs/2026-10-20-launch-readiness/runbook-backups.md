@@ -22,6 +22,8 @@ opening_hours 217, services 47, verification_checks 56, user_reports 2, audit_en
 2. For production, once the database is on a paid Render plan, also open Render's backups page for the database and check that a recent backup exists.
 3. Write the date in `LOG.md`.
 
+> **Since 2026-10-28 the production database is moving from Render to Neon** (`specs/2026-10-28-neon-database/runbook.md`). After the move, use Neon's **direct** address (the host without `-pooler`) for `scripts/backup-db.sh`, never the pooled one (Neon: "always use direct connections for `pg_dump`"). Neon's free plan keeps only a short history, so this script, run nightly somewhere, is still the daily backup of NFR-09.
+
 ## Backing up the production database yourself (until Render's backups exist)
 
 On your own machine, with the PostgreSQL client tools installed (`pg_dump`), take the database's **External Database URL** from the Render dashboard

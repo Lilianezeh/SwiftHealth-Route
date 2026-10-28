@@ -179,6 +179,92 @@ def test_database_url_is_rewritten_when_it_comes_from_the_environment(monkeypatc
     assert make_settings().database_url == "postgresql+psycopg://user:secret@host:5432/dbname"
 
 
+# --- The move from Render Postgres to Neon (specs/2026-10-28-neon-database/) ------------------
+# The addresses below are made up (a made-up project name and password): no real address is ever
+# written in the repository.
+NEON_POOLED = "postgresql://ada:pw@ep-quiet-sun-123456-pooler.eu-central-1.aws.neon.tech/swifthealth"
+NEON_DIRECT = "postgresql://ada:pw@ep-quiet-sun-123456.eu-central-1.aws.neon.tech/swifthealth"
+
+
+def test_database_url_with_the_short_postgres_prefix_gets_the_psycopg_driver():
+    # Some providers write `postgres://`; libpq accepts it, SQLAlchemy does not.
+    settings = make_settings(database_url="postgres://user:secret@host:5432/dbname")
+    assert settings.database_url == "postgresql+psycopg://user:secret@host:5432/dbname"
+
+
+@pytest.mark.parametrize("address", [NEON_POOLED, NEON_DIRECT])
+def test_a_neon_address_without_sslmode_gets_sslmode_require(address):
+    # Neon accepts only encrypted connections. Without the option the first connection would
+    # depend on the client's default.
+    settings = make_settings(database_url=address)
+    expected = address.replace("postgresql://", "postgresql+psycopg://") + "?sslmode=require"
+    assert settings.database_url == expected
+
+
+def test_a_neon_address_with_other_options_gets_sslmode_added_once_and_keeps_them():
+    settings = make_settings(database_url=NEON_POOLED + "?channel_binding=require")
+    assert settings.database_url.endswith("?channel_binding=require&sslmode=require")
+    assert settings.database_url.count("sslmode=") == 1
+
+
+def test_a_neon_address_that_names_its_own_sslmode_is_left_alone():
+    address = NEON_DIRECT + "?sslmode=verify-full"
+    assert make_settings(database_url=address).database_url == address.replace("postgresql://", "postgresql+psycopg://")
+
+
+@pytest.mark.parametrize(
+    "address",
+    [
+        "postgresql://ada:pw@dpg-abc123-a/swifthealth",  # Render's private address: nothing added
+        "postgresql://ada:pw@localhost:5432/swifthealth",
+        "postgresql://ada:pw@db:5432/swifthealth",
+        "postgresql://ada:pw@not-neon.tech.example.com/swifthealth",  # only a host ENDING in .neon.tech
+    ],
+)
+def test_an_address_that_is_not_neon_is_not_given_sslmode(address):
+    assert "sslmode" not in make_settings(database_url=address).database_url
+
+
+def test_a_neon_password_with_special_characters_comes_out_exactly_as_it_went_in():
+    from sqlalchemy.engine import make_url
+
+    # p@ss/w:rd#? written the way a connection string writes it
+    password_in_the_address = "p%40ss%2Fw%3Ard%23%3F"
+    host = "ep-quiet-sun-123456-pooler.eu-central-1.aws.neon.tech"
+    address = f"postgresql://ada:{password_in_the_address}@{host}/swifthealth"
+    url = make_url(make_settings(database_url=address).database_url)
+    assert url.password == "p@ss/w:rd#?"
+    assert url.host == host
+    assert url.database == "swifthealth"
+    assert url.query["sslmode"] == "require"
+
+
+def test_the_alembic_address_is_the_app_address_when_no_direct_address_is_set():
+    settings = make_settings(database_url="postgresql://ada:pw@host/dbname")
+    assert settings.database_url_direct == ""
+    assert settings.alembic_database_url == settings.database_url
+
+
+def test_alembic_uses_the_direct_address_when_one_is_set_and_the_app_keeps_the_pooled_one():
+    settings = make_settings(database_url=NEON_POOLED, database_url_direct=NEON_DIRECT)
+    expected = NEON_DIRECT.replace("postgresql://", "postgresql+psycopg://") + "?sslmode=require"
+    assert "-pooler" in settings.database_url
+    assert "-pooler" not in settings.alembic_database_url
+    assert settings.alembic_database_url == expected
+
+
+def test_the_direct_address_is_read_from_the_environment(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL_DIRECT", NEON_DIRECT)
+    assert make_settings().alembic_database_url.startswith("postgresql+psycopg://ada:pw@ep-quiet-sun-123456.")
+
+
+def test_a_validation_error_does_not_print_the_database_address():
+    # hide_input_in_errors: an address holds the password, so a wrong setting must never echo it into a log.
+    with pytest.raises(ValidationError) as error:
+        make_settings(database_url=NEON_POOLED, app_env="production", jwt_secret="short")
+    assert "ada:pw" not in str(error.value)
+
+
 def test_cors_origin_list_splits_a_comma_list_and_trims_spaces():
     settings = make_settings(cors_origins="https://swifthealth.netlify.app, http://localhost:3000")
     assert settings.cors_origin_list == ["https://swifthealth.netlify.app", "http://localhost:3000"]

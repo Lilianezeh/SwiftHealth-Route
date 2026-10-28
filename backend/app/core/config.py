@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import make_url
 
 # The eight blood groups, in the order of GET /meta. Blood banks store them as service rows (CLAUDE.md).
 BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
@@ -33,7 +34,13 @@ class Settings(BaseSettings):
 
     # "development" allows the default JWT secret. Any other value turns the secret check on (decision 12).
     app_env: str = "development"
+    # The address the app uses. In production it is Neon's POOLED address (host with `-pooler`);
+    # locally it is the `db` container.
     database_url: str = "postgresql+psycopg://swifthealth:swifthealth@localhost:5432/swifthealth"
+    # Neon's DIRECT address (the host without `-pooler`), used only by Alembic, because migrations
+    # must not go through the pooler (Neon's advice). Empty means "use DATABASE_URL", which is right
+    # for the local database and for any database without a pooler.
+    database_url_direct: str = ""
     jwt_secret: str = DEFAULT_JWT_SECRET
     jwt_minutes: int = 60 * 12
     # Keys the hash that counts different reporters for FR-22. Separate from JWT_SECRET on purpose: rotating
@@ -72,14 +79,34 @@ class Settings(BaseSettings):
         "Uwani", "Achara Layout", "Abakpa Nike", "Emene", "Coal Camp",
     ]
 
-    @field_validator("database_url")
+    @field_validator("database_url", "database_url_direct")
     @classmethod
     def use_psycopg_driver(cls, database_url: str) -> str:
-        """Render gives `postgresql://...`. SQLAlchemy would pick a driver we lack, so name psycopg."""
-        plain_prefix = "postgresql://"
-        if database_url.startswith(plain_prefix):
-            return "postgresql+psycopg://" + database_url.removeprefix(plain_prefix)
+        """Name the psycopg driver, and ask Neon for an encrypted connection.
+
+        Render and Neon give `postgresql://...` (some providers `postgres://...`). SQLAlchemy would
+        pick a driver we lack, so name psycopg. Neon accepts only encrypted connections and its
+        addresses end in `.neon.tech`: for such a host without a `sslmode` option, add
+        `sslmode=require` (an address copied from the Neon dashboard has it; one typed by hand may
+        not). Any other host is left as it is.
+        """
+        for plain_prefix in ("postgresql://", "postgres://"):
+            if database_url.startswith(plain_prefix):
+                database_url = "postgresql+psycopg://" + database_url.removeprefix(plain_prefix)
+                break
+        if not database_url.startswith("postgresql+psycopg://"):
+            return database_url
+        parsed = make_url(database_url)
+        if (parsed.host or "").endswith(".neon.tech") and "sslmode" not in parsed.query:
+            # Added to the text, not by rebuilding the address, so a password keeps exactly the
+            # characters it came with.
+            database_url += ("&" if "?" in database_url else "?") + "sslmode=require"
         return database_url
+
+    @property
+    def alembic_database_url(self) -> str:
+        """The address Alembic migrates through: DATABASE_URL_DIRECT if set, else DATABASE_URL."""
+        return self.database_url_direct or self.database_url
 
     @property
     def cors_origin_list(self) -> list[str]:
