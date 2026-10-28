@@ -1,0 +1,53 @@
+name: Nightly jobs
+# FR-33, FR-36 (the re-check) and the promise on the Privacy page that unfinished sign-ups are removed after 7 days.
+# Spec: specs/2026-10-28-nightly-jobs/. A schedule runs only from the default branch (main), so nothing starts before the merge.
+# This repository is public: the log of a run is public. The jobs print one line each and no address or key. There is
+# no pull_request trigger on purpose, so the secrets below can never reach code from a pull request.
+on:
+  schedule:
+    - cron: "0 0 * * *" # 00:00 UTC = 01:00 in Lagos (UTC+1, no daylight saving time). GitHub may start it a few minutes late.
+  workflow_dispatch: # the "Run workflow" button, to test after the merge
+permissions:
+  contents: read
+jobs:
+  recheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults: { run: { working-directory: backend } }
+    env:
+      # Neon's DIRECT address: a job is one short connection, so it does not need the pooler. Repository secrets, never printed.
+      DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
+      # For the summary email to editors and admins. With either one empty the job still moves the listings and logs a warning.
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
+    steps:
+      - name: Check the database secret is set
+        run: test -n "$DATABASE_URL" || { echo "The repository secret DATABASE_URL_DIRECT is not set."; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Move overdue listings to re-check due
+        run: python -m app.jobs.recheck
+
+  purge-signups:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults: { run: { working-directory: backend } }
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
+    steps:
+      - name: Check the database secret is set
+        run: test -n "$DATABASE_URL" || { echo "The repository secret DATABASE_URL_DIRECT is not set."; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Remove unconfirmed sign-ups older than 7 days
+        run: python -m app.jobs.purge_signups

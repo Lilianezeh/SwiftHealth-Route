@@ -1,0 +1,62 @@
+name: Nightly backup
+# NFR-09: a daily backup of the production database (Neon), kept for 7 days. Spec: specs/2026-10-28-nightly-jobs/.
+# THIS REPOSITORY IS PUBLIC, so every artifact of a run can be downloaded by any GitHub user who is signed in. A "private"
+# artifact does not exist here. So the dump is encrypted (gpg, AES-256, a passphrase kept as a repository secret) on the
+# runner, the plain file is deleted, and only the encrypted file is uploaded. Without the passphrase it cannot be read.
+# No pull_request trigger on purpose: the secrets must never reach code from a pull request. Runs only from main.
+on:
+  schedule:
+    - cron: "30 0 * * *" # 00:30 UTC = 01:30 in Lagos, after the nightly jobs. GitHub may start it a few minutes late.
+  workflow_dispatch: # the "Run workflow" button, to test after the merge
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # No variables here: the address and the passphrase are given only to the steps that use them, never to the upload.
+    steps:
+      - name: Check the secrets are set
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          test -n "$DATABASE_URL" || { echo "The repository secret DATABASE_URL_DIRECT is not set."; exit 1; }
+          test -n "$BACKUP_PASSPHRASE" || { echo "The repository secret BACKUP_PASSPHRASE is not set."; exit 1; }
+      - uses: actions/checkout@v4
+      - name: Install the pg_dump of the same major version as the Neon server
+        # pg_dump refuses a server newer than itself, so the runner's version (16) is not enough when Neon runs 17 or 18.
+        # server_version_num is like 180001: its first two digits are the major version. psql only reads this one number.
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
+        run: |
+          major="$(psql "$DATABASE_URL" --no-psqlrc --tuples-only --no-align --command 'SHOW server_version_num' 2>/dev/null | cut -c1-2)"
+          case "$major" in ([0-9][0-9]) ;; (*) echo "Could not read the version of the Neon server."; exit 1;; esac
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq "postgresql-client-$major"
+          echo "/usr/lib/postgresql/$major/bin" >> "$GITHUB_PATH"
+      - name: Back up the database (the direct address)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
+        run: bash scripts/backup-db.sh --url-from-env DATABASE_URL --folder backups
+      - name: Encrypt the dump and delete the plain file
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          for dump in backups/*.dump; do
+            pg_restore --list "$dump" > /dev/null # the dump is readable (lists table names only, to nowhere)
+            printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+              --symmetric --cipher-algo AES256 --s2k-digest-algo SHA512 --s2k-count 65011712 \
+              --output "$dump.gpg" "$dump"
+            rm -f "$dump"
+          done
+          test -z "$(ls backups/*.dump 2>/dev/null)" || { echo "A plain dump is still there."; exit 1; }
+          ls -l backups
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neon-backup-encrypted
+          path: backups/*.gpg
+          retention-days: 7
+          if-no-files-found: error

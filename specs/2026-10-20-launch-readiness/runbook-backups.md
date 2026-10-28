@@ -51,5 +51,7 @@ comparison in `LOG.md` ("The Render database expires about 2026-11-07").
 ## Not done on purpose
 
 - **No Render cron job** in `render.yaml`: a cron job is a paid service. When the database is on a paid plan, Render keeps its own recovery points; ask Render's docs how long.
-- **No scheduled job anywhere**: the owner decides where a nightly run would live (a free scheduler such as GitHub Actions can run `pg_dump` against the external URL
+- **No scheduled job anywhere** (until 2026-10-28): the owner decides where a nightly run would live (a free scheduler such as GitHub Actions can run `pg_dump` against the external URL
   with the address kept as a repository secret; that needs your decision because it puts the production address in GitHub).
+  **Update 2026-10-28:** the owner chose GitHub Actions. `.github/workflows/nightly-backup.yml` runs this script every day against Neon's direct address, **encrypts** the dump
+  (the repository is public, so an artifact is not private), and keeps the encrypted file for 7 days. Spec, secrets and how to decrypt: `specs/2026-10-28-nightly-jobs/`.
