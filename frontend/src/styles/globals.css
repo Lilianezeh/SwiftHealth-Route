@@ -48,6 +48,10 @@
   --color-hero-to: #1a7cad;
   --color-veil: #134f6a;
   --color-band: #ffffff; /* the section under the hero and the owners section: white (the surface) in the light mode, the hero's own navy in the dark */
+  /* The fill of the hero slideshow's buttons and dots (specs/2026-10-28-hero-slideshow/). A control has a white edge round this dark fill, so over any
+     photo one of the two stands out by 3:1: the edge over a dark pixel, the fill over a light one. The brand blue was not dark enough: there was a
+     middle grey (a light teal) where neither stood out, 2.4:1 in a real browser. tests/unit/darkMode.test.ts checks every grey level. */
+  --color-control: #0e3a4f;
 
   --shadow-card: 0 2px 12px color-mix(in srgb, var(--color-forest) 7%, transparent);
 }
@@ -118,4 +122,5 @@ body {
   --color-hero-to: #0d1d36;
   --color-veil: #060d18;
   --color-band: #0a1628;
+  --color-control: #0a1628;
 }

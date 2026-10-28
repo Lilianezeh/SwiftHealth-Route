@@ -41,7 +41,7 @@ function whenPageIsIdle(callback: () => void): () => void {
 }
 
 const CONTROL =
-  "inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border-2 border-snow bg-pine text-white shadow-card " +
+  "inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border-2 border-snow bg-control text-white shadow-card " +
   "focus-visible:shadow-[0_0_0_2px_var(--color-pine-dark)] disabled:opacity-50";
 
 type HeroSlideshowProps = {
@@ -195,7 +195,7 @@ export function HeroSlideshow({ children, shade }: HeroSlideshowProps) {
               onClick={() => go(index)}
               className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-full focus-visible:shadow-[0_0_0_2px_var(--color-pine-dark)]"
             >
-              <span className={`block h-4 w-4 rounded-full border-2 shadow-card ${index === shown ? "border-pine bg-snow" : "border-snow bg-pine"}`} />
+              <span className={`block h-4 w-4 rounded-full border-2 shadow-card ${index === shown ? "border-control bg-snow" : "border-snow bg-control"}`} />
             </button>
           ))}
         </div>
