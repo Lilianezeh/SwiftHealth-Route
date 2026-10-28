@@ -72,6 +72,6 @@ A schedule runs only from `main`, so nothing starts before the merge.
 - **Times are UTC.** 00:00 UTC is 01:00 in Lagos (no daylight saving time in Nigeria). GitHub can start a scheduled run several minutes late when it is busy.
 - **Schedules switch themselves off after 60 days without any activity in a public repository** (GitHub's rule). A push or a pull request counts. If the backups stop, look at the Actions tab for a banner and press **Enable workflow**.
 - **When a scheduled run fails**, GitHub e-mails the person who last changed the schedule (check **Settings, Notifications, Actions**). Look at the Actions tab now and then anyway.
-- **The artifact is public in a public repository**: that is why it is encrypted (decision J1 in `requirements.md`). Rotate `BACKUP_PASSPHRASE` (add the secret again) if you ever think it leaked; backups already made keep the old passphrase.
+- **The artifact is public in a public repository**: that is why it is encrypted (decision J1 in `requirements.md`, kept by your choice). Up to 30 days of encrypted backups sit there (decision J2), so the passphrase is what protects them. Rotate `BACKUP_PASSPHRASE` (add the secret again) if you ever think it leaked; backups already made keep the old passphrase.
 - Public repositories have free Actions minutes. The three jobs use about 6 minutes a night. Each one wakes Neon's compute for a short time; the free plan's 100 compute-hours a month is not at risk.
 - To stop everything: **Actions**, the workflow, the **...** menu, **Disable workflow**.

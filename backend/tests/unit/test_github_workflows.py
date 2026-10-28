@@ -7,7 +7,7 @@ The repository is public, so the logs and the artifacts of a run can be read by 
 hold the rules that keep that safe: a run starts only from the schedule or a button (never from a
 pull request, where a stranger's code could read a secret), a secret is read only as
 `secrets.NAME` and only the four named ones, nothing prints one, and only an encrypted file is
-kept as an artifact, for 7 days.
+kept as an artifact, for 30 days (NFR-09).
 
 The workflows are at the root of the repository. A test run inside the backend container does not
 see them (only ./backend is mounted), so those tests are skipped there; they run in CI.
@@ -132,7 +132,7 @@ def test_the_dump_is_encrypted_and_the_plain_file_removed_before_the_upload():
     assert text.index("--symmetric") < text.index("rm -f")
 
 
-def test_only_encrypted_files_are_uploaded_and_for_7_days():
+def test_only_encrypted_files_are_uploaded_and_for_30_days():
     uploads = [
         step
         for step in all_steps(load(NIGHTLY_BACKUP))
@@ -141,7 +141,7 @@ def test_only_encrypted_files_are_uploaded_and_for_7_days():
     assert len(uploads) == 1
     settings = uploads[0]["with"]
     assert settings["path"] == "backups/*.gpg"
-    assert settings["retention-days"] == 7
+    assert settings["retention-days"] == 30  # NFR-09: backups kept for 30 days
     assert settings["if-no-files-found"] == "error"
 
 

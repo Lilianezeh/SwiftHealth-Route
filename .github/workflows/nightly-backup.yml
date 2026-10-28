@@ -1,5 +1,5 @@
 name: Nightly backup
-# NFR-09: a daily backup of the production database (Neon), kept for 7 days. Spec: specs/2026-10-28-nightly-jobs/.
+# NFR-09: a daily backup of the production database (Neon), kept for 30 days. Spec: specs/2026-10-28-nightly-jobs/.
 # THIS REPOSITORY IS PUBLIC, so every artifact of a run can be downloaded by any GitHub user who is signed in. A "private"
 # artifact does not exist here. So the dump is encrypted (gpg, AES-256, a passphrase kept as a repository secret) on the
 # runner, the plain file is deleted, and only the encrypted file is uploaded. Without the passphrase it cannot be read.
@@ -58,5 +58,5 @@ jobs:
         with:
           name: neon-backup-encrypted
           path: backups/*.gpg
-          retention-days: 7
+          retention-days: 30 # NFR-09: backups kept for 30 days
           if-no-files-found: error
