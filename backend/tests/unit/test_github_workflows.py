@@ -94,6 +94,23 @@ def test_actions_are_pinned_to_a_version(workflow_path):
             assert re.fullmatch(r"[\w./-]+@v\d+(\.\d+){0,2}", step["uses"]), step["uses"]
 
 
+def test_checkout_is_the_first_step_so_no_command_runs_before_the_repository_exists(workflow_path):
+    # `defaults.run.working-directory: backend` does not exist until actions/checkout has run:
+    # a `run` step before it fails with "No such file or directory" (seen on the first real run).
+    for name, job in load(workflow_path)["jobs"].items():
+        steps = job["steps"]
+        checkout_positions = [
+            position
+            for position, step in enumerate(steps)
+            if step.get("uses", "").startswith("actions/checkout@")
+        ]
+        assert checkout_positions, f"job {name} never checks out the repository"
+        first_run_position = next(
+            (position for position, step in enumerate(steps) if "run" in step), len(steps)
+        )
+        assert checkout_positions[0] < first_run_position, f"job {name} runs a command before checkout"
+
+
 def test_every_job_has_a_time_limit(workflow_path):
     for job in load(workflow_path)["jobs"].values():
         assert job["timeout-minutes"] <= 15

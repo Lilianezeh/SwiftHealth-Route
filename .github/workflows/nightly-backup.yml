@@ -16,6 +16,7 @@ jobs:
     timeout-minutes: 15
     # No variables here: the address and the passphrase are given only to the steps that use them, never to the upload.
     steps:
+      - uses: actions/checkout@v4
       - name: Check the secrets are set
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
@@ -23,7 +24,6 @@ jobs:
         run: |
           test -n "$DATABASE_URL" || { echo "The repository secret DATABASE_URL_DIRECT is not set."; exit 1; }
           test -n "$BACKUP_PASSPHRASE" || { echo "The repository secret BACKUP_PASSPHRASE is not set."; exit 1; }
-      - uses: actions/checkout@v4
       - name: Install the pg_dump of the same major version as the Neon server
         # pg_dump refuses a server newer than itself, so the runner's version (16) is not enough when Neon runs 17 or 18.
         # server_version_num is like 180001: its first two digits are the major version. psql only reads this one number.

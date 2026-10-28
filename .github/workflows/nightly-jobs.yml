@@ -21,9 +21,10 @@ jobs:
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
       RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
     steps:
+      # Checkout first: the default working directory `backend` does not exist before it, so any `run` step above it fails.
+      - uses: actions/checkout@v4
       - name: Check the database secret is set
         run: test -n "$DATABASE_URL" || { echo "The repository secret DATABASE_URL_DIRECT is not set."; exit 1; }
-      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -40,9 +41,9 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
     steps:
+      - uses: actions/checkout@v4
       - name: Check the database secret is set
         run: test -n "$DATABASE_URL" || { echo "The repository secret DATABASE_URL_DIRECT is not set."; exit 1; }
-      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
