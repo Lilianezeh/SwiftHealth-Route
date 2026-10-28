@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /** "List your facility": a visitor is sent to sign up or log in, a provider registers a facility or claims one, and a staff
- * account is sent to the admin screens. Requirements: FR-50, FR-51, FR-23, NFR-06, NFR-07, NFR-10. UI spec 2.9; api-spec 7, "Phase 7";
+ * account gets a link to the new-listing form (not the dashboard). Requirements: FR-50, FR-51, FR-23, NFR-06, NFR-07, NFR-10. UI spec 2.9; api-spec 7, "Phase 7";
  * decisions D14 and D15 in specs/2026-10-23-accounts-and-facility-ownership/requirements.md. Every name and number here is fictional.
  */
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -83,7 +83,7 @@ describe("a visitor (no account)", () => {
     expect(await screen.findByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
     expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/log-in?next=/list-your-facility");
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByText(/you need an account/)).toBeInTheDocument();
+    expect(screen.getByText("Log in or sign up to list your facility.")).toBeInTheDocument();
     expect(screen.queryByLabelText("Facility name")).toBeNull();
     expect(apiCalls()).toEqual([]);
   });
@@ -93,6 +93,8 @@ describe("a visitor (no account)", () => {
     render(<ListYourFacilityPage />);
 
     expect(await screen.findByText("Sign-up is not open yet.")).toBeInTheDocument();
+    expect(screen.getByText("Log in to list your facility.")).toBeInTheDocument();
+    expect(screen.queryByText(/sign up to list/)).toBeNull();
     expect(screen.queryByRole("link", { name: "Sign up" })).toBeNull();
     expect(screen.getByRole("link", { name: "Log in" })).toBeInTheDocument();
   });
@@ -108,15 +110,29 @@ describe("a visitor (no account)", () => {
 });
 
 describe("a staff account", () => {
-  it.each(["verifier", "editor", "admin"] as const)("%s is told to use the admin screens and sees no form", async (role) => {
-    loginAs(role);
-    const { apiCalls } = stubApi();
+  it.each(["verifier", "editor", "admin"] as const)(
+    "%s gets a link straight to the new-listing form (not the dashboard), the owners' form explained, and no form",
+    async (role) => {
+      loginAs(role);
+      const { apiCalls } = stubApi();
+      render(<ListYourFacilityPage />);
+
+      expect(await screen.findByText(/Facility owners list a facility with this form/)).toBeInTheDocument();
+      expect(screen.getByText(/Our team verifies it before it is listed/)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Add a facility" })).toHaveAttribute("href", "/admin/listings/new");
+      for (const link of screen.getAllByRole("link")) expect(link).not.toHaveAttribute("href", "/admin");
+      expect(screen.queryByRole("link", { name: "Go to the admin screens" })).toBeNull();
+      expect(screen.queryByLabelText("Facility name")).toBeNull();
+      expect(apiCalls()).toEqual([]);
+    },
+  );
+
+  it("the link is a large button (at least 48 px)", async () => {
+    loginAs("admin");
+    stubApi();
     render(<ListYourFacilityPage />);
 
-    expect(await screen.findByText(/Use the admin screens/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Go to the admin screens" })).toBeInTheDocument();
-    expect(screen.queryByLabelText("Facility name")).toBeNull();
-    expect(apiCalls()).toEqual([]);
+    expect((await screen.findByRole("link", { name: "Add a facility" })).className).toMatch(/min-h-\[50px\]|min-h-12/);
   });
 });
 
@@ -269,7 +285,7 @@ describe("a provider registering a facility", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Send" }));
 
-    expect(await screen.findByText(/you need an account/)).toBeInTheDocument();
+    expect(await screen.findByText(/to list your facility\./)).toBeInTheDocument();
     expect(readStaffSession()).toBeNull();
   });
 
