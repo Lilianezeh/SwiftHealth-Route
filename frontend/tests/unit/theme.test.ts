@@ -5,8 +5,10 @@
 import { runInNewContext } from "node:vm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { THEME_CHOICES, THEME_KEY, applyTheme, nextChoice, readChoice, resolveTheme, saveChoice } from "@/lib/theme/theme";
+import { THEME_CHOICES, THEME_COLOURS, THEME_KEY, applyTheme, nextChoice, readChoice, resolveTheme, saveChoice } from "@/lib/theme/theme";
 import { THEME_SCRIPT } from "@/lib/theme/themeScript";
+
+import { readSource } from "../helpers/source";
 
 type Listener = () => void;
 
@@ -41,7 +43,7 @@ const theme = () => document.documentElement.getAttribute("data-theme");
 function runScript(): void {
   const sandbox = {
     window: { matchMedia: (window as unknown as { matchMedia?: unknown }).matchMedia, localStorage: window.localStorage },
-    document: { documentElement: document.documentElement },
+    document: { documentElement: document.documentElement, querySelector: (selector: string) => document.querySelector(selector) },
   };
   runInNewContext(THEME_SCRIPT, sandbox);
 }
@@ -123,7 +125,7 @@ describe("the theme the page gets", () => {
 
 describe("the script in the head (no flash)", () => {
   it("is short, plain and has no outside address", () => {
-    expect(THEME_SCRIPT.length).toBeLessThan(700);
+    expect(THEME_SCRIPT.length).toBeLessThan(900); // 700 before the address-bar colour was set here too
     expect(THEME_SCRIPT).not.toMatch(/https?:|fetch|XMLHttpRequest|document\.cookie|eval\(|import\(/);
     expect(THEME_SCRIPT).toContain(THEME_KEY);
   });
@@ -206,5 +208,66 @@ describe("the script in the head (no flash)", () => {
     });
     expect(runScript).not.toThrow();
     vi.restoreAllMocks();
+  });
+});
+
+describe("the browser's address-bar colour (theme-color), owner 2026-10-28", () => {
+  const meta = () => document.querySelector('meta[name="theme-color"]')?.getAttribute("content");
+
+  beforeEach(() => {
+    const tag = document.createElement("meta");
+    tag.setAttribute("name", "theme-color");
+    tag.setAttribute("content", "#1b6f93");
+    document.head.replaceChildren(tag);
+  });
+
+  it("is the header blue in the light mode and navy in the dark mode", () => {
+    expect(THEME_COLOURS).toEqual({ light: "#1b6f93", dark: "#0a1628" });
+  });
+
+  it("follows the Theme button: applyTheme sets it with the theme, Light then Dark then Light again", () => {
+    applyTheme("dark");
+    expect(meta()).toBe("#0a1628");
+    applyTheme("light");
+    expect(meta()).toBe("#1b6f93");
+  });
+
+  it("follows the choice, not the device: System on a dark device is navy, nothing chosen on a dark device stays blue", () => {
+    fakeSystem(true);
+    applyTheme("system");
+    expect(meta()).toBe("#0a1628");
+    window.localStorage.clear();
+    applyTheme("light");
+    expect(meta()).toBe("#1b6f93");
+  });
+
+  it("is set by the script in the head before the first paint, with the data-theme, for every choice and every device", () => {
+    for (const choice of THEME_CHOICES) {
+      for (const systemDark of [true, false]) {
+        window.localStorage.setItem(THEME_KEY, choice);
+        fakeSystem(systemDark);
+        runScript();
+        expect(meta(), `${choice} / dark device: ${systemDark}`).toBe(THEME_COLOURS[theme() as "light" | "dark"]);
+      }
+    }
+  });
+
+  it("is kept with the system's changes while System is chosen", () => {
+    const system = fakeSystem(false);
+    window.localStorage.setItem(THEME_KEY, "system");
+    runScript();
+    expect(meta()).toBe("#1b6f93");
+    system.change(true);
+    expect(meta()).toBe("#0a1628");
+  });
+
+  it("is the same light blue as the page's own meta tag (layout.tsx), which is what the first paint and a browser without script see", () => {
+    expect(readSource("app/layout.tsx")).toContain(`themeColor: "${THEME_COLOURS.light}"`);
+  });
+
+  it("does not throw when the page has no theme-color tag", () => {
+    document.head.replaceChildren();
+    expect(() => applyTheme("dark")).not.toThrow();
+    expect(runScript).not.toThrow();
   });
 });

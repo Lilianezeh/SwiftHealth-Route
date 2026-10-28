@@ -28,7 +28,7 @@ const DARK = { ...LIGHT, ...Object.fromEntries(Object.entries(DARK_RAW).map(([na
 const ROLE_TOKENS = [
   "page", "surface", "ink", "ink-soft", "line", "forest", "pine-100", "pine-50", "open", "open-bg", "closed", "closed-bg",
   "amber-ink", "amber-wash", "whatsapp-dark", "alert",
-  "pine", "pine-dark", "accent", "bar", "hero-from", "hero-to", "veil", "band",
+  "pine", "pine-dark", "accent", "bar", "hero-from", "hero-to", "veil", "band", "control",
 ];
 const CONSTANT_TOKENS = ["amber", "paper", "on-amber", "emergency", "sky", "sky-pale", "snow"];
 
@@ -160,6 +160,7 @@ describe("the light mode did not change", () => {
     ["hero-to", "#1a7cad"],
     ["veil", "#134f6a"],
     ["band", "#ffffff"],
+    ["control", "#0e3a4f"],
   ])("%s is %s", (name, value) => {
     expect(LIGHT[name]).toBe(value);
   });
@@ -175,6 +176,7 @@ describe("every text and background pair is at least 4.5:1 in the dark mode (NFR
     ["forest", "band", "the headings and links of those sections"],
     ["ink-soft", "band", "secondary text in those sections"],
     ["ink", "bar", "text on the header bar and the Why band, in case a page puts ink there"],
+    ["white", "control", "the icons of the slideshow's buttons"],
     ["forest", "hero-from", "a link on the hero's deep end"],
     ["ink", "pine-50", "text on a light panel"],
     ["ink-soft", "pine-50", "secondary text on a light panel"],
@@ -208,6 +210,44 @@ describe("every text and background pair is at least 4.5:1 in the dark mode (NFR
   ])("%s on %s (%s)", (foreground, background) => {
     expect(contrast(colour(DARK, foreground), colour(DARK, background))).toBeGreaterThanOrEqual(4.5);
   });
+});
+
+describe("the slideshow's buttons and dots show against ANY photo, in both modes (WCAG 1.4.11)", () => {
+  // A control has a white edge (`snow`) round a dark fill (`control`). Whatever the photo is behind it, one of the two stands out by at least 3:1:
+  // the white edge over a dark pixel, the dark fill over a light one. With a fill that is not dark enough there is a middle grey where neither does
+  // (the blue `pine` fill measured 2.4:1 over a light teal pixel in a real browser), so the maths is done for every grey level, 0 to 255.
+  const grey = (level: number) => `#${level.toString(16).padStart(2, "0").repeat(3)}`;
+
+  for (const [mode, tokens] of [["light", LIGHT], ["dark", DARK]] as const) {
+    it(`in the ${mode} mode: for every grey level the white edge or the fill is at least 3:1, and the white icon on the fill is at least 4.5:1`, () => {
+      const fill = tokens.control;
+      expect(fill, "the control token").toMatch(/^#[0-9a-f]{6}$/);
+      const worst = { level: -1, ratio: Infinity };
+      for (let level = 0; level <= 255; level++) {
+        const ratio = Math.max(contrast("#ffffff", grey(level)), contrast(fill, grey(level)));
+        if (ratio < worst.ratio) {
+          worst.level = level;
+          worst.ratio = ratio;
+        }
+      }
+      expect(worst.ratio, `the worst grey is ${worst.level}: ${worst.ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
+      expect(contrast("#ffffff", fill)).toBeGreaterThanOrEqual(4.5);
+    });
+
+    it(`in the ${mode} mode: the same holds for the coloured pixels of a photo: the worst of a coarse grid of red, green and blue`, () => {
+      const hex = (value: number) => value.toString(16).padStart(2, "0");
+      let worst = Infinity;
+      for (let red = 0; red <= 255; red += 15) {
+        for (let green = 0; green <= 255; green += 15) {
+          for (let blue = 0; blue <= 255; blue += 15) {
+            const pixel = `#${hex(red)}${hex(green)}${hex(blue)}`;
+            worst = Math.min(worst, Math.max(contrast("#ffffff", pixel), contrast(tokens.control, pixel)));
+          }
+        }
+      }
+      expect(worst).toBeGreaterThanOrEqual(3);
+    });
+  }
 });
 
 describe("edges and the focus ring are at least 3:1 in the dark mode (WCAG 1.4.11, 2.4.11)", () => {

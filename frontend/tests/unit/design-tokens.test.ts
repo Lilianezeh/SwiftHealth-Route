@@ -246,7 +246,9 @@ function sourceFiles(folder: string): string[] {
 describe("components use tokens, not hand-written colours", () => {
   // The browser's address bar and an installed app's splash screen cannot read a CSS variable, so these two files hold
   // the colour as text. They must stay equal to the tokens.
-  const BROWSER_CHROME_FILES = ["app/layout.tsx", "app/manifest.ts"];
+  // The browser's own parts take colours as text: the address bar and the install icon (theme-color in layout.tsx and the manifest; the Dark one is
+  // set by lib/theme/theme.ts with the Theme button, 2026-10-28).
+  const BROWSER_CHROME_FILES = ["app/layout.tsx", "app/manifest.ts", "lib/theme/theme.ts"];
 
   it("no hex or rgb colour is written in the source, except for the browser chrome", () => {
     const offenders = sourceFiles(SRC)

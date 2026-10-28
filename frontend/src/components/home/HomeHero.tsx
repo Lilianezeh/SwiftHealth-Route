@@ -2,7 +2,7 @@
  * R18 to R21 (2026-10-12) in specs/2026-10-11-home-redesign/requirements.md. Like the reference site the owner pointed to.
  *
  * A sky blue gradient (from `pine-dark` at the bottom left to `sky` at the top right; white text passes on every point: 8.92:1
- * to 4.64:1), with the white text in the lower left, one white button, and one photo. It is tall (85% of the screen) only from
+ * to 4.64:1), with the white text in the lower left, one white button, and the photo band (since 2026-10-28 a slideshow, HeroSlideshow: the stethoscope is always the first photo and is drawn here, the others come after the page has loaded). It is tall (85% of the screen) only from
  * 1024 px, in the side-by-side layout; the stacked layout has no forced height, so there is no empty gap on a tablet (R30).
  * Phone and tablet (up to 1023 px, R28): the photo is a band at the top, the full width (16 rem high, 18 rem from 768 px: R33),
  * with a slanted bottom edge, and the text is below it at the full width of the page. There the text row is a plain block and the
@@ -24,6 +24,7 @@
 import { getImageProps } from "next/image";
 import Link from "next/link";
 
+import { HeroSlideshow } from "@/components/home/HeroSlideshow";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { HOME_PHOTOS, HOME_WORDS } from "@/config/home";
 
@@ -48,24 +49,28 @@ export function HomeHero() {
       aria-labelledby="hero-heading"
       className="on-dark relative flex flex-col bg-linear-to-tr from-hero-from to-hero-to text-white lg:min-h-[85svh]"
     >
-      <div className="relative h-64 shrink-0 [clip-path:polygon(0_0,100%_0,100%_85%,0_100%)] md:h-72 lg:absolute lg:inset-y-0 lg:right-0 lg:h-auto lg:w-1/2 lg:[clip-path:polygon(15%_0,100%_0,100%_100%,0_100%)]">
+      {/* The photo band: the stethoscope first (the server draws it, eager and with its fetchPriority hint, as before), then the other photos (HeroSlideshow, a client part that
+          adds them after the page has loaded). The band's size, its slanted edge and the veil are the same as when it was one photo. */}
+      <HeroSlideshow
+        shade={
+          /* The veil: decoration only, behind the header's white links. 6 rem high, solid (85%) for the first 4.5 rem, which covers
+             everything the header draws (its items end at about 3.5 rem), then a fade out over the last 1.5 rem. It was solid for 3 rem and
+             80%; measured on the real pixels, the lower part of the items was then over a fading veil and a white sheet of the photo gave
+             3.8:1 to 4.3:1, under the 4.5:1 that text needs (tests/end-to-end/hero-header-contrast.spec.ts). It is the only thing over the
+             photos: they are as bright in the dark mode as in the light mode (owner, 2026-10-28), no filter on them and no tint. */
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-veil/85 via-veil/85 via-75% to-transparent"
+          />
+        }
+      >
         <picture className="block h-full">
           <source media={PHONE_SCREENS} srcSet={`${heroPhone.src} ${heroPhone.width}w`} sizes="100vw" />
           {/* A plain <img> on purpose: it is the fallback of the <picture> above, with the attributes of next/image. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img {...heroImage} alt={hero.alt} className="h-full w-full object-cover" />
         </picture>
-        {/* The photo is as bright in the dark mode as in the light mode (owner, 2026-10-28): no filter on it and nothing laid over it,
-            except the veil below. A test compares its pixels in both modes. */}
-        {/* The veil: decoration only, behind the header's white links. 6 rem high, solid (85%) for the first 4.5 rem, which covers
-            everything the header draws (its items end at about 3.5 rem), then a fade out over the last 1.5 rem. It was solid for 3 rem and
-            80%; measured on the real pixels, the lower part of the items was then over a fading veil and a white sheet of the photo gave
-            3.8:1 to 4.3:1, under the 4.5:1 that text needs (tests/end-to-end/hero-header-contrast.spec.ts). */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-veil/85 via-veil/85 via-75% to-transparent"
-        />
-      </div>
+      </HeroSlideshow>
 
       <div className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 pt-6 lg:flex lg:items-end lg:pb-16 lg:pt-28">
         <div className="w-full min-w-0 lg:w-1/2 lg:pr-8">

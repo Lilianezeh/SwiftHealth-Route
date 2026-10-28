@@ -169,11 +169,21 @@ describe("the hero", () => {
     expect(source).not.toMatch(/hero2|hero4|owner2/);
   });
 
+  /** The band of the photos (`HeroSlideshow`): its size and place. Since 2026-10-28 the slanted edge is on the frame inside it (frameOf). */
   function photoBoxOf(container: HTMLElement) {
-    const photoBox = container.querySelector("picture")?.parentElement as HTMLElement;
+    const photoBox = container.querySelector("[data-hero-band]") as HTMLElement;
     // The box is a child of the section itself, not of the page-width container, so it can reach the edge of the screen.
     expect(photoBox.parentElement).toBe(container.querySelector("section"));
     return photoBox;
+  }
+
+  function frameOf(container: HTMLElement) {
+    return photoBoxOf(container).querySelector("[data-hero-frame]") as HTMLElement;
+  }
+
+  /** The veil under the header: the one child of the frame that is not a slide. */
+  function veilOf(container: HTMLElement) {
+    return frameOf(container).querySelector(':scope > [aria-hidden="true"]:not([data-hero-slide])') as HTMLElement;
   }
 
   it("fills the whole right half of the hero on a tablet and desktop: top to bottom, to the right edge, nothing below it", () => {
@@ -195,11 +205,12 @@ describe("the hero", () => {
   it("has a slanted left edge on a tablet and desktop (clip-path) and no rounded corners", () => {
     const { container } = render(<HomeHero />);
 
-    const photoBox = photoBoxOf(container);
-    expect(photoBox.className).toMatch(/lg:\[clip-path:polygon\(15%_0,100%_0,100%_100%,0_100%\)\]/);
-    expect(photoBox.className).not.toMatch(/md:\[clip-path/); // a tablet keeps the band with the slanted bottom edge
-    expect(photoBox.className).not.toMatch(/\brounded/);
-    expect(photoBox.querySelector("img")?.className).not.toMatch(/\brounded/);
+    const frame = frameOf(container);
+    expect(frame.className).toMatch(/lg:\[clip-path:polygon\(15%_0,100%_0,100%_100%,0_100%\)\]/);
+    expect(frame.className).not.toMatch(/md:\[clip-path/); // a tablet keeps the band with the slanted bottom edge
+    expect(frame.className).not.toMatch(/\brounded/);
+    expect(photoBoxOf(container).className).not.toMatch(/\brounded/);
+    expect(frame.querySelector("img")?.className).not.toMatch(/\brounded/);
   });
 
   it("is a band at the top of the hero on a phone and a tablet (up to 1023 px), the full width, with a slanted bottom edge, above the text", () => {
@@ -213,7 +224,7 @@ describe("the hero", () => {
     expect(photoBox.className).toMatch(/\bmd:h-72\b/); // 18 rem from 768 px: the heading and the button stay on the first screen
     expect(photoBox.className).not.toMatch(/\bh-96\b|(^|\s)h-72\b/); // the old 18 rem phone band and 24 rem tablet band
     expect(photoBox.className).toMatch(/\blg:h-auto\b/); // from 1024 px the box follows the height of the hero
-    expect(photoBox.className).toMatch(/(^|\s)\[clip-path:polygon\(0_0,100%_0,100%_85%,0_100%\)\]/); // the slanted bottom edge
+    expect(frameOf(container).className).toMatch(/(^|\s)\[clip-path:polygon\(0_0,100%_0,100%_85%,0_100%\)\]/); // the slanted bottom edge
     expect(photoBox.className).not.toMatch(/(^|\s)(px|mx)-/); // the full width: no side margin
     expect(photoBox.querySelector("img")?.className).not.toMatch(/(^|\s)(px|mx)-/);
   });
@@ -221,9 +232,10 @@ describe("the hero", () => {
   it("has a short, soft dark veil over the top of the photo: 6 rem, 85%, solid for 4.5 rem, then a fade (R21, R27; measured again on 2026-10-28)", () => {
     const { container } = render(<HomeHero />);
 
-    const veil = photoBoxOf(container).querySelector('[aria-hidden="true"]') as HTMLElement;
+    const veil = veilOf(container);
     expect(veil).not.toBeNull();
-    expect(photoBoxOf(container).querySelectorAll('[aria-hidden="true"]')).toHaveLength(1); // the veil is the only thing laid over the photo
+    // the veil is the only thing laid over the photos: the frame holds the slides (the photos) and the veil, nothing else (the controls are beside it)
+    expect([...frameOf(container).children].filter((child) => !child.hasAttribute("data-hero-slide"))).toEqual([veil]);
     expect(photoBoxOf(container).querySelector("img")?.className).toBe("h-full w-full object-cover"); // the photo itself: no filter, in either mode
     expect(veil.className).toMatch(/\babsolute\b/);
     expect(veil.className).toMatch(/\btop-0\b/);
@@ -240,7 +252,7 @@ describe("the hero", () => {
   it("keeps everything the header draws inside the solid part of the veil (the first 4.5 rem), so the white links stay readable", () => {
     const { container } = render(<HomeHero />);
 
-    const veilClasses = (photoBoxOf(container).querySelector('[aria-hidden="true"]') as HTMLElement).className;
+    const veilClasses = veilOf(container).className;
     const heightRem = Number(/\bh-(\d+)\b/.exec(veilClasses)?.[1]) / 4; // Tailwind: h-24 = 6 rem
     const solidRem = (Number(/\bvia-(\d+)%/.exec(veilClasses)?.[1]) / 100) * heightRem;
     // The header: 0.5 rem of padding, then a 3 rem (48 px) link box: its items end at 3.5 rem. (A veil that was solid only to 3 rem left
@@ -350,10 +362,26 @@ describe("find by type", () => {
     ]);
   });
 
-  it("gives each tile a decorative icon over its label, and no photo in a tile (the faint slideshow is behind the tiles, not in them)", () => {
+  it("is a plain section again (owner, 2026-10-28): no photo, no slideshow behind it, no Pause button, no credit, a plain heading, on the light-blue band", () => {
     const { container } = render(<FindByType />);
 
-    expect(container.querySelectorAll("img:not([data-backdrop] img)")).toHaveLength(0);
+    expect(container.querySelectorAll("img, picture, [data-backdrop], [data-backdrop-slide]")).toHaveLength(0);
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(container.textContent).not.toMatch(/Magnific|Pause|Play/);
+    const section = container.querySelector("section") as HTMLElement;
+    expect(section.className).toMatch(/\bbg-pine-50\b/);
+    expect(section.className).not.toMatch(/section-lazy|isolate|overflow-hidden|lg:min-h-\[760px\]/);
+    const heading = screen.getByRole("heading", { level: 2, name: "Find by type" });
+    expect(heading.className).toMatch(/\btext-forest\b/);
+    expect(heading.className).not.toMatch(/\bbg-/); // no white backing: nothing is behind it any more
+    const source = readSource("components/home/FindByType.tsx");
+    expect(source).not.toMatch(/BackdropSlideshow|section-lazy|data-backdrop/);
+  });
+
+  it("gives each tile a decorative icon over its label, and no photo in a tile", () => {
+    const { container } = render(<FindByType />);
+
+    expect(container.querySelectorAll("img")).toHaveLength(0);
     for (const [label] of TILES) {
       const tile = screen.getByRole("link", { name: label });
       expect(tile.querySelector("svg"), label).toHaveAttribute("aria-hidden", "true");

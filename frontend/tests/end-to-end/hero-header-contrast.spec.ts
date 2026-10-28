@@ -1,6 +1,7 @@
-/** The header over the hero photo, and the text over the slideshow photos, measured on the real pixels, in both modes.
+/** The header over the hero photo, and the slideshow's controls over each of the six hero photos, measured on the real pixels, in both modes.
  * Requirements: NFR-10 (WCAG AA: 4.5:1 for text, 3:1 for an icon and for a button's edge), FR-02. Owner's request of 2026-10-28.
- * Spec: specs/2026-10-28-dark-palette-navy/. It needs the site running (playwright.config.ts); GET /meta goes to the real API.
+ * Spec: specs/2026-10-28-dark-palette-navy/ and specs/2026-10-28-hero-slideshow/. It needs the site running (playwright.config.ts); GET /meta goes
+ * to the real API.
  *
  * How it measures: it reads where each item of the header is and what colour it has, hides the items (so only the photo and the veil
  * are left), takes a picture of the header strip, and looks at every pixel behind each item. The worst pixel decides: for white text
@@ -8,7 +9,7 @@
  */
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { BACKDROP_PHOTOS } from "../../src/config/sitePhotos";
+import { HERO_SLIDES } from "../../src/config/sitePhotos";
 
 const WIDTHS = [
   { width: 360, height: 740 },
@@ -23,7 +24,9 @@ type Colour = [number, number, number, number]; // red, green, blue (0 to 255), 
 /** `ignoreShare` is the share of pixels (0 to 1) that may be worse than the rest: 0 for every item; a little for the strip across the
  * whole width, because the photo's slanted cut-out edge (clip-path) has one anti-aliased pixel per row that is a blend of photo and
  * gradient, and no text sits on a 1 px seam. */
-type Item = { name: string; x: number; y: number; width: number; height: number; colour: Colour; need: number; ignoreShare?: number };
+type Item = { name: string; x: number; y: number; width: number; height: number; colour: Colour; need: number; ignoreShare?: number; alternative?: Colour };
+// `alternative` is a second colour that may do the job instead: an edge is seen if its own colour (a white border) OR the fill it surrounds (a dark
+// button) stands out from the pixel behind it, so the better of the two counts for each pixel.
 type Result = { name: string; worst: number; need: number };
 
 /** Turns any CSS colour the browser reports (rgb, oklab, color-mix...) into plain red, green, blue and alpha. */
@@ -91,10 +94,15 @@ async function measure(page: Page, picture: Buffer, items: Item[]): Promise<Resu
           const ratios: number[] = [];
           for (let index = 0; index < data.length; index += 4) {
             // the item's colour over this pixel (a see-through colour, like a border at 60%, is blended first)
-            const seen = [0, 1, 2].map((channel) => alpha * [red, green, blue][channel] + (1 - alpha) * data[index + channel]);
-            const first = luminance(seen[0], seen[1], seen[2]);
             const second = luminance(data[index], data[index + 1], data[index + 2]);
-            ratios.push((Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05));
+            const ratioOf = (colour: number[]) => {
+              const [paintRed, paintGreen, paintBlue, paintAlpha] = colour;
+              const painted = [paintRed, paintGreen, paintBlue].map((channel, position) => paintAlpha * channel + (1 - paintAlpha) * data[index + position]);
+              const first = luminance(painted[0], painted[1], painted[2]);
+              return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+            };
+            // the item's colour over this pixel (a see-through colour, like a border at 60%, is blended first); the better of the two colours counts
+            ratios.push(Math.max(ratioOf([red, green, blue, alpha]), region.alternative ? ratioOf(region.alternative) : 0));
           }
           ratios.sort((smaller, larger) => smaller - larger);
           const worst = ratios[Math.floor(ratios.length * (region.ignoreShare ?? 0))];
@@ -198,47 +206,45 @@ for (const mode of MODES) {
 
 for (const mode of MODES) {
   for (const { width, height } of [WIDTHS[0], WIDTHS[2]]) {
-    test.describe(`the slideshow text in the ${mode} mode at ${width} px, on every slideshow photo`, () => {
+    test.describe(`the slideshow controls in the ${mode} mode at ${width} px, over every hero photo`, () => {
       test.use({ viewport: { width, height } });
 
-      BACKDROP_PHOTOS.forEach((photo, index) => {
-        test(`photo ${index + 1} (${photo.src.split("/").pop()}): the heading, Pause and the credit stay readable`, async ({ page }) => {
+      ["the stethoscope", ...HERO_SLIDES.map((photo) => photo.src.split("/").pop() ?? "")].forEach((name, index) => {
+        test(`photo ${index + 1} (${name}): every button and dot has an edge that shows, 3:1 against the photo, either the white edge or the dark fill`, async ({ page }) => {
           await openHome(page, mode);
-          const section = page.locator("section", { has: page.getByRole("heading", { level: 2, name: "Find by type" }) });
-          await section.scrollIntoViewIfNeeded();
-          await page.getByRole("button", { name: /Pause photos|Play photos/ }).waitFor({ timeout: 30_000 });
+          await page.getByRole("button", { name: `Photo ${index + 1} of ${HERO_SLIDES.length + 1}` }).click();
+          await page.waitForFunction((wanted) => /opacity-100/.test(document.querySelector(`[data-hero-slide][data-index="${wanted}"]`)?.className ?? ""), index, { timeout: 30_000 });
+          await page.waitForTimeout(1600); // the fade (1.2 s) is over
 
-          // show this photo in the first slide (the slideshow itself changes slowly and only adds photos while it plays)
-          await page.evaluate(async (file) => {
-            const slide = document.querySelector("[data-backdrop-slide]") as HTMLElement;
-            for (const other of document.querySelectorAll<HTMLElement>("[data-backdrop-slide]")) other.style.opacity = other === slide ? "1" : "0";
-            const source = slide.querySelector("source");
-            const image = slide.querySelector("img") as HTMLImageElement;
-            if (source) source.srcset = file.src;
-            image.srcset = `${file.srcLarge} ${file.widthLarge}w`;
-            image.src = file.src;
-            await image.decode();
-          }, { src: photo.src, srcLarge: photo.srcLarge, widthLarge: photo.widthLarge });
-
-          const targets = [
-            section.getByRole("heading", { level: 2, name: "Find by type" }),
-            section.getByRole("button", { name: /Pause photos|Play photos/ }),
-            section.getByRole("link", { name: /^Designed by Magnific/ }),
-          ];
-          // the colour of each text first, then the text is made see-through: the surface behind it (white or navy, a little see-through
-          // for the heading) stays, and that is what the text sits on
-          const colours: Colour[] = [];
-          for (const target of targets) colours.push(await readColour(page, await target.evaluate((element) => getComputedStyle(element).color)));
-          await page.addStyleTag({ content: "section *, section *::before { color: transparent !important; }" });
-
-          // positions on the whole page (not on the screen), because the picture is of the whole page
+          // what each control looks like: the edge of the button (or of the dot's circle) is its border colour or its fill, whichever stands out
           const items: Item[] = [];
-          for (const [position, target] of targets.entries()) {
-            const box = (await drawnBounds(target, true))!;
-            items.push({ name: ["the heading", "the Pause button", "the credit"][position], ...box, colour: colours[position], need: TEXT });
+          const pieces = await page.locator("[data-hero-controls] > button, [data-hero-controls] [role=group] button > span").all();
+          for (const piece of pieces) {
+            const box = await piece.boundingBox();
+            if (!box) continue;
+            const style = await piece.evaluate((element) => {
+              const computed = getComputedStyle(element);
+              return { edge: computed.borderTopColor, fill: computed.backgroundColor };
+            });
+            const label = (await piece.getAttribute("aria-label")) ?? (await piece.evaluate((element) => element.parentElement?.getAttribute("aria-label") ?? "a dot"));
+            const [edge, fill] = [await readColour(page, style.edge), await readColour(page, style.fill)];
+            const band = 3;
+            for (const [side, x, y, bandWidth, bandHeight] of [
+              ["above", box.x - band, box.y - band, box.width + 2 * band, band],
+              ["below", box.x - band, box.y + box.height, box.width + 2 * band, band],
+              ["left of", box.x - band, box.y, band, box.height],
+              ["right of", box.x + box.width, box.y, band, box.height],
+            ] as const) {
+              items.push({ name: `the edge of ${label}, ${side} it`, x, y, width: bandWidth, height: bandHeight, colour: edge, alternative: fill, need: GRAPHIC });
+            }
           }
-          const full = await page.screenshot({ fullPage: true, type: "png" });
-          expectAll(await measure(page, full, items));
+          expect(items.length).toBe(36); // three buttons and six dots, four sides each
+
+          // only the photo, the veil and the gradient are left: every control is hidden, so what is measured is what is behind it
+          await page.addStyleTag({ content: "[data-hero-controls] * { visibility: hidden !important; }" });
+          const bottom = (await page.locator("[data-hero-band]").boundingBox())!;
+          const picture = await page.screenshot({ clip: { x: 0, y: 0, width, height: Math.ceil(bottom.y + bottom.height + 24) }, type: "png" });
+          expectAll(await measure(page, picture, items));
         });
       });
     });
@@ -292,11 +298,13 @@ for (const { width, height } of WIDTHS) {
         helper ??= await (await browser.newContext()).newPage();
         await openHome(page, mode);
         const box = (await page.locator('section[aria-labelledby="hero-heading"] picture').boundingBox())!;
-        // The photo below the shade under the header (that is 6 rem = 96 px high), and away from the slanted cut-out edges, where the
-        // hero's own gradient shows through (the left fifth from 1024 px, the bottom fifth on a phone and a tablet).
+        // The photo below the shade under the header (that is 6 rem = 96 px high), above the slideshow's controls (they are buttons, not the
+        // photo, and their blue differs between the modes: 100 px up from the bottom of the band, and at most 160 px down on a phone, where
+        // they hang from about 168 px), and away from the slanted cut-out edges, where the hero's own gradient shows through (the left
+        // quarter from 1024 px).
         const top = Math.max(box.y, 110);
         const left = box.x + (width >= 1024 ? box.width * 0.25 : 0);
-        const bottom = box.y + box.height * (width >= 1024 ? 0.97 : 0.8);
+        const bottom = box.y + Math.min(box.height - 100, 160);
         pictures[mode] = await page.screenshot({ clip: { x: left, y: top, width: box.x + box.width - left, height: bottom - top }, type: "png" });
         await context.close();
       }

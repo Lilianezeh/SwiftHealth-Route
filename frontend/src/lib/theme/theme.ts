@@ -46,7 +46,14 @@ function systemIsDark(): boolean {
   return typeof window.matchMedia === "function" && window.matchMedia(DARK_QUERY).matches;
 }
 
-/** Puts the theme of this choice on the page. */
+/** The colour of the browser's address bar (the `theme-color` tag) for each theme (owner, 2026-10-28): the header blue in the light mode, the navy of
+ * the dark header and hero in the dark mode. It follows the page's theme (the Theme button), not the device. `layout.tsx` has the light value for the
+ * first paint and for a browser without script. */
+export const THEME_COLOURS: Record<Theme, string> = { light: "#1b6f93", dark: "#0a1628" };
+
+/** Puts the theme of this choice on the page, and the matching address-bar colour (when the page has a theme-color tag). */
 export function applyTheme(choice: ThemeChoice): void {
-  document.documentElement.setAttribute("data-theme", resolveTheme(choice, systemIsDark()));
+  const theme = resolveTheme(choice, systemIsDark());
+  document.documentElement.setAttribute("data-theme", theme);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLOURS[theme]);
 }
