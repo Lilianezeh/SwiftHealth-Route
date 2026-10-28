@@ -8,7 +8,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import EmergencyPage from "@/app/(public)/emergency/page";
-import { EMERGENCY_PHOTOS, MAGNIFIC_CREDIT } from "@/config/sitePhotos";
+import { EMERGENCY_PHOTOS } from "@/config/sitePhotos";
 import { OFFLINE_COPY_KEY } from "@/lib/emergency/offlineCopy";
 
 import { emergencyResponse, json, stubApi } from "../helpers/api";
@@ -101,25 +101,20 @@ describe("each photo", () => {
     expect(image.className).toMatch(/\bmax-w-\[427px\]|\bmax-w-md\b/); // 160 px high at 8:3 is 427 px wide
   });
 
-  it("has the 'Designed by Magnific' credit directly under it: a safe 16 px link, 48 px tap area, new tab", async () => {
+  it("has no 'Designed by Magnific' credit under it: the one credit of the site is in the footer (owner, 2026-10-28)", async () => {
     stubApi({});
-    render(<EmergencyPage />);
+    const { container } = render(<EmergencyPage />);
 
     for (const heading of ["Ambulance", "Fire service"]) {
       const section = await sectionOf(heading);
-      const credit = within(section).getByRole("link", { name: /^Designed by Magnific/ });
-      const image = section.querySelector("img") as HTMLElement;
 
-      expect(credit).toHaveAttribute("href", MAGNIFIC_CREDIT.href);
-      expect(credit).toHaveAttribute("target", "_blank");
-      expect(credit.getAttribute("rel")).toContain("noopener");
-      expect(credit.getAttribute("rel")).toContain("noreferrer");
-      expect(credit.className).toMatch(/\btext-base\b/);
-      expect(credit.className).toMatch(/\bmin-h-12\b/);
-      expect(image.compareDocumentPosition(credit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      expect(within(section).queryAllByRole("link", { name: /magnific/i })).toHaveLength(1);
+      expect(section.querySelector("img")).not.toBeNull();
+      expect(within(section).queryAllByRole("link", { name: /magnific/i })).toHaveLength(0);
+      expect(section.textContent).not.toMatch(/Magnific/);
     }
-    expect(screen.getAllByRole("link", { name: /^Designed by Magnific/ })).toHaveLength(2); // only under these two photos
+    expect(screen.queryAllByRole("link", { name: /magnific/i })).toHaveLength(0);
+    expect(container.textContent).not.toMatch(/Magnific/);
+    expect(readSource("components/emergency/GroupPhoto.tsx")).not.toMatch(/Magnific|MAGNIFIC_CREDIT|target="_blank"/);
   });
 });
 

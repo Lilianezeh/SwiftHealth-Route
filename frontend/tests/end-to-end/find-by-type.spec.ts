@@ -106,7 +106,7 @@ for (const { width, height } of WIDTHS) {
         await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible({ timeout: 60_000 });
         await expect(page.getByRole("button", { name: `Remove the ${chip} filter` })).toBeVisible();
         await expect(page.locator("main img, main picture, main figure")).toHaveCount(0);
-        await expect(page.getByRole("link", { name: /Magnific/ })).toHaveCount(0);
+        await expect(page.locator("main").getByRole("link", { name: /Magnific/ })).toHaveCount(0); // the one credit is in the footer (2026-10-28)
       }
       expect(images.filter((path) => path.startsWith("/images/"))).toEqual([]);
       await allIsInsideTheScreen(page, width);

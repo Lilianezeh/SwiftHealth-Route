@@ -2,7 +2,7 @@
  * R18 to R21 (2026-10-12) in specs/2026-10-11-home-redesign/requirements.md. Like the reference site the owner pointed to.
  *
  * A sky blue gradient (from `pine-dark` at the bottom left to `sky` at the top right; white text passes on every point: 8.92:1
- * to 4.64:1), with the white text in the lower left, one white button, and one photo. It is tall (85% of the screen) only from
+ * to 4.64:1), with the white text in the lower left, one white button, and the photo band (since 2026-10-28 a slideshow, HeroSlideshow: the stethoscope is always the first photo and is drawn here, the others come after the page has loaded). It is tall (85% of the screen) only from
  * 1024 px, in the side-by-side layout; the stacked layout has no forced height, so there is no empty gap on a tablet (R30).
  * Phone and tablet (up to 1023 px, R28): the photo is a band at the top, the full width (16 rem high, 18 rem from 768 px: R33),
  * with a slanted bottom edge, and the text is below it at the full width of the page. There the text row is a plain block and the
@@ -24,6 +24,7 @@
 import { getImageProps } from "next/image";
 import Link from "next/link";
 
+import { HeroSlideshow } from "@/components/home/HeroSlideshow";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { HOME_PHOTOS, HOME_WORDS } from "@/config/home";
 
@@ -48,20 +49,25 @@ export function HomeHero() {
       aria-labelledby="hero-heading"
       className="on-dark relative flex flex-col bg-linear-to-tr from-pine-dark to-sky text-white lg:min-h-[85svh]"
     >
-      <div className="relative h-64 shrink-0 [clip-path:polygon(0_0,100%_0,100%_85%,0_100%)] md:h-72 lg:absolute lg:inset-y-0 lg:right-0 lg:h-auto lg:w-1/2 lg:[clip-path:polygon(15%_0,100%_0,100%_100%,0_100%)]">
+      {/* The photo band: the stethoscope first (the server draws it, eager and with its fetchPriority hint, as before), then the other photos (HeroSlideshow, a client part that
+          adds them after the page has loaded). The band's size, its slanted edge and the veil are the same as when it was one photo. */}
+      <HeroSlideshow
+        shade={
+          /* The veil: decoration only, behind the header's white links. 6 rem high, solid (80%) for the first 3 rem, which covers
+             the header's text (it ends at 2.75 rem), then a gentle fade out over the other 3 rem. It is the only thing over the photos. */
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-pine-dark/80 via-pine-dark/80 via-50% to-transparent"
+          />
+        }
+      >
         <picture className="block h-full">
           <source media={PHONE_SCREENS} srcSet={`${heroPhone.src} ${heroPhone.width}w`} sizes="100vw" />
           {/* A plain <img> on purpose: it is the fallback of the <picture> above, with the attributes of next/image. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img {...heroImage} alt={hero.alt} className="h-full w-full object-cover" />
         </picture>
-        {/* The veil: decoration only, behind the header's white links. 6 rem high, solid (80%) for the first 3 rem, which covers
-            the header's text (it ends at 2.75 rem), then a gentle fade out over the other 3 rem. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-pine-dark/80 via-pine-dark/80 via-50% to-transparent"
-        />
-      </div>
+      </HeroSlideshow>
 
       <div className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 pt-6 lg:flex lg:items-end lg:pb-16 lg:pt-28">
         <div className="w-full min-w-0 lg:w-1/2 lg:pr-8">

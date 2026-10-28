@@ -1,13 +1,12 @@
 /** Part 5 of the home page: "Find by type" (it was "Browse by type" until 2026-10-15), five icon tiles. Requirements: US-13, NFR-10.
  * UI spec 2.1; revision R2 (2026-10-12): simple tiles, no photos; D1 of specs/2026-10-15-find-by-type/requirements.md. The whole tile is
  * one link to the search for its category, named by its label. A tile shows only that type: the search filters on the exact slug.
- * Since 2026-10-23 (specs/2026-10-22-home-photos/, revision 4) a faint background slideshow runs behind the heading and the tiles
- * (BackdropSlideshow); the tiles are white cards and stay as they were, and the heading is `pine-dark` so it passes 4.5:1 over the worst photo.
+ * From 2026-10-23 to 2026-10-28 a faint background slideshow ran behind the heading and the tiles; the photos moved to the hero
+ * (specs/2026-10-28-hero-slideshow/) and this is a plain section again: the light-blue band, a plain heading, the tiles as they were.
  */
 import { Baby, FlaskConical, Hospital, Pill, Stethoscope, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
-import { BackdropSlideshow } from "@/components/home/BackdropSlideshow";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { HOME_CATEGORIES, HOME_WORDS } from "@/config/home";
 import { filtersToQuery } from "@/lib/search/searchQuery";
@@ -32,21 +31,14 @@ const TILE_PLACE = [
 
 export function FindByType() {
   return (
-    <section
-      aria-labelledby="find-by-type-heading"
-      className="section-lazy relative isolate flex flex-col justify-end overflow-hidden bg-pine-50 lg:min-h-[760px]"
-    >
-      <BackdropSlideshow>
-        {/* A soft white backing, like the Pause button and the credit: the heading is on a white surface whatever photo is behind it. */}
-        <h2
-          id="find-by-type-heading"
-          className="inline-block rounded-xl bg-surface/90 px-4 py-2 text-2xl font-bold text-forest"
-        >
+    <section aria-labelledby="find-by-type-heading" className="bg-pine-50">
+      <div className="mx-auto max-w-6xl px-4 py-12">
+        <h2 id="find-by-type-heading" className="text-2xl font-bold text-forest">
           {HOME_WORDS.findByType.heading}
         </h2>
         {/* Two tiles of two columns each on a phone (grid-cols-4: the last tile in the middle), three on a tablet (grid-cols-6: the last two in
             the middle), one row of five on a laptop. */}
-        <ul className="mt-4 grid grid-cols-4 gap-2 md:mt-5 md:grid-cols-6 md:gap-3 lg:grid-cols-5">
+        <ul className="mt-6 grid grid-cols-4 gap-2 md:grid-cols-6 md:gap-3 lg:grid-cols-5">
           {HOME_CATEGORIES.map((category, position) => (
             <li key={category.slug} className={`col-span-2 lg:col-span-1 ${TILE_PLACE[position]}`}>
               {/* The link is named by its label (aria-labelledby) and described by its line (aria-describedby), so the name of each tile is
@@ -72,7 +64,7 @@ export function FindByType() {
             </li>
           ))}
         </ul>
-      </BackdropSlideshow>
+      </div>
     </section>
   );
 }

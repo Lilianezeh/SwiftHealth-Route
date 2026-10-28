@@ -186,19 +186,21 @@ describe("the whole page", () => {
     expect(container.querySelectorAll("blockquote, q")).toHaveLength(0);
   });
 
-  it("has one outside link: the 'Designed by Magnific' credit of the background slideshow (owner, 2026-10-23); the Unsplash photos need none", () => {
+  it("has one outside link, in the footer: 'Photos: Designed by Magnific' (the credit moved there on 2026-10-28); no credit on any photo, and the Unsplash photos need none", () => {
     const { container } = renderWholePage();
 
     const outside = [...container.querySelectorAll('a[href^="http"], a[target="_blank"]')];
 
     expect(outside.map((link) => link.getAttribute("href"))).toEqual(["https://www.magnific.com"]);
+    expect(outside[0].closest("footer")).not.toBeNull();
+    expect(container.querySelector("main")?.textContent).not.toMatch(/Magnific/);
     expect(container.textContent?.toLowerCase()).not.toMatch(/unsplash/);
   });
 
-  it("has the hero and the owner photo, each with alt text, a width and a height, exactly as on main, and the first faint slideshow photo", () => {
+  it("has the hero and the owner photo, each with alt text, a width and a height, exactly as on main (the other hero photos come after the page has loaded)", () => {
     const { container } = renderWholePage();
 
-    const images = [...container.querySelectorAll("img")].filter((image) => !image.closest("[data-backdrop]"));
+    const images = [...container.querySelectorAll("img")];
 
     expect(images.map((image) => image.getAttribute("src"))).toEqual([
       "/images/home/hero3.webp",
@@ -210,18 +212,16 @@ describe("the whole page", () => {
       expect(Number(image.getAttribute("width"))).toBeGreaterThan(0);
       expect(Number(image.getAttribute("height"))).toBeGreaterThan(0);
     }
-    // The slideshow behind Find by type: one photo in the page at first, decorative (no alt text).
-    const backdrop = [...container.querySelectorAll("[data-backdrop] img")];
-    expect(backdrop).toHaveLength(1);
-    expect(backdrop[0]).toHaveAttribute("alt", "");
+    expect(container.querySelector("[data-backdrop], [data-backdrop-slide]")).toBeNull(); // the faint slideshow behind Find by type is gone
   });
 
-  it("loads only the hero at once: the owner photo and the slideshow photo are lazy", () => {
+  it("loads only the hero at once, as before: the stethoscope is eager with high priority, the owner photo is lazy", () => {
     const { container } = renderWholePage();
 
     const eager = [...container.querySelectorAll("img")].filter((image) => image.getAttribute("loading") !== "lazy");
 
     expect(eager.map((image) => image.getAttribute("src"))).toEqual([HOME_PHOTOS.hero.src]);
+    expect(eager[0].getAttribute("fetchpriority")).toBe("high");
   });
 
   it("uses the red emergency colour once: the SwiftRescue button of the header", () => {

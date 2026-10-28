@@ -1,6 +1,6 @@
 /** Makes the WebP photos of the "Find by type" background slideshow and of SwiftRescue from the owner's full-size Magnific originals.
  * Requirements: US-13, US-04, NFR-01 (light for 3G), NFR-13 (credits). Spec: specs/2026-10-22-home-photos/requirements.md (revision 4);
- * tested by tests/unit/backdropPhotos.test.ts (sizes in kilobytes and in pixels, one file per config entry, nothing else in the folders).
+ * tested by tests/unit/heroSlides.test.ts (sizes in kilobytes and in pixels, one file per config entry, nothing else in the folders).
  *
  * Run it in the frontend folder:   node scripts/optimize-hero-photos.mjs             (everything)
  *                                  node scripts/optimize-hero-photos.mjs backdrop    (only the slideshow)
@@ -21,7 +21,7 @@ import sharp from "sharp";
 const SOURCE_FOLDER = fileURLToPath(new URL("../source-photos/", import.meta.url));
 const BACKDROP_FOLDER = fileURLToPath(new URL("../public/images/backdrop/", import.meta.url));
 const EMERGENCY_FOLDER = fileURLToPath(new URL("../public/images/emergency/", import.meta.url));
-const KILOBYTE = 1000; // the same "kB" as tests/unit/backdropPhotos.test.ts
+const KILOBYTE = 1000; // the same "kB" as tests/unit/heroSlides.test.ts
 
 // 3:2, two sizes of each slideshow photo (revision 6): 800 px for phones and tablets, 1600 px for wide screens (srcset/sizes in BackdropSlideshow).
 const BACKDROP_SMALL = { width: 800, height: 533, budgetKb: 45 };

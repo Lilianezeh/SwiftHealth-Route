@@ -211,7 +211,7 @@ test.describe("what the home page downloads", () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/", { waitUntil: "load" });
 
-    // The hero photo only: since the Find by type slideshow (#44) the page has a second <picture> (the lazy backdrop photos).
+    // The stethoscope only: the other hero photos (the slideshow, 2026-10-28) are added after the page has loaded and are not the first <picture>.
     const hero = page.locator('picture img[src*="/images/home/hero3"]');
     await expect(hero).toHaveAttribute("loading", "eager");
     await expect(hero).toHaveAttribute("fetchpriority", "high");
