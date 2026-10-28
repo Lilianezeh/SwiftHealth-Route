@@ -105,11 +105,21 @@ describe("the navy bars, the hero and the home sections (Option A, 2026-10-28)",
     expect(hero).toMatch(/dark:brightness-\d+/);
   });
 
-  it("gives the Why band's icon circles bg-pine-dark and the home panels role tokens (a surface, a tint), not constants", () => {
-    expect(code(join(SRC, "components/home/WhySwiftHealth.tsx"))).toMatch(/bg-pine-dark text-white/);
+  it("darkens the hero photo well (brightness 60%, a veil-colour tint from 80% to 55%), so the stethoscope's white sheets are not bright (2026-10-28)", () => {
+    const hero = code(join(SRC, "components/home/HomeHero.tsx"));
+    expect(hero).toMatch(/\bdark:brightness-60\b/);
+    expect(hero).toMatch(/\bfrom-veil\/80 to-veil\/55\b/);
+  });
+
+  it("gives the section under the hero and the owners section the band token (the hero's colour in the dark mode, white in the light mode)", () => {
     for (const file of ["components/home/Overview.tsx", "components/home/FacilityOwners.tsx"]) {
-      expect(code(join(SRC, file)), file).toMatch(/bg-surface/);
+      expect(code(join(SRC, file)), file).toMatch(/<section[^>]*className="bg-band"/);
+      expect(code(join(SRC, file)), file).not.toMatch(/<section[^>]*\bbg-surface\b/);
     }
+  });
+
+  it("gives the Why band's icon circles bg-pine-dark and the Find band's panels role tokens (a tint), not constants", () => {
+    expect(code(join(SRC, "components/home/WhySwiftHealth.tsx"))).toMatch(/bg-pine-dark text-white/);
     expect(code(join(SRC, "components/home/FindByType.tsx"))).toMatch(/bg-pine-50/);
   });
 

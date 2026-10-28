@@ -14,7 +14,7 @@ export function FacilityOwners() {
   const words = HOME_WORDS.owners;
 
   return (
-    <section aria-labelledby="owners-heading" className="bg-surface">
+    <section aria-labelledby="owners-heading" className="bg-band">
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-12 md:flex md:items-center md:gap-10 md:space-y-0">
         <HomeImage photo={HOME_PHOTOS.owner} className="h-auto w-full rounded-2xl md:h-[26rem] md:w-auto md:shrink-0" />
         <div className="md:max-w-xl">

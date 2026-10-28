@@ -28,7 +28,7 @@ const DARK = { ...LIGHT, ...Object.fromEntries(Object.entries(DARK_RAW).map(([na
 const ROLE_TOKENS = [
   "page", "surface", "ink", "ink-soft", "line", "forest", "pine-100", "pine-50", "open", "open-bg", "closed", "closed-bg",
   "amber-ink", "amber-wash", "whatsapp-dark", "alert",
-  "pine", "pine-dark", "accent", "bar", "hero-from", "hero-to", "veil",
+  "pine", "pine-dark", "accent", "bar", "hero-from", "hero-to", "veil", "band",
 ];
 const CONSTANT_TOKENS = ["amber", "paper", "on-amber", "emergency", "sky", "sky-pale", "snow"];
 
@@ -81,27 +81,43 @@ describe("the dark blocks", () => {
     expect(luminance(DARK.ink)).toBeGreaterThan(0.6);
   });
 
-  it("make the page and the cards deep navy: blue first, never pure black or grey, and the cards a little lighter than the page", () => {
+  it("make the page, the cards, the bars and the hero near-black navy: blue first, close to black but never pure black or grey, the cards a little lighter than the page", () => {
     const channels = (hex: string) => [1, 3, 5].map((start) => parseInt(hex.slice(start, start + 2), 16));
-    for (const name of ["page", "surface", "bar", "hero-from"]) {
+    for (const name of ["page", "surface", "bar", "hero-from", "hero-to", "band", "pine-50"]) {
       const [red, green, blue] = channels(DARK[name]);
-      expect(blue, name).toBeGreaterThan(green + 8);
+      expect(blue, name).toBeGreaterThan(green + 6);
       expect(green, name).toBeGreaterThan(red);
-      expect(blue - red, `${name} is not grey`).toBeGreaterThanOrEqual(25);
-      expect(Math.max(red, green, blue), `${name} is not pure black`).toBeGreaterThanOrEqual(30);
+      expect(blue - red, `${name} is not grey`).toBeGreaterThanOrEqual(18);
+      expect(Math.max(red, green, blue), `${name} is not pure black`).toBeGreaterThanOrEqual(24);
+      expect(luminance(DARK[name]), `${name} is close to black`).toBeLessThan(0.02);
     }
-    expect(luminance(DARK.surface)).toBeGreaterThan(luminance(DARK.page));
+    expect(luminance(DARK.surface)).toBeGreaterThan(luminance(DARK.page)); // the cards stand out from the page
     expect(luminance(DARK["pine-50"])).toBeGreaterThan(luminance(DARK.page)); // the panels too
-    expect(DARK.page).toBe("#0a1628"); // Option A, Midnight Navy
-    expect(DARK.surface).toBe("#11233f");
+    expect(DARK.page).toBe("#060d18"); // Option (a), near-black navy (the owner's choice of 2026-10-28)
+    expect(DARK.surface).toBe("#0d1a2e");
   });
 
-  it("give the blue bars, the hero and the buttons their own navy values, and keep the light ones as they were", () => {
-    expect(DARK.bar).toBe("#12305a");
+  it("gives the hero, the header, the bands and the section under the hero one navy: they read as one page", () => {
+    expect(DARK["hero-from"]).toBe("#0a1628");
+    expect(DARK["hero-to"]).toBe("#0d1d36");
+    expect(DARK.bar).toBe(DARK["hero-from"]);
+    expect(DARK.band).toBe(DARK["hero-from"]); // the section under the hero (and the owners section) take the hero's colour
+    expect(DARK.veil).toBe(DARK.page); // the shade under the header is the page's near-black
+    expect(luminance(DARK["hero-to"])).toBeGreaterThan(luminance(DARK["hero-from"]));
+    expect(contrast(DARK["hero-from"], DARK["hero-to"])).toBeLessThan(1.3); // a soft gradient, not a visible bar
+  });
+
+  it("keeps royal blue for the accents only: the button blue and the accent line are bright, every surface is near-black", () => {
     expect(DARK.pine).toBe("#2b6fc4"); // buttons and selected chips: bright enough to show against the page and a card
-    expect(DARK["hero-from"]).toBe("#0b2547");
-    expect(DARK["hero-to"]).toBe("#1f5fa8");
-    expect(DARK.veil).toBe("#0a1f3d");
+    expect(DARK.accent).toBe("#3fa9ee");
+    expect(luminance(DARK.pine)).toBeGreaterThan(0.1);
+    for (const name of ["page", "surface", "bar", "hero-from", "hero-to", "band", "veil", "pine-50", "pine-100"]) {
+      expect(luminance(DARK[name]), name).toBeLessThan(luminance(DARK.pine) / 5);
+    }
+  });
+
+  it("gives the new tokens, in the light mode, exactly the colour the class used before", () => {
+    expect(LIGHT.band).toBe(LIGHT.surface);
     // the new tokens say, in the light mode, exactly the colour the class used before (the constant they replace)
     expect(LIGHT.bar).toBe(LIGHT.pine);
     expect(LIGHT["hero-from"]).toBe(LIGHT["pine-dark"]);
@@ -143,6 +159,7 @@ describe("the light mode did not change", () => {
     ["hero-from", "#134f6a"],
     ["hero-to", "#1a7cad"],
     ["veil", "#134f6a"],
+    ["band", "#ffffff"],
   ])("%s is %s", (name, value) => {
     expect(LIGHT[name]).toBe(value);
   });
@@ -154,6 +171,11 @@ describe("every text and background pair is at least 4.5:1 in the dark mode (NFR
     ["ink", "surface", "body text on a card"],
     ["ink-soft", "page", "secondary text on the page"],
     ["ink-soft", "surface", "secondary text on a card"],
+    ["ink", "band", "the text of the section under the hero and of the owners section"],
+    ["forest", "band", "the headings and links of those sections"],
+    ["ink-soft", "band", "secondary text in those sections"],
+    ["ink", "bar", "text on the header bar and the Why band, in case a page puts ink there"],
+    ["forest", "hero-from", "a link on the hero's deep end"],
     ["ink", "pine-50", "text on a light panel"],
     ["ink-soft", "pine-50", "secondary text on a light panel"],
     ["ink", "pine-100", "text on the highlighted panel"],
