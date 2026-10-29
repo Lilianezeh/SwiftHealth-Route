@@ -184,8 +184,14 @@ export function approveOwnerRequest(token: string, requestId: number, note: stri
   return requestJson<unknown>(`/staff/owner-requests/${requestId}/approve`, { ...options, token, body: { note } });
 }
 
-export function rejectOwnerRequest(token: string, requestId: number, note?: string, options: Options = {}): Promise<unknown> {
-  return requestJson<unknown>(`/staff/owner-requests/${requestId}/reject`, { ...options, token, body: note ? { note } : {} });
+/** Rejecting gives the owner's first payment back in full: `refund` is "done", "pending" (tried again every night) or null (nothing was paid). */
+export function rejectOwnerRequest(
+  token: string,
+  requestId: number,
+  note?: string,
+  options: Options = {},
+): Promise<{ refund: "done" | "pending" | null }> {
+  return requestJson<{ refund: "done" | "pending" | null }>(`/staff/owner-requests/${requestId}/reject`, { ...options, token, body: note ? { note } : {} });
 }
 
 /** The activity log, newest first. Only the filters that were given are sent. */

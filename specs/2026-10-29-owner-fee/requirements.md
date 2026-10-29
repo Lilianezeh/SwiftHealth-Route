@@ -1,7 +1,9 @@
 # Owner fee: ₦10,000 a month to claim and manage a listing (SPEC ONLY)
 
-**Status: proposal. Nothing is built, nothing is live, nothing is paid. I wait for the owner's "yes" (and answers to the questions at the end) before any code, migration, PRD change or page text change.**
-Written 2026-10-29 from the owner's request. Paystack **test mode only**, as in FR-44.
+**Status: APPROVED by the owner on 2026-10-29: "Yes ... with your recommendations on Q1-Q10, including Q8 (paid_until column)". Built on branch `feature/owner-fee`. Nothing is live and nothing is paid: Paystack test mode only.** The answers are the recommended ones in section 7: Q1 monthly payment with reminders (no automatic charge), Q2 calendar month, Q3 grace 7 days, Q4 no refund of a paid month on cancel, Q5 staff may remove a link `lapsed` for 12 months, Q6 each person who edits pays their own fee, Q7 a free first month for existing links, Q8 the `paid_until` column, Q9 PRD rows added (FR-59 to FR-64) but **no page wording about the fee is changed until the lawyer has answered L1 to L8**, Q10 automatic refund on rejection.
+Written 2026-10-29 from the owner's request. Paystack **test mode only**, as in FR-44. The contracts are in `specs/backend/api-spec.md` (section 8, "Owner fee") and `specs/frontend/ui-spec.md` (4.2c).
+
+**What differs from the proposal below (found while building):** (a) `ending` is a link status of its own (an owner who cancels keeps editing to the end of the paid month; the nightly job then removes the link). (b) "Q5" is a staff power that already exists (remove a link); no new button. (c) The nightly job needs one more repository secret, `PAYSTACK_SECRET_KEY` (a **test** key), only to ask Paystack again for a refund it did not accept; without it the refund stays "pending" and nothing else is affected. (d) A staff-made owner link (admin screen) starts with the same free first month. (e) A receipt shows the facility, the day paid, the day covered and our reference; the amount is in the email (the audit log keeps no amount).
 
 Related: FR-44, FR-45, FR-46 (featured payments), FR-50, FR-51 (register or claim, staff approval), FR-19 (nothing sponsored in SwiftRescue), FR-48 (sign-up),
 `specs/2026-10-20-providers-payments/` (how Paystack is used today), `specs/2026-10-23-accounts-and-facility-ownership/` (owner links), the "Open questions" of `prd.md`

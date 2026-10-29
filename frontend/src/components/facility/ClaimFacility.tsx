@@ -7,9 +7,11 @@
  */
 import { useEffect, useState, type FormEvent } from "react";
 
+import { PayOwnerFee } from "@/components/provider/PayOwnerFee";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { claimFacility, findClaimableFacilities, type ClaimableFacility, type FacilityRole } from "@/lib/api/facility";
 import { ApiError } from "@/lib/api/request";
+import { formatNaira } from "@/lib/formatters/fees";
 
 const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink";
 const CHOICE = "flex min-h-12 items-center gap-3 text-base text-ink";
@@ -34,7 +36,7 @@ export function ClaimFacility({ call, initialTarget = null }: Props) {
   const [reason, setReason] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const [thanks, setThanks] = useState<string | null>(null);
+  const [thanks, setThanks] = useState<{ linkId: number; fee: string } | null>(null); // saved; the first month is not paid
 
   useEffect(() => {
     const trimmed = searchText.trim();
@@ -77,7 +79,7 @@ export function ClaimFacility({ call, initialTarget = null }: Props) {
     try {
       const answer = await call((token) => claimFacility(token, { listing_id: target.id, role, reason }));
       setReason("");
-      setThanks(answer.message);
+      setThanks({ linkId: answer.link_id, fee: formatNaira(answer.fee_naira) ?? answer.fee_naira });
     } catch (error) {
       if (error instanceof ApiError && (error.status === 409 || error.status === 404) && error.detail) setProblem(error.detail);
       else if (error instanceof ApiError && error.status === 429) setProblem("You've sent several requests. Please try again tomorrow.");
@@ -92,7 +94,10 @@ export function ClaimFacility({ call, initialTarget = null }: Props) {
     return (
       <section aria-labelledby="claim-heading" className="flex flex-col gap-3">
         <h2 id="claim-heading" className="text-xl font-bold text-forest">Find and claim your facility</h2>
-        <p role="status" className="rounded-2xl border border-line bg-pine-50 p-4 text-lg text-ink">{thanks}</p>
+        <p role="status" className="rounded-2xl border border-line bg-pine-50 p-4 text-lg text-ink">
+          Thanks. Pay the first month ({thanks.fee}) and our team will phone the facility to check.
+        </p>
+        <PayOwnerFee call={call} linkId={thanks.linkId} label={`Pay ${thanks.fee} to send your request`} />
       </section>
     );
   }

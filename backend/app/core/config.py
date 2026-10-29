@@ -78,6 +78,14 @@ class Settings(BaseSettings):
     # app set-up answers "not available yet".
     totp_encryption_key: str = ""
     featured_price_naira: Decimal = Decimal("5000.00")  # monthly featured price; set the real price in .env
+    # The owner fee (specs/2026-10-29-owner-fee/): what a facility owner pays each calendar month to
+    # claim and manage a listing. Listing itself stays free. Paystack test mode only.
+    owner_fee_naira: Decimal = Decimal("10000.00")
+    # Days after the paid month ends in which editing still works; then the link lapses (the
+    # listing stays public).
+    owner_fee_grace_days: int = Field(default=7, ge=0)
+    # Days before the end of the paid month on which the owner gets a reminder email, comma separated.
+    owner_fee_reminder_days: str = "7,3,1"
 
     # Fixed list of areas (PRD: managed in settings, not a table)
     areas: list[str] = [
@@ -123,6 +131,17 @@ class Settings(BaseSettings):
     def featured_price(self) -> Decimal:
         """The monthly featured price with exactly 2 decimals, e.g. Decimal("5000.00") (CLAUDE.md, money)."""
         return self.featured_price_naira.quantize(Decimal("0.01"))
+
+    @property
+    def owner_fee(self) -> Decimal:
+        """The monthly owner fee with exactly 2 decimals, e.g. Decimal("10000.00") (CLAUDE.md, money)."""
+        return self.owner_fee_naira.quantize(Decimal("0.01"))
+
+    @property
+    def owner_fee_reminder_day_list(self) -> list[int]:
+        """OWNER_FEE_REMINDER_DAYS ("7,3,1") as numbers, biggest first; non-numbers are skipped."""
+        days = {int(part) for part in self.owner_fee_reminder_days.split(",") if part.strip().isdigit()}
+        return sorted(days, reverse=True)
 
     @property
     def web_app_address(self) -> str:

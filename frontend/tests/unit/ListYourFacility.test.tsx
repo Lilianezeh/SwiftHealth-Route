@@ -44,11 +44,11 @@ function stubApi(handlers: Handlers = {}) {
       calls.push(call);
       if (url.pathname === "/meta") return json({ ...META, signup_open: handlers.signupOpen ?? false });
       if (url.pathname === "/provider/facilities") {
-        return (handlers.register ?? (() => json({ message: "Thanks.", listing_id: 7, link_id: 8 }, 201)))(call);
+        return (handlers.register ?? (() => json({ message: "Thanks.", listing_id: 7, link_id: 8, status: "awaiting_payment", fee_naira: "10000.00" }, 201)))(call);
       }
       if (url.pathname === "/provider/claimable") return (handlers.claimable ?? (() => json({ items: FOUND })))(call);
       if (url.pathname === "/provider/claims") {
-        return (handlers.claim ?? (() => json({ message: "Thanks. Our team will phone the facility to check.", link_id: 9 }, 201)))(call);
+        return (handlers.claim ?? (() => json({ message: "Thanks. Pay the first month and our team will phone the facility to check.", link_id: 9, status: "awaiting_payment", fee_naira: "10000.00" }, 201)))(call);
       }
       return json({ detail: "Not found" }, 404);
     }),
@@ -172,7 +172,10 @@ describe("a provider registering a facility", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Send" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Thanks. We'll verify your facility before it's listed.");
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Thanks. Your request is saved. Pay the first month (₦10,000) and we'll verify your facility before it's listed.",
+    );
+    expect(await screen.findByRole("button", { name: "Pay ₦10,000 to send your request" })).toBeInTheDocument();
     expect(apiCalls()).toHaveLength(1);
     expect(apiCalls()[0]).toMatchObject({
       method: "POST",
@@ -371,7 +374,10 @@ describe("a provider claiming a facility", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Send request" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Thanks. Our team will phone the facility to check.");
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Thanks. Pay the first month (₦10,000) and our team will phone the facility to check.",
+    );
+    expect(await screen.findByRole("button", { name: "Pay ₦10,000 to send your request" })).toBeInTheDocument();
     const claims = apiCalls().filter((call) => call.path === "/provider/claims");
     expect(claims).toHaveLength(1);
     expect(claims[0]).toMatchObject({

@@ -32,7 +32,7 @@ for (const { width, height } of WIDTHS) {
     test("a provider sees the form, big fields, and sends what was typed with the token", async ({ page }) => {
       await logInAs(page, "provider");
       const seen = await fakeApi(page, (request) =>
-        request.path === "/provider/facilities" ? { status: 201, body: { message: "Thanks.", listing_id: 7, link_id: 8 } } : null,
+        request.path === "/provider/facilities" ? { status: 201, body: { message: "Thanks.", listing_id: 7, link_id: 8, status: "awaiting_payment", fee_naira: "10000.00" } } : null,
       );
       await page.goto("/list-your-facility", { waitUntil: "load" });
 
@@ -48,7 +48,8 @@ for (const { width, height } of WIDTHS) {
       await page.getByLabel("Phone number of the facility").fill("0803 000 0000");
       await page.getByRole("button", { name: "Send", exact: true }).click();
 
-      await expect(page.getByText("Thanks. We'll verify your facility before it's listed.")).toBeVisible();
+      await expect(page.getByText(/Pay the first month \(₦10,000\) and we'll verify your facility before it's listed\./)).toBeVisible();
+      await expect(page.getByRole("button", { name: "Pay ₦10,000 to send your request" })).toBeVisible();
       const post = seen.find((request) => request.path === "/provider/facilities");
       expect(post?.body).toMatchObject({ facility_name: "Example Clinic", category: "clinic", phone: "0803 000 0000", role: "owner" });
       expect(post?.authorization).toMatch(/^Bearer /);
@@ -77,7 +78,7 @@ for (const { width, height } of WIDTHS) {
         if (request.path === "/provider/facilities") {
           return { status: 409, body: { detail: { message: "A facility like this is already listed. You can ask to manage it instead.", listing_id: 41 } } };
         }
-        if (request.path === "/provider/claims") return { status: 201, body: { message: "Thanks. Our team will phone the facility to check.", link_id: 9 } };
+        if (request.path === "/provider/claims") return { status: 201, body: { message: "Thanks. Pay the first month and our team will phone the facility to check.", link_id: 9, status: "awaiting_payment", fee_naira: "10000.00" } };
         return null;
       });
       await page.goto("/list-your-facility", { waitUntil: "load" });
@@ -93,7 +94,7 @@ for (const { width, height } of WIDTHS) {
       await page.getByLabel("How are you connected to this facility?").fill("I run the front desk.");
       await page.getByRole("button", { name: "Send request" }).click();
 
-      await expect(page.getByText("Thanks. Our team will phone the facility to check.")).toBeVisible();
+      await expect(page.getByText("Thanks. Pay the first month (₦10,000) and our team will phone the facility to check.")).toBeVisible();
       const claim = seen.find((request) => request.path === "/provider/claims");
       expect(claim?.body).toMatchObject({ listing_id: 41, role: "owner", reason: "I run the front desk." });
       await allIsInsideTheScreen(page, width);

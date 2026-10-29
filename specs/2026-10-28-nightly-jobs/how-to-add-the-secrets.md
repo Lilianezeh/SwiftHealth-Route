@@ -2,7 +2,7 @@
 
 For the owner. Nothing here asks you to show me a value, and I never see one. Only you paste the values.
 
-## The secrets to add: four
+## The secrets to add: four (a fifth since 2026-10-29: `PAYSTACK_SECRET_KEY`, see the end of this table)
 
 | Name | What it is | Where the value comes from | Needed by |
 | --- | --- | --- | --- |
@@ -12,7 +12,9 @@ For the owner. Nothing here asks you to show me a value, and I never see one. On
 | `RESEND_FROM_EMAIL` | The sender address on a domain verified in Resend | The same value as on the Render API service. | the re-check, optional |
 
 If you leave the two Resend secrets out, the re-check still hides the overdue listings every night; only the summary e-mail to editors and admins is not sent.
-Do not add `DATABASE_URL`, a JWT secret or anything else: the workflows read exactly these four names and the tests fail if they read another.
+**Fifth secret, for the owner fee (2026-10-29, `specs/2026-10-29-owner-fee/`):** `PAYSTACK_SECRET_KEY`, a Paystack **test** key (`sk_test_...`, the same one as on the Render API service). Only the `owner-fee` job reads it, to ask Paystack again for a refund it did not accept. The code refuses a live key (`sk_live_...`). Without it the other jobs work; only that retry waits.
+
+Do not add `DATABASE_URL`, a JWT secret or anything else: the workflows read exactly these five names and the tests fail if they read another.
 
 ## Make the backup passphrase
 

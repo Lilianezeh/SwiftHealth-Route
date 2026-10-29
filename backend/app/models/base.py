@@ -31,9 +31,12 @@ class OwnerRole(str, Enum):
 class LinkStatus(str, Enum):
     """Where a facility link is. Plain text in `facility_owners.status`."""
 
-    pending = "pending"  # asked for; staff have not phoned the facility yet
+    awaiting_payment = "awaiting_payment"  # asked for; the first month is not paid: staff do not see it
+    pending = "pending"  # first month paid; staff have not phoned the facility yet
     approved = "approved"
-    removed = "removed"  # rejected, or taken away later
+    lapsed = "lapsed"  # the paid month and the grace period ended: no editing, the listing stays public
+    ending = "ending"  # the owner cancelled: editing until the paid month ends, then removed
+    removed = "removed"  # rejected, cancelled, or taken away later
 
 
 class ListingStatus(str, Enum):

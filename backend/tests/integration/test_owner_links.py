@@ -203,6 +203,7 @@ async def test_the_list_of_my_facilities_shows_every_link_with_its_state_and_not
     ]
     assert set(items[0]) == {
         "link_id", "listing_id", "name", "area", "category", "role", "status", "requested_at",
+        "paid_until", "fee_state",  # the owner fee
     }
     assert "Somebody Else" not in response.text and "phone" not in response.text
 
@@ -390,7 +391,7 @@ async def test_removing_takes_the_access_away_at_once_and_is_audited(
     assert (entry.old_value, entry.new_value) == ("approved", "removed")
 
 
-async def test_asking_again_after_a_removal_uses_the_same_row_and_waits_again(
+async def test_asking_again_after_a_removal_uses_the_same_row_and_waits_for_payment_again(
     session: AsyncSession, demo_users: dict[Role, User]
 ) -> None:
     from datetime import datetime, timezone
@@ -409,8 +410,9 @@ async def test_asking_again_after_a_removal_uses_the_same_row_and_waits_again(
 
     rows = (await session.exec(select(FacilityOwner))).all()
     assert len(rows) == 1 and again.id == removed.id
-    assert (again.status, again.role) == ("pending", "manager")
+    assert (again.status, again.role) == ("awaiting_payment", "manager")  # staff see it once paid
     assert (again.removed_at, again.removed_by, again.approved_at, again.note) == (None, None, None, None)
+    assert again.paid_until is None
 
 
 async def test_a_second_request_for_a_link_that_waits_or_is_approved_changes_nothing(

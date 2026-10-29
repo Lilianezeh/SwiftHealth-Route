@@ -6,7 +6,7 @@ secret in the repository, none in a log). Spec: specs/2026-10-28-nightly-jobs/.
 The repository is public, so the logs and the artifacts of a run can be read by anyone. These tests
 hold the rules that keep that safe: a run starts only from the schedule or a button (never from a
 pull request, where a stranger's code could read a secret), a secret is read only as
-`secrets.NAME` and only the four named ones, nothing prints one, and only an encrypted file is
+`secrets.NAME` and only the five named ones, nothing prints one, and only an encrypted file is
 kept as an artifact, for 30 days (NFR-09).
 
 The workflows are at the root of the repository. A test run inside the backend container does not
@@ -26,12 +26,13 @@ pytestmark = pytest.mark.skipif(
     not NIGHTLY_JOBS.exists(), reason=".github/workflows is not mounted here"
 )
 
-# The only repository secrets these workflows may read. The owner adds exactly these four.
+# The only repository secrets these workflows may read. The owner adds exactly these five.
 ALLOWED_SECRETS = {
     "DATABASE_URL_DIRECT",
     "RESEND_API_KEY",
     "RESEND_FROM_EMAIL",
     "BACKUP_PASSPHRASE",
+    "PAYSTACK_SECRET_KEY",  # a TEST key (sk_test_...), for the owner fee job's refunds
 }
 
 
@@ -69,7 +70,7 @@ def test_the_token_can_only_read_the_repository(workflow_path):
     assert load(workflow_path)["permissions"] == {"contents": "read"}
 
 
-def test_secrets_are_read_only_as_the_four_named_repository_secrets(workflow_path):
+def test_secrets_are_read_only_as_the_five_named_repository_secrets(workflow_path):
     used = set(re.findall(r"secrets\.([A-Za-z0-9_]+)", workflow_path.read_text()))
     assert used <= ALLOWED_SECRETS
     assert "secrets[" not in workflow_path.read_text()  # no secret picked by a computed name
@@ -131,10 +132,18 @@ def test_the_jobs_reach_the_database_through_the_direct_address():
         assert job["env"]["DATABASE_URL"] == "${{ secrets.DATABASE_URL_DIRECT }}"
 
 
-def test_only_the_recheck_gets_the_email_secrets():
+def test_only_the_recheck_and_the_owner_fee_get_the_email_secrets_and_only_the_fee_gets_paystack():
     jobs = load(NIGHTLY_JOBS)["jobs"]
     assert set(jobs["recheck"]["env"]) == {"DATABASE_URL", "RESEND_API_KEY", "RESEND_FROM_EMAIL"}
     assert set(jobs["purge-signups"]["env"]) == {"DATABASE_URL"}
+    # The owner fee job emails reminders and asks Paystack (a TEST key) again for refunds it did not accept.
+    assert set(jobs["owner-fee"]["env"]) == {
+        "DATABASE_URL", "RESEND_API_KEY", "RESEND_FROM_EMAIL", "PAYSTACK_SECRET_KEY",
+    }
+
+
+def test_the_owner_fee_job_runs_in_the_nightly_workflow():
+    assert "python -m app.jobs.owner_fee" in run_text(load(NIGHTLY_JOBS))
 
 
 def test_the_backup_uses_the_script_with_the_address_read_from_the_environment():

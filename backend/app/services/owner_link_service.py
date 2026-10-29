@@ -13,6 +13,7 @@ from datetime import datetime
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.config import settings
 from app.models import FacilityOwner, User
 from app.models.base import LinkStatus
 from app.repositories import audit_repository, facility_owner_repository
@@ -26,6 +27,8 @@ from app.schemas.owner_link import (
     QueuePerson,
     QueuePhone,
 )
+from app.services import owner_fee_service
+from app.services.owner_fee_service import fee_state
 
 
 class LinkNotFoundError(Exception):
@@ -40,10 +43,12 @@ class LinkNotApprovedError(Exception):
     """The link is not approved, so it cannot be removed."""
 
 
-async def my_links(session: AsyncSession, user: User) -> OwnerList:
+async def my_links(session: AsyncSession, user: User, moment: datetime) -> OwnerList:
     """Every link of the caller, any state, by listing id. Only the caller's own: nothing else is read."""
     rows = await facility_owner_repository.list_for_user(session, user.id)  # type: ignore[arg-type]
     return OwnerList(
+        fee_naira=settings.owner_fee,
+        grace_days=settings.owner_fee_grace_days,
         items=[
             OwnerListItem(
                 link_id=link.id,  # type: ignore[arg-type]
@@ -54,6 +59,8 @@ async def my_links(session: AsyncSession, user: User) -> OwnerList:
                 role=link.role,
                 status=link.status,
                 requested_at=link.requested_at,
+                paid_until=link.paid_until,
+                fee_state=fee_state(link.status, link.paid_until, moment),
             )
             for link, listing, category in rows
         ]
@@ -125,7 +132,12 @@ async def approve(
 
 async def reject(
     session: AsyncSession, staff: User, link_id: int, note: str | None, moment: datetime
-) -> FacilityOwner:
+) -> tuple[FacilityOwner, str | None]:
+    """Rejects a request that waits, and gives the owner's payment back in full (owner fee, question Q10).
+
+    Returns the link and the refund: "done", "pending" (Paystack did not accept it yet; the nightly job asks
+    again) or None (nothing was paid). The rejection is committed first, so a failing refund never
+    undoes it."""
     link = await _load(session, link_id)
     if link.status != LinkStatus.pending.value:
         raise LinkNotPendingError
@@ -134,7 +146,10 @@ async def reject(
     await facility_owner_repository.save(session, link)
     await _audit(session, staff, "owner_reject", link, "pending", "removed", moment)
     await session.commit()
-    return link
+    refund = await owner_fee_service.refund_link_payment(session, link, staff.id, moment)
+    if refund != "none":
+        await owner_fee_service.tell_refund(session, link)
+    return link, refund if refund in ("done", "pending") else None
 
 
 async def remove(

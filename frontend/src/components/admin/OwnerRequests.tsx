@@ -28,6 +28,13 @@ const roleWords = (role: OwnerRequest["role"]) => (role === "owner" ? "an owner"
 
 type CardProps = { request: OwnerRequest; onDecided: (request: OwnerRequest, message: string) => void };
 
+/** A rejection gives the owner's first payment back in full, automatically (owner fee). Said in words, or nothing if nothing was paid. */
+function refundWords(refund: "done" | "pending" | null): string {
+  if (refund === "done") return " Their payment is being given back in full.";
+  if (refund === "pending") return " Their payment will be given back in full; the refund is not finished yet and will be tried again.";
+  return "";
+}
+
 function RequestCard({ request, onDecided }: CardProps) {
   const { call } = useStaff();
   const [note, setNote] = useState("");
@@ -46,8 +53,8 @@ function RequestCard({ request, onDecided }: CardProps) {
         await call((token) => approveOwnerRequest(token, request.id, trimmed));
         onDecided(request, `${person.name} was approved as ${roleWords(request.role)} of ${listing.name}.`);
       } else {
-        await call((token) => rejectOwnerRequest(token, request.id, trimmed || undefined));
-        onDecided(request, `${person.name} was rejected for ${listing.name}.`);
+        const answer = await call((token) => rejectOwnerRequest(token, request.id, trimmed || undefined));
+        onDecided(request, `${person.name} was rejected for ${listing.name}.${refundWords(answer.refund)}`);
       }
     } catch (error) {
       setProblem(sentenceFor(error));

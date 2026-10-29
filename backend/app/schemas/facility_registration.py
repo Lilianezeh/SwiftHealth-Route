@@ -3,6 +3,7 @@ Requirements: FR-50, FR-51, US-17. Replaces the open form's `schemas/submission.
 the contact name and email are no longer asked, they come from the account.
 """
 
+from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -54,6 +55,8 @@ class FacilityRegistered(BaseModel):
     message: str
     listing_id: int
     link_id: int
+    status: str  # "awaiting_payment": the first month is paid before our team sees the request
+    fee_naira: Decimal  # "10000.00" (OWNER_FEE_NAIRA)
 
 
 class BranchCreate(BaseModel):
@@ -122,6 +125,8 @@ class ClaimCreate(BaseModel):
 class ClaimCreated(BaseModel):
     message: str
     link_id: int
+    status: str  # "awaiting_payment": the first month is paid before our team sees the request
+    fee_naira: Decimal  # "10000.00" (OWNER_FEE_NAIRA)
 
 
 class ClaimableItem(BaseModel):

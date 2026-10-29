@@ -15,7 +15,7 @@ from datetime import datetime
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.config import CLAIMABLE_RESULT_LIMIT, DEFAULT_MAP_CENTRE, DUPLICATE_NAME_SIMILARITY
+from app.core.config import CLAIMABLE_RESULT_LIMIT, DEFAULT_MAP_CENTRE, DUPLICATE_NAME_SIMILARITY, settings
 from app.models import Listing, PhoneNumber, User
 from app.models.base import LinkStatus, ListingStatus
 from app.repositories import (
@@ -36,12 +36,16 @@ from app.schemas.owner_link import CategoryRef
 from app.services.search_service import MATCH_THRESHOLD
 from app.services.staff_listing_service import unique_slug
 
-REGISTERED_THANKS = "Thanks. Our team will verify your facility before it is listed."
-CLAIM_THANKS = "Thanks. Our team will phone the facility to check."
+REGISTERED_THANKS = "Thanks. Pay the first month and our team will verify your facility before it is listed."
+CLAIM_THANKS = "Thanks. Pay the first month and our team will phone the facility to check."
 ALREADY_LISTED = "A facility like this is already listed. You can ask to manage it instead."
 ALREADY_REGISTERED = "This facility is already registered. Please contact us."
 ALREADY_MANAGER = "You already manage this facility."
 REQUEST_WAITING = "Your request for this facility is waiting for our team."
+
+# A link in one of these states already manages the facility (a lapsed or cancelled one pays instead
+# of asking again).
+MANAGING_STATUSES = (LinkStatus.approved.value, LinkStatus.lapsed.value, LinkStatus.ending.value)
 
 # A person can ask to manage a listing the public can see, or one that is only waiting for its next check.
 CLAIMABLE_STATUSES = (ListingStatus.published, ListingStatus.recheck_due)
@@ -96,7 +100,7 @@ async def _write_request_entry(
         listing_id=listing_id,
         action="owner_request",
         field_changed="status",
-        new_value=LinkStatus.pending.value,
+        new_value=LinkStatus.awaiting_payment.value,
         reference=f"user:{user.id}",
         changed_at=moment,
     )
@@ -138,7 +142,8 @@ async def register_facility(
     await _write_request_entry(session, user, listing.id, moment)  # type: ignore[arg-type]
     await session.commit()
     return FacilityRegistered(
-        message=REGISTERED_THANKS, listing_id=listing.id, link_id=link.id  # type: ignore[arg-type]
+        message=REGISTERED_THANKS, listing_id=listing.id, link_id=link.id,  # type: ignore[arg-type]
+        status=link.status, fee_naira=settings.owner_fee,
     )
 
 
@@ -169,13 +174,16 @@ async def claim_listing(
     if listing is None or listing.status not in CLAIMABLE_STATUSES:
         raise ListingNotClaimableError
     existing = await facility_owner_repository.get_for(session, listing.id, user.id)  # type: ignore[arg-type]
-    if existing is not None and existing.status == LinkStatus.approved.value:
+    if existing is not None and existing.status in MANAGING_STATUSES:
         raise AlreadyManagerError
     if existing is not None and existing.status == LinkStatus.pending.value:
         raise RequestWaitingError
     link = await facility_owner_repository.request_link(
         session, listing.id, user.id, payload.role, moment, payload.reason  # type: ignore[arg-type]
     )
-    await _write_request_entry(session, user, listing.id, moment)  # type: ignore[arg-type]
+    if existing is None or existing.status == LinkStatus.removed.value:  # an unpaid request is not new
+        await _write_request_entry(session, user, listing.id, moment)  # type: ignore[arg-type]
     await session.commit()
-    return ClaimCreated(message=CLAIM_THANKS, link_id=link.id)  # type: ignore[arg-type]
+    return ClaimCreated(
+        message=CLAIM_THANKS, link_id=link.id, status=link.status, fee_naira=settings.owner_fee  # type: ignore[arg-type]
+    )

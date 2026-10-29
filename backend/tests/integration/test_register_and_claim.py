@@ -7,7 +7,7 @@ Every name, address and number here is fictional.
 """
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from httpx import AsyncClient
@@ -25,8 +25,8 @@ from tests.staff_helpers import bearer_for
 pytestmark = pytest.mark.anyio
 
 NOW = datetime(2026, 10, 27, 9, 0, tzinfo=timezone.utc)
-THANKS = "Thanks. Our team will verify your facility before it is listed."
-CLAIM_THANKS = "Thanks. Our team will phone the facility to check."
+THANKS = "Thanks. Pay the first month and our team will verify your facility before it is listed."
+CLAIM_THANKS = "Thanks. Pay the first month and our team will phone the facility to check."
 BODY = {
     "facility_name": "Example Clinic",
     "category": "clinic",
@@ -84,6 +84,14 @@ async def search_claimable(client: AsyncClient, user: User | None, text: str, ip
     )
 
 
+async def first_month_paid(session: AsyncSession) -> None:
+    """What the signed Paystack webhook does to a request (see test_owner_fee_payment.py): the link
+    is `pending` for staff and paid for a month. Staff see a request only after this."""
+    for link in await links_of(session):
+        link.status, link.paid_until = "pending", NOW + timedelta(days=30)
+    await session.commit()
+
+
 async def links_of(session: AsyncSession) -> list[FacilityOwner]:
     return list((await session.exec(select(FacilityOwner).order_by(FacilityOwner.id))).all())
 
@@ -118,14 +126,17 @@ async def test_a_staff_account_is_403_on_all_three_routes(
 # ---------- register ----------
 
 
-async def test_a_registration_makes_a_draft_and_a_pending_owner_link(
+async def test_a_registration_makes_a_draft_and_an_owner_link_that_waits_for_the_first_payment(
     client: AsyncClient, session: AsyncSession, clock: None, categories: None, provider: User
 ) -> None:
     response = await register(client, provider)
     assert response.status_code == 201, response.text
     [listing] = (await session.exec(select(Listing))).all()
     [link] = await links_of(session)
-    assert response.json() == {"message": THANKS, "listing_id": listing.id, "link_id": link.id}
+    assert response.json() == {
+        "message": THANKS, "listing_id": listing.id, "link_id": link.id,
+        "status": "awaiting_payment", "fee_naira": "10000.00",
+    }
     assert listing.status == ListingStatus.draft
     assert listing.created_by is None and listing.owner_id is None
     assert (listing.name, listing.area, listing.address) == (
@@ -134,9 +145,9 @@ async def test_a_registration_makes_a_draft_and_a_pending_owner_link(
     assert (listing.latitude, listing.longitude) == DEFAULT_MAP_CENTRE
     assert listing.slug == "example-clinic-trans-ekulu"
     assert (link.listing_id, link.user_id, link.role, link.status) == (
-        listing.id, provider.id, "owner", "pending",
+        listing.id, provider.id, "owner", "awaiting_payment",
     )
-    assert link.requested_at == NOW
+    assert link.requested_at == NOW and link.paid_until is None
 
 
 async def test_the_phone_is_stored_as_the_primary_number_in_plus_234(
@@ -175,7 +186,7 @@ async def test_it_writes_a_create_row_and_an_owner_request_row_for_the_provider(
     ]
     request_entry = entries[1]
     assert request_entry.reference == f"user:{provider.id}"
-    assert (request_entry.field_changed, request_entry.new_value) == ("status", "pending")
+    assert (request_entry.field_changed, request_entry.new_value) == ("status", "awaiting_payment")
     written = " ".join(str(entry.model_dump()) for entry in entries)
     assert "Call after 5 pm" not in written and "+2348030000000" not in written
 
@@ -363,7 +374,7 @@ async def test_the_61st_claim_search_from_one_address_in_an_hour_is_429(
 # ---------- claim ----------
 
 
-async def test_a_claim_makes_a_pending_link_and_an_audit_row(
+async def test_a_claim_makes_a_link_that_waits_for_payment_and_an_audit_row(
     client: AsyncClient, session: AsyncSession, clock: None, categories: None, provider: User
 ) -> None:
     listing = await add_listing(session, "Eze Clinic", category_slug="clinic")
@@ -371,9 +382,11 @@ async def test_a_claim_makes_a_pending_link_and_an_audit_row(
     response = await claim(client, provider, listing.id, role="manager")
     assert response.status_code == 201, response.text
     [link] = await links_of(session)
-    assert response.json() == {"message": CLAIM_THANKS, "link_id": link.id}
+    assert response.json() == {
+        "message": CLAIM_THANKS, "link_id": link.id, "status": "awaiting_payment", "fee_naira": "10000.00",
+    }
     assert (link.listing_id, link.user_id, link.role, link.status) == (
-        listing.id, provider.id, "manager", "pending",
+        listing.id, provider.id, "manager", "awaiting_payment",
     )
     assert link.note == "I run the front desk."
     [entry] = (await session.exec(select(AuditEntry))).all()
@@ -438,20 +451,45 @@ async def test_a_claim_for_a_facility_already_managed_is_409(
     assert response.json()["detail"] == "You already manage this facility."
 
 
-async def test_a_second_claim_while_the_first_waits_is_409(
+async def test_a_second_claim_while_the_first_is_unpaid_gives_back_the_same_request_without_a_new_row(
     client: AsyncClient, session: AsyncSession, clock: None, categories: None, provider: User
 ) -> None:
     listing = await add_listing(session, "Eze Clinic", category_slug="clinic")
     await session.commit()
-    await claim(client, provider, listing.id)
-    response = await claim(client, provider, listing.id)
-    assert response.status_code == 409
-    assert response.json()["detail"] == "Your request for this facility is waiting for our team."
+    first = await claim(client, provider, listing.id)
+    second = await claim(client, provider, listing.id)
+    assert second.status_code == 201
+    assert second.json()["link_id"] == first.json()["link_id"]
+    assert second.json()["status"] == "awaiting_payment"
     assert len(await links_of(session)) == 1
     assert len((await session.exec(select(AuditEntry))).all()) == 1
 
 
-async def test_a_removed_link_goes_back_to_pending_on_the_same_row(
+async def test_a_second_claim_while_the_first_waits_for_staff_is_409(
+    client: AsyncClient, session: AsyncSession, clock: None, categories: None, provider: User
+) -> None:
+    listing = await add_listing(session, "Eze Clinic", category_slug="clinic")
+    await add_owner_link(session, listing, provider, status="pending")  # the first month is paid
+    await session.commit()
+    response = await claim(client, provider, listing.id)
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Your request for this facility is waiting for our team."
+    assert len(await links_of(session)) == 1
+
+
+@pytest.mark.parametrize("status", ["lapsed", "ending"])
+async def test_a_claim_on_a_facility_whose_fee_lapsed_or_was_cancelled_says_you_already_manage_it(
+    client: AsyncClient, session: AsyncSession, clock: None, categories: None, provider: User, status: str
+) -> None:
+    listing = await add_listing(session, "Eze Clinic", category_slug="clinic")
+    await add_owner_link(session, listing, provider, status=status)
+    await session.commit()
+    response = await claim(client, provider, listing.id)
+    assert response.status_code == 409
+    assert response.json()["detail"] == "You already manage this facility."
+
+
+async def test_a_removed_link_goes_back_to_waiting_for_payment_on_the_same_row(
     client: AsyncClient, session: AsyncSession, clock: None, categories: None, provider: User
 ) -> None:
     listing = await add_listing(session, "Eze Clinic", category_slug="clinic")
@@ -462,11 +500,11 @@ async def test_a_removed_link_goes_back_to_pending_on_the_same_row(
     [link] = await links_of(session)
     assert link.id == old.id
     assert (link.status, link.role, link.note, link.requested_at) == (
-        "pending", "manager", "Back again, new manager.", NOW,
+        "awaiting_payment", "manager", "Back again, new manager.", NOW,
     )
 
 
-async def test_a_listing_with_an_approved_owner_still_gets_a_pending_request(
+async def test_a_listing_with_an_approved_owner_still_gets_a_request_that_waits_for_payment(
     client: AsyncClient, session: AsyncSession, clock: None, categories: None, provider: User,
     demo_users: dict[Role, User],
 ) -> None:
@@ -476,7 +514,7 @@ async def test_a_listing_with_an_approved_owner_still_gets_a_pending_request(
     await session.commit()
     assert (await claim(client, provider, listing.id)).status_code == 201
     statuses = sorted(link.status for link in await links_of(session))
-    assert statuses == ["approved", "pending"]
+    assert statuses == ["approved", "awaiting_payment"]
 
 
 @pytest.mark.parametrize(
@@ -513,6 +551,9 @@ async def test_the_owner_requests_queue_shows_the_reason_and_a_decision_replaces
     await session.commit()
     await claim(client, provider, listing.id)
     editor = bearer_for(demo_users[Role.editor])
+    unpaid = await client.get("/staff/owner-requests", headers=editor)
+    assert unpaid.json()["items"] == []  # staff see nothing before the first payment
+    await first_month_paid(session)
     [item] = (await client.get("/staff/owner-requests", headers=editor)).json()["items"]
     assert item["reason"] == "I run the front desk."
     approved = await client.post(
@@ -527,6 +568,7 @@ async def test_a_registered_facility_shows_up_in_the_queue_with_the_phone_to_cal
     demo_users: dict[Role, User],
 ) -> None:
     await register(client, provider, notes="Call after 5 pm")
+    await first_month_paid(session)
     editor = bearer_for(demo_users[Role.editor])
     [item] = (await client.get("/staff/owner-requests", headers=editor)).json()["items"]
     assert item["reason"] == "Call after 5 pm"
