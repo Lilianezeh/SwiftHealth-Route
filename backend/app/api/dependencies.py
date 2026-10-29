@@ -30,7 +30,7 @@ __all__ = [
     "NO_PERMISSION_MESSAGE", "branch_rate_limit", "claim_rate_limit", "claimable_search_rate_limit",
     "forgot_rate_limit",
     "get_current_moment", "get_current_user", "get_session",
-    "login_rate_limit",
+    "login_rate_limit", "oauth2_scheme",
     "require_listing_access", "report_rate_limit", "require_role", "signup_rate_limit",
     "submission_rate_limit", "verify_code_rate_limit",
 ]

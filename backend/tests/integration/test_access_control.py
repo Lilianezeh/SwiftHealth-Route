@@ -51,7 +51,7 @@ async def access_client(session):
 
 
 def bearer_for(user: User) -> dict[str, str]:
-    return {"Authorization": f"Bearer {create_access_token(user.id)}"}
+    return {"Authorization": f"Bearer {create_access_token(user.id, user.role)}"}
 
 
 async def add_listing(session, status=ListingStatus.published, created_by=None, owner_id=None) -> Listing:

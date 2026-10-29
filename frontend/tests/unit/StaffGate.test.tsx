@@ -37,6 +37,44 @@ function Probe() {
   );
 }
 
+describe("StaffGate and the renewed token (the idle sign-out)", () => {
+  function Caller() {
+    const { call, updateUser } = useStaff();
+    return (
+      <div>
+        <button onClick={() => call(async (token) => { sent.push(token); })}>Call</button>
+        <button onClick={() => updateUser({ name: "Ada Okafor" })}>Rename</button>
+      </div>
+    );
+  }
+  const sent: string[] = [];
+  beforeEach(() => sent.splice(0));
+
+  it("calls the API with the newest token in the session, not the one it was drawn with", async () => {
+    saveStaffSession({ token: "tok", user: user("editor") });
+    render(<StaffGate area="listings"><Caller /></StaffGate>);
+    await screen.findByRole("button", { name: "Call" });
+
+    saveStaffSession({ token: "tok-renewed", user: user("editor"), idle_seconds: 900 }); // the keep-alive of the idle sign-out
+    await userEvent.click(screen.getByRole("button", { name: "Call" }));
+
+    expect(sent).toEqual(["tok-renewed"]);
+  });
+
+  it("does not put an old token back when the person changes their name", async () => {
+    saveStaffSession({ token: "tok", user: user("editor"), idle_seconds: 900 });
+    render(<StaffGate area="listings"><Caller /></StaffGate>);
+    await screen.findByRole("button", { name: "Rename" });
+
+    saveStaffSession({ token: "tok-renewed", user: user("editor"), idle_seconds: 900 });
+    await userEvent.click(screen.getByRole("button", { name: "Rename" }));
+
+    expect(readStaffSession()?.token).toBe("tok-renewed");
+    expect(readStaffSession()?.idle_seconds).toBe(900);
+    expect(readStaffSession()?.user.name).toBe("Ada Okafor");
+  });
+});
+
 describe("StaffGate", () => {
   it("sends a visitor with no session to the login screen and shows none of the page", async () => {
     render(<StaffGate area="listings"><p>Secret page</p></StaffGate>);

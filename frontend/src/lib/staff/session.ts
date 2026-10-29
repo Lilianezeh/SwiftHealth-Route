@@ -46,9 +46,10 @@ export function readStaffSession(): StaffSession | null {
     if (stored === null) return null;
     const value: unknown = JSON.parse(stored);
     if (typeof value !== "object" || value === null) return null;
-    const { token, user } = value as Record<string, unknown>;
+    const { token, user, idle_seconds: idleSeconds } = value as Record<string, unknown>;
     if (typeof token !== "string" || token === "" || !looksLikeAUser(user)) return null;
-    return { token, user };
+    const hasLimit = typeof idleSeconds === "number" && Number.isFinite(idleSeconds) && idleSeconds > 0;
+    return hasLimit ? { token, user, idle_seconds: idleSeconds } : { token, user };
   } catch {
     return null;
   }

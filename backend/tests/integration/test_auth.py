@@ -186,7 +186,8 @@ async def test_verify_expired_challenge_401(client, demo_users):
 
 async def test_verify_garbage_or_wrong_type_token_401(client, demo_users):
     user = demo_users[Role.admin]
-    for bad_token in ("garbage", "", create_access_token(user.id)):  # an access token is not a challenge
+    access_token = create_access_token(user.id, user.role)  # an access token is not a challenge
+    for bad_token in ("garbage", "", access_token):
         assert (await verify(client, bad_token, "123456")).status_code == 401
 
 
@@ -228,7 +229,7 @@ async def test_verify_returns_a_token_and_the_user_without_secrets(client, demo_
     assert response.status_code == 200
     body = response.json()
     assert body["token_type"] == "bearer"
-    assert body["expires_in"] == settings.jwt_minutes * 60
+    assert body["expires_in"] == settings.idle_minutes_other * 60  # a provider: the idle limit
     assert body["user"] == {
         "id": user.id, "name": user.name, "email": user.email, "phone": user.phone,
         "role": "provider", "is_active": True, "two_factor_enabled": False,  # the field of FR-58
@@ -268,7 +269,7 @@ async def test_me_with_a_bad_token_401(client, demo_users):
 
 async def test_me_for_a_deleted_user_401(client, demo_users, session):
     user = demo_users[Role.admin]
-    token = create_access_token(user.id)
+    token = create_access_token(user.id, user.role)
     await session.delete(user)
     await session.commit()
     assert (await client.get("/auth/me", headers=bearer(token))).status_code == 401
@@ -276,7 +277,7 @@ async def test_me_for_a_deleted_user_401(client, demo_users, session):
 
 async def test_me_deactivated_user_403(client, demo_users, session):
     user = demo_users[Role.editor]
-    token = create_access_token(user.id)
+    token = create_access_token(user.id, user.role)
     user.is_active = False
     await session.commit()
     assert (await client.get("/auth/me", headers=bearer(token))).status_code == 403
@@ -284,7 +285,7 @@ async def test_me_deactivated_user_403(client, demo_users, session):
 
 async def test_me_uses_role_from_database(client, demo_users, session):
     user = demo_users[Role.verifier]
-    token = create_access_token(user.id)
+    token = create_access_token(user.id, user.role)
     assert (await client.get("/auth/me", headers=bearer(token))).json()["role"] == "verifier"
     user.role = Role.admin  # promoted after the token was issued
     await session.commit()

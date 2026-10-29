@@ -38,6 +38,13 @@ export function useStaff(): StaffContextValue {
   return value;
 }
 
+/** The idle sign-out renews the token in the background (hooks/useIdleSignOut.ts) and saves the new one in the session, so the
+ * session this screen drew earlier may hold an old token. Calls and saves start from the newest token and limit in storage. */
+function newest(current: StaffSession): StaffSession {
+  const saved = readStaffSession();
+  return saved === null ? current : { ...current, token: saved.token, idle_seconds: saved.idle_seconds };
+}
+
 type StaffGateProps = { area: StaffArea; children: ReactNode };
 
 export function StaffGate({ area, children }: StaffGateProps) {
@@ -59,7 +66,7 @@ export function StaffGate({ area, children }: StaffGateProps) {
   const updateUser = useCallback((changes: Partial<StaffUser>) => {
     setSession((current) => {
       if (!current) return current;
-      const next = { ...current, user: { ...current.user, ...changes } };
+      const next = { ...newest(current), user: { ...current.user, ...changes } };
       saveStaffSession(next);
       return next;
     });
@@ -68,7 +75,7 @@ export function StaffGate({ area, children }: StaffGateProps) {
   const replaceToken = useCallback((token: string) => {
     setSession((current) => {
       if (!current) return current;
-      const next = { ...current, token };
+      const next = { ...newest(current), token };
       saveStaffSession(next);
       return next;
     });
@@ -83,7 +90,7 @@ export function StaffGate({ area, children }: StaffGateProps) {
       replaceToken,
       call: async <T,>(operation: (token: string) => Promise<T>) => {
         try {
-          return await operation(session.token);
+          return await operation(newest(session).token);
         } catch (error) {
           if (error instanceof ApiError && error.status === 401) logout();
           throw error;

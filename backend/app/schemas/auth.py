@@ -50,5 +50,13 @@ class UserRead(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    expires_in: int  # seconds
+    expires_in: int  # seconds; the idle limit of the role: the token expires this long after its last renewal
     user: UserRead
+
+
+class TokenRefreshed(BaseModel):
+    """POST /auth/keep-alive: only a new token, for the same session."""
+
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int  # seconds, as in TokenResponse

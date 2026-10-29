@@ -5,7 +5,7 @@ Every function awaits the database or the SMS service, so they are async (decisi
 """
 import math
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.concurrency import run_in_threadpool
@@ -24,6 +24,7 @@ from app.core.security import (
     decode_totp_challenge_token,
     generate_login_code,
     hash_password,
+    idle_limit_for,
     verify_password,
 )
 from app.integrations.resend import EmailSendError, mask_email
@@ -255,7 +256,7 @@ async def verify_login_code(
 
     await user_repository.set_last_login(session, user, utcnow())
     await session.commit()
-    return LoginCompleted(access_token=create_access_token(user.id), user=user)
+    return LoginCompleted(access_token=create_access_token(user.id, user.role), user=user)
 
 
 async def _verify_app_login(
@@ -278,7 +279,22 @@ async def _verify_app_login(
         raise InvalidCodeError from error
     await user_repository.set_last_login(session, user, utcnow())
     await session.commit()
-    return LoginCompleted(access_token=create_access_token(user.id), user=user)
+    return LoginCompleted(access_token=create_access_token(user.id, user.role), user=user)
+
+
+def access_token_lifetime_seconds(user: User) -> int:
+    """How long a token of this account lives without a renewal: the idle limit of its role, in seconds."""
+    return int(idle_limit_for(user.role).total_seconds())
+
+
+def refresh_access_token(user: User, access_token: str) -> str:
+    """A fresh token for the same session, with the idle limit of the role the database has now (keep-alive).
+
+    The token was already checked by `get_user_for_token`. The moment the session began is passed
+    on, so renewing never stretches a session past `jwt_minutes`. Plain `def`: it only reads the
+    token and makes a new one."""
+    claims = decode_access_claims(access_token)
+    return create_access_token(user.id, user.role, claims.session_started_ms or claims.issued_ms)
 
 
 async def get_user_for_token(session: AsyncSession, access_token: str) -> User:
@@ -288,6 +304,11 @@ async def get_user_for_token(session: AsyncSession, access_token: str) -> User:
     AccountNotReadyError for an account that is waiting, rejected, closed or not confirmed.
     """
     claims = decode_access_claims(access_token)
+    session_started_ms = claims.session_started_ms or claims.issued_ms
+    if session_started_ms is not None:
+        session_age = utcnow() - datetime.fromtimestamp(session_started_ms / 1000, tz=timezone.utc)
+        if session_age > timedelta(minutes=settings.jwt_minutes):
+            raise InvalidTokenError("The session is older than the longest session")
     user = await user_repository.get_by_id(session, claims.user_id)
     if user is None:
         raise InvalidTokenError("User not found")

@@ -188,7 +188,7 @@ async def change_password(
         )
     except EXPECTED as error:
         raise _problem(error) from None
-    return PasswordChanged(access_token=token, expires_in=service.access_token_lifetime_seconds())
+    return PasswordChanged(access_token=token, expires_in=service.access_token_lifetime_seconds(user))
 
 
 @router.post(

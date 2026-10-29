@@ -181,6 +181,22 @@ describe("step 2: the code", () => {
     expect(screen.getByRole("button", { name: "Log in" })).toBeInTheDocument();
   });
 
+  it("keeps the idle limit the API gave (expires_in) in the session and counts the login as activity", async () => {
+    const before = Date.now();
+    const admin = { id: 3, name: "Ada Staff", email: "ada@example.com", phone: "+2340000000001", role: "admin", is_active: true };
+    stubAuth({ verify: () => json({ access_token: "access.jwt", token_type: "bearer", expires_in: 300, user: admin }) });
+    render(<LoginForm />);
+    await logInTo();
+
+    await userEvent.type(screen.getByLabelText("6-digit code"), "482913");
+    await userEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(readStaffSession()?.idle_seconds).toBe(300);
+    const lastActivity = Number(window.localStorage.getItem("swifthealth.last-activity"));
+    expect(lastActivity).toBeGreaterThanOrEqual(before);
+  });
+
   it("posts the challenge and the code, saves the session in sessionStorage only, and goes to where the role starts", async () => {
     const calls = stubAuth({ verify: () => tokenFor("editor") });
     render(<LoginForm />);
@@ -193,7 +209,9 @@ describe("step 2: the code", () => {
     expect(calls[1]).toEqual({ path: "/auth/verify-code", body: { challenge_token: "challenge.jwt", code: "482913" } });
     expect(readStaffSession()?.token).toBe("access.jwt");
     expect(readStaffSession()?.user.role).toBe("editor");
-    expect(window.localStorage.length).toBe(0);
+    // The token is never in localStorage (C2). Only the moment of the last activity is, a bare number (idle sign-out).
+    expect(Object.keys({ ...window.localStorage })).toEqual(["swifthealth.last-activity"]);
+    expect(window.localStorage.getItem("swifthealth.last-activity")).toMatch(/^\d+$/);
   });
 
   it.each([

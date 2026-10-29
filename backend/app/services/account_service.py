@@ -42,6 +42,7 @@ from app.core.security import (
     decode_code_token,
     generate_login_code,
     hash_password,
+    idle_limit_for,
     verify_password,
 )
 from app.integrations.resend import EmailNotConfiguredError, EmailSendError, mask_email
@@ -352,7 +353,7 @@ async def change_password(
     await user_repository.save(session, user)
     await _audit(session, user, "account_update", "password", None, CHANGED, moment)
     await session.commit()
-    return create_access_token(user.id)
+    return create_access_token(user.id, user.role)
 
 
 # --- a forgotten password ---
@@ -449,5 +450,6 @@ async def close_account(session: AsyncSession, user: User, password: str, moment
     await _tell(old_email, "account_closed")
 
 
-def access_token_lifetime_seconds() -> int:
-    return settings.jwt_minutes * 60
+def access_token_lifetime_seconds(user: User) -> int:
+    """How long the token of `change_password` lives: the idle limit of the account's role."""
+    return int(idle_limit_for(user.role).total_seconds())

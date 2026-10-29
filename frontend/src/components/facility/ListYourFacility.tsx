@@ -52,7 +52,8 @@ export function ListYourFacility() {
     async <T,>(operation: (token: string) => Promise<T>): Promise<T> => {
       if (token === null) throw new ApiError(401);
       try {
-        return await operation(token);
+        // The newest token in the session: the idle sign-out renews it in the background (hooks/useIdleSignOut.ts).
+        return await operation(readStaffSession()?.token ?? token);
       } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
           clearStaffSession();
