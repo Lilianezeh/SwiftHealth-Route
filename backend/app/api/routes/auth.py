@@ -10,15 +10,16 @@ from app.api.dependencies import (
     get_current_user,
     get_session,
     login_rate_limit,
+    oauth2_scheme,
     verify_code_rate_limit,
 )
 from app.api.limit_errors import code_too_soon, too_many_codes, too_many_wrong_codes
-from app.core.config import settings
 from app.models import User
 from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
     ResendCodeRequest,
+    TokenRefreshed,
     TokenResponse,
     UserRead,
     UseSmsRequest,
@@ -148,8 +149,27 @@ async def verify_code(
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, APP_CODE_UNAVAILABLE_MESSAGE) from None
     return TokenResponse(
         access_token=completed.access_token,
-        expires_in=settings.jwt_minutes * 60,
+        expires_in=auth_service.access_token_lifetime_seconds(completed.user),
         user=UserRead.model_validate(completed.user),
+    )
+
+
+@router.post(
+    "/keep-alive",
+    response_model=TokenRefreshed,
+    summary="A fresh token while the person is active (the idle sign-out)",
+    responses={401: {"description": "No token, idle for too long, or a session that is too old."}},
+)
+async def keep_alive(
+    access_token: str = Depends(oauth2_scheme), user: User = Depends(get_current_user)
+) -> TokenRefreshed:
+    """The browser calls this while the person clicks, types or scrolls.
+
+    A session nobody renews expires after the idle limit of the role (admin 5 minutes, others 15,
+    both settings). The longest session is `jwt_minutes`, whatever the activity."""
+    return TokenRefreshed(
+        access_token=auth_service.refresh_access_token(user, access_token),
+        expires_in=auth_service.access_token_lifetime_seconds(user),
     )
 
 

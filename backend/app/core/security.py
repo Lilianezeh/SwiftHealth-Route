@@ -18,6 +18,7 @@ from pwdlib import PasswordHash
 from pwdlib.exceptions import UnknownHashError
 
 from app.core.config import settings
+from app.models.base import Role
 
 JWT_ALGORITHM = "HS256"
 CHALLENGE_TOKEN_LIFETIME = timedelta(minutes=5)
@@ -55,6 +56,9 @@ class ChallengeClaims:
 class AccessClaims:
     user_id: int
     issued_ms: int | None  # when the token was made (ms); None for a token made before this claim existed
+    expires_at: datetime  # when the token stops working: the idle limit after the last renewal
+    # When the whole session began (ms), kept by every renewal; None for an older token.
+    session_started_ms: int | None = None
 
 
 def hash_password(plain_password: str) -> str:
@@ -121,22 +125,47 @@ def _user_id_from(claims: dict) -> int:
         raise InvalidTokenError("Invalid token subject") from error
 
 
-def create_access_token(user_id: int) -> str:
-    """The login token. `ims` is the moment it was made, in milliseconds: a token made before the
-    account's last password change is refused (decision D10). Our own claim, not the standard `iat`,
-    which has whole seconds only."""
+def idle_limit_for(role: Role) -> timedelta:
+    """How long an account may be idle before it is signed out: admin 5 minutes, any other role 15.
+
+    Both numbers are settings (IDLE_MINUTES_ADMIN, IDLE_MINUTES_OTHER)."""
+    minutes = settings.idle_minutes_admin if role == Role.admin else settings.idle_minutes_other
+    return timedelta(minutes=minutes)
+
+
+def create_access_token(user_id: int, role: Role, session_started_ms: int | None = None) -> str:
+    """The login token. It lives as long as the idle limit of the role (`idle_limit_for`).
+
+    The browser asks for a new one while the person is active (POST /auth/keep-alive), so a
+    session nobody uses expires on its own. The role only chooses that length; it is not in the
+    token, and the API still reads the role from the database on every request.
+    `ims` is the moment it was made, in milliseconds: a token made before the account's last
+    password change is refused (decision D10). Our own claim, not the standard `iat`, which has
+    whole seconds only. `sts` is when the whole session began: a renewal passes it on
+    (`session_started_ms`), so a session ends after `jwt_minutes` however active the person is."""
     issued_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
     return _encode(
-        {"sub": str(user_id), "purpose": ACCESS_PURPOSE, "ims": issued_ms},
-        timedelta(minutes=settings.jwt_minutes),
+        {
+            "sub": str(user_id), "purpose": ACCESS_PURPOSE, "ims": issued_ms,
+            "sts": session_started_ms if session_started_ms is not None else issued_ms,
+        },
+        idle_limit_for(role),
     )
 
 
 def decode_access_claims(token: str) -> AccessClaims:
-    """The user id and when the token was made. Raises InvalidTokenError for any bad token."""
+    """The user id, when the token was made and when the session began.
+
+    Raises InvalidTokenError for any bad token."""
     claims = _decode(token, ACCESS_PURPOSE)
     issued = claims.get("ims")
-    return AccessClaims(user_id=_user_id_from(claims), issued_ms=issued if isinstance(issued, int) else None)
+    started = claims.get("sts")
+    return AccessClaims(
+        user_id=_user_id_from(claims),
+        issued_ms=issued if isinstance(issued, int) else None,
+        expires_at=datetime.fromtimestamp(claims["exp"], tz=timezone.utc),
+        session_started_ms=started if isinstance(started, int) else None,
+    )
 
 
 def decode_access_token(token: str) -> int:

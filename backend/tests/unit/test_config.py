@@ -36,6 +36,19 @@ def test_app_env_defaults_to_development():
     assert make_settings().app_env == "development"
 
 
+def test_the_idle_limits_default_to_5_minutes_for_an_admin_and_15_for_the_others():
+    assert make_settings().idle_minutes_admin == 5
+    assert make_settings().idle_minutes_other == 15
+
+
+def test_the_idle_limits_can_be_set_and_may_not_be_under_2_minutes():
+    # The warning comes 60 seconds before the sign-out, so a limit under 2 minutes would warn at once.
+    assert make_settings(idle_minutes_admin=3, idle_minutes_other=30).idle_minutes_other == 30
+    for name in ("idle_minutes_admin", "idle_minutes_other"):
+        with pytest.raises(ValidationError):
+            make_settings(**{name: 1})
+
+
 def test_development_accepts_the_default_and_a_short_secret():
     assert make_settings().jwt_secret == DEFAULT_JWT_SECRET  # no JWT_SECRET set at all
     assert make_settings(app_env="development", jwt_secret="short").jwt_secret == "short"

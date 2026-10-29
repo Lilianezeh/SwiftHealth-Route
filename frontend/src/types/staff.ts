@@ -16,7 +16,9 @@ export type StaffUser = {
   two_factor_enabled?: boolean; // the authenticator app is switched on (FR-58); absent in a session saved before it existed
 };
 
-export type StaffSession = { token: string; user: StaffUser };
+/** `idle_seconds` is how long the account may be idle (`expires_in` of the login or the last renewal); absent in a session saved
+ * before the automatic sign-out existed (the page then uses the default of the role, config/idle.ts). */
+export type StaffSession = { token: string; user: StaffUser; idle_seconds?: number };
 
 /** What the second login step asks for: a code that was sent by SMS or email, or a code from the authenticator app (FR-58). */
 export type LoginMethod = "sms" | "email" | "totp";
@@ -28,6 +30,8 @@ export type TwoFactorStatus = { enabled: boolean; backup_codes_left: number; ava
 export type TwoFactorSetupStart = { secret: string; otpauth_uri: string };
 export type BackupCodes = { backup_codes: string[] };
 export type TokenResponse = { access_token: string; token_type: string; expires_in: number; user: StaffUser };
+/** POST /auth/keep-alive: a new token for the same session. */
+export type TokenRefreshed = { access_token: string; token_type: string; expires_in: number };
 
 export type StaffListingSummary = ListingSummary & {
   status: ListingStatus;

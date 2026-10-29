@@ -23,6 +23,7 @@ from app.core.security import (
     decode_challenge_token,
     decode_code_token,
 )
+from app.models.base import Role
 
 PURPOSES = [EMAIL_CONFIRM_PURPOSE, PHONE_CONFIRM_PURPOSE, PASSWORD_RESET_PURPOSE]
 
@@ -85,7 +86,7 @@ def test_the_other_token_types_cannot_stand_in_for_a_code_token_and_the_other_wa
     with pytest.raises(InvalidTokenError):
         decode_challenge_token(code_token)
     with pytest.raises(InvalidTokenError):
-        decode_code_token(create_access_token(7), EMAIL_CONFIRM_PURPOSE)
+        decode_code_token(create_access_token(7, Role.editor), EMAIL_CONFIRM_PURPOSE)
     with pytest.raises(InvalidTokenError):
         decode_code_token(create_challenge_token(7, "004821"), EMAIL_CONFIRM_PURPOSE)
 

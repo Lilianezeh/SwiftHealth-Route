@@ -177,7 +177,7 @@ async def test_a_wrong_expired_or_other_kind_of_token_is_401_and_sends_nothing(
     tampered = (await logged_in_to_step_two(client, editor))[:-3] + "abc"
     sms.messages.clear()
 
-    for bad in ["not-a-token", expired, tampered, create_access_token(editor.id)]:
+    for bad in ["not-a-token", expired, tampered, create_access_token(editor.id, editor.role)]:
         response = await resend(client, bad)
         assert response.status_code == 401, bad
         assert response.json()["detail"] == "Invalid or expired code"

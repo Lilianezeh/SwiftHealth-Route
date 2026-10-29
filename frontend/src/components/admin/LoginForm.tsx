@@ -21,6 +21,7 @@ import { askForSmsInstead, resendLoginCode, startLogin, verifyLoginCode } from "
 import { ApiError } from "@/lib/api/request";
 import { formatPhoneHint } from "@/lib/formatters/phone";
 import { addressAfterLogin } from "@/lib/staff/roles";
+import { recordActivity } from "@/lib/staff/idle";
 import { saveStaffSession } from "@/lib/staff/session";
 import type { LoginMethod } from "@/types/staff";
 
@@ -229,7 +230,10 @@ export function LoginForm() {
     setNotice(null);
     try {
       const completed = await verifyLoginCode(challenge.token, code);
-      saveStaffSession({ token: completed.access_token, user: completed.user });
+      // `expires_in` is the idle limit of this account's role (the API's settings): the page signs the person out after that long
+      // without a click, a key or a scroll (hooks/useIdleSignOut.ts). Logging in is itself activity.
+      saveStaffSession({ token: completed.access_token, user: completed.user, idle_seconds: completed.expires_in });
+      recordActivity(Date.now());
       setPassword(""); // the password is not needed any more
       router.replace(addressAfterLogin(completed.user.role, window.location.search));
     } catch (error) {

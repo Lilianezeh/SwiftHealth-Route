@@ -27,6 +27,7 @@ import type {
   StaffListingList,
   StaffListParams,
   StaffUser,
+  TokenRefreshed,
   TokenResponse,
   TwoFactorSetupStart,
   TwoFactorStatus,
@@ -72,6 +73,12 @@ export function resendLoginCode(challengeToken: string, options: Options = {}): 
 
 export function verifyLoginCode(challengeToken: string, code: string, options: Options = {}): Promise<TokenResponse> {
   return requestJson<TokenResponse>("/auth/verify-code", { ...options, body: { challenge_token: challengeToken, code } });
+}
+
+/** A fresh token for the same session, asked for while the person is active (the idle sign-out). A 401 means the server counted
+ * the session as idle too long or too old. */
+export function keepAlive(token: string, options: Options = {}): Promise<TokenRefreshed> {
+  return requestJson<TokenRefreshed>("/auth/keep-alive", { ...options, token, method: "POST" });
 }
 
 export function listStaffListings(token: string, params: StaffListParams, options: Options = {}): Promise<StaffListingList> {

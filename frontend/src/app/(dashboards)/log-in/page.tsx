@@ -4,9 +4,15 @@
 import type { Metadata } from "next";
 
 import { LoginForm } from "@/components/admin/LoginForm";
+import { SignedOutNotice } from "@/components/admin/SignedOutNotice";
 
 export const metadata: Metadata = { title: "Log in" };
 
 export default function LogInPage() {
-  return <LoginForm />;
+  return (
+    <>
+      <SignedOutNotice />
+      <LoginForm />
+    </>
+  );
 }

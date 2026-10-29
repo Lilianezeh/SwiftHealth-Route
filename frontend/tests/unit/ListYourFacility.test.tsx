@@ -188,6 +188,23 @@ describe("a provider registering a facility", () => {
     expect(screen.getByRole("link", { name: "Go to My facilities" })).toHaveAttribute("href", "/provider");
   });
 
+  it("sends the newest token of the session when the idle sign-out renewed it after the page was drawn", async () => {
+    const { apiCalls } = stubApi();
+    render(<ListYourFacilityPage />);
+    await screen.findByRole("option", { name: "Clinic" });
+
+    saveStaffSession({
+      token: "tok-renewed",
+      user: { id: 5, name: "Ada Eze", email: "ada@example.com", phone: null, role: "provider", is_active: true },
+      idle_seconds: 900,
+    });
+    await fillValidForm();
+    await userEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    await screen.findByRole("status");
+    expect(apiCalls()[0].token).toBe("tok-renewed");
+  });
+
   it("leaves the notes out when empty", async () => {
     const { apiCalls } = stubApi();
     render(<ListYourFacilityPage />);

@@ -1,7 +1,7 @@
 """Tests for core/security.py. Requirements: FR-30 (one-time code), NFR-06 (hashed passwords, two-factor)."""
 import hashlib
 import hmac
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import jwt
 import pytest
@@ -12,14 +12,17 @@ from app.core.security import (
     code_matches,
     create_access_token,
     create_challenge_token,
+    decode_access_claims,
     decode_access_token,
     decode_challenge_token,
     generate_login_code,
     hash_login_code,
     hash_password,
     hash_reporter_key,
+    idle_limit_for,
     verify_password,
 )
+from app.models.base import Role
 
 USER_ID = 7
 
@@ -55,12 +58,12 @@ def test_verify_password_rejects_garbage_hash(unreadable_hash):
 
 
 def test_access_token_round_trip():
-    token = create_access_token(USER_ID)
+    token = create_access_token(USER_ID, Role.editor)
     assert decode_access_token(token) == USER_ID
 
 
 def test_decoded_user_id_is_an_int():
-    user_id = decode_access_token(create_access_token(USER_ID))
+    user_id = decode_access_token(create_access_token(USER_ID, Role.editor))
     claims = decode_challenge_token(create_challenge_token(USER_ID, "123456"))
     assert isinstance(user_id, int)
     assert isinstance(claims.user_id, int)
@@ -68,22 +71,52 @@ def test_decoded_user_id_is_an_int():
 
 def test_sub_claim_is_stored_as_a_string():
     # Recent PyJWT versions reject a non-string "sub", so both token types store str(user_id).
-    assert decode_without_checks(create_access_token(USER_ID))["sub"] == "7"
+    assert decode_without_checks(create_access_token(USER_ID, Role.editor))["sub"] == "7"
     assert decode_without_checks(create_challenge_token(USER_ID, "123456"))["sub"] == "7"
 
 
-def test_expired_access_token_rejected(monkeypatch):
-    monkeypatch.setattr(settings, "jwt_minutes", -1)
+@pytest.mark.parametrize(("role", "setting"), [
+    (Role.admin, "idle_minutes_admin"), (Role.editor, "idle_minutes_other"),
+    (Role.verifier, "idle_minutes_other"), (Role.provider, "idle_minutes_other"),
+])
+def test_expired_access_token_rejected(monkeypatch, role, setting):
+    monkeypatch.setattr(settings, setting, -1)
     with pytest.raises(InvalidTokenError):
-        decode_access_token(create_access_token(USER_ID))
+        decode_access_token(create_access_token(USER_ID, role))
 
 
 def test_access_token_has_no_role_claim():
-    claims = decode_without_checks(create_access_token(USER_ID))
+    claims = decode_without_checks(create_access_token(USER_ID, Role.admin))
     assert "role" not in claims
     # `ims` is the moment the token was made, in milliseconds (a password change ends older tokens, D10).
-    assert set(claims) == {"sub", "purpose", "exp", "ims"}
+    # `sts` is when the whole session began: a renewed token keeps it (the longest session, jwt_minutes).
+    assert set(claims) == {"sub", "purpose", "exp", "ims", "sts"}
     assert isinstance(claims["ims"], int)
+    assert claims["sts"] == claims["ims"]
+
+
+def test_the_idle_limit_is_5_minutes_for_an_admin_15_for_the_rest_and_both_are_settings(monkeypatch):
+    assert idle_limit_for(Role.admin) == timedelta(minutes=5)
+    for role in (Role.editor, Role.verifier, Role.provider):
+        assert idle_limit_for(role) == timedelta(minutes=15)
+    monkeypatch.setattr(settings, "idle_minutes_admin", 9)
+    monkeypatch.setattr(settings, "idle_minutes_other", 30)
+    assert idle_limit_for(Role.admin) == timedelta(minutes=9)
+    assert idle_limit_for(Role.provider) == timedelta(minutes=30)
+
+
+def test_a_token_expires_after_the_idle_limit_of_its_role():
+    for role in (Role.admin, Role.editor):
+        claims = decode_access_claims(create_access_token(USER_ID, role))
+        lifetime = claims.expires_at - datetime.now(timezone.utc)
+        assert idle_limit_for(role) - timedelta(seconds=5) < lifetime <= idle_limit_for(role)
+
+
+def test_a_renewed_token_keeps_the_moment_the_session_began():
+    began = 1_700_000_000_000
+    claims = decode_access_claims(create_access_token(USER_ID, Role.editor, session_started_ms=began))
+    assert claims.session_started_ms == began
+    assert claims.issued_ms is not None and claims.issued_ms > began
 
 
 def test_the_issue_time_is_read_back_and_an_old_token_without_it_reads_as_none():
@@ -92,7 +125,7 @@ def test_the_issue_time_is_read_back_and_an_old_token_without_it_reads_as_none()
     from app.core.config import settings
     from app.core.security import decode_access_claims
 
-    fresh = decode_access_claims(create_access_token(USER_ID))
+    fresh = decode_access_claims(create_access_token(USER_ID, Role.editor))
     assert fresh.user_id == USER_ID and fresh.issued_ms is not None
 
     old = jwt.encode(
@@ -101,6 +134,7 @@ def test_the_issue_time_is_read_back_and_an_old_token_without_it_reads_as_none()
         algorithm="HS256",
     )
     assert decode_access_claims(old).issued_ms is None
+    assert decode_access_claims(old).session_started_ms is None  # then `ims` stands in for it
 
 
 def test_challenge_token_does_not_contain_plain_code():
@@ -137,11 +171,11 @@ def test_challenge_token_rejected_as_access_token():
 
 def test_access_token_rejected_as_challenge():
     with pytest.raises(InvalidTokenError):
-        decode_challenge_token(create_access_token(USER_ID))
+        decode_challenge_token(create_access_token(USER_ID, Role.editor))
 
 
 def test_tampered_or_garbage_token_rejected():
-    token = create_access_token(USER_ID)
+    token = create_access_token(USER_ID, Role.editor)
     with pytest.raises(InvalidTokenError):
         decode_access_token(token[:-2] + "xx")
     with pytest.raises(InvalidTokenError):

@@ -42,7 +42,13 @@ class Settings(BaseSettings):
     # for the local database and for any database without a pooler.
     database_url_direct: str = ""
     jwt_secret: str = DEFAULT_JWT_SECRET
+    # The longest a login session lasts, however active the person is.
     jwt_minutes: int = 60 * 12
+    # Automatic sign-out after no activity: an admin after 5 minutes, every other account after 15.
+    # The login token lives this long and POST /auth/keep-alive renews it while the person is
+    # active, so an idle session simply expires. At least 2: the browser warns 60 seconds before.
+    idle_minutes_admin: int = Field(default=5, ge=2)
+    idle_minutes_other: int = Field(default=15, ge=2)
     # Keys the hash that counts different reporters for FR-22. Separate from JWT_SECRET on purpose: rotating
     # the JWT secret must not break the counting. In development a blank value means the development default.
     reporter_key_secret: str = DEFAULT_REPORTER_KEY_SECRET
