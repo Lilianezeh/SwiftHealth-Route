@@ -3,7 +3,8 @@
 /** "List your facility" `/list-your-facility`. Requirements: FR-50, FR-51, US-17, NFR-07. UI spec 2.9; decision D14 in
  * specs/2026-10-23-accounts-and-facility-ownership/requirements.md. What the page shows depends on who looks, read from the tab's
  * session after the first render (so the server and the browser draw the same page): a visitor is asked to sign up or log in, a
- * provider can register a facility or claim one, and a staff account is sent to the admin screens. The API checks the role on every
+ * provider can register a facility or claim one, and a staff account is told how owners list a facility and given a link to
+ * the new-listing form of the admin screens (`/admin/listings/new`), not to the dashboard. The API checks the role on every
  * call; this only chooses what to show. A 401 from a call ends the session and shows the visitor part.
  */
 import Link from "next/link";
@@ -14,7 +15,7 @@ import { RegisterFacility } from "@/components/facility/RegisterFacility";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useSignupOpen } from "@/hooks/useSignupOpen";
 import { ApiError } from "@/lib/api/request";
-import { homeAddressFor, LIST_YOUR_FACILITY_ADDRESS } from "@/lib/staff/roles";
+import { LIST_YOUR_FACILITY_ADDRESS } from "@/lib/staff/roles";
 import { clearStaffSession, readStaffSession } from "@/lib/staff/session";
 import type { StaffSession } from "@/types/staff";
 
@@ -24,9 +25,10 @@ function Visitor() {
   const signupOpen = useSignupOpen();
   return (
     <>
-      <p className="text-base text-ink">
-        To list a facility or ask to manage one, you need an account. This lets our team know who is asking and keeps listings accurate.
+      <p className="text-base font-semibold text-ink">
+        {signupOpen ? "Log in or sign up to list your facility." : "Log in to list your facility."}
       </p>
+      <p className="text-base text-ink">An account lets our team know who is asking and keeps listings accurate.</p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {signupOpen ? (
           <Link href="/sign-up" className={buttonClasses("primary")}>Sign up</Link>
@@ -76,8 +78,12 @@ export function ListYourFacility() {
       {session === null && <Visitor />}
       {session && session.user.role !== "provider" && (
         <>
-          <p className="text-base text-ink">This page is for facility owners. Use the admin screens to add or change listings.</p>
-          <Link href={homeAddressFor(session.user.role)} className={buttonClasses("secondary")}>Go to the admin screens</Link>
+          <p className="text-base text-ink">
+            Facility owners list a facility with this form: its name, category, area, address and phone number. Our team verifies it before
+            it is listed.
+          </p>
+          <p className="text-base text-ink">As staff you do not need the form. Add a facility directly:</p>
+          <Link href="/admin/listings/new" prefetch={false} className={buttonClasses("primary")}>Add a facility</Link>
         </>
       )}
       {session && session.user.role === "provider" && (
