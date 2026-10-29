@@ -2,6 +2,8 @@
 Requirements: FR-50, US-19."""
 
 from datetime import datetime
+from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -22,11 +24,18 @@ class OwnerListItem(BaseModel):
     area: str
     category: CategoryRef
     role: str  # owner or manager
-    status: str  # pending, approved or removed
+    status: str  # awaiting_payment, pending, approved, lapsed, ending or removed
     requested_at: datetime
+    # The owner fee (specs/2026-10-29-owner-fee/): the end of the paid month, and where the link is in
+    # the life of the fee: awaiting_payment, waiting_for_staff, paid, grace, lapsed, ending, ended or
+    # removed.
+    paid_until: datetime | None
+    fee_state: str
 
 
 class OwnerList(BaseModel):
+    fee_naira: Decimal  # "10000.00" (OWNER_FEE_NAIRA), what a month costs
+    grace_days: int  # editing goes on this many days after the paid month ends
     items: list[OwnerListItem]
 
 
@@ -78,6 +87,10 @@ class LinkRead(BaseModel):
     removed_by: int | None
     removed_at: datetime | None
     note: str | None
+    paid_until: datetime | None = None  # the owner fee: the end of the paid month
+    # Set only by a rejection: the first payment is given back in full, "done" or "pending" (the
+    # nightly job asks Paystack again), and null when nothing was paid.
+    refund: Literal["done", "pending"] | None = None
 
 
 class ApproveLink(BaseModel):

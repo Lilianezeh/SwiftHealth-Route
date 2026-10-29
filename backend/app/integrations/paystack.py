@@ -104,6 +104,45 @@ async def initialize_transaction(
     return started
 
 
+REFUND_URL = "https://api.paystack.co/refund"
+
+
+class RefundError(Exception):
+    """Paystack could not be reached or did not accept the refund. The message holds no key and no email."""
+
+
+async def create_refund(*, reference: str, client: httpx.AsyncClient | None = None) -> None:
+    """Asks Paystack to give a whole payment back (the owner fee of a rejected claim).
+
+    From Paystack's refunds page (https://paystack.com/docs/payments/refunds/): POST
+    https://api.paystack.co/refund with `Authorization: Bearer <secret key>` and a JSON body whose
+    `transaction` is the transaction reference; with no `amount` the refund is for the whole payment. Paystack
+    answers that the refund was queued (`status` true). Not tested against the real service: the tests use a
+    mock transport. Check it once in the Paystack test dashboard.
+
+    Raises PaymentsNotSetUpError and LiveKeyRefusedError like every call here, and RefundError. `async def`
+    because it awaits httpx.
+    """
+    key = secret_key()
+    headers = {"Authorization": f"Bearer {key}"}
+    sending_client = client or httpx.AsyncClient(timeout=TIMEOUT_SECONDS)
+    try:
+        response = await sending_client.post(REFUND_URL, json={"transaction": reference}, headers=headers)
+    except httpx.HTTPError as error:
+        raise RefundError(f"Could not reach Paystack ({type(error).__name__}).") from error
+    finally:
+        if client is None:
+            await sending_client.aclose()
+    if not response.is_success:
+        raise RefundError(f"Paystack answered with HTTP {response.status_code}.")
+    try:
+        accepted = response.json().get("status") is True
+    except (ValueError, AttributeError):
+        accepted = False
+    if not accepted:
+        raise RefundError("Paystack did not accept the refund.")
+
+
 def signature_is_valid(raw_body: bytes, signature: str | None) -> bool:
     """True when `signature` is the HMAC SHA-512 of `raw_body` made with the secret key (FR-44).
 

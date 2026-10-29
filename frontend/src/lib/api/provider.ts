@@ -3,7 +3,17 @@
  * never called from the browser: the API starts the payment, and Paystack's own page takes it (test mode only).
  */
 import { requestJson, type RequestOptions } from "@/lib/api/request";
-import type { FeaturedStarted, ListingInput, MyFacility, PaymentVerified, ProviderListing } from "@/types/staff";
+import type {
+  FeaturedStarted,
+  LinkCancelled,
+  ListingInput,
+  MyFacilityList,
+  OwnerFeePayment,
+  OwnerFeeStarted,
+  OwnerFeeVerified,
+  PaymentVerified,
+  ProviderListing,
+} from "@/types/staff";
 
 type Options = Omit<RequestOptions, "token" | "body" | "method">;
 
@@ -26,9 +36,29 @@ export function updateProviderListing(
   return requestJson<ProviderListing>(path, { ...options, token, method: "PATCH", body: changes });
 }
 
-/** Every facility link of the provider, with its state (accounts phase 6). */
-export function listMyFacilities(token: string, options: Options = {}): Promise<{ items: MyFacility[] }> {
-  return requestJson<{ items: MyFacility[] }>("/provider/listings", { ...options, token });
+/** Every facility link of the provider, with its state and the owner fee (accounts phase 6; owner fee). */
+export function listMyFacilities(token: string, options: Options = {}): Promise<MyFacilityList> {
+  return requestJson<MyFacilityList>("/provider/listings", { ...options, token });
+}
+
+/** Starts the monthly owner fee of one of the provider's own links on Paystack (test mode). The amount is the API's setting. */
+export function startOwnerFeePayment(token: string, linkId: number, options: Options = {}): Promise<OwnerFeeStarted> {
+  return requestJson<OwnerFeeStarted>("/payments/owner-fee", { ...options, token, body: { link_id: linkId } });
+}
+
+/** `reference` comes from the address Paystack sends the provider back to; it is encoded, never trusted as a path. */
+export function verifyOwnerFeePayment(token: string, reference: string, options: Options = {}): Promise<OwnerFeeVerified> {
+  return requestJson<OwnerFeeVerified>(`/payments/owner-fee/${encodeURIComponent(reference)}`, { ...options, token });
+}
+
+/** Stops managing a facility (the listing stays public and free). */
+export function cancelLink(token: string, linkId: number, options: Options = {}): Promise<LinkCancelled> {
+  return requestJson<LinkCancelled>(`/provider/links/${linkId}/cancel`, { ...options, token, method: "POST" });
+}
+
+/** The provider's own owner-fee payments (receipts), newest first. */
+export function listMyPayments(token: string, options: Options = {}): Promise<{ items: OwnerFeePayment[] }> {
+  return requestJson<{ items: OwnerFeePayment[] }>("/provider/payments", { ...options, token });
 }
 
 export function startFeaturedPayment(token: string, options: Options = {}): Promise<FeaturedStarted> {

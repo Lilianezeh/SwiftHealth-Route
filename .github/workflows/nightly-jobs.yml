@@ -52,3 +52,28 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Remove unconfirmed sign-ups older than 7 days
         run: python -m app.jobs.purge_signups
+
+  owner-fee:
+    # The owner fee (specs/2026-10-29-owner-fee/): lapses links whose paid month and grace days ended, removes cancelled
+    # links, emails the reminders, and asks Paystack again for refunds it did not accept.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults: { run: { working-directory: backend } }
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
+      # A Paystack TEST key (sk_test_...): the code refuses a live key. Only used to retry a refund.
+      PAYSTACK_SECRET_KEY: ${{ secrets.PAYSTACK_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the database secret is set
+        run: test -n "$DATABASE_URL" || { echo "The repository secret DATABASE_URL_DIRECT is not set."; exit 1; }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Lapse, end, remind and retry refunds
+        run: python -m app.jobs.owner_fee

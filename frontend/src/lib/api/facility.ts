@@ -19,7 +19,10 @@ export type FacilityRegistration = {
 
 export type ClaimableFacility = { id: number; name: string; area: string; category: { slug: string; name: string } };
 
-export function registerFacility(token: string, registration: FacilityRegistration): Promise<{ message: string; listing_id: number; link_id: number }> {
+/** What registering or claiming answers: the request waits for its first payment (`status` "awaiting_payment") of `fee_naira`. */
+export type RequestSaved = { message: string; link_id: number; status: string; fee_naira: string };
+
+export function registerFacility(token: string, registration: FacilityRegistration): Promise<RequestSaved & { listing_id: number }> {
   const notes = registration.notes.trim();
   return requestJson("/provider/facilities", {
     token,
@@ -40,6 +43,6 @@ export async function findClaimableFacilities(token: string, searchText: string,
   return answer.items;
 }
 
-export function claimFacility(token: string, claim: { listing_id: number; role: FacilityRole; reason: string }): Promise<{ message: string; link_id: number }> {
+export function claimFacility(token: string, claim: { listing_id: number; role: FacilityRole; reason: string }): Promise<RequestSaved> {
   return requestJson("/provider/claims", { token, body: { ...claim, reason: claim.reason.trim() } });
 }

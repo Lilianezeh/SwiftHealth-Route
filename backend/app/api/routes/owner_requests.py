@@ -73,10 +73,11 @@ async def reject_request(
     session: AsyncSession = Depends(get_session),
 ) -> LinkRead:
     try:
-        link = await service.reject(session, staff, link_id, request.note if request else None, moment)
+        note = request.note if request else None
+        link, refund = await service.reject(session, staff, link_id, note, moment)
     except EXPECTED as error:
         raise _problem(error) from None
-    return LinkRead.model_validate(link)
+    return LinkRead.model_validate(link).model_copy(update={"refund": refund})
 
 
 @router.post(

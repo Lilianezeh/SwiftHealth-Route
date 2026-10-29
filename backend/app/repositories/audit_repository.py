@@ -113,6 +113,59 @@ async def find_payment(session: AsyncSession, reference: str) -> AuditEntry | No
     return (await session.exec(query)).first()
 
 
+OWNER_FEE_PREFIX = "SO-"  # the Paystack references of the owner fee (specs/2026-10-29-owner-fee/)
+REFUND_ACTION = "refund"  # a payment given back; `reference` is the reference of the payment
+REFUND_PENDING_ACTION = "refund_pending"  # a refund Paystack did not accept yet; the nightly job asks again
+# One reminder email. `reference` names the link, the end date and the day count, so none is sent twice.
+REMINDER_ACTION = "owner_fee_reminder"
+
+
+async def list_owner_fee_payments(session: AsyncSession, listing_ids: set[int]) -> list[AuditEntry]:
+    """The owner-fee payments on these listings, newest first. The caller keeps those of its own links."""
+    if not listing_ids:
+        return []
+    query = (
+        select(AuditEntry)
+        .where(
+            AuditEntry.action == PAYMENT_ACTION,
+            col(AuditEntry.reference).startswith(OWNER_FEE_PREFIX),
+            col(AuditEntry.listing_id).in_(listing_ids),
+        )
+        .order_by(col(AuditEntry.id).desc())
+    )
+    return list((await session.exec(query)).all())
+
+
+async def latest_owner_fee_payment(session: AsyncSession, link_id: int) -> AuditEntry | None:
+    """The newest payment of this link (its reference is `SO-<link id>-<digits>`), or None."""
+    query = (
+        select(AuditEntry)
+        .where(AuditEntry.action == PAYMENT_ACTION, col(AuditEntry.reference).startswith(f"SO-{link_id}-"))
+        .order_by(col(AuditEntry.id).desc())
+        .limit(1)
+    )
+    return (await session.exec(query)).first()
+
+
+async def find_by_action_and_reference(
+    session: AsyncSession, action: str, reference: str
+) -> AuditEntry | None:
+    query = select(AuditEntry).where(AuditEntry.action == action, AuditEntry.reference == reference).limit(1)
+    return (await session.exec(query)).first()
+
+
+async def list_refunds_to_retry(session: AsyncSession) -> list[AuditEntry]:
+    """The refunds that were asked for and not done: a `refund_pending` entry with no `refund` entry for the
+    same payment reference."""
+    done = select(AuditEntry.reference).where(AuditEntry.action == REFUND_ACTION)
+    query = (
+        select(AuditEntry)
+        .where(AuditEntry.action == REFUND_PENDING_ACTION, col(AuditEntry.reference).not_in(done))
+        .order_by(col(AuditEntry.id))
+    )
+    return list((await session.exec(query)).all())
+
+
 async def latest_new_value(session: AsyncSession, listing_id: int, action: str) -> str | None:
     """The `new_value` of the newest entry of this action for a listing, or None (decision C6)."""
     query = (
