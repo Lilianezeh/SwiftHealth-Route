@@ -46,7 +46,7 @@ for (const { width, height } of WIDTHS) {
 
       const bar = page.getByRole("navigation", { name: "Staff" });
       for (const name of ["Dashboard", "Edit my facility", "Get featured"]) await expect(bar.getByRole("link", { name })).toBeVisible();
-      await expect(page.getByRole("link", { name: "Staff", exact: true })).toHaveCount(0); // none of the staff links
+      await expect(page.getByRole("link", { name: "Accounts", exact: true })).toHaveCount(0); // none of the staff links
       await allIsInsideTheScreen(page, width);
       await targetsAndTextAreBigEnough(page);
     });

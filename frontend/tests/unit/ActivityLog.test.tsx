@@ -74,6 +74,31 @@ describe("the entries", () => {
     expect(within(card).getByText("approval_status: pending → approved")).toBeInTheDocument();
   });
 
+  it("says a role change in the words of the screens: 'provider' is 'Facility owner'", async () => {
+    stubApi({
+      entries: [
+        entry(3, { action: "user_update", field_changed: "role", old_value: "editor", new_value: "provider" }),
+        entry(4, { action: "user_update", field_changed: "role", old_value: "provider", new_value: "verifier" }),
+        entry(5, { action: "user_create", field_changed: "role", old_value: null, new_value: "provider" }),
+      ],
+    });
+    const { container } = render(<ActivityPage />);
+
+    await screen.findAllByRole("listitem");
+
+    expect(screen.getByText("role: Editor → Facility owner")).toBeInTheDocument();
+    expect(screen.getByText("role: Facility owner → Verifier")).toBeInTheDocument();
+    expect(screen.getByText("role: Facility owner")).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/provider/i);
+  });
+
+  it("leaves every other kind of change as it was", async () => {
+    stubApi({ entries: [entry(6, { field_changed: "is_active", old_value: "true", new_value: "false" })] });
+    render(<ActivityPage />);
+
+    expect(await screen.findByText("is_active: true → false")).toBeInTheDocument();
+  });
+
   it("names the listing when the entry is about a listing, and leaves out a missing old value", async () => {
     stubApi({
       entries: [entry(2, { action: "update", listing_id: 5, listing_name: "Night Pharmacy A", target_user_id: null, target_user_name: null, field_changed: "phone", old_value: null, new_value: "changed" })],

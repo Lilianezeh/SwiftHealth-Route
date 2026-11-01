@@ -27,7 +27,7 @@ function loginAs(role: StaffRole, id = 1) {
   saveStaffSession({ token: "tok", user: person(id, role) });
 }
 
-type Call = { method: string; path: string; body: unknown; headers: Record<string, string> };
+type Call = { method: string; path: string; search: string; body: unknown; headers: Record<string, string> };
 
 function stubApi(options: { users?: StaffUser[]; write?: (call: Call) => Response } = {}) {
   const calls: Call[] = [];
@@ -39,6 +39,7 @@ function stubApi(options: { users?: StaffUser[]; write?: (call: Call) => Respons
       const call: Call = {
         method: init?.method ?? "GET",
         path: url.pathname,
+        search: url.search,
         body: init?.body ? JSON.parse(String(init.body)) : undefined,
         headers: (init?.headers ?? {}) as Record<string, string>,
       };
@@ -104,6 +105,63 @@ describe("the staff list", () => {
     await userEvent.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(await screen.findAllByRole("listitem")).toHaveLength(4);
+  });
+});
+
+describe("the role 'provider' is called 'Facility owner' wherever the admin reads it", () => {
+  // The code, the API and the option values keep saying `provider`; only the words change.
+  it("has the heading Accounts (it lists everyone), not Staff and providers", async () => {
+    stubApi();
+    render(<AdminStaffPage />);
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Accounts" })).toBeInTheDocument();
+    expect(screen.queryByText(/Staff and providers/)).toBeNull();
+  });
+
+  it("shows a facility owner's card as 'Facility owner' and no card says Provider", async () => {
+    stubApi();
+    const { container } = render(<AdminStaffPage />);
+
+    const rows = await screen.findAllByRole("listitem");
+
+    expect(rows[3]).toHaveTextContent("Person 4");
+    expect(rows[3]).toHaveTextContent("Facility owner · Active");
+    expect(container.textContent).not.toMatch(/provider/i);
+  });
+
+  it("names the role in the add form, the filter and the edit select 'Facility owner' with the value still provider", async () => {
+    stubApi();
+    render(<AdminStaffPage />);
+    await screen.findAllByRole("listitem");
+    await userEvent.click(screen.getByRole("button", { name: "Add user" }));
+
+    const wording = (select: HTMLElement) =>
+      within(select).getAllByRole("option").map((option) => [option.getAttribute("value"), option.textContent]);
+    const owner = ["provider", "Facility owner"];
+    expect(wording(screen.getByLabelText("Role"))).toEqual([["verifier", "Verifier"], ["editor", "Editor"], ["admin", "Admin"], owner]);
+    expect(wording(screen.getByLabelText("Filter by role"))).toEqual([["", "Any"], ["admin", "Admin"], ["editor", "Editor"], ["verifier", "Verifier"], owner]);
+
+    await userEvent.click(screen.getByRole("button", { name: /Edit Person 2/ }));
+    expect(wording(screen.getByLabelText("Role of Person 2")).at(-1)).toEqual(owner);
+  });
+
+  it("filters by 'Facility owner' and still asks the API for role=provider", async () => {
+    const { calls } = stubApi();
+    render(<AdminStaffPage />);
+    await screen.findAllByRole("listitem");
+
+    await userEvent.selectOptions(screen.getByLabelText("Filter by role"), "Facility owner");
+
+    await userEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => expect(calls.some((call) => call.path === "/admin/users" && call.search.includes("role=provider"))).toBe(true));
+    expect((screen.getByLabelText("Filter by role") as HTMLSelectElement).value).toBe("provider");
+  });
+
+  it("keeps the words in one place: no admin screen spells out 'Provider' to the reader", () => {
+    for (const file of ["lib/staff/accountText.ts", "components/admin/StaffBar.tsx", "components/admin/StaffAccounts.tsx", "components/admin/AllAccounts.tsx", "components/admin/AccountRow.tsx"]) {
+      expect(readSource(file), file).not.toMatch(/"Provider"|>Provider<|Staff and providers|make a provider staff/);
+    }
   });
 });
 
@@ -300,7 +358,7 @@ describe("the password rule: 8 characters for a provider, 10 for staff and admin
     await userEvent.selectOptions(screen.getByLabelText("Role of Person 4"), "verifier");
     expect(screen.getByLabelText("New password for Person 4 (at least 10 characters)")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Save Person 4" }));
-    expect(screen.getByText("To make a provider staff, type a new password of at least 10 characters.")).toBeInTheDocument();
+    expect(screen.getByText("To make a facility owner staff, type a new password of at least 10 characters.")).toBeInTheDocument();
     expect(writes()).toHaveLength(0);
 
     await userEvent.type(screen.getByLabelText("New password for Person 4 (at least 10 characters)"), "river-bed!");

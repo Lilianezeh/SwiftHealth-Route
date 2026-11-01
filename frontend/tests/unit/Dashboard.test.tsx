@@ -203,10 +203,10 @@ describe("the staff bar", () => {
     ]);
   });
 
-  it("shows an admin the same, and also staff and import and export", () => {
-    // Activity (the activity log) is for the admin only, accounts phase 4b.
+  it("shows an admin the same, and also accounts (everyone) and import and export", () => {
+    // Activity (the activity log) is for the admin only, accounts phase 4b. "Accounts" was called "Staff" before the wording change.
     expect(barFor("admin")).toEqual([
-      "Dashboard", "Reports", "Re-checks", "Owner requests", "SwiftRescue contacts", "Listings", "Staff",
+      "Dashboard", "Reports", "Re-checks", "Owner requests", "SwiftRescue contacts", "Listings", "Accounts",
       "Activity", "Import and export", "Security", "Account",
     ]);
   });

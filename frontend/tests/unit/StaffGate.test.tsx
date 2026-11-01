@@ -2,7 +2,7 @@
 /** The gate and the bar of the staff area. Requirements: FR-30, FR-42, NFR-06, NFR-10. UI spec "Phase 10 details";
  * decisions C2 and C11 in specs/2026-10-20-staff-screens/requirements.md.
  */
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -102,20 +102,37 @@ describe("StaffGate", () => {
     expect(screen.getByRole("link", { name: "Go to your start page" })).toHaveAttribute("href", "/admin/listings?mine=true");
   });
 
-  it("shows only the links a role can use: Listings for staff, Staff for the admin only", async () => {
+  it("shows only the links a role can use: Listings for staff, Accounts for the admin only", async () => {
     saveStaffSession({ token: "tok", user: user("admin") });
     const first = render(<StaffGate area="listings"><p>x</p></StaffGate>);
     await screen.findByText("x");
     expect(screen.getByRole("link", { name: "Listings" })).toHaveAttribute("href", "/admin/listings");
-    expect(screen.getByRole("link", { name: "Staff" })).toHaveAttribute("href", "/admin/staff");
+    // It lists everyone (staff and facility owners), so it is called Accounts; the address is the same.
+    expect(screen.getByRole("link", { name: "Accounts" })).toHaveAttribute("href", "/admin/staff");
+    expect(screen.queryByRole("link", { name: "Staff" })).toBeNull();
     expect(screen.getByRole("link", { name: "Import and export" })).toHaveAttribute("href", "/admin/import-export");
     first.unmount();
 
     saveStaffSession({ token: "tok", user: user("editor") });
     render(<StaffGate area="listings"><p>y</p></StaffGate>);
     await screen.findByText("y");
-    expect(screen.queryByRole("link", { name: "Staff" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Accounts" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Import and export" })).toBeNull();
+  });
+
+  it.each([
+    ["admin", "Admin"],
+    ["editor", "Editor"],
+    ["verifier", "Verifier"],
+    ["provider", "Facility owner"],
+  ] as const)("says the role of a %s in words in the bar: %s", async (role, words) => {
+    saveStaffSession({ token: "tok", user: user(role) });
+    render(<StaffGate area={role === "provider" ? "provider" : "listings"}><p>x</p></StaffGate>);
+    await screen.findByText("x");
+
+    const bar = screen.getByRole("navigation", { name: "Staff" }); // the landmark keeps its name
+    expect(within(bar).getByText(words)).toBeInTheDocument();
+    expect(bar.textContent).not.toContain("Provider");
   });
 
   it("makes every link and button of the bar at least 48 px high", async () => {
@@ -123,7 +140,7 @@ describe("StaffGate", () => {
     render(<StaffGate area="listings"><p>x</p></StaffGate>);
     await screen.findByText("x");
 
-    const controls = [screen.getByRole("link", { name: "Listings" }), screen.getByRole("link", { name: "Staff" }), screen.getByRole("button", { name: "Log out" })];
+    const controls = [screen.getByRole("link", { name: "Listings" }), screen.getByRole("link", { name: "Accounts" }), screen.getByRole("button", { name: "Log out" })];
     for (const control of controls) expect(control.className).toMatch(/\bmin-h-12\b/);
   });
 

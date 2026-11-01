@@ -71,7 +71,7 @@ for (const { width, height } of WIDTHS) {
       await logInAs(page, "admin", 1);
       await page.goto("/admin/staff", { waitUntil: "load" });
 
-      await expect(page.getByRole("heading", { level: 1, name: "Staff and providers" })).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByRole("heading", { level: 1, name: "Accounts" })).toBeVisible({ timeout: 60_000 });
       await expect(page.getByText("2 people are waiting for approval.")).toBeVisible();
       await page.getByRole("tab", { name: "Waiting for approval (2)" }).click();
       await expect(page.getByText("Bola Staff", { exact: true })).toBeVisible();

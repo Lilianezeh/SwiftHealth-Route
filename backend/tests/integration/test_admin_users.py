@@ -310,7 +310,9 @@ async def test_a_provider_becomes_staff_only_with_a_new_password_of_10_character
 
     without = await patch_user(client, admin, provider, role="verifier")
     assert without.status_code == 422
-    assert "new password" in without.json()["detail"]
+    assert without.json()["detail"] == (
+        "To make a facility owner staff, give a new password of at least 10 characters in the same request."
+    )  # the admin reads this on the Accounts screen: "provider" is called "facility owner" there
     await session.refresh(provider)
     assert provider.role == Role.provider  # nothing changed
 
@@ -418,11 +420,11 @@ async def test_a_listing_can_only_be_linked_to_a_provider_and_must_exist(
     listing = await add_listing(session, "Some Clinic", status=ListingStatus.draft)
     await session.commit()
     not_a_provider = demo_users[Role.verifier]
-    assert (
-        await client.patch(
-            f"/admin/users/{not_a_provider.id}", json={"listing_id": listing.id}, headers=bearer_for(admin)
-        )
-    ).status_code == 422
+    refused = await client.patch(
+        f"/admin/users/{not_a_provider.id}", json={"listing_id": listing.id}, headers=bearer_for(admin)
+    )
+    assert refused.status_code == 422
+    assert refused.json()["detail"] == "listing_id: only a facility owner can be linked to a listing"
     assert (
         await client.patch(
             f"/admin/users/{demo_users[Role.provider].id}",
