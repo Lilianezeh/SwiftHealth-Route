@@ -65,9 +65,18 @@ describe("the map styles (src/styles/map.css)", () => {
     expect(rule(".map-position-dot")).toMatch(/border-radius:\s*50%/);
   });
 
-  it("never uses red, the emergency colour, or a hand-written hex, rgb or hsl colour", () => {
-    const rules = css.replace(/\/\*[\s\S]*?\*\//g, ""); // the comments may say "never red"
+  it("never uses red, the emergency colour, or a hand-written hex, rgb or hsl colour, except in the one-facility pin", () => {
+    const rules = css
+      .replace(/\/\*[\s\S]*?\*\//g, "") // the comments may say "never red"
+      .replace(/\.facility-pin__(body|dot)\s*\{[^}]*\}/g, ""); // the exception below (owner, 2026-11-01)
     expect(rules).not.toMatch(/emergency|\bred\b|#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/i);
+  });
+
+  it("paints the one-facility pin red with a white outline and a white dot, and no plus (owner, 2026-11-01)", () => {
+    expect(rule(".facility-pin__body")).toMatch(/fill:\s*#b3261e/i);
+    expect(rule(".facility-pin__body")).toMatch(/stroke:\s*#ffffff/i);
+    expect(rule(".facility-pin__dot")).toMatch(/fill:\s*#ffffff/i);
+    expect(css).not.toMatch(/facility-pin__plus|facility-pin__cross/);
   });
 
   it("makes the popup close button and the zoom buttons 48 px wide and high (NFR-10)", () => {

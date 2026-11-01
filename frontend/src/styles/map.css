@@ -1,7 +1,7 @@
 /* Styles of the results map (specs/frontend/ui-spec.md, 2.3 "Map view"). Requirements: FR-07, NFR-10.
    Imported by ResultsMap right after leaflet.css, so it loads only when the map is shown, and wins over Leaflet's own rules
-   (the same specificity, later in the file). Colours are the design tokens (var(--color-...)), never a hand-written colour,
-   and never red: red is for emergency actions. */
+   (the same specificity, later in the file). Colours are the design tokens (var(--color-...)), and the results pins are never red:
+   red is for emergency actions. The one exception is the pin of a single facility (.facility-pin below), red by the owner's choice. */
 
 /* Leaflet starts at 12 px text; every text of the site is 16 px or larger. */
 .leaflet-container {
@@ -27,6 +27,26 @@
 
 .map-pin__plus {
   fill: var(--color-white);
+}
+
+/* The pin of one facility (listing page, owner's form): RED, with a white round dot and a white border. No plus, no cross. The red is
+   the SwiftRescue red, written as a fixed colour because the map tiles stay light in the dark mode too (6.6:1 on white). This is the
+   one place besides SwiftRescue where red is used (owner, 2026-11-01). */
+.facility-pin {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  filter: drop-shadow(0 2px 2px color-mix(in srgb, var(--color-ink) 40%, transparent));
+}
+
+.facility-pin__body {
+  fill: #b3261e;
+  stroke: #ffffff;
+  stroke-width: 2px;
+}
+
+.facility-pin__dot {
+  fill: #ffffff;
 }
 
 /* The visitor's position: a dark round dot with a white ring. The same class is used for the legend under the map. */

@@ -75,9 +75,9 @@ describe("the /search page", () => {
     expect(searches()[0].searchParams.has("lng")).toBe(false);
   });
 
-  it("sends lat and lng from the session store to the API, and does not put them in the address or the page", async () => {
+  it("sends lat and lng from memory to the API in the BODY of a POST, and not in any address or the page", async () => {
     savePosition({ latitude: 6.101, longitude: 7.202 });
-    const { searches } = stubApi({ search: () => json({ items: [listing()], total: 1 }) });
+    const { searches, searchAddresses } = stubApi({ search: () => json({ items: [listing()], total: 1 }) });
     const { container } = render(<SearchPage />);
 
     expect(await screen.findByText("1 place, nearest first")).toBeInTheDocument();
@@ -85,6 +85,9 @@ describe("the /search page", () => {
     expect(searches()).toHaveLength(1); // it waited for the stored position, so no first search without it
     expect(searches()[0].searchParams.get("lat")).toBe("6.101");
     expect(searches()[0].searchParams.get("lng")).toBe("7.202");
+    expect(searchAddresses()[0].search).toBe(""); // the address of the API call itself holds nothing (NFR-07)
+    expect(window.location.href).not.toMatch(/6\.101|7\.202/);
+    expect(window.sessionStorage.length).toBe(0);
     expect(navigation.replace).not.toHaveBeenCalled();
     expect(navigation.push).not.toHaveBeenCalled();
     expect(container.innerHTML).not.toMatch(/6\.101|7\.202/);

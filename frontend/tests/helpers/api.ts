@@ -77,6 +77,18 @@ export async function stubSignupOpen(state: boolean | "fails"): Promise<void> {
 
 type SearchHandler = (parameters: URLSearchParams, signal?: AbortSignal) => Response | Promise<Response>;
 
+/** The search a request asked for, as an address with the filters AND the position: a plain GET has them in its address, a POST (which
+ * is how the position travels since 2026-11-01, api-spec "POST /search") has them in its JSON body. `searches()` gives these, so a test
+ * reads `searchParams.get("lat")` either way; `searchAddresses()` gives the real addresses, which must never hold a position. */
+function askedSearch(url: URL, init?: RequestInit): URL {
+  if (!init?.body) return url;
+  const asked = new URL(url);
+  for (const [name, value] of Object.entries(JSON.parse(String(init.body)) as Record<string, unknown>)) {
+    asked.searchParams.set(name, String(value));
+  }
+  return asked;
+}
+
 /** Puts a fake API behind fetch. Returns the list of addresses that were asked for. */
 export function stubApi(handlers: {
   meta?: () => Response | Promise<Response>;
@@ -84,6 +96,7 @@ export function stubApi(handlers: {
   emergency?: SearchHandler;
 }) {
   const requests: URL[] = [];
+  const asked: URL[] = [];
   const fetchStub = vi.fn(async (address: string, init?: RequestInit) => {
     const url = new URL(address);
     requests.push(url);
@@ -92,12 +105,19 @@ export function stubApi(handlers: {
       return (handlers.emergency ?? (() => json(emergencyResponse())))(url.searchParams, init?.signal ?? undefined);
     }
     if (url.pathname === "/search") {
-      return (handlers.search ?? (() => json({ items: [], total: 0 })))(url.searchParams, init?.signal ?? undefined);
+      const search = askedSearch(url, init);
+      asked.push(search);
+      return (handlers.search ?? (() => json({ items: [], total: 0 })))(search.searchParams, init?.signal ?? undefined);
     }
     return json({ detail: "Not found" }, 404);
   });
   vi.stubGlobal("fetch", fetchStub);
-  return { requests, fetchStub, searches: () => requests.filter((url) => url.pathname === "/search") };
+  return {
+    requests,
+    fetchStub,
+    searches: () => asked,
+    searchAddresses: () => requests.filter((url) => url.pathname === "/search"),
+  };
 }
 
 /** A fetch answer that never comes. Like a real fetch, it fails when the request is cancelled (the 45 second limit). */
