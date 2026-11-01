@@ -1,4 +1,8 @@
-"""Resend email: tells the staff about a flagged listing. Requirements: FR-22, NFR-06, NFR-07.
+"""Email: Resend first, SMTP when Resend is not set up (integrations/smtp.py).
+Requirements: FR-22, FR-48, NFR-06, NFR-07.
+`send_email` here is the one function every service calls (the name is from the days when Resend
+was the only way). The errors live in integrations/email_errors.py and are used from here.
+Resend: tells the staff about a flagged listing, and sends the account codes.
 
 API: POST https://api.resend.com/emails with `Authorization: Bearer <key>` and the fields `from`, `to`
 (a list), `subject` and `text` (https://resend.com/docs/api-reference/emails/send-email). Not tested
@@ -13,6 +17,8 @@ import logging
 import httpx
 
 from app.core.config import settings
+from app.integrations import smtp
+from app.integrations.email_errors import EmailNotConfiguredError, EmailSendError
 
 logger = logging.getLogger(__name__)
 
@@ -26,27 +32,25 @@ def mask_email(email: str) -> str:
     return f"{name[:1]}***@{domain}"
 
 
-class EmailSendError(Exception):
-    """The email could not be sent. The message never contains the API key or the address."""
-
-
-class EmailNotConfiguredError(EmailSendError):
-    """A required email (an account code) cannot be sent: no Resend key or sender, outside development."""
-
-
 async def send_email(
     to: str, subject: str, body: str, *, required: bool = False, client: httpx.AsyncClient | None = None
 ) -> None:
-    """Sends a plain-text email. Raises EmailSendError if Resend does not accept it.
+    """Sends a plain-text email. Raises EmailSendError if it cannot be sent.
 
-    With no key or no sender, an ordinary email (a staff alert) is skipped with a warning. A `required`
-    email (the code of an account) is different, because skipping it would leave a person who can never
-    confirm their account: in development its text, which holds the code, is logged (like the Termii SMS);
-    in any other environment EmailNotConfiguredError is raised, and nothing about the email is logged.
+    THE ONE FUNCTION EVERY SERVICE CALLS to send an email. Resend is used when it is set up (a key and a
+    sender); when it is not, SMTP is used if that is set up (integrations/smtp.py, free: a Gmail account
+    with an app password). With neither, an ordinary email (a staff alert) is skipped with a warning. A
+    `required` email (the code of an account) is different, because skipping it would leave a person who can
+    never confirm their account: in development its text, which holds the code, is logged (like the Termii
+    SMS); in any other environment EmailNotConfiguredError is raised, and nothing about the email is logged.
 
-    `async def` because it awaits httpx. Tests pass their own `client` (with a mocked transport).
+    `async def` because it awaits httpx or the SMTP thread. Tests pass their own `client` (with a mocked
+    transport) for Resend.
     """
-    if not settings.resend_api_key or not settings.resend_from_email:
+    if not settings.resend_configured:
+        if settings.smtp_configured:
+            await smtp.send_email(to, subject, body)
+            return
         if not required:
             logger.warning("RESEND_API_KEY or RESEND_FROM_EMAIL is not set, so no email was sent.")
             return

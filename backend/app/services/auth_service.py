@@ -162,11 +162,11 @@ def sms_is_possible(user: User) -> bool:
 
 def code_channel() -> str:
     """How a login code is sent to a person without the app: "sms" when Termii is set up, else "email" when
-    Resend is (so a new account is never left with no way to log in while the SMS is not set up, D19), else
-    "sms", which in development only logs the code."""
+    Resend or SMTP is (so a new account is never left with no way to log in while the SMS is not set up, D19),
+    else "sms", which in development only logs the code."""
     if settings.termii_api_key:
         return "sms"
-    if settings.resend_api_key and settings.resend_from_email:
+    if settings.email_configured:
         return "email"
     return "sms"
 

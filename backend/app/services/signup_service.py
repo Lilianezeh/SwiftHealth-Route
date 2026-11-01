@@ -105,14 +105,15 @@ class EmailConfirmed:
 
 
 def signup_is_open() -> bool:
-    """Sign-up is closed unless the setting is on; outside development it also needs Resend, because a code
-    that cannot be sent cannot be confirmed, and an account that nobody can use must not be made (decision
-    D2). Termii is not needed: without it the phone is confirmed by an admin's call (decision D20)."""
+    """Sign-up is closed unless the setting is on; outside development it also needs a way to send email,
+    Resend or else SMTP (a free Gmail account with an app password), because a code that cannot be sent cannot
+    be confirmed, and an account that nobody can use must not be made (decision D2). Termii is not needed:
+    without it the phone is confirmed by an admin's call (decision D20)."""
     if not settings.signup_enabled:
         return False
     if settings.app_env == "development":
         return True
-    return bool(settings.resend_api_key and settings.resend_from_email)
+    return settings.email_configured
 
 
 def _role_for(account_type: str) -> Role:
