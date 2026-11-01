@@ -212,8 +212,7 @@ def _claims(token: str, purpose: str, user_id: int | None) -> ChallengeClaims:
 
 
 def _email_can_be_sent() -> bool:
-    has_key = bool(settings.resend_api_key and settings.resend_from_email)
-    return settings.app_env == "development" or has_key
+    return settings.app_env == "development" or settings.email_configured
 
 
 async def _send_email_code(to: str, code: str, purpose: str) -> None:

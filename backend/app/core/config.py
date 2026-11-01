@@ -64,6 +64,15 @@ class Settings(BaseSettings):
     cloudinary_upload_preset: str = ""
     resend_api_key: str = ""  # empty means no email is sent (the staff alert of FR-22 is only logged)
     resend_from_email: str = ""  # a sender on a domain verified in Resend; empty: no email
+    # Free email without a domain (specs/2026-11-01-smtp-email/): plain SMTP with STARTTLS, made for
+    # a Gmail account with an app password (smtp.gmail.com, port 587). Used when Resend is not set up.
+    # The password and the user name are never logged or printed. EMAIL_FROM is the sender
+    # ("SwiftHealth Route <me@gmail.com>"); empty: the user name, if it is an address.
+    smtp_host: str = ""
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_username: str = ""
+    smtp_password: str = ""
+    email_from: str = ""
     termii_api_key: str = ""  # empty means local dev: the login code is logged instead of sent
     termii_base_url: str = ""  # per account, from the Termii dashboard; needed only when a key is set
     termii_sender_id: str = "SwiftHealth"
@@ -134,6 +143,30 @@ class Settings(BaseSettings):
     def featured_price(self) -> Decimal:
         """The monthly featured price with exactly 2 decimals, e.g. Decimal("5000.00") (CLAUDE.md, money)."""
         return self.featured_price_naira.quantize(Decimal("0.01"))
+
+    @property
+    def resend_configured(self) -> bool:
+        """Resend is set up: a key and a sender on a verified domain."""
+        return bool(self.resend_api_key and self.resend_from_email)
+
+    @property
+    def email_sender(self) -> str:
+        """The sender of an SMTP email: EMAIL_FROM, else the user name when it is an address, else nothing."""
+        sender = self.email_from.strip()
+        if sender:
+            return sender
+        return self.smtp_username.strip() if "@" in self.smtp_username else ""
+
+    @property
+    def smtp_configured(self) -> bool:
+        """SMTP is set up: a host, a user name, a password and a sender. Half of it is none of it."""
+        has_login = bool(self.smtp_username and self.smtp_password)
+        return bool(self.smtp_host.strip() and has_login and self.email_sender)
+
+    @property
+    def email_configured(self) -> bool:
+        """An email can go out: Resend, or else SMTP."""
+        return self.resend_configured or self.smtp_configured
 
     @property
     def owner_fee(self) -> Decimal:

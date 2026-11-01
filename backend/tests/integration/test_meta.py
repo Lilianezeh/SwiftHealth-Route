@@ -107,6 +107,55 @@ async def test_meta_sign_up_outside_development_needs_resend(
     assert (await get_meta(client))["signup_open"] is expected
 
 
+@pytest.mark.parametrize(
+    ("host", "username", "password", "sender", "expected"),
+    [
+        ("smtp.gmail.com", "me@gmail.example", "app-password", "Route <me@gmail.example>", True),
+        ("smtp.gmail.com", "me@gmail.example", "app-password", "", True),  # the username is the sender
+        ("", "me@gmail.example", "app-password", "me@gmail.example", False),
+        ("smtp.gmail.com", "", "app-password", "me@gmail.example", False),
+        ("smtp.gmail.com", "me@gmail.example", "", "me@gmail.example", False),
+        ("smtp.gmail.com", "not-an-address", "app-password", "", False),  # no sender to send from
+    ],
+)
+async def test_meta_sign_up_outside_development_is_open_with_smtp_alone_and_needs_no_resend_and_no_termii(
+    client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    host: str,
+    username: str,
+    password: str,
+    sender: str,
+    expected: bool,
+) -> None:
+    """Free email (a Gmail account with an app password) opens sign-up.
+
+    The phone is confirmed by an admin's call (decision D20), so Termii is not needed either."""
+    monkeypatch.setattr(settings, "app_env", "production")
+    monkeypatch.setattr(settings, "signup_enabled", True)
+    monkeypatch.setattr(settings, "resend_api_key", "")
+    monkeypatch.setattr(settings, "resend_from_email", "")
+    monkeypatch.setattr(settings, "termii_api_key", "")
+    monkeypatch.setattr(settings, "smtp_host", host)
+    monkeypatch.setattr(settings, "smtp_username", username)
+    monkeypatch.setattr(settings, "smtp_password", password)
+    monkeypatch.setattr(settings, "email_from", sender)
+
+    assert (await get_meta(client))["signup_open"] is expected
+
+
+async def test_meta_sign_up_is_closed_when_the_setting_is_off_even_with_smtp_set_up(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "app_env", "production")
+    monkeypatch.setattr(settings, "signup_enabled", False)
+    monkeypatch.setattr(settings, "smtp_host", "smtp.gmail.com")
+    monkeypatch.setattr(settings, "smtp_username", "me@gmail.example")
+    monkeypatch.setattr(settings, "smtp_password", "app-password")
+    monkeypatch.setattr(settings, "email_from", "me@gmail.example")
+
+    assert (await get_meta(client))["signup_open"] is False
+
+
 async def test_meta_sign_up_is_closed_when_the_setting_is_off_even_with_resend_set_up(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
