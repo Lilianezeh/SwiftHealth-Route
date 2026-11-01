@@ -167,26 +167,45 @@ async def close_unpaid_requests(session: AsyncSession, moment: datetime) -> int:
         await _status_entry(
             session, link, "owner_unpaid", LinkStatus.awaiting_payment.value, LinkStatus.removed.value, moment
         )
-        listing = await listing_repository.get_by_id(session, link.listing_id)
-        others = await facility_owner_repository.count_other_live_links(session, link.listing_id, link.id)  # type: ignore[arg-type]
-        made_by_this_request = (
-            listing is not None
-            and listing.status == ListingStatus.draft
-            and listing.created_by is None
-            and listing.closed_at is None
-            and others == 0
+        await close_listing_made_by_request(
+            session, link, moment, closed_by=None, reference=UNPAID_CLOSE_REASON
         )
-        if listing is not None and made_by_this_request:
-            listing.status = ListingStatus.hidden
-            listing.closed_at, listing.closed_reason, listing.updated_at = moment, UNPAID_CLOSE_REASON, moment
-            session.add(listing)
-            await audit_repository.add_entry(
-                session, user_id=None, listing_id=listing.id, action="close", field_changed="status",
-                old_value=ListingStatus.draft.value, new_value=ListingStatus.hidden.value,
-                reference=UNPAID_CLOSE_REASON, changed_at=moment,
-            )
     await session.commit()
     return len(links)
+
+
+async def close_listing_made_by_request(
+    session: AsyncSession, link: FacilityOwner, moment: datetime, *, closed_by: int | None, reference: str
+) -> bool:
+    """Closes the draft listing that only this (already removed) request made. True if it was closed.
+
+    The listing is hidden with `closed_at` and `closed_reason` "unpaid", which is what keeps it out of
+    staff's lists and lets the same phone number be registered again. Nothing is deleted. A listing that
+    staff made, one that is not a draft (a published listing someone asked to claim), one already closed
+    and one another person still has a link to are left alone. `closed_by` is the owner who withdrew it, or
+    None when the nightly job did it; `reference` says why ("unpaid" or "withdrawn"). The caller commits."""
+    listing = await listing_repository.get_by_id(session, link.listing_id)
+    others = await facility_owner_repository.count_other_live_links(
+        session, link.listing_id, link.id  # type: ignore[arg-type]
+    )
+    made_by_this_request = (
+        listing is not None
+        and listing.status == ListingStatus.draft
+        and listing.created_by is None
+        and listing.closed_at is None
+        and others == 0
+    )
+    if listing is None or not made_by_this_request:
+        return False
+    listing.status = ListingStatus.hidden
+    listing.closed_at, listing.closed_reason, listing.updated_at = moment, UNPAID_CLOSE_REASON, moment
+    session.add(listing)
+    await audit_repository.add_entry(
+        session, user_id=closed_by, listing_id=listing.id, action="close", field_changed="status",
+        old_value=ListingStatus.draft.value, new_value=ListingStatus.hidden.value,
+        reference=reference, changed_at=moment,
+    )
+    return True
 
 
 async def run_all(session: AsyncSession, moment: datetime) -> UpkeepResult:
