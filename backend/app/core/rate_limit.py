@@ -123,3 +123,5 @@ claim_limiter = RateLimiter(10, timedelta(days=1))
 claimable_search_limiter = RateLimiter(60, timedelta(hours=1))
 # Adding a branch to a facility (FR-52, Phase 8b): 10 per client address per day.
 branch_limiter = RateLimiter(10, timedelta(days=1))
+# Signing an owner's entrance photo upload (owner form, part (b)): 20 per client address per day.
+owner_upload_limiter = RateLimiter(20, timedelta(days=1))

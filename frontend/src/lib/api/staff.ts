@@ -184,6 +184,11 @@ export function approveOwnerRequest(token: string, requestId: number, note: stri
   return requestJson<unknown>(`/staff/owner-requests/${requestId}/approve`, { ...options, token, body: { note } });
 }
 
+/** Sends a paid request back to its owner with a note (what to change); the owner edits it and sends it again. */
+export function requestOwnerChanges(token: string, requestId: number, note: string, options: Options = {}): Promise<unknown> {
+  return requestJson<unknown>(`/staff/owner-requests/${requestId}/request-changes`, { ...options, token, body: { note } });
+}
+
 /** Rejecting gives the owner's first payment back in full: `refund` is "done", "pending" (tried again every night) or null (nothing was paid). */
 export function rejectOwnerRequest(
   token: string,

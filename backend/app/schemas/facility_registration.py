@@ -8,9 +8,11 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.core.config import settings
+from app.core.config import NIGERIA_LATITUDE_RANGE, NIGERIA_LONGITUDE_RANGE, settings
 from app.core.phone import normalise_nigerian_phone
+from app.core.photo_address import check_owner_photo_address
 from app.core.service_catalogue import canonical_service_name
+from app.integrations.cloudinary import CloudinaryNotConfiguredError, parse_cloudinary_url
 from app.schemas.admin_user import MAX_EMAIL_LENGTH, check_email
 from app.schemas.owner_link import CategoryRef
 from app.schemas.staff_listing import HoursInput, check_hours
@@ -19,6 +21,9 @@ NOTES_MAX_LENGTH = 300
 DESCRIPTION_MAX_LENGTH = 200  # the owner form's short description (the staff editor allows more)
 LANDMARK_MAX_LENGTH = 200
 MAX_OTHER_PHONES = 4  # besides the main number
+PHOTO_URL_MAX_LENGTH = 500
+LATITUDE_MIN, LATITUDE_MAX = NIGERIA_LATITUDE_RANGE
+LONGITUDE_MIN, LONGITUDE_MAX = NIGERIA_LONGITUDE_RANGE
 RequestedRole = Literal["owner", "manager"]
 
 
@@ -60,9 +65,24 @@ class FacilityRegister(BaseModel):
     is_24_hours: bool = False
     opening_hours: list[HoursInput] = Field(default_factory=list)  # ignored when is_24_hours
     services: list[str] = Field(default_factory=list)  # names from the service catalogue
+    # The exact location (owner form, part (b)): both or neither. Absent in a save keeps the stored pin.
+    latitude: float | None = Field(default=None, ge=LATITUDE_MIN, le=LATITUDE_MAX)
+    longitude: float | None = Field(default=None, ge=LONGITUDE_MIN, le=LONGITUDE_MAX)
+    # An address in the owner photo folder of our Cloudinary account.
+    # Absent in a save keeps the photo; null removes it.
+    entrance_photo_url: str | None = Field(default=None, max_length=PHOTO_URL_MAX_LENGTH)
     role: RequestedRole = "owner"
     notes: str | None = Field(default=None, max_length=NOTES_MAX_LENGTH)
     save_as_draft: bool = False
+
+    @field_validator("entrance_photo_url")
+    @classmethod
+    def photo_is_in_the_owner_folder(cls, address: str | None) -> str | None:
+        try:
+            cloud_name: str | None = parse_cloudinary_url(settings.cloudinary_url).cloud_name
+        except CloudinaryNotConfiguredError:
+            cloud_name = None  # no account set up: only the host and the folder are checked
+        return check_owner_photo_address(address, cloud_name)
 
     @field_validator("facility_name", "address", "category")
     @classmethod
@@ -118,6 +138,12 @@ class FacilityRegister(BaseModel):
             raise ValueError("a phone number can be listed only once")
         return self
 
+    @model_validator(mode="after")
+    def pin_needs_latitude_and_longitude(self) -> Self:
+        if (self.latitude is None) != (self.longitude is None):
+            raise ValueError("latitude and longitude must be sent together")
+        return self
+
 
 class FacilityRegistered(BaseModel):
     message: str
@@ -150,6 +176,11 @@ class FacilityRequestRead(BaseModel):
     is_24_hours: bool
     opening_hours: list[HoursInput]
     services: list[str]
+    latitude: float
+    longitude: float
+    map_pin_is_default: bool  # the owner has not placed the pin: it is still the default centre
+    entrance_photo_url: str | None
+    change_note: str | None  # staff's note while the request is `changes_requested`, else None
 
 
 class BranchCreate(BaseModel):

@@ -37,8 +37,15 @@ from app.schemas.facility_registration import (
 from app.schemas.owner_link import CategoryRef
 from app.schemas.staff_listing import HoursInput, ListingUpdate, PhoneInput, ServiceInput
 from app.services import staff_listing_service
+from app.services.owner_link_service import change_note_of
 from app.services.search_service import MATCH_THRESHOLD
-from app.services.staff_listing_service import hours_rows, phone_rows, service_rows, unique_slug
+from app.services.staff_listing_service import (
+    hours_rows,
+    is_default_pin,
+    phone_rows,
+    service_rows,
+    unique_slug,
+)
 
 REGISTERED_THANKS = "Thanks. Pay the first month and our team will verify your facility before it is listed."
 DRAFT_SAVED = "Your draft is saved. Nothing is sent to our team and nothing is public until you send it."
@@ -176,8 +183,10 @@ async def register_facility(
         description=payload.description,
         email=payload.email,
         is_24_hours=payload.is_24_hours,
-        latitude=DEFAULT_MAP_CENTRE[0],
-        longitude=DEFAULT_MAP_CENTRE[1],
+        entrance_photo_url=payload.entrance_photo_url,
+        # The pin the owner placed, or the default centre for staff to move (decision L5).
+        latitude=payload.latitude if payload.latitude is not None else DEFAULT_MAP_CENTRE[0],
+        longitude=payload.longitude if payload.longitude is not None else DEFAULT_MAP_CENTRE[1],
         status=ListingStatus.draft,
         created_by=None,
         created_at=moment,
@@ -263,6 +272,11 @@ async def read_request(session: AsyncSession, user: User, link_id: int) -> Facil
             for hours in rows.opening_hours
         ],
         services=[service.name for service in rows.services],
+        latitude=rows.listing.latitude,
+        longitude=rows.listing.longitude,
+        map_pin_is_default=is_default_pin(rows.listing.latitude, rows.listing.longitude),
+        entrance_photo_url=rows.listing.entrance_photo_url,
+        change_note=await change_note_of(session, link, rows.listing.id),  # type: ignore[arg-type]
     )
 
 
@@ -291,26 +305,31 @@ async def save_request(
             link.status = LinkStatus.pending.value
         await _write_request_entry(session, user, listing.id, moment, old_status, link.status)  # type: ignore[arg-type]
     await facility_owner_repository.save(session, link)
-    await staff_listing_service.update_listing(
-        session,
-        user,
-        listing,
-        ListingUpdate(
-            name=payload.facility_name,
-            category=payload.category,
-            area=payload.area,
-            address=payload.address,
-            landmark=payload.landmark,
-            description=payload.description,
-            email=payload.email,
-            is_24_hours=payload.is_24_hours,
-            phones=_phone_inputs(payload),
-            opening_hours=_hours_inputs(payload),
-            services=_service_inputs(payload),
-        ),
-        moment,
-    )
+    await staff_listing_service.update_listing(session, user, listing, _listing_update(payload), moment)
     return _saved_answer(listing.id, link)  # type: ignore[arg-type]
+
+
+def _listing_update(payload: FacilityRegister) -> ListingUpdate:
+    """The whole form as a change of the listing. The pin and the photo are special (decision L9): when the
+    form leaves them out, what is stored stays; a photo sent as null removes the photo."""
+    fields: dict[str, object] = {
+        "name": payload.facility_name,
+        "category": payload.category,
+        "area": payload.area,
+        "address": payload.address,
+        "landmark": payload.landmark,
+        "description": payload.description,
+        "email": payload.email,
+        "is_24_hours": payload.is_24_hours,
+        "phones": _phone_inputs(payload),
+        "opening_hours": _hours_inputs(payload),
+        "services": _service_inputs(payload),
+    }
+    if payload.latitude is not None and payload.longitude is not None:
+        fields["latitude"], fields["longitude"] = payload.latitude, payload.longitude
+    if "entrance_photo_url" in payload.model_fields_set:
+        fields["entrance_photo_url"] = payload.entrance_photo_url
+    return ListingUpdate(**fields)  # type: ignore[arg-type]
 
 
 async def find_claimable(session: AsyncSession, search_text: str) -> ClaimableList:

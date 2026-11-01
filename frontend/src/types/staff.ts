@@ -166,6 +166,7 @@ export type MyFacility = {
   role: "owner" | "manager";
   status: "draft" | "awaiting_payment" | "pending" | "changes_requested" | "approved" | "lapsed" | "ending" | "removed";
   listing_status: string; // where the listing itself is: "published" once it is public (the owner's "Published")
+  change_note: string | null; // what staff asked to change, while the request is "changes_requested"
   requested_at: string;
   // The owner fee (specs/2026-10-29-owner-fee/): the end of the paid month, and where the link is in its life.
   paid_until: string | null;
@@ -209,8 +210,27 @@ export type OwnerRequest = {
   role: "owner" | "manager";
   requested_at: string;
   reason: string | null; // the person's own words, when they gave some (a claim or a new facility's notes)
+  previous_change_note: string | null; // what staff asked last time, when the request was sent back before
   person: { id: number; name: string; email: string; phone: string | null };
-  listing: { id: number; name: string; area: string; phones: { number: string; label: string | null; is_primary: boolean }[] };
+  /** Every field of the request, so staff see all of it before they approve (the email is for staff only). */
+  listing: {
+    id: number;
+    name: string;
+    area: string;
+    category: { slug: string; name: string };
+    address: string;
+    landmark: string | null;
+    description: string | null;
+    email: string | null;
+    latitude: number;
+    longitude: number;
+    map_pin_is_default: boolean; // the owner did not place the pin: staff move it
+    entrance_photo_url: string | null;
+    is_24_hours: boolean;
+    opening_hours: { day_of_week: number; opens_at: string | null; closes_at: string | null; is_closed: boolean }[];
+    services: string[];
+    phones: { number: string; label: string | null; is_primary: boolean; is_whatsapp: boolean }[];
+  };
 };
 export type OwnerRequestList = { items: OwnerRequest[]; total: number };
 

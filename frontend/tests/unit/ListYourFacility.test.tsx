@@ -16,6 +16,9 @@ import type { StaffRole } from "@/types/staff";
 import { META, json } from "../helpers/api";
 import { readSource } from "../helpers/source";
 
+// The pin picker is Leaflet; it has its own tests (PinPicker.test.tsx, OwnerLocationPhoto.test.tsx). Here it is a stand-in.
+vi.mock("@/components/map/PinPicker", () => ({ PinPicker: () => <div role="region" aria-label="Map to place the pin of your facility" /> }));
+
 type Call = { method: string; path: string; search: string; token: string | null; body: Record<string, unknown> | undefined };
 
 type Handlers = {

@@ -17,3 +17,8 @@ export const DEFAULT_MAP_CENTRE = { latitude: 6.4361, longitude: 7.4881 };
 export const DEFAULT_MAP_ZOOM = 12;
 export const SINGLE_PIN_ZOOM = 15; // one pin: close enough to see the streets around it
 export const MAP_MAX_ZOOM = 19; // the closest zoom the OpenStreetMap tiles have
+
+// A rough box around Nigeria, the same as the API's (NIGERIA_LATITUDE_RANGE and NIGERIA_LONGITUDE_RANGE in core/config.py). A pin an owner
+// places outside it is almost always a typing mistake (decision L6 of specs/2026-11-01-owner-form-location-photo/).
+export const NIGERIA_LATITUDE_RANGE = { min: 4, max: 14 };
+export const NIGERIA_LONGITUDE_RANGE = { min: 2.5, max: 15 };

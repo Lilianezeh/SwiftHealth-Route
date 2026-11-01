@@ -16,6 +16,12 @@ import { readSource } from "../helpers/source";
 
 const router = { replace: vi.fn(), push: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
+// The pin picker is Leaflet (its own tests are in PinPicker.test.tsx); here it says where the pin is.
+vi.mock("@/components/map/PinPicker", () => ({
+  PinPicker: ({ pin }: { pin: { latitude: number; longitude: number } | null }) => (
+    <div role="region" aria-label="Map to place the pin of your facility">{pin ? "A pin is on the map" : "No pin on the map"}</div>
+  ),
+}));
 
 type Call = { method: string; path: string; token: string | null; body: Record<string, unknown> | undefined };
 
@@ -38,6 +44,11 @@ const SAVED = {
   is_24_hours: false,
   opening_hours: [{ day_of_week: 0, opens_at: "08:00:00", closes_at: "17:00:00", is_closed: false }],
   services: ["Consultation"],
+  latitude: 6.4521,
+  longitude: 7.5103,
+  map_pin_is_default: false,
+  entrance_photo_url: "https://res.cloudinary.com/demo-cloud/image/upload/v1/swifthealth/owner-entrances/front.jpg",
+  change_note: null,
 };
 
 function stubApi(request: Response | Record<string, unknown> = SAVED, save?: (call: Call) => Response) {
@@ -101,6 +112,46 @@ describe("a draft", () => {
     expect(screen.getByRole("radio", { name: "I manage it" })).toBeChecked();
   });
 
+  it("shows the saved pin on the map and the saved photo", async () => {
+    stubApi();
+    open();
+
+    const group = await screen.findByRole("group", { name: "Exact location (optional)" });
+    expect(within(group).getByText("Pin at 6.45210, 7.51030")).toBeInTheDocument();
+    expect(within(screen.getByRole("group", { name: "Photo of the entrance (optional)" })).getByRole("img")).toHaveAttribute("src", SAVED.entrance_photo_url);
+  });
+
+  it("starts with no pin when the saved one was never placed (still the default centre)", async () => {
+    stubApi({ ...SAVED, map_pin_is_default: true, entrance_photo_url: null });
+    open();
+
+    const group = await screen.findByRole("group", { name: "Exact location (optional)" });
+    expect(within(group).getByText(/No pin placed yet/)).toBeInTheDocument();
+    expect(within(screen.getByRole("group", { name: "Photo of the entrance (optional)" })).queryByRole("img")).toBeNull();
+  });
+
+  it("sends the saved pin again when it is not touched, and no photo change", async () => {
+    const { puts } = stubApi();
+    open();
+    await screen.findByLabelText("Facility name");
+
+    await userEvent.click(screen.getByRole("button", { name: "Save as draft" }));
+
+    await screen.findByText("Saved.");
+    expect(puts()[0].body).toMatchObject({ latitude: 6.4521, longitude: 7.5103, entrance_photo_url: SAVED.entrance_photo_url });
+  });
+
+  it("sends a null photo when the owner removes the saved one, so the API takes it away", async () => {
+    const { puts } = stubApi();
+    open();
+    await userEvent.click(await screen.findByRole("button", { name: "Remove the photo" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Save as draft" }));
+
+    await screen.findByText("Saved.");
+    expect(puts()[0].body).toMatchObject({ entrance_photo_url: null });
+  });
+
   it("saves as a draft with a PUT to its own request, with the token", async () => {
     const { puts } = stubApi();
     open();
@@ -138,7 +189,23 @@ describe("a draft", () => {
 });
 
 describe("a request that needs changes", () => {
-  const NEEDS_CHANGES = { ...SAVED, status: "changes_requested" };
+  const NEEDS_CHANGES = { ...SAVED, status: "changes_requested", change_note: "Please add the pharmacy number." };
+
+  it("shows what staff asked, above the form", async () => {
+    stubApi(NEEDS_CHANGES);
+    open();
+
+    const note = await screen.findByText("Our team asked: Please add the pharmacy number.");
+    expect(note.compareDocumentPosition(screen.getByLabelText("Facility name")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("shows no 'Our team asked' line on a draft", async () => {
+    stubApi();
+    open();
+    await screen.findByLabelText("Facility name");
+
+    expect(screen.queryByText(/^Our team asked:/)).toBeNull();
+  });
 
   it("shows the status and sending puts it back in front of our team without asking for payment again", async () => {
     const { puts } = stubApi(NEEDS_CHANGES, () => json({ message: "Thanks. Your changes are sent to our team.", listing_id: 7, link_id: 8, status: "pending", fee_naira: "10000.00" }));

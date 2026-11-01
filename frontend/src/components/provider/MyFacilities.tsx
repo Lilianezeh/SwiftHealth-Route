@@ -136,6 +136,7 @@ function FacilityCard({ facility, fee, graceDays }: CardProps) {
         <>
           <p className="text-base font-semibold text-ink">{`Status: ${ownerStatusWords(facility.status, facility.listing_status)}`}</p>
           <p className="text-base text-ink">{stateWords(facility, graceDays)}</p>
+          {facility.change_note && <p className="rounded-2xl border border-line bg-amber-wash p-3 text-base font-semibold text-amber-ink">{`Our team asked: ${facility.change_note}`}</p>}
           {canEditRequest && (
             <Link href={`/provider/request?link=${facility.link_id}`} prefetch={false} className={SECONDARY_BUTTON}>
               Edit and send

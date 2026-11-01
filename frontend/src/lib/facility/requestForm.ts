@@ -28,9 +28,14 @@ export type RequestForm = {
   is24Hours: boolean;
   hours: DayHours[]; // Monday first, as DAY_NAMES
   services: string[];
+  pin: { latitude: number; longitude: number } | null; // the exact location; null: not placed (staff place it)
+  photoUrl: string | undefined; // the entrance photo's address; undefined: none chosen now
+  removePhoto: boolean; // the owner removed the photo that was saved: the body then sends null
   role: FacilityRole;
   notes: string;
 };
+
+const PIN_DECIMALS = 6; // about 10 cm
 
 const ORDINALS = ["second", "third", "fourth", "fifth"] as const;
 const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,7 +46,7 @@ export function emptyRequestForm(): RequestForm {
     phone: "", phoneHasWhatsApp: false, otherPhones: [],
     is24Hours: false,
     hours: DAY_NAMES.map(() => ({ opens: "", closes: "", closed: false })),
-    services: [], role: "owner", notes: "",
+    services: [], pin: null, photoUrl: undefined, removePhoto: false, role: "owner", notes: "",
   };
 }
 
@@ -70,6 +75,9 @@ export function formFromRead(saved: SavedRequest): RequestForm {
       return { opens: (entry.opens_at ?? "").slice(0, 5), closes: (entry.closes_at ?? "").slice(0, 5), closed: false };
     }),
     services: saved.services,
+    pin: saved.map_pin_is_default ? null : { latitude: saved.latitude, longitude: saved.longitude },
+    photoUrl: saved.entrance_photo_url ?? undefined,
+    removePhoto: false,
     role: saved.role,
     notes: saved.notes ?? "",
   };
@@ -111,6 +119,10 @@ export function problemsOf(form: RequestForm): string[] {
   return problems;
 }
 
+function roundPin(coordinate: number): number {
+  return Number(coordinate.toFixed(PIN_DECIMALS));
+}
+
 function hoursEntries(form: RequestForm): HoursEntry[] {
   const entries: HoursEntry[] = [];
   form.hours.forEach((day, index) => {
@@ -145,6 +157,8 @@ export function toBody(form: RequestForm, saveAsDraft: boolean): FacilityRegistr
     is_24_hours: form.is24Hours,
     ...(hours.length > 0 ? { opening_hours: hours } : {}),
     ...(form.services.length > 0 ? { services: form.services } : {}),
+    ...(form.pin ? { latitude: roundPin(form.pin.latitude), longitude: roundPin(form.pin.longitude) } : {}),
+    ...(form.photoUrl ? { entrance_photo_url: form.photoUrl } : form.removePhoto ? { entrance_photo_url: null } : {}),
     role: form.role,
     ...(text(form.notes) ? { notes: text(form.notes) } : {}),
     save_as_draft: saveAsDraft,

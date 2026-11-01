@@ -1,7 +1,8 @@
 "use client";
 
-/** The owner requests screen (editor and admin): phone the facility, write who answered, approve or reject.
- * Requirements: FR-50, US-19, NFR-10. UI spec 3.10 (accounts phase 6b); api-spec 7, "Phase 6a"; decision D4.
+/** The owner requests screen (editor and admin): read every field of the request, phone the facility, write who answered, approve,
+ * send it back with a note ("Request changes", owner form part (b)) or reject.
+ * Requirements: FR-50, US-19, US-17, NFR-10. UI spec 3.10 (accounts phase 6b); api-spec 7, "Phase 6a"; decision D4.
  * One card per request: who asked, for which facility, as an owner or a manager, and the FACILITY's own phone numbers as `tel:`
  * links (the numbers staff phone, shown in the local form, kept international in the link). Approve needs the note (who was
  * reached) and asks first; reject takes the note if there is one and asks first. The API's own sentence is shown when a decision
@@ -12,7 +13,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useStaff } from "@/components/admin/StaffGate";
 import { ResultsSkeleton } from "@/components/search/ResultsSkeleton";
 import { buttonClasses } from "@/components/ui/buttonStyles";
-import { approveOwnerRequest, listOwnerRequests, rejectOwnerRequest } from "@/lib/api/staff";
+import { OwnerRequestDetails } from "@/components/admin/OwnerRequestDetails";
+import { approveOwnerRequest, listOwnerRequests, rejectOwnerRequest, requestOwnerChanges } from "@/lib/api/staff";
 import { formatLagosDateTime } from "@/lib/formatters/dates";
 import { formatPhoneForReading } from "@/lib/formatters/phone";
 import { sentenceFor } from "@/lib/staff/accountText";
@@ -38,13 +40,15 @@ function refundWords(refund: "done" | "pending" | null): string {
 function RequestCard({ request, onDecided }: CardProps) {
   const { call } = useStaff();
   const [note, setNote] = useState("");
-  const [asking, setAsking] = useState<"approve" | "reject" | null>(null);
+  const [changeNote, setChangeNote] = useState(""); // what the owner should change: not the same note as "who did you speak to"
+  const [asking, setAsking] = useState<"approve" | "reject" | "changes" | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const { person, listing } = request;
   const trimmed = note.trim();
+  const trimmedChange = changeNote.trim();
 
-  async function run(action: "approve" | "reject") {
+  async function run(action: "approve" | "reject" | "changes") {
     if (busy) return;
     setBusy(true);
     setProblem(null);
@@ -52,6 +56,9 @@ function RequestCard({ request, onDecided }: CardProps) {
       if (action === "approve") {
         await call((token) => approveOwnerRequest(token, request.id, trimmed));
         onDecided(request, `${person.name} was approved as ${roleWords(request.role)} of ${listing.name}.`);
+      } else if (action === "changes") {
+        await call((token) => requestOwnerChanges(token, request.id, trimmedChange));
+        onDecided(request, `${person.name} was asked to change ${listing.name}. They will see your note.`);
       } else {
         const answer = await call((token) => rejectOwnerRequest(token, request.id, trimmed || undefined));
         onDecided(request, `${person.name} was rejected for ${listing.name}.${refundWords(answer.refund)}`);
@@ -77,10 +84,14 @@ function RequestCard({ request, onDecided }: CardProps) {
       <div className="flex flex-col">
         {listing.phones.map((phone) => (
           <a key={phone.number} href={`tel:${phone.number}`} className={PHONE_LINK}>
-            {phone.label ? `${phone.label} ${formatPhoneForReading(phone.number)}` : formatPhoneForReading(phone.number)}
+            {`${phone.label ? `${phone.label} ` : ""}${formatPhoneForReading(phone.number)}${phone.is_whatsapp ? " · WhatsApp" : ""}`}
           </a>
         ))}
       </div>
+      <OwnerRequestDetails listing={listing} />
+      {request.previous_change_note && (
+        <p className="rounded-2xl border border-line bg-pine-50 p-3 text-base text-ink">{`Last time you asked: ${request.previous_change_note}`}</p>
+      )}
 
       <div className="flex flex-col gap-1 border-t border-line pt-3">
         <label htmlFor={`note-${request.id}`} className="text-base font-semibold text-ink">
@@ -97,25 +108,44 @@ function RequestCard({ request, onDecided }: CardProps) {
       </div>
 
       {asking === null && (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <button type="button" onClick={() => setAsking("approve")} disabled={trimmed === ""} aria-label={`Approve ${person.name}`} className={PRIMARY}>
             Approve
+          </button>
+          <button type="button" onClick={() => setAsking("changes")} aria-label={`Request changes from ${person.name}`} className={SECONDARY}>
+            Request changes
           </button>
           <button type="button" onClick={() => setAsking("reject")} aria-label={`Reject ${person.name}`} className={SECONDARY}>
             Reject
           </button>
         </div>
       )}
+      {asking === "changes" && (
+        <div className="flex flex-col gap-1">
+          <label htmlFor={`changes-${request.id}`} className="text-base font-semibold text-ink">{`What should ${person.name} change?`}</label>
+          <textarea
+            id={`changes-${request.id}`}
+            rows={3}
+            maxLength={NOTE_MAX_LENGTH}
+            value={changeNote}
+            onChange={(event) => setChangeNote(event.target.value)}
+            className="w-full rounded-xl border border-line bg-surface p-3 text-base text-ink"
+          />
+          {trimmedChange === "" && <p className="text-base text-ink-soft">Write what the owner should change first.</p>}
+        </div>
+      )}
       {asking !== null && (
         <div className="flex flex-col gap-2">
           <p className="text-base font-semibold text-ink">
-            {asking === "approve"
-              ? `Approve ${person.name} as ${roleWords(request.role)} of ${listing.name}?`
-              : `Reject ${person.name} for ${listing.name}?`}
+            {asking === "approve" && `Approve ${person.name} as ${roleWords(request.role)} of ${listing.name}?`}
+            {asking === "reject" && `Reject ${person.name} for ${listing.name}?`}
+            {asking === "changes" && `Send ${listing.name} back to ${person.name} with your note?`}
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <button type="button" onClick={() => void run(asking)} disabled={busy} className={PRIMARY}>
-              {asking === "approve" ? (busy ? "Approving…" : "Yes, approve") : busy ? "Rejecting…" : "Yes, reject"}
+            <button type="button" onClick={() => void run(asking)} disabled={busy || (asking === "changes" && trimmedChange === "")} className={PRIMARY}>
+              {asking === "approve" && (busy ? "Approving…" : "Yes, approve")}
+              {asking === "reject" && (busy ? "Rejecting…" : "Yes, reject")}
+              {asking === "changes" && (busy ? "Sending…" : "Yes, send it back")}
             </button>
             <button type="button" onClick={() => setAsking(null)} className={SECONDARY}>
               Cancel

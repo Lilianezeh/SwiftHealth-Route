@@ -264,7 +264,8 @@ describe("a listing that is not there, and a failure", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Listing not found" })).toBeInTheDocument();
     expect(screen.getByText("This listing isn't available. It may be under re-verification.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Search for care" })).toHaveAttribute("href", "/search");
-    expect(document.title).toBe("Listing not found | SwiftHealth Route");
+    // The title is set by an effect after the page is drawn, so under load it can come a moment later.
+    await waitFor(() => expect(document.title).toBe("Listing not found | SwiftHealth Route"));
   });
 
   it("shows the error message with Retry for a server error, not the not-found page", async () => {

@@ -21,11 +21,11 @@ const FEE_STATE: Record<string, string> = {
   awaiting_payment: "awaiting_payment", changes_requested: "changes_requested",
 };
 
-function link(id: number, name: string, role: string, status: string, listingStatus = "published") {
+function link(id: number, name: string, role: string, status: string, listingStatus = "published", changeNote: string | null = null) {
   const unpaid = status === "removed" || status === "draft" || status === "awaiting_payment";
   return {
     link_id: id, listing_id: 100 + id, name, area: "Ogui", category: { slug: "clinic", name: "Clinic" },
-    role, status, listing_status: listingStatus, requested_at: "2026-10-20T10:30:00Z",
+    role, status, listing_status: listingStatus, change_note: changeNote, requested_at: "2026-10-20T10:30:00Z",
     paid_until: unpaid ? null : "2026-11-29T09:00:00Z", fee_state: FEE_STATE[status],
   };
 }
@@ -135,6 +135,22 @@ describe("My facilities", () => {
     expect(within(card).queryByRole("link", { name: "Edit this facility" })).toBeNull();
     await userEvent.click(within(card).getByRole("button", { name: "Withdraw my request" }));
     expect(within(card).getByText(/payment will be given back in full/)).toBeInTheDocument();
+  });
+
+  it("shows what staff asked to change, in their words, on a request that needs changes", async () => {
+    stubApi([link(4, "Changes Clinic", "owner", "changes_requested", "draft", "Please check the address.")]);
+    render(<ProviderPage />);
+    const card = within(await screen.findByRole("region", { name: "My facilities" })).getAllByRole("listitem")[0];
+
+    expect(within(card).getByText("Our team asked: Please check the address.")).toBeInTheDocument();
+  });
+
+  it("shows no 'Our team asked' line when there is no note", async () => {
+    stubApi([link(4, "Changes Clinic", "owner", "changes_requested", "draft"), link(1, "Draft Clinic", "owner", "draft", "draft")]);
+    render(<ProviderPage />);
+    const cards = within(await screen.findByRole("region", { name: "My facilities" })).getAllByRole("listitem");
+
+    for (const card of cards) expect(within(card).queryByText(/^Our team asked:/)).toBeNull();
   });
 
   it("has no 'Edit and send' on a request that waits for payment or for staff", async () => {

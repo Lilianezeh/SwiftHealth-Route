@@ -24,6 +24,7 @@ from app.core.rate_limit import (
     forgot_email_limiter,
     forgot_ip_limiter,
     login_limiter,
+    owner_upload_limiter,
     password_failure_limiter,
     report_limiter,
     signup_code_failure_limiter,
@@ -105,6 +106,7 @@ def reset_rate_limiters() -> None:
     submission_limiter.reset()
     claim_limiter.reset()
     branch_limiter.reset()
+    owner_upload_limiter.reset()
     claimable_search_limiter.reset()
     sms_code_limiter.reset()
     totp_failure_limiter.reset()
