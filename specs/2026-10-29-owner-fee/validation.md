@@ -12,7 +12,8 @@ Check every line before the pull request leaves draft. Paystack **test mode only
 - [x] Backend: ruff clean; full suite **2346 passed, 5 skipped**. New: `test_owner_fee_rules` (unit), `test_paystack_refund`, `test_owner_fee_{migration,access,payment,cancel_refund,job}`, workflow tests for the new job.
 - [x] Mutation check (payment and access code): with the amount rule removed, and with "no paid date" allowed to edit, 3 tests failed as they must; reverted.
 - [x] Frontend: `tsc` and `eslint` clean; `OwnerFee.test.tsx` (19 tests) and the changed `ListYourFacility`, `OwnerRequests`, `MyFacilities` tests pass (84 together), and `ProviderScreens` and `StaffGate` (64) pass.
-- [ ] **The whole frontend unit suite was not run to the end:** the system stopped it for low memory, so please run `cd frontend && npm test` once.
+- [x] **Whole frontend unit suite (2026-11-01, run alone): 2254 tests, all pass** (one real failure found and fixed: the list of the site's page addresses did not know `/provider/fee-complete`).
+- [x] **Playwright, one spec at a time with nothing else running (2026-11-01): `provider.spec.ts` 28 of 28, `facility.spec.ts` 20 of 20, `admin-accounts.spec.ts` 6 of 6** (320, 360, 768 and 1024 px; Light mode). Two real failures found and fixed in the test helper `tests/helpers/browserApi.ts`: (1) the idle sign-out of #80 renews the token with `POST /auth/keep-alive`, which the fake API did not answer, so the real API said 401 to the fake token and the page signed the person out in the middle of a check (the helper now answers it); (2) the new "My payments" list calls `GET /provider/payments`, also unanswered (added to the side calls). No product code was wrong. Other specs that log in with a fake token (`staff`, `queue`, `reports`, `import-export`, `emergency-contacts`, `signup`) use the same helper and were not re-run.
 
 ## Not done by me (yours, or needs a browser)
 
@@ -21,7 +22,7 @@ Check every line before the pull request leaves draft. Paystack **test mode only
 - [ ] On Render: `PAYSTACK_SECRET_KEY` (test key) must be set for the API and the Paystack **test** dashboard webhook must point to `<Render address>/payments/webhook` (already needed for Featured). Check `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are set, or no receipt or reminder email is sent. Optionally set `OWNER_FEE_NAIRA`, `OWNER_FEE_GRACE_DAYS`, `OWNER_FEE_REMINDER_DAYS`.
 - [ ] Try it with a Paystack **test card** end to end: register a facility as a provider → Pay → the page `/provider/fee-complete` says confirmed → the request appears in Owner requests → approve → edit works. Then: reject a second paid request and look at the refund in the Paystack test dashboard (the Create Refund call is read from Paystack's documentation and **not tested against the real service**).
 - [ ] After the merge: press "Run workflow" on **Nightly jobs** and check the `owner-fee` job prints one line and no address.
-- [ ] Playwright at 360 and 1280 px in Light and Dark, and Lighthouse accessibility, on `/provider`, `/provider/fee-complete` and `/list-your-facility` (not run here: memory). The e2e spec text for registration and claim was updated but not run.
+- [ ] Dark mode and Lighthouse accessibility on `/provider`, `/provider/fee-complete` and `/list-your-facility` (not run), and a Playwright check of `/provider/fee-complete` and of the pay button's redirect (the unit tests cover them; no spec drives them in a real browser).
 
 ## Known limits
 
