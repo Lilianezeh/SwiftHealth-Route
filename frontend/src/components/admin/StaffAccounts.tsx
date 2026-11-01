@@ -141,7 +141,7 @@ export function StaffAccounts() {
   return (
     <section className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-forest">Staff and providers</h1>
+        <h1 className="text-2xl font-bold text-forest">Accounts</h1>
         {!adding && (
           <button type="button" onClick={() => { setAdding(true); setNotice(null); }} className={`${buttonClasses("primary")} sm:w-auto sm:px-6`}>
             Add user

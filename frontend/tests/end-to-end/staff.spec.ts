@@ -243,7 +243,7 @@ for (const { width, height } of WIDTHS) {
 
       await expect(page.getByRole("heading", { level: 1, name: "Listings" })).toBeVisible({ timeout: 60_000 });
       await expect(page.getByRole("article")).toHaveCount(3);
-      await expect(page.getByRole("link", { name: "Staff" })).toBeVisible(); // the admin sees the Staff link
+      await expect(page.getByRole("link", { name: "Accounts", exact: true })).toBeVisible(); // the admin sees the Accounts link
       await allIsInsideTheScreen(page, width);
       await targetsAndTextAreBigEnough(page);
 
@@ -336,7 +336,7 @@ for (const { width, height } of WIDTHS) {
       await fakeApi(page, (request) => (request.path === "/admin/users" ? { body: { items: ADMIN_USERS, total: 4 } } : null));
       await page.goto("/admin/staff", { waitUntil: "load" });
 
-      await expect(page.getByRole("heading", { level: 1, name: "Staff and providers" })).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByRole("heading", { level: 1, name: "Accounts" })).toBeVisible({ timeout: 60_000 });
       await expect(page.getByRole("listitem")).toHaveCount(4);
       await allIsInsideTheScreen(page, width);
       await page.getByRole("button", { name: "Edit Person 1" }).click();

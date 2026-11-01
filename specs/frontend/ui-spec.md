@@ -436,7 +436,9 @@ Urgent first (red tag). Each: listing name (link), reason, comment, time ago. Bu
 ### 3.7 Re-checks — `/admin/recheck`
 US-11. **API:** `GET /listings?due=overdue` and `?due=this_week`. Two tabs: Overdue · Due this week. Each row links to the verification log.
 
-### 3.8 Staff and providers — `/admin/staff`
+### 3.8 Accounts — `/admin/staff`
+**Wording (owner's request, branch `fix/accounts-wording`):** the page and its menu link are called **"Accounts"** (they list everyone: staff and facility owners; the menu link was "Staff" and the heading "Staff and providers"; the address `/admin/staff` and the landmark name "Staff" of the bar are unchanged). The role `provider` is shown to the reader as **"Facility owner"** everywhere: the staff bar ("Ada · Facility owner"), each card, the Role selects of the add and edit forms, the **Filter by role** options (Any, Admin, Editor, Verifier, Facility owner), the activity log's role changes ("role: Editor → Facility owner") and the sentences the admin reads ("To make a facility owner staff, type a new password…"). Only the words change: the values sent to the API and every rule stay as they were. Below, "Provider" in an older sentence means this role.
+
 FR-41. Admin only. **API:** `/admin/users`. List, add user (name, email, phone, role, password), edit role, deactivate, link provider to listing.
 
 **Accounts phase 4b (FR-49, FR-55, US-18; feature `specs/2026-10-23-accounts-and-facility-ownership/`, owner's plan of 2026-10-24).** The page has two tabs under the heading, **"Waiting for approval (N)"** and **"All accounts"** (default); N is the number of staff sign-ups waiting (`GET /admin/users?approval_status=pending`), also said in words above the tabs when it is more than zero ("2 people are waiting for approval."). Mobile first, one column, every button and field at least 48 px, 16 px text, no red (red is for SwiftRescue). Every decision has a **confirm step** (the button asks "Approve Bola as an editor?" with "Yes, approve" and "Cancel"); a result or problem is a status line or an amber box in the API's own sentence.

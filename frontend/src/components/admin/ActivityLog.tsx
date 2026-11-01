@@ -13,7 +13,7 @@ import { ResultsSkeleton } from "@/components/search/ResultsSkeleton";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { listActivity, listAdminUsers } from "@/lib/api/staff";
 import { formatLagosDateTime } from "@/lib/formatters/dates";
-import { ACTION_CHOICES, actionWords } from "@/lib/staff/accountText";
+import { ACTION_CHOICES, actionWords, changeValueWords } from "@/lib/staff/accountText";
 import type { ActivityItem, ActivityQuery, StaffUser } from "@/types/staff";
 
 const PAGE_SIZE = 50;
@@ -21,8 +21,9 @@ const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 tex
 
 function EntryCard({ entry }: { entry: ActivityItem }) {
   const who = entry.user_name ?? "The system";
-  const change = entry.field_changed
-    ? `${entry.field_changed}: ${entry.old_value !== null ? `${entry.old_value} → ` : ""}${entry.new_value ?? ""}`
+  const field = entry.field_changed;
+  const change = field
+    ? `${field}: ${entry.old_value !== null ? `${changeValueWords(field, entry.old_value)} → ` : ""}${changeValueWords(field, entry.new_value ?? "")}`
     : null;
   return (
     <li className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">

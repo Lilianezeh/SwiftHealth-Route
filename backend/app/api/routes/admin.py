@@ -88,7 +88,8 @@ async def update_user(
         ) from None
     except admin_user_service.NotAProviderError:
         raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, "listing_id: only a provider can be linked to a listing"
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "listing_id: only a facility owner can be linked to a listing",
         ) from None
     except admin_user_service.ListingNotFoundError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Listing not found") from None
@@ -101,7 +102,8 @@ async def update_user(
     except admin_user_service.NewPasswordNeededError:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
-            "To make a provider staff, give a new password of at least 10 characters in the same request.",
+            "To make a facility owner staff, give a new password of at least 10 characters "
+            "in the same request.",
         ) from None
 
 

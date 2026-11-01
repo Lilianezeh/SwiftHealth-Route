@@ -5,10 +5,9 @@
  */
 import Link from "next/link";
 
+import { ROLE_LABELS } from "@/lib/staff/accountText";
 import { canOpen } from "@/lib/staff/roles";
-import type { StaffRole, StaffUser } from "@/types/staff";
-
-const ROLE_LABELS: Record<StaffRole, string> = { verifier: "Verifier", editor: "Editor", admin: "Admin", provider: "Provider" };
+import type { StaffUser } from "@/types/staff";
 
 const LINK_CLASSES = "inline-flex min-h-12 items-center text-base font-semibold text-forest underline underline-offset-4";
 
@@ -60,8 +59,9 @@ export function StaffBar({ user, onLogout }: StaffBarProps) {
           </Link>
         )}
         {canOpen(user.role, "staff") && (
+          // It lists everyone (staff and facility owners), so it is called Accounts; the address stays /admin/staff.
           <Link href="/admin/staff" prefetch={false} className={LINK_CLASSES}>
-            Staff
+            Accounts
           </Link>
         )}
         {canOpen(user.role, "staff") && (

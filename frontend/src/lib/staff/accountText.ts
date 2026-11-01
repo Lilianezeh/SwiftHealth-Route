@@ -5,7 +5,15 @@ import { ApiError } from "@/lib/api/request";
 import { formatLagosDateTime } from "@/lib/formatters/dates";
 import type { AdminUserRow, StaffRole } from "@/types/staff";
 
-export const ROLE_LABELS: Record<StaffRole, string> = { verifier: "Verifier", editor: "Editor", admin: "Admin", provider: "Provider" };
+/** The role in words, for every admin screen and the staff bar. The role `provider` of the API and the code is called "Facility owner"
+ * to the reader (the same words as on the sign-up form); only these words change, never the value that is sent. */
+export const ROLE_LABELS: Record<StaffRole, string> = { verifier: "Verifier", editor: "Editor", admin: "Admin", provider: "Facility owner" };
+
+/** A value of the activity log in words: when the change is about the role, the role as the screens say it ("Facility owner"), else the
+ * value as it is. */
+export function changeValueWords(field: string, value: string): string {
+  return field === "role" && value in ROLE_LABELS ? ROLE_LABELS[value as StaffRole] : value;
+}
 
 /** An account in words: waiting, not approved, suspended or active. An answer from an older API with no approval state counts as approved. */
 export function stateWords(user: Pick<AdminUserRow, "approval_status" | "is_active">): string {

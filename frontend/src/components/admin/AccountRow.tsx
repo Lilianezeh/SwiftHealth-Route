@@ -22,7 +22,7 @@ import type { AdminUserChanges, AdminUserRow, StaffRole } from "@/types/staff";
 const FIELD = "min-h-12 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink disabled:bg-closed-bg";
 const ROLES: StaffRole[] = ["verifier", "editor", "admin", "provider"];
 const passwordTooShort = (role: StaffRole) => `The password needs at least ${minPasswordLength(role)} characters.`;
-const STAFF_NEEDS_NEW_PASSWORD = `To make a provider staff, type a new password of at least ${minPasswordLength("editor")} characters.`;
+const STAFF_NEEDS_NEW_PASSWORD = `To make a facility owner staff, type a new password of at least ${minPasswordLength("editor")} characters.`;
 
 type RowProps = { user: AdminUserRow; isMe: boolean; onSaved: (user: AdminUserRow) => void };
 
