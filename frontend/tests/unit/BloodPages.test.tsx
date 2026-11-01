@@ -364,7 +364,8 @@ describe("saving the list for offline use (decision N2)", () => {
     await screen.findByRole("article");
 
     expect(banks()).toHaveLength(1);
-    expect(readBloodCopy()?.banks.map((bank) => bank.name)).toEqual(["Demo Blood Bank Central"]);
+    // The copy is saved by an effect after the card is drawn, so under load it can come a moment later.
+    await waitFor(() => expect(readBloodCopy()?.banks.map((bank) => bank.name)).toEqual(["Demo Blood Bank Central"]));
   });
 
   it("with a position asks once more, quietly, with no position and no group and the most banks, and saves that: no distance in it", async () => {
