@@ -101,6 +101,7 @@ async def get_staff_detail(session: AsyncSession, listing_id: int, moment: datet
         owner_id=listing.owner_id,
         created_by=listing.created_by,
         featured_until=listing.featured_until,
+        email=listing.email,
         map_pin_is_default=is_default_pin(listing.latitude, listing.longitude),
         submission_details=await audit_repository.latest_new_value(session, listing.id, SUBMISSION_ACTION),
         closed_at=listing.closed_at,
@@ -178,6 +179,7 @@ async def create_listing(session: AsyncSession, user: User, payload: ListingCrea
         latitude=payload.latitude,
         longitude=payload.longitude,
         description=payload.description,
+        email=payload.email,
         status=ListingStatus.draft,
         is_24_hours=payload.is_24_hours,
         created_by=user.id,
@@ -258,6 +260,7 @@ async def update_listing(
         "latitude",
         "longitude",
         "description",
+        "email",
         "is_24_hours",
     ):
         if field in payload.model_fields_set:

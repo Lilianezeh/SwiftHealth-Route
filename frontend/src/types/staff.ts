@@ -164,14 +164,25 @@ export type MyFacility = {
   area: string;
   category: { slug: string; name: string };
   role: "owner" | "manager";
-  status: "awaiting_payment" | "pending" | "approved" | "lapsed" | "ending" | "removed";
+  status: "draft" | "awaiting_payment" | "pending" | "changes_requested" | "approved" | "lapsed" | "ending" | "removed";
+  listing_status: string; // where the listing itself is: "published" once it is public (the owner's "Published")
   requested_at: string;
   // The owner fee (specs/2026-10-29-owner-fee/): the end of the paid month, and where the link is in its life.
   paid_until: string | null;
   fee_state: FeeState;
 };
 
-export type FeeState = "awaiting_payment" | "waiting_for_staff" | "paid" | "grace" | "lapsed" | "ending" | "ended" | "removed";
+export type FeeState =
+  | "draft"
+  | "awaiting_payment"
+  | "waiting_for_staff"
+  | "changes_requested"
+  | "paid"
+  | "grace"
+  | "lapsed"
+  | "ending"
+  | "ended"
+  | "removed";
 
 /** GET /provider/listings: the links, the monthly fee ("10000.00") and the grace days after a paid month. */
 export type MyFacilityList = { fee_naira: string; grace_days: number; items: MyFacility[] };

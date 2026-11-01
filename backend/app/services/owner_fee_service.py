@@ -84,10 +84,14 @@ def next_paid_until(paid_until: datetime | None, moment: datetime) -> datetime:
 
 
 def fee_state(status: str, paid_until: datetime | None, moment: datetime) -> str:
-    """Where a link is in the life of the fee: awaiting_payment, waiting_for_staff, paid, grace,
-    lapsed, ending, ended or removed. "paid", "grace" and "ending" may manage the listing."""
+    """Where a link is in the life of the fee: draft, awaiting_payment, waiting_for_staff, changes_requested,
+    paid, grace, lapsed, ending, ended or removed. "paid", "grace" and "ending" may manage the listing."""
     if status == LinkStatus.removed.value:
         return "removed"
+    if status == LinkStatus.draft.value:
+        return "draft"
+    if status == LinkStatus.changes_requested.value:
+        return "changes_requested"
     if status == LinkStatus.awaiting_payment.value:
         return "awaiting_payment"
     if status == LinkStatus.pending.value:
@@ -343,8 +347,8 @@ async def cancel_link(session: AsyncSession, provider: User, link_id: int, momen
 
     A paid, approved link goes to `ending`: editing goes on to the end of the paid month (no refund
     of that month), then the nightly job removes it. A link that never gave access
-    (`awaiting_payment`, `lapsed`) is removed at once. A link that is waiting for staff is withdrawn
-    and its payment given back in full."""
+    (`draft`, `awaiting_payment`, `lapsed`) is removed at once. A link that is waiting for staff, or
+    that staff asked to change (`changes_requested`), is withdrawn and its payment given back in full."""
     link = await _own_link(session, provider, link_id)
     old_status = link.status
     refund: str | None = None
@@ -367,7 +371,7 @@ async def cancel_link(session: AsyncSession, provider: User, link_id: int, momen
         changed_at=moment,
     )
     await session.commit()
-    if old_status == LinkStatus.pending.value:
+    if old_status in (LinkStatus.pending.value, LinkStatus.changes_requested.value):  # both are paid
         refund = await refund_link_payment(session, link, provider.id, moment)
         if refund != "none":
             await tell_refund(session, link)

@@ -24,11 +24,14 @@ class OwnerListItem(BaseModel):
     area: str
     category: CategoryRef
     role: str  # owner or manager
-    status: str  # awaiting_payment, pending, approved, lapsed, ending or removed
+    # draft, awaiting_payment, pending, changes_requested, approved, lapsed, ending or removed
+    status: str
+    # Where the listing itself is (draft, pending_review, published, ...): the owner's "Published" needs it.
+    listing_status: str
     requested_at: datetime
     # The owner fee (specs/2026-10-29-owner-fee/): the end of the paid month, and where the link is in
-    # the life of the fee: awaiting_payment, waiting_for_staff, paid, grace, lapsed, ending, ended or
-    # removed.
+    # the life of the fee: draft, awaiting_payment, waiting_for_staff, changes_requested, paid, grace,
+    # lapsed, ending, ended or removed.
     paid_until: datetime | None
     fee_state: str
 

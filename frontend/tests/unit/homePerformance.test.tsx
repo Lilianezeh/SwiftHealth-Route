@@ -137,6 +137,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/provider/featured", // phase 12, start a Paystack test payment
         "/provider/fee-complete", // owner fee (2026-10-29), where Paystack sends the provider back after the monthly fee
         "/provider/payment-complete", // phase 12, where Paystack sends the provider back
+        "/provider/request", // owner form (2026-11-01), edit a saved draft or a request that needs changes
         "/report/[slug]", // was /report/[id] until phase 9 (decision B1 in specs/2026-10-20-reports/)
         "/search",
         "/sign-up", // accounts phase 3b, the choice and the form

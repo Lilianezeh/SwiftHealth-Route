@@ -204,6 +204,7 @@ async def test_the_list_of_my_facilities_shows_every_link_with_its_state_and_not
     assert set(items[0]) == {
         "link_id", "listing_id", "name", "area", "category", "role", "status", "requested_at",
         "paid_until", "fee_state",  # the owner fee
+        "listing_status",  # the owner's "Published" (owner form, 2026-11-01)
     }
     assert "Somebody Else" not in response.text and "phone" not in response.text
 

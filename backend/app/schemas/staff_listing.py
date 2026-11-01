@@ -17,6 +17,7 @@ from app.core.config import settings
 from app.core.phone import normalise_nigerian_phone
 from app.core.service_catalogue import canonical_service_name
 from app.models.base import ListingStatus
+from app.schemas.admin_user import MAX_EMAIL_LENGTH, check_email
 from app.schemas.listing import ListingDetail, ListingSummary
 
 MAX_NAME_LENGTH = 120
@@ -67,6 +68,7 @@ class StaffListingDetail(ListingDetail):
     owner_id: int | None
     created_by: int | None
     featured_until: datetime | None
+    email: str | None  # the facility's contact address: staff only, never in a public answer (2026-11-01)
     map_pin_is_default: bool  # the pin is still the default centre, so the editor can warn (decision C5)
     submission_details: str | None  # the text of a "List your facility" draft, for staff only (decision C6)
     closed_at: datetime | None  # set when the facility was closed (accounts phase 8a)
@@ -172,6 +174,14 @@ class _ListingFields(BaseModel):
     def trim_text(cls, text: str | None) -> str | None:
         return text.strip() or None if text is not None else None
 
+    @field_validator("email", check_fields=False)
+    @classmethod
+    def email_is_valid(cls, email: str | None) -> str | None:
+        """A blank email means none. The contact address of the facility is for staff only."""
+        if email is None or not email.strip():
+            return None
+        return check_email(email)
+
     @field_validator("phones", check_fields=False)
     @classmethod
     def phones_are_valid(cls, phones: list[PhoneInput] | None) -> list[PhoneInput] | None:
@@ -197,6 +207,7 @@ class ListingCreate(_ListingFields):
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
     description: str | None = Field(default=None, max_length=1000)
+    email: str | None = Field(default=None, max_length=MAX_EMAIL_LENGTH)
     is_24_hours: bool = False
     phones: list[PhoneInput]
     opening_hours: list[HoursInput] = []
@@ -215,6 +226,7 @@ class ListingUpdate(_ListingFields):
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     description: str | None = Field(default=None, max_length=1000)
+    email: str | None = Field(default=None, max_length=MAX_EMAIL_LENGTH)
     is_24_hours: bool | None = None
     phones: list[PhoneInput] | None = None
     opening_hours: list[HoursInput] | None = None

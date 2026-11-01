@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import ColumnElement, and_, func, or_
+from sqlalchemy import ColumnElement, and_, func, or_, true
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -29,13 +29,14 @@ def not_an_unpaid_request() -> ColumnElement[bool]:
 
     This keeps out of their lists, numbers and exports (1) a draft that registering a facility made
     while its first month is still unpaid (a draft nobody created, with a link that waits for
-    payment) and (2) a draft the nightly job closed as unpaid. Once the first month is paid the link
-    is `pending` and the draft shows like any other."""
+    payment, or that the owner saved as a draft and has not sent) and (2) a draft the nightly job
+    closed as unpaid. Once the first month is paid the link is `pending` and the draft shows like
+    any other."""
     waiting_for_payment = (
         select(FacilityOwner.id)
         .where(
             col(FacilityOwner.listing_id) == col(Listing.id),
-            col(FacilityOwner.status) == LinkStatus.awaiting_payment.value,
+            col(FacilityOwner.status).in_((LinkStatus.awaiting_payment.value, LinkStatus.draft.value)),
         )
         .exists()
     )
@@ -288,12 +289,19 @@ async def slug_exists(session: AsyncSession, slug: str) -> bool:
     return (await session.exec(select(Listing.id).where(Listing.slug == slug))).first() is not None
 
 
-async def find_by_phone_number(session: AsyncSession, number: str) -> Listing | None:
+def _is_not(listing_id: int | None) -> ColumnElement[bool]:
+    """Leaves one listing out of a duplicate check (a request being edited is not a duplicate of itself)."""
+    return col(Listing.id) != listing_id if listing_id is not None else true()
+
+
+async def find_by_phone_number(
+    session: AsyncSession, number: str, excluding_id: int | None = None
+) -> Listing | None:
     """A listing of ANY status that has this phone number (already in the +234 form). Duplicate check, D15."""
     query = (
         select(Listing)
         .join(PhoneNumber, col(PhoneNumber.listing_id) == col(Listing.id))
-        .where(col(PhoneNumber.number) == number, _not_closed_as_unpaid())
+        .where(col(PhoneNumber.number) == number, _not_closed_as_unpaid(), _is_not(excluding_id))
         .order_by(col(Listing.id))
         .limit(1)
     )
@@ -306,14 +314,19 @@ def _not_closed_as_unpaid() -> ColumnElement[bool]:
 
 
 async def find_similar_name_in_area(
-    session: AsyncSession, name: str, area: str, minimum_similarity: float
+    session: AsyncSession, name: str, area: str, minimum_similarity: float, excluding_id: int | None = None
 ) -> Listing | None:
     """The most similar listing of ANY status in the area, if its name is at least `minimum_similarity` like
     `name` (pg_trgm `similarity`, the whole name against the whole name). Duplicate check, D15."""
     similarity = func.similarity(col(Listing.name), name)
     query = (
         select(Listing)
-        .where(col(Listing.area) == area, similarity >= minimum_similarity, _not_closed_as_unpaid())
+        .where(
+            col(Listing.area) == area,
+            similarity >= minimum_similarity,
+            _not_closed_as_unpaid(),
+            _is_not(excluding_id),
+        )
         .order_by(similarity.desc(), col(Listing.id))
         .limit(1)
     )

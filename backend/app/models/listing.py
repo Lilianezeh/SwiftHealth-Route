@@ -19,6 +19,8 @@ class Listing(SQLModel, table=True):
     latitude: float
     longitude: float
     description: str | None = None
+    # The facility's contact address, for staff only (owner form, 2026-11-01): never in a public answer.
+    email: str | None = None
     status: ListingStatus = Field(default=ListingStatus.draft, index=True)
     is_24_hours: bool = False
     entrance_photo_url: str | None = None  # Cloudinary

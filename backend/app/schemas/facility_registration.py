@@ -4,36 +4,97 @@ the contact name and email are no longer asked, they come from the account.
 """
 
 from decimal import Decimal
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.core.config import settings
 from app.core.phone import normalise_nigerian_phone
+from app.core.service_catalogue import canonical_service_name
+from app.schemas.admin_user import MAX_EMAIL_LENGTH, check_email
 from app.schemas.owner_link import CategoryRef
+from app.schemas.staff_listing import HoursInput, check_hours
 
 NOTES_MAX_LENGTH = 300
+DESCRIPTION_MAX_LENGTH = 200  # the owner form's short description (the staff editor allows more)
+LANDMARK_MAX_LENGTH = 200
+MAX_OTHER_PHONES = 4  # besides the main number
 RequestedRole = Literal["owner", "manager"]
 
 
+class OtherPhone(BaseModel):
+    """A number besides the main one: an optional label, and whether the number has WhatsApp."""
+
+    number: str = Field(max_length=30)
+    label: str | None = Field(default=None, max_length=50)
+    is_whatsapp: bool = False
+
+    @field_validator("number")
+    @classmethod
+    def number_is_nigerian(cls, number: str) -> str:
+        normalised = normalise_nigerian_phone(number)
+        if normalised is None:
+            raise ValueError("number must be a Nigerian phone number")
+        return normalised
+
+    @field_validator("label")
+    @classmethod
+    def blank_label_means_none(cls, label: str | None) -> str | None:
+        return label.strip() or None if label is not None else None
+
+
 class FacilityRegister(BaseModel):
+    """The owner form. Also the body of `PUT /provider/requests/{link_id}`. `save_as_draft` keeps the request
+    with the owner (no payment asked, staff see nothing); without it the request is sent."""
+
     facility_name: str = Field(min_length=2, max_length=120)
     category: str = Field(min_length=1, max_length=100)
     area: str
     address: str = Field(min_length=3, max_length=200)
-    phone: str = Field(max_length=30)
+    landmark: str | None = Field(default=None, max_length=LANDMARK_MAX_LENGTH)
+    description: str | None = Field(default=None, max_length=DESCRIPTION_MAX_LENGTH)
+    email: str | None = Field(default=None, max_length=MAX_EMAIL_LENGTH)  # staff only
+    phone: str = Field(max_length=30)  # the main number: the one staff phone
+    phone_has_whatsapp: bool = False
+    other_phones: list[OtherPhone] = Field(default_factory=list, max_length=MAX_OTHER_PHONES)
+    is_24_hours: bool = False
+    opening_hours: list[HoursInput] = Field(default_factory=list)  # ignored when is_24_hours
+    services: list[str] = Field(default_factory=list)  # names from the service catalogue
     role: RequestedRole = "owner"
     notes: str | None = Field(default=None, max_length=NOTES_MAX_LENGTH)
+    save_as_draft: bool = False
 
     @field_validator("facility_name", "address", "category")
     @classmethod
     def trim(cls, text: str) -> str:
         return text.strip()
 
-    @field_validator("notes")
+    @field_validator("notes", "landmark", "description")
     @classmethod
-    def blank_notes_mean_none(cls, notes: str | None) -> str | None:
-        return notes.strip() or None if notes is not None else None
+    def blank_text_means_none(cls, text: str | None) -> str | None:
+        return text.strip() or None if text is not None else None
+
+    @field_validator("email")
+    @classmethod
+    def email_is_valid(cls, email: str | None) -> str | None:
+        if email is None or not email.strip():
+            return None
+        return check_email(email)
+
+    @field_validator("opening_hours")
+    @classmethod
+    def hours_are_valid(cls, hours: list[HoursInput]) -> list[HoursInput]:
+        return check_hours(hours)
+
+    @field_validator("services")
+    @classmethod
+    def services_are_in_the_catalogue(cls, names: list[str]) -> list[str]:
+        canonical = [canonical_service_name(name) for name in names]
+        if any(name is None for name in canonical):
+            raise ValueError("a service is not in the service catalogue")
+        if len(set(canonical)) != len(canonical):
+            raise ValueError("a service can be listed only once")
+        return [name for name in canonical if name is not None]
 
     @field_validator("area")
     @classmethod
@@ -50,13 +111,45 @@ class FacilityRegister(BaseModel):
             raise ValueError("phone must be a Nigerian phone number")
         return normalised
 
+    @model_validator(mode="after")
+    def no_number_twice(self) -> Self:
+        numbers = [self.phone, *(other.number for other in self.other_phones)]
+        if len(set(numbers)) != len(numbers):
+            raise ValueError("a phone number can be listed only once")
+        return self
+
 
 class FacilityRegistered(BaseModel):
     message: str
     listing_id: int
     link_id: int
-    status: str  # "awaiting_payment": the first month is paid before our team sees the request
+    # "awaiting_payment": the first month is paid before our team sees the request; "draft": saved, not sent;
+    # "pending": a request that needed changes was sent again (already paid); "changes_requested": saved only.
+    status: str
     fee_naira: Decimal  # "10000.00" (OWNER_FEE_NAIRA)
+
+
+class FacilityRequestRead(BaseModel):
+    """The form of a request as saved, to fill the form again. The numbers come back as stored (+234...)."""
+
+    link_id: int
+    listing_id: int
+    status: str
+    role: str
+    notes: str | None
+    facility_name: str
+    category: str
+    area: str
+    address: str
+    landmark: str | None
+    description: str | None
+    email: str | None
+    phone: str
+    phone_has_whatsapp: bool
+    other_phones: list[OtherPhone]
+    is_24_hours: bool
+    opening_hours: list[HoursInput]
+    services: list[str]
 
 
 class BranchCreate(BaseModel):

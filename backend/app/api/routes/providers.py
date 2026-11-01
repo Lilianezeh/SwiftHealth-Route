@@ -26,6 +26,7 @@ from app.schemas.facility_registration import (
     ClaimCreated,
     FacilityRegister,
     FacilityRegistered,
+    FacilityRequestRead,
 )
 from app.schemas.owner_link import OwnerList
 from app.schemas.payment import LinkCancelled, PaymentList
@@ -60,6 +61,57 @@ async def register_facility(
 ) -> FacilityRegistered:
     try:
         return await facility_registration_service.register_facility(session, provider, payload, moment)
+    except facility_registration_service.RegistrationCategoryError:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "category: choose one of the everyday categories"
+        ) from None
+    except facility_registration_service.SimilarListingError as error:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, {"message": error.message, "listing_id": error.listing_id}
+        ) from None
+
+
+@router.get(
+    "/requests/{link_id}",
+    response_model=FacilityRequestRead,
+    summary="Provider: the form of one of my requests as saved (draft, sent, or needing changes)",
+    responses={404: {"description": "Not the caller's request."}},
+)
+async def get_my_request(
+    link_id: int,
+    provider: User = Depends(require_role(Role.provider)),
+    session: AsyncSession = Depends(get_session),
+) -> FacilityRequestRead:
+    try:
+        return await facility_registration_service.read_request(session, provider, link_id)
+    except facility_registration_service.RequestNotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Request not found") from None
+
+
+@router.put(
+    "/requests/{link_id}",
+    response_model=FacilityRegistered,
+    summary="Provider: save my draft (or a request that needs changes), and send it unless save_as_draft",
+    responses={
+        404: {"description": "Not the caller's request."},
+        409: {"description": "The request is with our team now; or a listing like this exists."},
+    },
+)
+async def save_my_request(
+    link_id: int,
+    payload: FacilityRegister,
+    provider: User = Depends(require_role(Role.provider)),
+    moment: datetime = Depends(get_current_moment),
+    session: AsyncSession = Depends(get_session),
+) -> FacilityRegistered:
+    try:
+        return await facility_registration_service.save_request(session, provider, link_id, payload, moment)
+    except facility_registration_service.RequestNotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Request not found") from None
+    except facility_registration_service.RequestNotEditableError:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "This request cannot be changed now. It is with our team."
+        ) from None
     except facility_registration_service.RegistrationCategoryError:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, "category: choose one of the everyday categories"

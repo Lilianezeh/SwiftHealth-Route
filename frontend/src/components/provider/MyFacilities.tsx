@@ -18,6 +18,7 @@ import { buttonClasses } from "@/components/ui/buttonStyles";
 import { cancelLink, listMyFacilities } from "@/lib/api/provider";
 import { formatNoticeDate } from "@/lib/formatters/dates";
 import { formatNaira } from "@/lib/formatters/fees";
+import { ownerStatusWords } from "@/lib/formatters/ownerStatus";
 import type { LinkCancelled, MyFacility, MyFacilityList } from "@/types/staff";
 
 const ROLE_WORDS: Record<MyFacility["role"], string> = { owner: "Owner", manager: "Manager" };
@@ -32,10 +33,14 @@ function plusDays(isoDate: string, days: number): string {
 function stateWords(facility: MyFacility, graceDays: number): string {
   const until = facility.paid_until ? formatNoticeDate(facility.paid_until) : null;
   switch (facility.fee_state) {
+    case "draft":
+      return "Saved, not sent. Nothing is public and our team cannot see it. Send it when you are ready; you pay after sending.";
     case "awaiting_payment":
       return "Not sent to our team yet. Pay the first month and our team will phone the facility to check your request.";
     case "waiting_for_staff":
       return "Paid. Waiting for staff to phone the facility.";
+    case "changes_requested":
+      return "Our team asked for changes. Edit your request and send it again.";
     case "paid":
       return `Approved. Paid until ${until}.`;
     case "grace":
@@ -53,7 +58,10 @@ function stateWords(facility: MyFacility, graceDays: number): string {
 function askWords(facility: MyFacility): { question: string; yes: string } {
   const until = facility.paid_until ? formatNoticeDate(facility.paid_until) : "";
   switch (facility.fee_state) {
+    case "draft":
+      return { question: `Delete your draft for ${facility.name}? Nothing has been paid.`, yes: "Yes, delete" };
     case "waiting_for_staff":
+    case "changes_requested":
       return { question: `Withdraw your request for ${facility.name}? Your payment will be given back in full.`, yes: "Yes, withdraw" };
     case "awaiting_payment":
       return { question: `Withdraw your request for ${facility.name}? Nothing has been paid.`, yes: "Yes, withdraw" };
@@ -99,8 +107,12 @@ function FacilityCard({ facility, fee, graceDays }: CardProps) {
     lapsed: `Pay ${price} to edit again`,
     ending: `Pay ${price} to keep managing`,
   };
-  const canStop = state === "awaiting_payment" || state === "waiting_for_staff" || state === "paid" || state === "grace" || state === "lapsed";
-  const stopLabel = state === "awaiting_payment" || state === "waiting_for_staff" ? "Withdraw my request" : "Stop managing";
+  const canEditRequest = state === "draft" || state === "changes_requested"; // the form of the request, not the live listing
+  const canStop = canEditRequest || state === "awaiting_payment" || state === "waiting_for_staff" || state === "paid" || state === "grace" || state === "lapsed";
+  const stopLabel =
+    state === "draft" ? "Delete this draft"
+    : state === "awaiting_payment" || state === "waiting_for_staff" || state === "changes_requested" ? "Withdraw my request"
+    : "Stop managing";
   const words = askWords(facility);
 
   async function stop() {
@@ -122,7 +134,13 @@ function FacilityCard({ facility, fee, graceDays }: CardProps) {
       <p className="text-base text-ink-soft">{`${facility.category.name} · ${facility.area} · ${ROLE_WORDS[facility.role]}`}</p>
       {result === null ? (
         <>
-          <p className="text-base font-semibold text-ink">{stateWords(facility, graceDays)}</p>
+          <p className="text-base font-semibold text-ink">{`Status: ${ownerStatusWords(facility.status, facility.listing_status)}`}</p>
+          <p className="text-base text-ink">{stateWords(facility, graceDays)}</p>
+          {canEditRequest && (
+            <Link href={`/provider/request?link=${facility.link_id}`} prefetch={false} className={SECONDARY_BUTTON}>
+              Edit and send
+            </Link>
+          )}
           {canEdit && (
             <Link href={`/provider/edit?listing=${facility.listing_id}`} prefetch={false} className={SECONDARY_BUTTON}>
               Edit this facility
