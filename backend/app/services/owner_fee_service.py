@@ -31,12 +31,13 @@ from app.schemas.payment import (
     PaymentList,
     PaymentListItem,
 )
-from app.services import owner_fee_mail
+from app.services import owner_fee_mail, owner_fee_upkeep_service
 
 logger = logging.getLogger(__name__)
 
 REFERENCE_SHAPE = re.compile(r"SO-(\d+)-(\d+)")
 FEE_KIND = "owner_fee"  # in the Paystack metadata, so a Featured event can never be read as an owner fee
+WITHDRAWN_REFERENCE = "withdrawn"  # audit reference of a draft listing closed by a withdrawal
 PAYABLE_STATUSES = (
     LinkStatus.awaiting_payment.value,
     LinkStatus.approved.value,
@@ -370,6 +371,11 @@ async def cancel_link(session: AsyncSession, provider: User, link_id: int, momen
         reference=f"user:{link.user_id}",
         changed_at=moment,
     )
+    if old_status in (LinkStatus.draft.value, LinkStatus.awaiting_payment.value):
+        # The request never reached staff: the draft listing it made is closed, as the nightly clean-up does.
+        await owner_fee_upkeep_service.close_listing_made_by_request(
+            session, link, moment, closed_by=provider.id, reference=WITHDRAWN_REFERENCE
+        )
     await session.commit()
     if old_status in (LinkStatus.pending.value, LinkStatus.changes_requested.value):  # both are paid
         refund = await refund_link_payment(session, link, provider.id, moment)
