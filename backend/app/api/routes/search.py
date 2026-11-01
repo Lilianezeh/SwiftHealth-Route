@@ -3,10 +3,10 @@ services/search_service.py. Contract: specs/backend/api-spec.md, "GET /search"."
 from datetime import datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
-from pydantic import ValidationError
+from fastapi import APIRouter, Body, Depends, Query
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.api.body_params import params_from_body
 from app.api.dependencies import get_current_moment, get_session
 from app.schemas.search import SearchParams, SearchResponse
 from app.services import search_service
@@ -40,15 +40,5 @@ async def search_with_position_in_body(
 
     The body is checked here, not by FastAPI, so that a 422 says which field is wrong and never
     repeats a value (FastAPI would put the whole input, the position included, in the answer)."""
-    try:
-        params = SearchParams.model_validate(body)
-    except ValidationError as error:
-        problems = error.errors(include_url=False, include_context=False, include_input=False)
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT,
-            [
-                {"loc": ["body", *problem["loc"]], "msg": problem["msg"], "type": problem["type"]}
-                for problem in problems
-            ],
-        ) from None
+    params = params_from_body(SearchParams, body)
     return await search_service.search_listings(session, params, moment)

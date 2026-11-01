@@ -151,14 +151,15 @@ describe("the contacts", () => {
     savePosition({ latitude: 6.452, longitude: 7.51 });
     const response = emergencyResponse();
     response.groups[0].contacts[0].distance_km = 1.4;
-    const { requests } = stubApi({
+    const { requests, emergencies } = stubApi({
       emergency: (parameters) => json(parameters.has("lat") ? response : emergencyResponse()),
     });
     render(<EmergencyPage />);
 
     await waitFor(() => expect(screen.getAllByRole("article")[0]).toHaveTextContent("1.4 km"));
 
-    expect(requests.some((url) => url.searchParams.get("lat") === "6.452")).toBe(true);
+    expect(emergencies().some((url) => url.searchParams.get("lat") === "6.452")).toBe(true);
+    expect(requests.every((url) => url.search === "")).toBe(true); // not in any address the browser asked for
     expect(window.location.search).toBe(""); // the position is never in the address
   });
 
