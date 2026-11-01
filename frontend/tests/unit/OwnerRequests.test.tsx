@@ -39,7 +39,11 @@ function request(id: number, overrides: Record<string, unknown> = {}) {
 
 type Call = { method: string; path: string; body: Record<string, string> | undefined };
 
-function stubApi(items = [request(1), request(2, { role: "manager" })], fail?: (call: Call) => Response | null) {
+function stubApi(
+  items = [request(1), request(2, { role: "manager" })],
+  fail?: (call: Call) => Response | null,
+  refunds: Record<number, "done" | "pending"> = {},
+) {
   const calls: Call[] = [];
   let waiting = [...items];
   vi.stubGlobal(
@@ -58,7 +62,8 @@ function stubApi(items = [request(1), request(2, { role: "manager" })], fail?: (
       const decision = /^\/staff\/owner-requests\/(\d+)\/(approve|reject)$/.exec(path);
       if (decision) {
         waiting = waiting.filter((item) => item.id !== Number(decision[1]));
-        return json({ id: Number(decision[1]), status: decision[2] === "approve" ? "approved" : "removed" });
+        const refund = decision[2] === "reject" ? (refunds[Number(decision[1])] ?? null) : null;
+        return json({ id: Number(decision[1]), status: decision[2] === "approve" ? "approved" : "removed", refund });
       }
       return json({ detail: "Not found" }, 404);
     }),
@@ -229,6 +234,22 @@ describe("rejecting", () => {
     expect(decisions()).toEqual([
       { method: "POST", path: "/staff/owner-requests/1/reject", body: { note: "Nobody there knew them" } },
     ]);
+  });
+
+  it("says the payment is being given back in full (the owner fee), or that the refund is not finished yet", async () => {
+    stubApi(undefined, undefined, { 1: "done", 2: "pending" });
+    render(<OwnerRequestsPage />);
+    await screen.findAllByRole("listitem");
+
+    await userEvent.click(screen.getByRole("button", { name: "Reject Ada 1" }));
+    await userEvent.click(screen.getByRole("button", { name: "Yes, reject" }));
+    expect(await screen.findByText("Ada 1 was rejected for Eze Clinic 1. Their payment is being given back in full.")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Reject Ada 2" }));
+    await userEvent.click(screen.getByRole("button", { name: "Yes, reject" }));
+    expect(
+      await screen.findByText("Ada 2 was rejected for Eze Clinic 2. Their payment will be given back in full; the refund is not finished yet and will be tried again."),
+    ).toBeInTheDocument();
   });
 
   it("works with no note, sending an empty body", async () => {

@@ -3,7 +3,7 @@
 Every function adds rows and flushes, so the rows are visible to the next query in the same session.
 """
 import re
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -84,12 +84,20 @@ async def add_owner_link(
     *,
     role: str = "owner",
     status: str = "approved",
+    paid_until: datetime | None | str = "default",
 ) -> FacilityOwner:
     """A link between a provider and a listing (the table `facility_owners`). An `approved` one is what lets a
-    provider edit the listing; set `status` to "pending" or "removed" for the other states."""
+    provider edit the listing; set `status` to "pending" or "removed" for the other states.
+
+    `paid_until` is the end of the paid month (owner fee). By default a pending, approved or ending
+    link is paid for a year (a request only reaches staff after the first payment), so a test about
+    something else is not about the fee; pass a date, or None, to test the fee."""
+    if paid_until == "default":
+        paid_until = utcnow() + timedelta(days=365) if status in ("pending", "approved", "ending") else None
     link = FacilityOwner(
         listing_id=listing.id, user_id=user.id, role=role, status=status,
         approved_at=utcnow() if status == "approved" else None,
+        paid_until=paid_until,
     )
     session.add(link)
     await session.flush()

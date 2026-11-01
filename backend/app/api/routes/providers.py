@@ -28,11 +28,13 @@ from app.schemas.facility_registration import (
     FacilityRegistered,
 )
 from app.schemas.owner_link import OwnerList
+from app.schemas.payment import LinkCancelled, PaymentList
 from app.schemas.provider import ProviderListing, ProviderListingUpdate
 from app.services import (
     branch_rules,
     branch_service,
     facility_registration_service,
+    owner_fee_service,
     owner_link_service,
     provider_service,
 )
@@ -167,9 +169,45 @@ async def claim_facility(
 )
 async def list_my_links(
     provider: User = Depends(require_role(Role.provider)),
+    moment: datetime = Depends(get_current_moment),
     session: AsyncSession = Depends(get_session),
 ) -> OwnerList:
-    return await owner_link_service.my_links(session, provider)
+    return await owner_link_service.my_links(session, provider, moment)
+
+
+@router.post(
+    "/links/{link_id}/cancel",
+    response_model=LinkCancelled,
+    summary="Provider: stop managing a facility (the listing stays public and free)",
+    responses={
+        404: {"description": "No such link of the caller."},
+        409: {"description": "The link is already cancelled or removed."},
+    },
+)
+async def cancel_link(
+    link_id: int,
+    provider: User = Depends(require_role(Role.provider)),
+    moment: datetime = Depends(get_current_moment),
+    session: AsyncSession = Depends(get_session),
+) -> LinkCancelled:
+    try:
+        return await owner_fee_service.cancel_link(session, provider, link_id, moment)
+    except owner_fee_service.LinkNotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Link not found") from None
+    except owner_fee_service.LinkAlreadyEndedError:
+        raise HTTPException(status.HTTP_409_CONFLICT, "You already stopped managing this facility.") from None
+
+
+@router.get(
+    "/payments",
+    response_model=PaymentList,
+    summary="Provider: my own owner-fee payments (receipts), newest first",
+)
+async def list_my_payments(
+    provider: User = Depends(require_role(Role.provider)),
+    session: AsyncSession = Depends(get_session),
+) -> PaymentList:
+    return await owner_fee_service.list_payments(session, provider)
 
 
 @router.get(

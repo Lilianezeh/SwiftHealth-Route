@@ -14,10 +14,14 @@ import { json } from "../helpers/api";
 const router = { replace: vi.fn(), push: vi.fn() }; // one object: the gate's effect depends on it
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
+// The owner fee fields (specs/2026-10-29-owner-fee/): an approved link is paid for a month, a pending one is paid and waits for staff.
+const FEE_STATE: Record<string, string> = { approved: "paid", pending: "waiting_for_staff", removed: "removed" };
+
 function link(id: number, name: string, role: string, status: string) {
   return {
     link_id: id, listing_id: 100 + id, name, area: "Ogui", category: { slug: "clinic", name: "Clinic" },
     role, status, requested_at: "2026-10-20T10:30:00Z",
+    paid_until: status === "removed" ? null : "2026-11-29T09:00:00Z", fee_state: FEE_STATE[status],
   };
 }
 
@@ -31,7 +35,7 @@ function stubApi(links: unknown[] | "fails") {
     "fetch",
     vi.fn(async (address: string) => {
       const path = new URL(address).pathname;
-      if (path === "/provider/listings") return links === "fails" ? json({ detail: "boom" }, 500) : json({ items: links });
+      if (path === "/provider/listings") return links === "fails" ? json({ detail: "boom" }, 500) : json({ fee_naira: "10000.00", grace_days: 7, items: links });
       if (path === "/provider/listing") return json(MINE);
       return json({ detail: "Not found" }, 404);
     }),
@@ -61,9 +65,9 @@ describe("My facilities", () => {
     expect(cards).toHaveLength(3);
     expect(within(cards[0]).getByText("Approved Clinic")).toBeInTheDocument();
     expect(within(cards[0]).getByText("Clinic · Ogui · Owner")).toBeInTheDocument();
-    expect(within(cards[0]).getByText("Approved")).toBeInTheDocument();
+    expect(within(cards[0]).getByText("Approved. Paid until 29 Nov 2026.")).toBeInTheDocument();
     expect(within(cards[1]).getByText("Clinic · Ogui · Manager")).toBeInTheDocument();
-    expect(within(cards[1]).getByText("Waiting for staff to phone the facility.")).toBeInTheDocument();
+    expect(within(cards[1]).getByText("Paid. Waiting for staff to phone the facility.")).toBeInTheDocument();
     expect(within(cards[2]).getByText("Removed.")).toBeInTheDocument();
   });
 
@@ -77,8 +81,8 @@ describe("My facilities", () => {
 
     expect(edit).toHaveAttribute("href", "/provider/edit?listing=101");
     expect(edit.className).toMatch(/min-h-\[50px\]/);
-    expect(within(cards[1]).queryByRole("link")).not.toBeInTheDocument();
-    expect(within(cards[2]).queryByRole("link")).not.toBeInTheDocument();
+    expect(within(cards[1]).queryByRole("link", { name: "Edit this facility" })).not.toBeInTheDocument();
+    expect(within(cards[2]).queryByRole("link", { name: "Edit this facility" })).not.toBeInTheDocument();
   });
 
   it("shows nothing at all about a facility the provider has no link to", async () => {

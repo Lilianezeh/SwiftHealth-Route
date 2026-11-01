@@ -25,6 +25,14 @@ export async function fakeApi(page: Page, answer: (request: FakeRequest) => Fake
       return;
     }
     const url = new URL(request.url());
+    if (request.method() === "POST" && url.pathname === "/auth/keep-alive") {
+      // The page's own idle sign-out renews the token while the person acts (specs/2026-10-29-idle-sign-out/). The
+      // fake token is not real, so the real API would answer 401 and the page would sign the person out in the middle of a
+      // check. The renewal is not what these checks look at: answer it, and keep it out of the list of requests seen.
+      const renewed = { access_token: "fake.token.value", token_type: "bearer", expires_in: 900 };
+      await route.fulfill({ status: 200, contentType: "application/json", headers: CORS, body: JSON.stringify(renewed) });
+      return;
+    }
     const fake: FakeRequest = {
       method: request.method(),
       path: url.pathname,
@@ -63,7 +71,10 @@ export async function logInAs(page: Page, role: "verifier" | "editor" | "admin" 
  * Use it as the last answer: `return answerSideCalls(request)`. */
 export function answerSideCalls(request: FakeRequest): FakeAnswer {
   const isSideCall =
-    request.path === "/provider/listings" || /^\/listings\/\d+\/address-history$/.test(request.path) || /^\/provider\/facilities\/\d+\/branches$/.test(request.path);
+    request.path === "/provider/listings" ||
+    request.path === "/provider/payments" || // "My payments" on the provider's page (owner fee)
+    /^\/listings\/\d+\/address-history$/.test(request.path) ||
+    /^\/provider\/facilities\/\d+\/branches$/.test(request.path);
   return isSideCall ? { body: { items: [] } } : null;
 }
 

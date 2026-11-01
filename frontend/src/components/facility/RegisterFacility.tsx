@@ -9,7 +9,9 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
+import { PayOwnerFee } from "@/components/provider/PayOwnerFee";
 import { buttonClasses } from "@/components/ui/buttonStyles";
+import { formatNaira } from "@/lib/formatters/fees";
 import { useMeta } from "@/hooks/useMeta";
 import { registerFacility, type FacilityRole } from "@/lib/api/facility";
 import { ApiError } from "@/lib/api/request";
@@ -49,7 +51,7 @@ export function RegisterFacility({ call, onAskToManage }: Props) {
   const [problems, setProblems] = useState<string[]>([]);
   const [claimable, setClaimable] = useState<{ id: number; name: string } | null>(null);
   const [sending, setSending] = useState(false);
-  const [thanks, setThanks] = useState(false);
+  const [thanks, setThanks] = useState<{ linkId: number; fee: string } | null>(null); // the request is saved, the first month is not paid
 
   const categories = meta?.categories.filter((category) => !category.is_emergency) ?? [];
   const set = (key: keyof Form, value: string) => setForm((current) => ({ ...current, [key]: value }));
@@ -66,9 +68,9 @@ export function RegisterFacility({ call, onAskToManage }: Props) {
     setProblems([]);
     setClaimable(null);
     try {
-      await call((token) => registerFacility(token, form));
+      const saved = await call((token) => registerFacility(token, form));
       setForm(EMPTY);
-      setThanks(true);
+      setThanks({ linkId: saved.link_id, fee: formatNaira(saved.fee_naira) ?? saved.fee_naira });
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
         setProblems([error.detail ?? "This facility is already registered. Please contact us."]);
@@ -90,8 +92,10 @@ export function RegisterFacility({ call, onAskToManage }: Props) {
       <section aria-labelledby="register-heading" className="flex flex-col gap-3">
         <h2 id="register-heading" className="text-xl font-bold text-forest">Register a new facility</h2>
         <p role="status" className="rounded-2xl border border-line bg-pine-50 p-4 text-lg text-ink">
-          Thanks. We&apos;ll verify your facility before it&apos;s listed. Our team will phone the facility to check that you may manage it.
+          Thanks. Your request is saved. Pay the first month ({thanks.fee}) and we&apos;ll verify your facility before it&apos;s listed.
+          Our team will phone the facility to check that you may manage it.
         </p>
+        <PayOwnerFee call={call} linkId={thanks.linkId} label={`Pay ${thanks.fee} to send your request`} />
         <Link href="/provider" className={buttonClasses("secondary")}>Go to My facilities</Link>
       </section>
     );

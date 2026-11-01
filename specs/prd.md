@@ -177,6 +177,12 @@ Feature folder: `specs/2026-10-23-accounts-and-facility-ownership/` (owner's ans
 | FR-56 | One password rule for every way an account gets a password: at least 8 characters for a provider, at least 10 for a verifier, editor or admin, at most 128, not a very common password, not the email; a provider made staff gets a new password of at least 10 | Must |
 | FR-57 | The login code screen shows the phone mostly hidden ("••• ••• 4567"), has a "Send a new code" button (60 seconds between sends, at most 5 codes per account per hour, enforced by the server) and a "Start again" link | Must |
 | FR-58 | A person can switch on an authenticator app (standard time-based codes, QR code, 10 backup codes) for a free second step instead of an SMS code; the secret is encrypted in the database; SMS (or an email code while Termii is off) stays the fallback | Must |
+| FR-59 | Listing a facility stays free and staff can add any facility; a facility owner pays a monthly fee (setting `OWNER_FEE_NAIRA`, ₦10,000.00 to start; Paystack test mode in the MVP) to claim and manage a listing; the request reaches staff only after the first payment is confirmed by a verified Paystack webhook. Paying never buys the verified badge or a better place in search | Must |
+| FR-60 | The fee is paid one calendar month at a time with email reminders 7, 3 and 1 days before the month ends (no automatic charge). After a grace period (setting, 7 days) the owner can no longer edit; the listing stays public, free and unchanged; paying again restores editing without a new staff approval | Must |
+| FR-61 | If staff reject a paid claim, the payment is given back in full automatically (a refund that fails is kept and tried again every night); an owner can stop managing at any time (editing goes on to the end of the paid month, no refund of it) | Must |
+| FR-62 | Every fee payment and refund is recorded in the audit log with its Paystack reference and a repeated webhook never applies twice; the owner gets an email receipt and sees a list of their payments | Must |
+| FR-63 | Staff sign-up and staff accounts are never charged; Featured (FR-44, FR-45) stays a separate optional extra that needs an owner whose fee is current | Must |
+| FR-64 | The wording about the fee on the Terms, "For facilities", the home page and "List your facility" is reviewed by a lawyer before it goes live (the current "free during our launch" sentences stay until then) | Must |
 
 ## Data model
 

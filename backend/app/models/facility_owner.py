@@ -29,3 +29,7 @@ class FacilityOwner(SQLModel, table=True):
     removed_at: datetime | None = None
     removed_by: int | None = Field(default=None, foreign_key="users.id")
     note: str | None = None  # at most 300 characters (checked at the edge)
+    # The end of the paid month (owner fee, specs/2026-10-29-owner-fee/). Editing works while
+    # now <= paid_until plus the grace days. Empty until the first payment is confirmed. Every payment
+    # is also an audit entry with its reference.
+    paid_until: datetime | None = None

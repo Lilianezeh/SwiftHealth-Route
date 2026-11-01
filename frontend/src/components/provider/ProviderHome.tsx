@@ -8,6 +8,7 @@ import Link from "next/link";
 import { QueueStatus } from "@/components/admin/QueueStatus";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { MyFacilities } from "@/components/provider/MyFacilities";
+import { MyPayments } from "@/components/provider/MyPayments";
 import { NoLinkedFacility } from "@/components/provider/NoLinkedFacility";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useProviderListing } from "@/hooks/useProviderListing";
@@ -24,6 +25,7 @@ export function ProviderHome() {
       <QueueStatus status={status === "none" ? "ready" : status} onRetry={retry} />
       {status === "none" && <NoLinkedFacility />}
       <MyFacilities />
+      <MyPayments />
 
       {listing && (
         <article className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card">

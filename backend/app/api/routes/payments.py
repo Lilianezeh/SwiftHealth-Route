@@ -13,8 +13,16 @@ from app.api.dependencies import get_current_moment, get_session, require_role
 from app.integrations import paystack
 from app.models import User
 from app.models.base import Role
-from app.schemas.payment import FeaturedRequest, FeaturedStarted, PaymentVerified, WebhookReceived
-from app.services import payment_service, provider_service
+from app.schemas.payment import (
+    FeaturedRequest,
+    FeaturedStarted,
+    OwnerFeeRequest,
+    OwnerFeeStarted,
+    OwnerFeeVerified,
+    PaymentVerified,
+    WebhookReceived,
+)
+from app.services import owner_fee_service, payment_service, provider_service
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +117,16 @@ async def paystack_webhook(
     if not isinstance(payload, dict):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "The body is not a JSON object")
 
+    # Two kinds of payment, told apart by the shape of our own reference: Featured (SH-...) and the
+    # owner fee (SO-...).
+    fee_event = owner_fee_service.parse_charge_success(payload)
+    if fee_event is not None:
+        if not await owner_fee_service.apply_charge_success(session, fee_event, moment):
+            logger.info(
+                "Paystack webhook not applied (done before, or no such link), reference %s",
+                fee_event.reference,
+            )
+        return WebhookReceived(status="ok")
     event = payment_service.parse_charge_success(payload)
     if event is None:
         # Only the reference is logged: never the body, the email or anything of the card.
@@ -118,3 +136,53 @@ async def paystack_webhook(
             "Paystack webhook not applied (done before, or no such listing), reference %s", event.reference
         )
     return WebhookReceived(status="ok")
+
+
+@router.post(
+    "/owner-fee",
+    response_model=OwnerFeeStarted,
+    summary="Provider: start the monthly owner fee for one of your links (Paystack test mode)",
+    responses={
+        404: {"description": "No such link of the caller."},
+        409: {"description": "The link is waiting for staff or removed: there is nothing to pay."},
+        502: {"description": "Paystack did not accept the payment."},
+        503: {"description": "Payments are not set up, or the key is a live key."},
+    },
+)
+async def start_owner_fee_payment(
+    payload: OwnerFeeRequest,
+    provider: User = Depends(require_role(Role.provider)),
+    moment: datetime = Depends(get_current_moment),
+    session: AsyncSession = Depends(get_session),
+) -> OwnerFeeStarted:
+    try:
+        return await owner_fee_service.start_payment(session, provider, payload.link_id, moment)
+    except owner_fee_service.LinkNotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Link not found") from None
+    except owner_fee_service.LinkNotPayableError:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "There is nothing to pay for this request now."
+        ) from None
+    except paystack.PaymentsNotSetUpError:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Payments are not set up yet.") from None
+    except paystack.LiveKeyRefusedError:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Live payments are switched off.") from None
+    except paystack.PaymentStartError:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Could not start the payment. Try again.") from None
+
+
+@router.get(
+    "/owner-fee/{reference}",
+    response_model=OwnerFeeVerified,
+    summary="Provider: has the webhook for this owner-fee payment been applied?",
+    responses={404: {"description": "The reference is not of one of the caller's links."}},
+)
+async def verify_owner_fee_payment(
+    reference: str,
+    provider: User = Depends(require_role(Role.provider)),
+    session: AsyncSession = Depends(get_session),
+) -> OwnerFeeVerified:
+    try:
+        return await owner_fee_service.verify_payment(session, provider, reference)
+    except owner_fee_service.LinkNotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Payment not found") from None

@@ -9,6 +9,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models import (
     AuditEntry,
     Category,
+    FacilityOwner,
     Listing,
     OpeningHours,
     PhoneNumber,
@@ -16,11 +17,33 @@ from app.models import (
     UserReport,
     VerificationCheck,
 )
-from app.models.base import CheckMethod, CheckResult, ListingStatus
+from app.models.base import UNPAID_CLOSE_REASON, CheckMethod, CheckResult, LinkStatus, ListingStatus
 from app.repositories.search_repository import flagged_listing_ids, text_matches
 
 # Only these listings are a re-check job; a draft, a pending or a hidden one is not (decision H6).
 RECHECK_STATUSES = (ListingStatus.published, ListingStatus.recheck_due)
+
+
+def not_an_unpaid_request() -> ColumnElement[bool]:
+    """Staff never see a request that was not paid (owner fee, specs/2026-10-29-owner-fee/).
+
+    This keeps out of their lists, numbers and exports (1) a draft that registering a facility made
+    while its first month is still unpaid (a draft nobody created, with a link that waits for
+    payment) and (2) a draft the nightly job closed as unpaid. Once the first month is paid the link
+    is `pending` and the draft shows like any other."""
+    waiting_for_payment = (
+        select(FacilityOwner.id)
+        .where(
+            col(FacilityOwner.listing_id) == col(Listing.id),
+            col(FacilityOwner.status) == LinkStatus.awaiting_payment.value,
+        )
+        .exists()
+    )
+    closed_as_unpaid = col(Listing.closed_reason) == UNPAID_CLOSE_REASON
+    unpaid_draft = and_(
+        col(Listing.status) == ListingStatus.draft, col(Listing.created_by).is_(None), waiting_for_payment
+    )
+    return and_(or_(col(Listing.closed_reason).is_(None), ~closed_as_unpaid), ~unpaid_draft)
 
 
 @dataclass
@@ -205,7 +228,7 @@ async def list_for_staff(
     `due_before` alone means overdue (the check date has passed); with `due_after` it is a window. Either
     one counts only the listings of RECHECK_STATUSES, so the list agrees with the dashboard numbers.
     """
-    conditions = []
+    conditions = [not_an_unpaid_request()]
     if status is not None:
         conditions.append(Listing.status == status)
     if due_before is not None or due_after is not None:
@@ -270,11 +293,16 @@ async def find_by_phone_number(session: AsyncSession, number: str) -> Listing | 
     query = (
         select(Listing)
         .join(PhoneNumber, col(PhoneNumber.listing_id) == col(Listing.id))
-        .where(col(PhoneNumber.number) == number)
+        .where(col(PhoneNumber.number) == number, _not_closed_as_unpaid())
         .order_by(col(Listing.id))
         .limit(1)
     )
     return (await session.exec(query)).first()
+
+
+def _not_closed_as_unpaid() -> ColumnElement[bool]:
+    """A draft closed because its request was never paid is not a duplicate (register again is allowed)."""
+    return or_(col(Listing.closed_reason).is_(None), col(Listing.closed_reason) != UNPAID_CLOSE_REASON)
 
 
 async def find_similar_name_in_area(
@@ -285,7 +313,7 @@ async def find_similar_name_in_area(
     similarity = func.similarity(col(Listing.name), name)
     query = (
         select(Listing)
-        .where(col(Listing.area) == area, similarity >= minimum_similarity)
+        .where(col(Listing.area) == area, similarity >= minimum_similarity, _not_closed_as_unpaid())
         .order_by(similarity.desc(), col(Listing.id))
         .limit(1)
     )
@@ -424,6 +452,7 @@ async def list_all_with_primary_phone(session: AsyncSession) -> list[tuple[Listi
         await session.exec(
             select(Listing, Category)
             .join(Category, col(Category.id) == Listing.category_id)
+            .where(not_an_unpaid_request())
             .order_by(col(Listing.name), col(Listing.id))
         )
     ).all()

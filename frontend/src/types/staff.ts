@@ -164,9 +164,33 @@ export type MyFacility = {
   area: string;
   category: { slug: string; name: string };
   role: "owner" | "manager";
-  status: "pending" | "approved" | "removed";
+  status: "awaiting_payment" | "pending" | "approved" | "lapsed" | "ending" | "removed";
   requested_at: string;
+  // The owner fee (specs/2026-10-29-owner-fee/): the end of the paid month, and where the link is in its life.
+  paid_until: string | null;
+  fee_state: FeeState;
 };
+
+export type FeeState = "awaiting_payment" | "waiting_for_staff" | "paid" | "grace" | "lapsed" | "ending" | "ended" | "removed";
+
+/** GET /provider/listings: the links, the monthly fee ("10000.00") and the grace days after a paid month. */
+export type MyFacilityList = { fee_naira: string; grace_days: number; items: MyFacility[] };
+
+/** POST /payments/owner-fee: where to pay on Paystack's own page (test mode). */
+export type OwnerFeeStarted = { authorization_url: string; reference: string; amount_naira: string };
+/** GET /payments/owner-fee/{reference}: "success" only after the signed webhook was applied. */
+export type OwnerFeeVerified = { status: "success" | "pending"; link_status: MyFacility["status"]; paid_until: string | null };
+/** One receipt: GET /provider/payments. */
+export type OwnerFeePayment = {
+  reference: string;
+  kind: "owner_fee";
+  listing_id: number;
+  listing_name: string;
+  paid_at: string;
+  paid_until: string | null;
+};
+/** POST /provider/links/{id}/cancel. */
+export type LinkCancelled = { link_id: number; status: MyFacility["status"]; access_until: string | null; refund: "done" | "pending" | null };
 
 /** A request that waits for staff to phone the facility (GET /staff/owner-requests). */
 export type OwnerRequest = {
