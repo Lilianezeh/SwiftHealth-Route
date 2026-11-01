@@ -16,6 +16,14 @@ import { json } from "../helpers/api";
 const replace = vi.fn();
 const router = { replace, push: vi.fn() }; // one object: the gate's effect depends on it
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
+// The map is Leaflet, drawn in the browser; its own tests are in FacilityMap.test.tsx. Here it is a stand-in that says where the pin is.
+vi.mock("@/components/map/FacilityMap", () => ({
+  FacilityMap: ({ name, latitude, longitude }: { name: string; latitude: number; longitude: number }) => (
+    <div role="region" aria-label={`Map showing where ${name} is`}>{`Pin at ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`}</div>
+  ),
+}));
+
+const PHOTO = "https://res.cloudinary.com/demo-cloud/image/upload/v1/swifthealth/owner-entrances/front.jpg";
 
 function request(id: number, overrides: Record<string, unknown> = {}) {
   return {
@@ -23,17 +31,34 @@ function request(id: number, overrides: Record<string, unknown> = {}) {
     role: "owner",
     requested_at: "2026-10-20T10:30:00Z",
     reason: null,
+    previous_change_note: null,
     person: { id: 20 + id, name: `Ada ${id}`, email: `ada${id}@example.com`, phone: "+2348030000123" },
     listing: {
       id: 100 + id,
       name: `Eze Clinic ${id}`,
       area: "Ogui",
-      phones: [
-        { number: "+2348031234567", label: "Front desk", is_primary: true },
-        { number: "+2348039999999", label: null, is_primary: false },
+      category: { slug: "clinic", name: "Clinic" },
+      address: "4 Example Street",
+      landmark: "Behind the market",
+      description: "A small clinic for families.",
+      email: "front-desk@clinic.example.com",
+      latitude: 6.4521,
+      longitude: 7.5103,
+      map_pin_is_default: false,
+      entrance_photo_url: PHOTO,
+      is_24_hours: false,
+      opening_hours: [
+        { day_of_week: 0, opens_at: "08:00:00", closes_at: "17:00:00", is_closed: false },
+        { day_of_week: 6, opens_at: null, closes_at: null, is_closed: true },
       ],
+      services: ["Consultation", "X-ray"],
+      phones: [
+        { number: "+2348031234567", label: "Front desk", is_primary: true, is_whatsapp: true },
+        { number: "+2348039999999", label: null, is_primary: false, is_whatsapp: false },
+      ],
+      ...(overrides.listing as Record<string, unknown> | undefined),
     },
-    ...overrides,
+    ...Object.fromEntries(Object.entries(overrides).filter(([key]) => key !== "listing")),
   };
 }
 
@@ -59,11 +84,12 @@ function stubApi(
       const failure = fail?.(call);
       if (failure) return failure;
       if (path === "/staff/owner-requests") return json({ items: waiting, total: waiting.length });
-      const decision = /^\/staff\/owner-requests\/(\d+)\/(approve|reject)$/.exec(path);
+      const decision = /^\/staff\/owner-requests\/(\d+)\/(approve|reject|request-changes)$/.exec(path);
       if (decision) {
         waiting = waiting.filter((item) => item.id !== Number(decision[1]));
         const refund = decision[2] === "reject" ? (refunds[Number(decision[1])] ?? null) : null;
-        return json({ id: Number(decision[1]), status: decision[2] === "approve" ? "approved" : "removed", refund });
+        const status = { approve: "approved", reject: "removed", "request-changes": "changes_requested" }[decision[2]];
+        return json({ id: Number(decision[1]), status, refund });
       }
       return json({ detail: "Not found" }, 404);
     }),
@@ -140,6 +166,157 @@ describe("the cards", () => {
     await userEvent.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(await screen.findAllByRole("listitem")).toHaveLength(1);
+  });
+});
+
+describe("everything in the request (part (b) of the owner form)", () => {
+  async function firstCard() {
+    render(<OwnerRequestsPage />);
+    return (await screen.findAllByRole("listitem"))[0];
+  }
+
+  it("shows the category, address, landmark and description", async () => {
+    stubApi([request(1)]);
+    const card = await firstCard();
+
+    expect(within(card).getByText("Clinic")).toBeInTheDocument();
+    expect(within(card).getByText("4 Example Street")).toBeInTheDocument();
+    expect(within(card).getByText("Behind the market")).toBeInTheDocument();
+    expect(within(card).getByText("A small clinic for families.")).toBeInTheDocument();
+  });
+
+  it("shows the email, and says that only our team sees it", async () => {
+    stubApi([request(1)]);
+    const card = await firstCard();
+
+    expect(within(card).getByText("front-desk@clinic.example.com")).toBeInTheDocument();
+    expect(within(card).getByText(/Only our team sees this email/)).toBeInTheDocument();
+  });
+
+  it("shows the opening hours for each day in 12-hour time, with Closed, or 'Open 24 hours'", async () => {
+    stubApi([request(1), request(2, { listing: { is_24_hours: true, opening_hours: [] } })]);
+    render(<OwnerRequestsPage />);
+    const [first, second] = await screen.findAllByRole("listitem");
+
+    expect(within(first).getByText("Monday")).toBeInTheDocument();
+    expect(within(first).getByText("8:00 AM – 5:00 PM")).toBeInTheDocument();
+    expect(within(first).getByText("Sunday")).toBeInTheDocument();
+    expect(within(first).getByText("Closed")).toBeInTheDocument();
+    expect(within(second).getByText("Open 24 hours")).toBeInTheDocument();
+    expect(within(second).queryByText("Monday")).toBeNull();
+  });
+
+  it("shows the services, and which phone numbers have WhatsApp", async () => {
+    stubApi([request(1)]);
+    const card = await firstCard();
+
+    expect(within(card).getByText("Consultation, X-ray")).toBeInTheDocument();
+    expect(within(card).getByRole("link", { name: /Front desk 0803 123 4567/ })).toHaveTextContent("WhatsApp");
+    expect(within(card).getByRole("link", { name: "0803 999 9999" })).not.toHaveTextContent("WhatsApp");
+  });
+
+  it("shows the entrance photo, only when its address is https, with a text for screen readers", async () => {
+    stubApi([request(1), request(2, { listing: { entrance_photo_url: "http://example.com/a.jpg" } }), request(3, { listing: { entrance_photo_url: null } })]);
+    render(<OwnerRequestsPage />);
+    const [first, second, third] = await screen.findAllByRole("listitem");
+
+    const photo = within(first).getByRole("img", { name: "Entrance photo from the owner" });
+    expect(photo).toHaveAttribute("src", PHOTO);
+    expect(photo).toHaveAttribute("loading", "lazy");
+    expect(within(second).queryByRole("img", { name: "Entrance photo from the owner" })).toBeNull();
+    expect(within(third).getByText("No entrance photo.")).toBeInTheDocument();
+  });
+
+  it("shows the pin on a map with its coordinates", async () => {
+    stubApi([request(1)]);
+    const card = await firstCard();
+
+    const map = await within(card).findByRole("region", { name: "Map showing where Eze Clinic 1 is" }); // loaded on demand
+    expect(map).toHaveTextContent("Pin at 6.45210, 7.51030");
+    expect(within(card).queryByText(/did not place the pin/)).toBeNull();
+  });
+
+  it("says the owner did not place the pin, and links to the listing editor to move it", async () => {
+    stubApi([request(1, { listing: { map_pin_is_default: true } })]);
+    const card = await firstCard();
+
+    expect(within(card).getByText(/The owner did not place the pin/)).toBeInTheDocument();
+    expect(within(card).getByRole("link", { name: "Open the listing editor" })).toHaveAttribute("href", "/admin/listings/101");
+  });
+
+  it("shows what staff asked last time, when the request was sent back before", async () => {
+    stubApi([request(1, { previous_change_note: "Please check the address." })]);
+    const card = await firstCard();
+
+    expect(within(card).getByText("Last time you asked: Please check the address.")).toBeInTheDocument();
+  });
+
+  it("shows no 'last time' line for a first request", async () => {
+    stubApi([request(1)]);
+    const card = await firstCard();
+
+    expect(within(card).queryByText(/Last time you asked/)).toBeNull();
+  });
+});
+
+describe("Request changes", () => {
+  it("needs a note, asks first, and Cancel sends nothing", async () => {
+    const { decisions } = stubApi([request(1)]);
+    render(<OwnerRequestsPage />);
+    await userEvent.click(await screen.findByRole("button", { name: "Request changes from Ada 1" }));
+
+    const confirm = screen.getByRole("button", { name: "Yes, send it back" });
+    expect(confirm).toBeDisabled();
+    expect(screen.getByText("Write what the owner should change first.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(decisions()).toEqual([]);
+    expect(screen.getByRole("button", { name: "Request changes from Ada 1" })).toBeInTheDocument();
+  });
+
+  it("sends the note, takes the card out of the list and says what happened", async () => {
+    const { decisions } = stubApi([request(1), request(2)]);
+    render(<OwnerRequestsPage />);
+    await userEvent.click(await screen.findByRole("button", { name: "Request changes from Ada 1" }));
+    await userEvent.type(screen.getByLabelText("What should Ada 1 change?"), "Please add the pharmacy number.");
+
+    await userEvent.click(screen.getByRole("button", { name: "Yes, send it back" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Ada 1 was asked to change Eze Clinic 1. They will see your note.");
+    expect(decisions()).toEqual([
+      { method: "POST", path: "/staff/owner-requests/1/request-changes", body: { note: "Please add the pharmacy number." } },
+    ]);
+    expect(screen.queryByText("Eze Clinic 1")).toBeNull();
+    expect(screen.getByText("Eze Clinic 2")).toBeInTheDocument();
+  });
+
+  it("limits the note to 300 characters", async () => {
+    stubApi([request(1)]);
+    render(<OwnerRequestsPage />);
+    await userEvent.click(await screen.findByRole("button", { name: "Request changes from Ada 1" }));
+
+    expect(screen.getByLabelText("What should Ada 1 change?")).toHaveAttribute("maxlength", "300");
+  });
+
+  it("is a different note from the one that says who was spoken to", async () => {
+    stubApi([request(1)]);
+    render(<OwnerRequestsPage />);
+    await userEvent.type(await screen.findByLabelText(/Who did you speak to/), "Mr Eze");
+    await userEvent.click(screen.getByRole("button", { name: "Request changes from Ada 1" }));
+
+    expect(screen.getByLabelText("What should Ada 1 change?")).toHaveValue("");
+  });
+
+  it("shows the API's own sentence when it is refused, and keeps the card", async () => {
+    stubApi([request(1)], (call) => (call.path.endsWith("/request-changes") ? json({ detail: "This request is not waiting." }, 409) : null));
+    render(<OwnerRequestsPage />);
+    await userEvent.click(await screen.findByRole("button", { name: "Request changes from Ada 1" }));
+    await userEvent.type(screen.getByLabelText("What should Ada 1 change?"), "Fix the address.");
+
+    await userEvent.click(screen.getByRole("button", { name: "Yes, send it back" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("This request is not waiting.");
+    expect(screen.getByText("Eze Clinic 1")).toBeInTheDocument();
   });
 });
 

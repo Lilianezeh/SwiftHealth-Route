@@ -14,6 +14,10 @@ MINIMUM_SECRET_BYTES = 32
 # and a listing cannot have none. The centre of the pilot city; a verifier sets the real pin (decision C5
 # in specs/2026-10-20-staff-screens/requirements.md). It is only a point on the map, not a city name.
 DEFAULT_MAP_CENTRE: tuple[float, float] = (6.4584, 7.5464)  # latitude, longitude
+# A rough box around Nigeria. A pin an owner places outside it is almost always a typing mistake (decision
+# L6 of specs/2026-11-01-owner-form-location-photo/). Staff can still place a pin anywhere in the editor.
+NIGERIA_LATITUDE_RANGE: tuple[float, float] = (4.0, 14.0)
+NIGERIA_LONGITUDE_RANGE: tuple[float, float] = (2.5, 15.0)
 # Registering a facility (FR-51, decision D15): a listing in the same area whose name has this pg_trgm
 # `similarity` (0 to 1, the whole name against the whole name) with the new name stops the registration.
 # 0.6 is high on purpose: "Example Clinic" and "Example Clinic Ltd" match, "Good Life Pharmacy" and

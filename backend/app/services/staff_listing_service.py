@@ -261,6 +261,7 @@ async def update_listing(
         "longitude",
         "description",
         "email",
+        "entrance_photo_url",
         "is_24_hours",
     ):
         if field in payload.model_fields_set:

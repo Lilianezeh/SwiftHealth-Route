@@ -1,7 +1,7 @@
 """Shapes of the owner links. See specs/backend/api-spec.md section 7, "Phase 6a".
 Requirements: FR-50, US-19."""
 
-from datetime import datetime
+from datetime import datetime, time
 from decimal import Decimal
 from typing import Literal
 
@@ -28,6 +28,7 @@ class OwnerListItem(BaseModel):
     status: str
     # Where the listing itself is (draft, pending_review, published, ...): the owner's "Published" needs it.
     listing_status: str
+    change_note: str | None  # what staff asked to change, while the request is `changes_requested`
     requested_at: datetime
     # The owner fee (specs/2026-10-29-owner-fee/): the end of the paid month, and where the link is in
     # the life of the fee: draft, awaiting_payment, waiting_for_staff, changes_requested, paid, grace,
@@ -53,12 +54,35 @@ class QueuePhone(BaseModel):
     number: str
     label: str | None
     is_primary: bool
+    is_whatsapp: bool
+
+
+class QueueHours(BaseModel):
+    day_of_week: int  # 0 is Monday
+    opens_at: time | None
+    closes_at: time | None
+    is_closed: bool
 
 
 class QueueListing(BaseModel):
+    """Every field of the request, so staff see all of it before they approve (part (b) of the owner form).
+    The `email` is for staff only: this answer is staff's."""
+
     id: int
     name: str
     area: str
+    category: CategoryRef
+    address: str
+    landmark: str | None
+    description: str | None
+    email: str | None
+    latitude: float
+    longitude: float
+    map_pin_is_default: bool  # the owner did not place the pin: staff move it
+    entrance_photo_url: str | None
+    is_24_hours: bool
+    opening_hours: list[QueueHours]
+    services: list[str]
     phones: list[QueuePhone]  # the numbers staff call to check the claim
 
 
@@ -67,6 +91,7 @@ class QueueItem(BaseModel):
     role: str
     requested_at: datetime
     reason: str | None  # the person's own words (Phase 7), kept in the link's note while it waits
+    previous_change_note: str | None  # what staff asked for last time, when this request was sent back before
     person: QueuePerson
     listing: QueueListing
 
@@ -98,6 +123,20 @@ class LinkRead(BaseModel):
 
 class ApproveLink(BaseModel):
     """Approving needs the note: who staff reached on the phone."""
+
+    note: str = Field(min_length=1, max_length=NOTE_MAX_LENGTH)
+
+    @field_validator("note")
+    @classmethod
+    def not_blank(cls, note: str) -> str:
+        stripped = note.strip()
+        if not stripped:
+            raise ValueError("note cannot be blank")
+        return stripped
+
+
+class ChangesRequest(BaseModel):
+    """Sending a request back needs the note: what the owner should change. It is kept in the audit log."""
 
     note: str = Field(min_length=1, max_length=NOTE_MAX_LENGTH)
 

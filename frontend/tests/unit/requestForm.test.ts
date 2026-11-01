@@ -17,6 +17,40 @@ function filled(changes: Partial<RequestForm> = {}): RequestForm {
   };
 }
 
+const PHOTO = "https://res.cloudinary.com/demo-cloud/image/upload/v1/swifthealth/owner-entrances/front.jpg";
+
+describe("the pin and the photo (part (b))", () => {
+  it("start with no pin and no photo, and the body then holds neither", () => {
+    const form = emptyRequestForm();
+    const body = toBody(filled(), false);
+
+    expect(form.pin).toBeNull();
+    expect(form.photoUrl).toBeUndefined();
+    expect(form.removePhoto).toBe(false);
+    expect(body).not.toHaveProperty("latitude");
+    expect(body).not.toHaveProperty("longitude");
+    expect(body).not.toHaveProperty("entrance_photo_url");
+  });
+
+  it("send the pin as latitude and longitude, together", () => {
+    const body = toBody(filled({ pin: { latitude: 6.452123, longitude: 7.510987 } }), false);
+
+    expect(body).toMatchObject({ latitude: 6.452123, longitude: 7.510987 });
+  });
+
+  it("round a pin to 6 decimals, about 10 cm", () => {
+    const body = toBody(filled({ pin: { latitude: 6.4521234567, longitude: 7.5109876543 } }), false);
+
+    expect(body).toMatchObject({ latitude: 6.452123, longitude: 7.510988 });
+  });
+
+  it("send a photo as its address, and send null when the owner removed the one that was saved", () => {
+    expect(toBody(filled({ photoUrl: PHOTO }), false)).toMatchObject({ entrance_photo_url: PHOTO });
+    expect(toBody(filled({ removePhoto: true }), false)).toMatchObject({ entrance_photo_url: null });
+    expect(toBody(filled({ photoUrl: PHOTO, removePhoto: true }), false)).toMatchObject({ entrance_photo_url: PHOTO }); // a new photo wins
+  });
+});
+
 describe("a new form", () => {
   it("is empty, with an owner role, seven days with no hours given and nothing ticked", () => {
     const form = emptyRequestForm();
@@ -184,6 +218,11 @@ describe("filling the form again from a saved request", () => {
       { day_of_week: 6, opens_at: null, closes_at: null, is_closed: true },
     ],
     services: ["Consultation"],
+    latitude: 6.4521,
+    longitude: 7.5103,
+    map_pin_is_default: false,
+    entrance_photo_url: PHOTO,
+    change_note: null,
   } as const;
 
   it("shows the numbers in the local reading format and the times as hours and minutes", () => {
@@ -204,6 +243,17 @@ describe("filling the form again from a saved request", () => {
     expect(form.hours[0]).toEqual({ opens: "08:00", closes: "17:00", closed: false });
     expect(form.hours[1]).toEqual({ opens: "", closes: "", closed: false }); // nothing was given for Tuesday
     expect(form.hours[6]).toEqual({ opens: "", closes: "", closed: true });
+  });
+
+  it("takes the pin and the photo from the saved request, and no pin when the saved one is still the default centre", () => {
+    const placed = formFromRead({ ...SAVED, other_phones: [], opening_hours: [], services: [] });
+    const unplaced = formFromRead({ ...SAVED, map_pin_is_default: true, entrance_photo_url: null, other_phones: [], opening_hours: [], services: [] });
+
+    expect(placed.pin).toEqual({ latitude: 6.4521, longitude: 7.5103 });
+    expect(placed.photoUrl).toBe(PHOTO);
+    expect(placed.removePhoto).toBe(false);
+    expect(unplaced.pin).toBeNull();
+    expect(unplaced.photoUrl).toBeUndefined();
   });
 
   it("makes a form that gives back the same body", () => {

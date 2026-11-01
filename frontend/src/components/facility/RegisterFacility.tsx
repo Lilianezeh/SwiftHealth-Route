@@ -14,6 +14,8 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
+import { LocationFields } from "@/components/facility/LocationFields";
+import { PhotoField } from "@/components/facility/PhotoField";
 import { CHOICE, FIELD, OpeningHours, OtherPhones, ServiceChoices } from "@/components/facility/RequestFields";
 import { PayOwnerFee } from "@/components/provider/PayOwnerFee";
 import { buttonClasses } from "@/components/ui/buttonStyles";
@@ -121,6 +123,9 @@ export function RegisterFacility({ call, onAskToManage, saved }: Props) {
     <section aria-labelledby="register-heading" className="flex flex-col gap-4">
       <h2 id="register-heading" className="text-xl font-bold text-forest">{saved ? "Your request" : "Register a new facility"}</h2>
       {saved && <p className="text-base font-semibold text-ink">{`Status: ${ownerStatusWords(saved.status, "draft")}`}</p>}
+      {saved?.change_note && (
+        <p className="rounded-2xl border border-line bg-amber-wash p-4 text-base font-semibold text-amber-ink">{`Our team asked: ${saved.change_note}`}</p>
+      )}
       {feeWords && <p className="rounded-2xl border border-line bg-pine-50 p-4 text-base text-ink">{feeWords}</p>}
       <p className="text-base text-ink">Our team checks every listing before it goes live. Nothing is public until then.</p>
       <form onSubmit={send} noValidate className="flex flex-col gap-4">
@@ -155,6 +160,13 @@ export function RegisterFacility({ call, onAskToManage, saved }: Props) {
           <input id="facility-landmark" maxLength={200} value={form.landmark} onChange={(event) => set("landmark", event.target.value)} className={FIELD} />
           <p className="text-base text-ink-soft">A place people know, for example &quot;Opposite the main market&quot;.</p>
         </div>
+        <LocationFields pin={form.pin} onChange={(pin) => set("pin", pin)} />
+        <PhotoField
+          call={call}
+          photoUrl={form.photoUrl}
+          onPhoto={(address) => setForm((current) => ({ ...current, photoUrl: address, removePhoto: false }))}
+          onRemove={() => setForm((current) => ({ ...current, photoUrl: undefined, removePhoto: saved?.entrance_photo_url != null }))}
+        />
         <div className="flex flex-col gap-1">
           <label htmlFor="facility-description" className="text-base font-semibold text-ink">Short description (optional)</label>
           <textarea id="facility-description" rows={3} maxLength={MAX_DESCRIPTION} value={form.description} onChange={(event) => set("description", event.target.value)} className={TEXTAREA} />

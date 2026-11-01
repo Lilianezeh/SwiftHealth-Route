@@ -10,7 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.api.dependencies import get_current_moment, get_session, require_role
 from app.models import User
 from app.models.base import Role
-from app.schemas.owner_link import ApproveLink, DecisionNote, LinkRead, QueueList
+from app.schemas.owner_link import ApproveLink, ChangesRequest, DecisionNote, LinkRead, QueueList
 from app.services import owner_link_service as service
 
 router = APIRouter(prefix="/staff/owner-requests", tags=["Staff"])
@@ -54,6 +54,26 @@ async def approve_request(
 ) -> LinkRead:
     try:
         link = await service.approve(session, staff, link_id, request.note, moment)
+    except EXPECTED as error:
+        raise _problem(error) from None
+    return LinkRead.model_validate(link)
+
+
+@router.post(
+    "/{link_id}/request-changes",
+    response_model=LinkRead,
+    summary="Staff: send a paid request back to its owner with a note (the owner edits and sends it again)",
+    responses=CONFLICT,
+)
+async def request_changes(
+    link_id: int,
+    request: ChangesRequest,
+    staff: User = Depends(require_role(Role.editor)),
+    moment: datetime = Depends(get_current_moment),
+    session: AsyncSession = Depends(get_session),
+) -> LinkRead:
+    try:
+        link = await service.request_changes(session, staff, link_id, request.note, moment)
     except EXPECTED as error:
         raise _problem(error) from None
     return LinkRead.model_validate(link)

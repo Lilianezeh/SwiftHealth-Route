@@ -16,6 +16,7 @@ from app.core.rate_limit import (
     forgot_ip_limiter,
     get_client_ip,
     login_limiter,
+    owner_upload_limiter,
     report_limiter,
     signup_limiter,
     submission_limiter,
@@ -30,7 +31,7 @@ __all__ = [
     "NO_PERMISSION_MESSAGE", "branch_rate_limit", "claim_rate_limit", "claimable_search_rate_limit",
     "forgot_rate_limit",
     "get_current_moment", "get_current_user", "get_session",
-    "login_rate_limit", "oauth2_scheme",
+    "login_rate_limit", "oauth2_scheme", "owner_upload_rate_limit",
     "require_listing_access", "report_rate_limit", "require_role", "signup_rate_limit",
     "submission_rate_limit", "verify_code_rate_limit",
 ]
@@ -128,6 +129,9 @@ submission_rate_limit = build_rate_limit_dependency(
 )
 branch_rate_limit = build_rate_limit_dependency(
     branch_limiter, "You've added several branches. Please try again tomorrow."
+)
+owner_upload_rate_limit = build_rate_limit_dependency(
+    owner_upload_limiter, "You've asked to upload many photos. Please try again tomorrow."
 )
 claim_rate_limit = build_rate_limit_dependency(
     claim_limiter, "You've sent several requests. Please try again tomorrow."

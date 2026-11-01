@@ -205,6 +205,7 @@ async def test_the_list_of_my_facilities_shows_every_link_with_its_state_and_not
         "link_id", "listing_id", "name", "area", "category", "role", "status", "requested_at",
         "paid_until", "fee_state",  # the owner fee
         "listing_status",  # the owner's "Published" (owner form, 2026-11-01)
+        "change_note",  # what staff asked to change (owner form, part (b))
     }
     assert "Somebody Else" not in response.text and "phone" not in response.text
 
@@ -260,10 +261,12 @@ async def test_the_queue_shows_the_pending_links_oldest_first_with_the_numbers_t
     }
     assert first_item["listing"]["name"] == "First Clinic"
     assert first_item["listing"]["phones"] == [
-        {"number": "+2340000000555", "label": None, "is_primary": True}
+        {"number": "+2340000000555", "label": None, "is_primary": True, "is_whatsapp": False}
     ]
     assert (second_item["role"], second_item["person"]["id"]) == ("manager", other.id)
-    assert set(first_item) == {"id", "role", "requested_at", "reason", "person", "listing"}
+    assert set(first_item) == {
+        "id", "role", "requested_at", "reason", "previous_change_note", "person", "listing",
+    }
     assert "password" not in response.text and "hash" not in response.text
 
 

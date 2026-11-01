@@ -4,6 +4,7 @@
  * facility may be claimed); a 422 and a 429 reach it with that status.
  */
 import { requestJson } from "@/lib/api/request";
+import type { UploadSignature } from "@/types/staff";
 
 export type FacilityRole = "owner" | "manager";
 
@@ -28,6 +29,9 @@ export type FacilityRegistration = {
   is_24_hours: boolean;
   opening_hours?: HoursEntry[];
   services?: string[];
+  latitude?: number; // the pin, with longitude; left out keeps the stored pin
+  longitude?: number;
+  entrance_photo_url?: string | null; // an address in the owner photo folder; left out keeps the photo, null removes it
   role: FacilityRole;
   notes?: string;
   save_as_draft: boolean;
@@ -53,6 +57,11 @@ export type SavedRequest = {
   is_24_hours: boolean;
   opening_hours: { day_of_week: number; opens_at: string | null; closes_at: string | null; is_closed: boolean }[];
   services: string[];
+  latitude: number;
+  longitude: number;
+  map_pin_is_default: boolean; // the pin was never placed: it is still the default centre
+  entrance_photo_url: string | null;
+  change_note: string | null; // what staff asked to change, while the request is "changes_requested"
 };
 
 export type ClaimableFacility = { id: number; name: string; area: string; category: { slug: string; name: string } };
@@ -72,6 +81,11 @@ export function getFacilityRequest(token: string, linkId: number): Promise<Saved
 /** Saves the request, and sends it unless `save_as_draft` is true. Only a draft or a request that needs changes can be saved (else 409). */
 export function saveFacilityRequest(token: string, linkId: number, registration: FacilityRegistration): Promise<RequestSaved & { listing_id: number }> {
   return requestJson(`/provider/requests/${linkId}`, { token, method: "PUT", body: registration });
+}
+
+/** The parameters for a direct upload of the entrance photo to the owner folder of Cloudinary (the same shape as the staff one). */
+export function signOwnerPhotoUpload(token: string): Promise<UploadSignature> {
+  return requestJson<UploadSignature>("/uploads/owner-sign", { token, method: "POST" });
 }
 
 export async function findClaimableFacilities(token: string, searchText: string, signal?: AbortSignal): Promise<ClaimableFacility[]> {

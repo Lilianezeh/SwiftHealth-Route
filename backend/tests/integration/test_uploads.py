@@ -115,3 +115,78 @@ async def test_a_broken_account_setting_is_also_503_and_leaks_nothing(
     response = await sign(client, demo_users[Role.verifier])
     assert response.status_code == 503
     assert "secret-456" not in response.text and "key-123" not in response.text
+
+
+# --- the owner's own folder (owner form, part (b), decision L3) ---
+
+
+async def sign_for_owner(client: AsyncClient, user: User | None):
+    headers = bearer_for(user) if user else {}
+    return await client.post("/uploads/owner-sign", headers=headers)
+
+
+async def test_a_facility_owner_gets_parameters_for_the_owner_folder_only(
+    client: AsyncClient, demo_users: dict[Role, User], clock: None, cloudinary_account: None
+) -> None:
+    response = await sign_for_owner(client, demo_users[Role.provider])
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["folder"] == "swifthealth/owner-entrances"
+    assert body["cloud_name"] == "demo-cloud"
+    assert body["signature"] == sign_parameters(
+        {"folder": "swifthealth/owner-entrances", "timestamp": str(int(NOW.timestamp()))}, SECRET
+    )
+    assert SECRET not in response.text and "api_secret" not in response.text
+
+
+async def test_the_owner_folder_is_for_owners_only_and_the_staff_folder_for_staff_only(
+    client: AsyncClient, demo_users: dict[Role, User], clock: None, cloudinary_account: None
+) -> None:
+    assert (await sign_for_owner(client, None)).status_code == 401
+    for role in (Role.verifier, Role.editor, Role.admin):
+        assert (await sign_for_owner(client, demo_users[role])).status_code == 403
+    assert (await sign(client, demo_users[Role.provider])).status_code == 403  # the staff folder
+
+
+async def test_the_owner_signature_is_signed_with_the_upload_preset_when_one_is_set(
+    client: AsyncClient,
+    demo_users: dict[Role, User],
+    clock: None,
+    cloudinary_account: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "cloudinary_upload_preset", "swifthealth_entrances")
+
+    body = (await sign_for_owner(client, demo_users[Role.provider])).json()
+
+    assert body["upload_preset"] == "swifthealth_entrances"
+    assert body["signature"] == sign_parameters(
+        {
+            "folder": "swifthealth/owner-entrances",
+            "timestamp": str(int(NOW.timestamp())),
+            "upload_preset": "swifthealth_entrances",
+        },
+        SECRET,
+    )
+
+
+async def test_signing_for_an_owner_is_limited_to_20_a_day_for_each_address(
+    client: AsyncClient, demo_users: dict[Role, User], clock: None, cloudinary_account: None
+) -> None:
+    provider = demo_users[Role.provider]
+    for _ in range(20):
+        assert (await sign_for_owner(client, provider)).status_code == 200
+
+    assert (await sign_for_owner(client, provider)).status_code == 429
+
+
+async def test_without_a_cloudinary_account_the_owner_answer_is_503(
+    client: AsyncClient, demo_users: dict[Role, User], clock: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "cloudinary_url", "")
+
+    response = await sign_for_owner(client, demo_users[Role.provider])
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Photo upload is not set up."}

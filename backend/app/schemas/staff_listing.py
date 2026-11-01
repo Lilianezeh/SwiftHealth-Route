@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.core.config import settings
 from app.core.phone import normalise_nigerian_phone
+from app.core.photo_address import check_cloudinary_address
 from app.core.service_catalogue import canonical_service_name
 from app.models.base import ListingStatus
 from app.schemas.admin_user import MAX_EMAIL_LENGTH, check_email
@@ -174,6 +175,11 @@ class _ListingFields(BaseModel):
     def trim_text(cls, text: str | None) -> str | None:
         return text.strip() or None if text is not None else None
 
+    @field_validator("entrance_photo_url", check_fields=False)
+    @classmethod
+    def photo_is_a_cloudinary_address(cls, address: str | None) -> str | None:
+        return check_cloudinary_address(address)
+
     @field_validator("email", check_fields=False)
     @classmethod
     def email_is_valid(cls, email: str | None) -> str | None:
@@ -227,6 +233,9 @@ class ListingUpdate(_ListingFields):
     longitude: float | None = Field(default=None, ge=-180, le=180)
     description: str | None = Field(default=None, max_length=1000)
     email: str | None = Field(default=None, max_length=MAX_EMAIL_LENGTH)
+    # A Cloudinary address; null removes the photo. A provider cannot send it (PROVIDER_FIELDS); an owner's
+    # photo goes through the owner form, which checks the owner folder.
+    entrance_photo_url: str | None = Field(default=None, max_length=500)
     is_24_hours: bool | None = None
     phones: list[PhoneInput] | None = None
     opening_hours: list[HoursInput] | None = None
