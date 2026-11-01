@@ -34,6 +34,8 @@ LISTING_CLOSURE_REVISION_FILE_PATTERN = "*_listing_closure.py"
 LISTING_BRANCHES_REVISION_FILE_PATTERN = "*_listing_branches.py"
 # Owner fee (facility_owners.paid_until), specs/2026-10-29-owner-fee/
 OWNER_FEE_REVISION_FILE_PATTERN = "*_owner_fee_paid_until.py"
+# Feature specs/2026-11-01-owner-form-fields/ (the facility's email, staff only)
+LISTING_EMAIL_REVISION_FILE_PATTERN = "*_listing_email.py"
 
 
 def revision_file(pattern: str = REVISION_FILE_PATTERN) -> Path:

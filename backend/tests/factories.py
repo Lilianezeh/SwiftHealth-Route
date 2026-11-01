@@ -93,7 +93,8 @@ async def add_owner_link(
     link is paid for a year (a request only reaches staff after the first payment), so a test about
     something else is not about the fee; pass a date, or None, to test the fee."""
     if paid_until == "default":
-        paid_until = utcnow() + timedelta(days=365) if status in ("pending", "approved", "ending") else None
+        is_paid = status in ("pending", "approved", "ending", "changes_requested")
+        paid_until = utcnow() + timedelta(days=365) if is_paid else None
     link = FacilityOwner(
         listing_id=listing.id, user_id=user.id, role=role, status=status,
         approved_at=utcnow() if status == "approved" else None,

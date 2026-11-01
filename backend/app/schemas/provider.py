@@ -10,6 +10,7 @@ from pydantic import ConfigDict, model_validator
 from app.schemas.staff_listing import ListingUpdate, StaffListingDetail
 
 PROVIDER_FIELDS = frozenset({"description", "services", "opening_hours", "phones"})
+# `email` is not here: an owner changes it only through their request form, and staff through the editor.
 
 
 class ProviderListing(StaffListingDetail):

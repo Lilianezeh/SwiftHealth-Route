@@ -35,8 +35,10 @@ UNPAID_CLOSE_REASON = "unpaid"
 class LinkStatus(str, Enum):
     """Where a facility link is. Plain text in `facility_owners.status`."""
 
+    draft = "draft"  # saved by the owner, not sent: no payment is asked and staff do not see it
     awaiting_payment = "awaiting_payment"  # asked for; the first month is not paid: staff do not see it
     pending = "pending"  # first month paid; staff have not phoned the facility yet
+    changes_requested = "changes_requested"  # paid; staff asked the owner to change something and send again
     approved = "approved"
     lapsed = "lapsed"  # the paid month and the grace period ended: no editing, the listing stays public
     ending = "ending"  # the owner cancelled: editing until the paid month ends, then removed

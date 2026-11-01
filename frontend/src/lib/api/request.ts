@@ -54,7 +54,7 @@ export type RequestOptions = {
   slowAfterMs?: number;
   timeoutMs?: number;
   body?: unknown; // sent as JSON; with a body the call is a POST unless `method` says otherwise
-  method?: "GET" | "POST" | "PATCH"; // a POST with no body is the staff status buttons
+  method?: "GET" | "POST" | "PATCH" | "PUT"; // a POST with no body is the staff status buttons; PUT saves a whole request
   token?: string; // the staff session's token, sent as `Authorization: Bearer ...` and never in an address
   csvBody?: string; // the text of a CSV file, sent as `text/csv` with a POST (the staff import)
   asText?: boolean; // return the answer as text, not as JSON (the staff CSV export)

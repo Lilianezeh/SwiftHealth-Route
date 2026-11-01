@@ -58,6 +58,7 @@ async def my_links(session: AsyncSession, user: User, moment: datetime) -> Owner
                 category=CategoryRef(slug=category.slug, name=category.name),
                 role=link.role,
                 status=link.status,
+                listing_status=listing.status.value,
                 requested_at=link.requested_at,
                 paid_until=link.paid_until,
                 fee_state=fee_state(link.status, link.paid_until, moment),
