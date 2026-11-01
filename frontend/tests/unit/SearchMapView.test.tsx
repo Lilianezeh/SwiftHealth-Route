@@ -4,7 +4,7 @@
  * tests are about the page: which view shows, what the address holds, and that nothing is asked twice.
  * The stand-in for the address lets a push or a replace change what `useSearchParams` returns, like the real router does.
  */
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -136,15 +136,17 @@ describe("the list is the default and is complete", () => {
 });
 
 describe("the map view", () => {
-  it("shows the map with the same results, and not the cards, for view=map", async () => {
+  it("shows the map with the same results AND the list under it, in the same order, for view=map (since 2026-11-01)", async () => {
     address.query = "view=map";
     stubApi({ search: () => json({ items: manyListings(3), total: 3 }) });
     render(<SearchPage />);
 
-    expect(await screen.findByTestId("results-map")).toBeInTheDocument();
+    const map = await screen.findByTestId("results-map");
 
     expect(pinNames()).toEqual(["Place 1", "Place 2", "Place 3"]);
-    expect(screen.queryByRole("article")).not.toBeInTheDocument();
+    expect(cardNames()).toEqual(["Place 1", "Place 2", "Place 3"]); // the list is sorted as the API sorted it: nearest first
+    const firstCard = screen.getAllByRole("article")[0];
+    expect(map.compareDocumentPosition(firstCard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // the map first, the list after it
     expect(screen.getByRole("button", { name: "Map" })).toHaveAttribute("aria-pressed", "true");
   });
 
@@ -224,8 +226,8 @@ describe("the map view", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Load more" }));
 
-    await screen.findByText("Place 25");
-    expect(pinNames()).toHaveLength(25);
+    await waitFor(() => expect(pinNames()).toHaveLength(25));
+    expect(cardNames()).toHaveLength(25);
     expect(screen.queryByRole("button", { name: "Load more" })).not.toBeInTheDocument();
   });
 });

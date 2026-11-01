@@ -98,8 +98,10 @@ for small text on both (the old `pine` did not on `paper`).
   code is downloaded; the photos and `/_next/static` are cached for a year (`netlify.toml`; a new photo gets a new file name); the header
   and the footer are server components (the route group of the page decides which one, see "Layout"); only the Menu button is client
   code; the site uses the system font stack, so no font blocks the text.
-- A visitor's position is kept in `sessionStorage` for the tab only, rounded to 3 decimals. It is never in a page address,
-  a cookie, `localStorage` or a log, and it is sent only as `lat` and `lng` to `GET /search`.
+- A visitor's position is kept **in memory only** (a variable of the page, rounded to 3 decimals; owner, 2026-11-01), so a reload
+  forgets it. It is never in a page address, a cookie, `localStorage`, `sessionStorage` or a log. It is sent to the API only in the
+  **body of `POST /search`** (never in a URL). The chosen area and the "refused" note stay in `sessionStorage`. A position left by an
+  older version under `swifthealth.position` is deleted when the page loads.
 - Images compressed; no large libraries on public pages except Leaflet on the map view.
 
 ### Standard states (every data screen)
@@ -225,9 +227,16 @@ FR-01, FR-03. **Purpose:** the app's start screen.
 3. Search box: "Search hospitals, pharmacies, labs…" → `/search?q=…`. It is a plain form (a GET to `/search`), so it works before any script has loaded.
 4. Category shortcuts (plain links): Hospitals `/search?category=hospital` · Clinics `clinic` · Pharmacies `pharmacy` · Maternity `maternity` · Labs `laboratory` · Blood (→ `/blood`, a "Coming soon" page until phase 8).
 5. "Open now near me" button → asks for the position (after the tap), then `/search?open_now=true`. The position is not in the address.
+5a. **Find care near me** (`FindNearMe`; owner, 2026-11-01; feature `specs/2026-11-01-maps-near-me/`): `h2` "Find care near me", the line "Choose the
+   kind of place. We ask your phone for your location only after you tap. We never keep it.", then the five types as 48 px buttons
+   ("Hospitals", "Clinics", "Maternity homes", "Pharmacies", "Laboratories"; accessible names "<plural> near me"). A tap asks the browser for the
+   position (once per tab; nothing is asked when the page opens). When allowed, the visitor goes to `/search?category=<type>&view=map`: the nearest places
+   of that type as pins on a map and, under it, the list sorted by distance, each pin opening the listing. When refused or not found, the
+   message "We could not use your location. Choose an area instead." and the area list appear, and choosing an area opens the list of that area for the
+   same type. The position is kept in memory only and sent in the body of `POST /search`; it is in no address, storage, log or tracking.
 6. **Near you** (once there is a position or a chosen area; before that, a "Show places near me" button and the area list): two cards, **Closest open pharmacy** (`category=pharmacy&open_now=true&limit=1`) and **Closest open 24-hour place** (`is_24_hours=true&limit=1`), each a `ListingCard`, then a button **See all open places near me** (`/search?open_now=true`). With an area and no position, the same two calls use `area=` and show no distance. The two cards load independently, but **never show the same place twice** (owner, 2026-10-13; feature `specs/2026-10-15-find-by-type/` D9): the pharmacy card asks for 1 result and the 24-hour card for 2 and shows the first that is not the pharmacy card's; if the only 24-hour place is that pharmacy, **one card carries both labels** and spans both columns; the 24-hour card waits for the pharmacy answer so it never shows a place and then replaces it. A card with no result says "No open pharmacy found nearby" or "No 24-hour place found nearby" with a link to search all places, never an empty card; a failed card shows its own error and Retry.
 **Location:** the browser asks for permission only after a tap on a button, and only once per tab (a refusal is remembered for the tab). If refused, show an area dropdown (from `GET /meta`).
-**A stored position is used only while the browser still allows it** (found in the phone test, 2026-10-10: a tab opened from a page gets a copy of its `sessionStorage`, so a position stored before the visitor blocked the site was still used). Before using a stored position, the pages ask the browser for the permission with `navigator.permissions.query({ name: "geolocation" })`. If it says `denied`, the stored position is deleted, the refusal is remembered for the tab, and the page behaves as for a refusal (the message "We could not use your location. Choose an area instead." and the area list); a chosen area is kept. `granted` and `prompt` keep the stored position. If the browser has no permission check, or the check fails, nothing changes: the stored position is used as before. Until the check has answered, results wait for it (one search, not two).
+**A kept position is used only while the browser still allows it** (found in the phone test, 2026-10-10, when the position was in `sessionStorage`; since 2026-11-01 it is in memory, and the check stays as a second guard). Before using a kept position, the pages ask the browser for the permission with `navigator.permissions.query({ name: "geolocation" })`. If it says `denied`, the stored position is deleted, the refusal is remembered for the tab, and the page behaves as for a refusal (the message "We could not use your location. Choose an area instead." and the area list); a chosen area is kept. `granted` and `prompt` keep the stored position. If the browser has no permission check, or the check fails, nothing changes: the stored position is used as before. Until the check has answered, results wait for it (one search, not two).
 
 ### 2.3 Search results — `/search`
 FR-04 to FR-08, US-01, US-05. **API:** `GET /search`, `GET /meta`.
@@ -236,7 +245,7 @@ FR-04 to FR-08, US-01, US-05. **API:** `GET /search`, `GET /meta`.
 3. Result count: "12 places, nearest first" with a position, "12 places, A to Z" without one.
 4. List of `ListingCard`s; sponsored card (if any) first with "Sponsored" tag.
 5. "Load more" button (pagination, 20 at a time; page state, not in the address).
-**URL holds all filters** (`/search?category=pharmacy&open_now=true`) so results can be shared, but **never the position** (`lat`, `lng`): it is read from `sessionStorage`. Applying filters replaces the address without adding history entries. A shared link opens with the filters set and, for the receiver, no position. The address may also hold `view=map` (see "Map view"); it is not a filter.
+**URL holds all filters** (`/search?category=pharmacy&open_now=true`) so results can be shared, but **never the position** (`lat`, `lng`): it is read from memory and sent in the body of `POST /search`. Applying filters replaces the address without adding history entries. A shared link opens with the filters set and, for the receiver, no position. The address may also hold `view=map` (see "Map view"); it is not a filter.
 **States:** skeleton cards while loading; after 5 seconds "The service is waking up. This can take up to a minute."; error with Retry after 45 seconds or on an error answer.
 **No pictures (owner, 2026-10-22; feature `specs/2026-10-22-home-photos/`):** this page, with or without a type, has no photo, illustration or "Designed by Magnific" credit. The type banners that `specs/2026-10-15-find-by-type/` added are removed. Icons of buttons and cards stay.
 **Heading and chip (owner, 2026-10-14 and 2026-10-15; feature `specs/2026-10-15-find-by-type/` D2 to D5).** The chosen type is the `category` in the address. The `h1` is
@@ -252,7 +261,8 @@ sits tight under it (16 px text, a 48 px tap area reaching below the text), only
 <launch city> and adding more places soon."** (the city from `siteConfig.launchCity`).
 
 **Map view** (phase 5B-2, FR-07; owner's decisions, 2026-10-11). The same results as the list, drawn on a map.
-- **View in the address.** `view=map` in the address shows the map; no `view`, or any other value, shows the list. The list is
+- **View in the address.** `view=map` in the address shows the map **and, under it, the same list of cards** (owner, 2026-11-01, so
+  "Find care near me" gives pins and a list sorted by distance); no `view`, or any other value, shows the list alone. The list is
   the default and is always complete: it is never replaced by the map. The toggle, a new search from the search box and
   Apply or Clear in the Filters sheet all keep `view=map`. Changing the view with the toggle **adds a history entry**
   (owner's decision, 2026-10-11), so Back from the map returns to the list; tapping the view that is already shown does nothing.
@@ -267,10 +277,11 @@ sits tight under it (16 px text, a 48 px tap area reaching below the text), only
   contributors", linking to <https://www.openstreetmap.org/copyright>, is always visible on the map (Leaflet's attribution
   control), at 16 px and wrapping at 320 px. The tile provider is to be reviewed before launch (`LOG.md`).
 - **Pins.** Drawn in code as a small inline SVG (a Leaflet `divIcon`), no image files. Blue (`forest`) with a white border and a
-  white plus, so it reads on any tile. Never red: red belongs to emergency actions. Every pin looks the same: a sponsored
+  white plus, so it reads on any tile. Never red: red belongs to emergency actions. (The one exception is the single-facility pin of
+  the listing page, 2.4, and the owner's pin picker: a red pin with a white dot, never a cross; owner, 2026-11-01. Results pins stay blue.) Every pin looks the same: a sponsored
   result has the same pin (its popup shows "Sponsored"). A result with no real position (not a number, or outside
   -90..90 and -180..180) gets no pin, and the map says "N places have no position on the map. Switch to List to see them."
-- **The visitor's position** (only when there is one, from `sessionStorage`): a dark (`ink`) dot with a white ring, round where
+- **The visitor's position** (only when there is one, from memory): a dark (`ink`) dot with a white ring, round where
   the pins are pointed, never red, not clickable and not a tab stop. A line under the map says "● Your position" so the
   meaning does not depend on colour. With only a chosen area, there is no dot.
 - **Opening the map.** It fits all the pins (and the dot when there is one) with some padding; one pin gives a close zoom; the
@@ -285,7 +296,7 @@ sits tight under it (16 px text, a 48 px tap area reaching below the text), only
 
 ### 2.4 Listing page — `/listing/[slug]`
 FR-09 to FR-13, FR-47, US-02, US-03, US-06, US-07. **API:** `GET /listings/{slug}`. Full detail, with the owner's answers of 2026-10-13: `specs/2026-10-13-listing-page/requirements.md`.
-**Loading:** in the browser, like `/search` (skeleton, "The service is waking up" after 5 s, Retry after 45 s); no query string; no map; every link `prefetch={false}`.
+**Loading:** in the browser, like `/search` (skeleton, "The service is waking up" after 5 s, Retry after 45 s); no query string; every link `prefetch={false}`. The map (item 5a) is loaded by `next/dynamic` only when the page shows it, so the page's first code stays small.
 1. If `recently_reported_not_working`: the amber note "Recently reported as not working. Call before you go." at the top (never red).
 2. Name, category, `OpenNowBadge`, `hours_note`, `VerifiedDate` (and "Verification due" when it applies). Each badge **fits its content**, as on the
    search cards: none stretches across the page.
@@ -295,6 +306,13 @@ FR-09 to FR-13, FR-47, US-02, US-03, US-06, US-07. **API:** `GET /listings/{slug
    **Directions** (the diamond road-sign icon). **The main number is also shown as text** right under the buttons in the reading format
    ("Front desk · 0803 123 4567"), so a visitor can read it or save it.
 4. Address and landmark; the entrance photo (`https://` only, lazy, fixed size, alt "Entrance of <name>").
+5a. **Map** (owner, 2026-11-01; feature `specs/2026-11-01-maps-near-me/`): `h2` "Map", then a small map (`FacilityMap`, 256 px high, full
+   width, zoom 16, OpenStreetMap tiles) with **one red pin exactly at the listing's latitude and longitude** (a teardrop, `#b3261e`, white
+   outline and white dot; **never a cross or a plus**; the same red in Light and Dark so it reads on any tile). The pin is not a link; it has
+   the accessible name of the facility. Under the map a line of 16 px text gives the coordinates ("Pin at 6.45210, 7.50980"). The map does
+   not capture the page scroll (no wheel zoom, and on a phone one finger scrolls the page). Shown only when the listing has real
+   coordinates; otherwise no map and no gap. The map code is loaded by `next/dynamic` (browser only) so the listing page stays light.
+   **Directions** (item 3) opens Google Maps with `destination=<latitude>,<longitude>`, never the address text.
 5. Other phone numbers (label, the number in the reading format, their own Call and, if marked, WhatsApp buttons).
 6. Opening hours for the week in **12-hour time**; today highlighted with the word "Today" (Lagos time); past midnight "8:00 PM – 2:00 AM (next day)";
    closed days "Closed"; a 24-hour listing shows **"Open 24 hours, every day"** instead of the table.

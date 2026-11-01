@@ -27,14 +27,20 @@ const NIGHT_PHARMACY: ListingSummary = {
 };
 
 let requestedUrls: URL[];
+let requests: { method: string; body: Record<string, unknown> | undefined }[];
 
 beforeEach(() => {
   requestedUrls = [];
+  requests = [];
   const answer: SearchResponse = { items: [NIGHT_PHARMACY], total: 37 };
   vi.stubGlobal(
     "fetch",
-    vi.fn(async (url: string) => {
+    vi.fn(async (url: string, init?: RequestInit) => {
       requestedUrls.push(new URL(url));
+      requests.push({
+        method: init?.method ?? "GET",
+        body: init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : undefined,
+      });
       return new Response(JSON.stringify(answer), { status: 200 });
     }),
   );
@@ -73,17 +79,26 @@ describe("searchListings", () => {
     expect([...requestedUrls[0].searchParams.keys()].sort()).toEqual(["limit", "offset"]);
   });
 
-  it("sends lat and lng together as plain numbers", async () => {
-    await searchListings({ open_now: true }, { latitude: 6.451, longitude: 7.51 });
+  it("sends lat and lng together as plain numbers, in the BODY of a POST, never in the address (NFR-07)", async () => {
+    await searchListings({ open_now: true, category: "pharmacy" }, { latitude: 6.451, longitude: 7.51 });
 
-    const parameters = requestedUrls[0].searchParams;
-    expect(parameters.get("lat")).toBe("6.451");
-    expect(parameters.get("lng")).toBe("7.51");
+    expect(requests[0].method).toBe("POST");
+    expect(requests[0].body).toMatchObject({ lat: 6.451, lng: 7.51, open_now: true, category: "pharmacy" });
+    expect(requestedUrls[0].pathname).toBe("/search");
+    expect(requestedUrls[0].search).toBe(""); // nothing after the path: no lat, no lng, no filter
+    expect(requestedUrls[0].href).not.toMatch(/6\.451|7\.51/);
   });
 
-  it("sends no lat and no lng without a position", async () => {
+  it("keeps the filters, the page and the distance in the body next to the position", async () => {
+    await searchListings({ q: " night ", radius_km: 20 }, { latitude: 6.451, longitude: 7.51 }, { limit: 5, offset: 10 });
+
+    expect(requests[0].body).toEqual({ q: "night", lat: 6.451, lng: 7.51, radius_km: 20, limit: 5, offset: 10 });
+  });
+
+  it("sends no lat and no lng, as a plain GET, without a position", async () => {
     await searchListings({ radius_km: 5 }, null);
 
+    expect(requests[0]).toEqual({ method: "GET", body: undefined });
     expect(requestedUrls[0].searchParams.has("lat")).toBe(false);
     expect(requestedUrls[0].searchParams.has("lng")).toBe(false);
   });
@@ -93,7 +108,7 @@ describe("searchListings", () => {
     await searchListings({ radius_km: 20 }, { latitude: 6.451, longitude: 7.51 });
 
     expect(requestedUrls[0].searchParams.has("radius_km")).toBe(false);
-    expect(requestedUrls[1].searchParams.get("radius_km")).toBe("20");
+    expect(requests[1].body?.radius_km).toBe(20);
   });
 
   it("sends the page: 20 at a time by default, and the offset for Load more", async () => {

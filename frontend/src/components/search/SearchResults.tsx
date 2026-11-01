@@ -104,7 +104,10 @@ export function SearchResults() {
         hasFilter={Object.keys(filters).length > 0}
         onRetry={results.retry}
       />
-      {showMap ? <ResultsMap listings={results.items} position={position} /> : <ResultsList items={results.items} />}
+      {/* The map view is the map AND the list under it (find care near me, 2026-11-01): pins that open the listing, and the same
+          places as cards, in the order the API gave (nearest first when there is a position). */}
+      {showMap && <ResultsMap listings={results.items} position={position} />}
+      <ResultsList items={results.items} />
       {results.loadMoreFailed && (
         <p className="text-base text-ink">We couldn&apos;t load more. Check your connection and try again.</p>
       )}

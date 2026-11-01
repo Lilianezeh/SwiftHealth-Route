@@ -129,10 +129,7 @@ for (const { width, height } of WIDTHS) {
 test.describe("what the type pages send", () => {
   test.use({ viewport: { width: 375, height: 667 } });
 
-  test("a stored position is never in the address; one search for a typed word", async ({ page }) => {
-    await page.addInitScript(() =>
-      window.sessionStorage.setItem("swifthealth.position", JSON.stringify({ latitude: 6.101, longitude: 7.202 })),
-    );
+  test("one search for a typed word, and the address holds no position", async ({ page }) => {
     const searches: Request[] = [];
     page.on("request", (request) => {
       // The API's searches only (they carry `limit`). The page itself is also at /search, and replacing its address makes the site fetch
@@ -149,5 +146,28 @@ test.describe("what the type pages send", () => {
     // The typed word was turned into the category before the first search: no request ever carried q=pharmacies.
     expect(searches.some((request) => request.url().includes("q=pharmacies"))).toBe(false);
     expect(searches.filter((request) => request.url().includes("category=pharmacy"))).toHaveLength(1);
+  });
+
+  test("Find care near me: the position goes in the body of a POST, never in an address, and is not stored", async ({ page, context }) => {
+    await context.grantPermissions(["geolocation"]);
+    await context.setGeolocation({ latitude: 6.45212, longitude: 7.50987 }); // inside the demo data of Enugu, so there are pins
+    const searches: Request[] = [];
+    page.on("request", (request) => {
+      if (new URL(request.url()).pathname === "/search" && request.method() === "POST") searches.push(request);
+    });
+    const addresses: string[] = [];
+    page.on("request", (request) => addresses.push(request.url()));
+    await page.goto("/find", { waitUntil: "load" });
+
+    await page.getByRole("button", { name: "Pharmacies near me" }).click();
+
+    await expect(page).toHaveURL(/\/search\?category=pharmacy&view=map$/, { timeout: 60_000 });
+    await expect.poll(() => searches.length, { timeout: 60_000 }).toBeGreaterThan(0);
+    expect(JSON.parse(searches[0].postData() ?? "{}")).toMatchObject({ category: "pharmacy", lat: 6.452, lng: 7.51 }); // rounded to 3 decimals
+    expect(addresses.filter((address) => /lat=|lng=|6\.45|7\.50|7\.51/.test(address))).toEqual([]); // not in the page address, not in any call
+    const stored = await page.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }) + document.cookie);
+    expect(stored).not.toMatch(/6\.45|7\.50|7\.51/);
+    await expect(page.getByRole("region", { name: "Map of the search results" })).toBeVisible({ timeout: 60_000 }); // the map ...
+    await expect(page.getByRole("article").first()).toBeVisible(); // ... and the list under it
   });
 });

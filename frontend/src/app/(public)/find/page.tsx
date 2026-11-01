@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CategoryShortcuts } from "@/components/search/CategoryShortcuts";
+import { FindNearMe } from "@/components/search/FindNearMe";
 import { NearYou } from "@/components/search/NearYou";
 import { SearchBox } from "@/components/search/SearchBox";
 import { buttonClasses } from "@/components/ui/buttonStyles";
@@ -35,6 +36,7 @@ export default function FindPage() {
           <SearchBox />
           <CategoryShortcuts />
         </section>
+        <FindNearMe />
         <NearYou />
       </div>
     </>

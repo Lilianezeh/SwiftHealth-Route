@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ListingPage from "@/app/(public)/listing/[slug]/page";
 import { ListingDetailView } from "@/components/listing/ListingDetailView";
+import { savePosition } from "@/lib/location/locationStore";
 
 import { makeListing, OTHER_PHONE, PRIMARY_PHONE } from "../helpers/listing";
 
@@ -19,6 +20,15 @@ vi.mock("next/link", async () => {
   return {
     default: ({ href, prefetch, children, ...rest }: { href: string; prefetch?: boolean | null; children?: React.ReactNode }) =>
       createElement("a", { href, "data-prefetch": String(prefetch), ...rest }, children),
+  };
+});
+
+// The real map (Leaflet) has its own tests in FacilityMap.test.tsx. Here it is a stand-in that says where it was asked to put the pin.
+vi.mock("@/components/map/FacilityMap", async () => {
+  const { createElement } = await import("react");
+  return {
+    FacilityMap: ({ name, latitude, longitude }: { name: string; latitude: number; longitude: number }) =>
+      createElement("div", { "data-testid": "facility-map", "data-name": name, "data-position": `${latitude},${longitude}` }),
   };
 });
 
@@ -267,9 +277,49 @@ describe("a listing that is not there, and a failure", () => {
   });
 });
 
+describe("the map and the directions (specs/2026-11-01-maps-near-me/)", () => {
+  it("shows a Map section with the pin at the facility's own coordinates", async () => {
+    answerWith(200, makeListing({ latitude: 6.4521, longitude: 7.5103 }));
+    render(<ListingDetailView slug="night-pharmacy-a" />);
+
+    const map = await screen.findByTestId("facility-map");
+
+    expect(map).toHaveAttribute("data-position", "6.4521,7.5103");
+    expect(map).toHaveAttribute("data-name", "Night Pharmacy A");
+    expect(screen.getByRole("heading", { level: 2, name: "Map" })).toBeInTheDocument();
+  });
+
+  it("puts the map after the address and before the photo, so the address text still comes first", async () => {
+    answerWith(200, makeListing());
+    const { container } = render(<ListingDetailView slug="night-pharmacy-a" />);
+    await screen.findByTestId("facility-map");
+
+    const order = [...container.querySelectorAll("h2")].map((heading) => heading.textContent);
+    expect(order.indexOf("Address")).toBeLessThan(order.indexOf("Map"));
+  });
+
+  it("opens Google Maps directions with the coordinates (destination=lat,lng), never the address text", async () => {
+    answerWith(200, makeListing({ latitude: 6.4521, longitude: 7.5103, address: "12 Example Road, New Haven" }));
+    render(<ListingDetailView slug="night-pharmacy-a" />);
+
+    const directions = await screen.findByRole("link", { name: /Directions to Night Pharmacy A/ });
+
+    expect(directions).toHaveAttribute("href", "https://www.google.com/maps/dir/?api=1&destination=6.4521,7.5103");
+    expect(decodeURIComponent(directions.getAttribute("href") ?? "")).not.toMatch(/Example Road|New Haven/);
+  });
+
+  it("draws no map for a listing whose position is not real, and says so in words instead of failing", async () => {
+    answerWith(200, makeListing({ latitude: Number.NaN }));
+    render(<ListingDetailView slug="night-pharmacy-a" />);
+    await screen.findByRole("heading", { level: 1 });
+
+    expect(screen.queryByTestId("facility-map")).toBeNull();
+  });
+});
+
 describe("privacy and size (NFR-07, NFR-01)", () => {
   it("never reads the visitor's position: a stored position appears in no link, no message and no request", async () => {
-    window.sessionStorage.setItem("swifthealth.position", JSON.stringify({ latitude: 6.123, longitude: 7.456 }));
+    savePosition({ latitude: 6.123, longitude: 7.456 }); // the position is kept in memory now (specs/2026-11-01-maps-near-me/)
     answerWith(200, makeListing({ phones: [{ ...PRIMARY_PHONE, number: "+2348030000000", is_whatsapp: true }] }));
     const { container } = render(<ListingDetailView slug="night-pharmacy-a" />);
     await screen.findByRole("heading", { level: 1 });
@@ -290,7 +340,7 @@ describe("privacy and size (NFR-07, NFR-01)", () => {
     for (const link of internal) expect(link.getAttribute("data-prefetch"), link.textContent ?? "").toBe("false");
   });
 
-  it("loads no map, no chart and no next/image: none of its files imports them", () => {
+  it("loads the map only when the page is shown, in the browser: no file of the page imports Leaflet or a chart or next/image", () => {
     const folder = join(process.cwd(), "src", "components", "listing");
     const files = readdirSync(folder).map((name) => join(folder, name));
     files.push(

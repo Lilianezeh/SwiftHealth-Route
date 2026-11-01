@@ -203,6 +203,8 @@ FR-04 to FR-08, US-01, US-05. Open-now, nearest-first search over trusted listin
 **Privacy (NFR-07):** `lat` and `lng` are a visitor's position. They are used for this request only. The server logs must never keep
 them: the API access log shows `lat=redacted&lng=redacted`.
 
+**`POST /search` (2026-11-01, `specs/2026-11-01-maps-near-me/`): the same search with the position in the BODY.** A position in a GET is in the address, and a hosting platform may log an address before our code can redact it. So **the website sends a visitor's position only in the body of `POST /search`**; `GET /search` is used without one. The body is a JSON object with the same fields as the query (`q`, `category`, `service`, `area`, `open_now`, `is_24_hours`, `lat`, `lng`, `radius_km`, `limit`, `offset`) and the same rules; the answer is the same `{ "items", "total" }`. A bad field is 422 with `[{ "loc", "msg", "type" }]` and **never repeats a value** (the position is not echoed). `GET /search` still accepts `lat` and `lng` for other clients, with the log redaction above; the blood and emergency endpoints still take them in the query (not changed). **Tests:** `tests/integration/test_search_post.py`.
+
 **Response 200:** `{ "items": [ListingSummary], "total": 37 }`
 
 **Tests:** past-midnight open/closed (01:30 vs 03:00) · distance order · flagged listing excluded · overdue listing labelled `verification_due` · draft never returned · only one sponsored item · a featured listing comes first with `sponsored: true` and is not repeated · an ended period, an emergency category and a listing that does not match the filters are not sponsored · with two featured listings the first in the normal order wins · `total` and paging stay right.

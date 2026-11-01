@@ -25,6 +25,25 @@ export function createPinIcon(): L.DivIcon {
   });
 }
 
+// The pin of ONE facility on its listing page and, draggable, in the owner's form (specs/2026-11-01-maps-near-me/): a RED teardrop with
+// a white round dot. It has no plus and no cross (the red cross is a health-service symbol we must not use); the blue pins of the
+// results map are unchanged. The red is fixed in map.css, because the map tiles stay light in both modes.
+const FACILITY_PIN_HTML =
+  '<svg class="facility-pin__shape" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 46" width="36" height="46" aria-hidden="true" focusable="false">' +
+  '<path class="facility-pin__body" d="M18 45C10 35 2 26 2 17a16 16 0 0 1 32 0c0 9-8 18-16 28z"/>' +
+  '<circle class="facility-pin__dot" cx="18" cy="17" r="6"/>' +
+  "</svg>";
+
+/** The red pin of one facility. Its tip is at the bottom centre of the 48 px box, exactly on the coordinates. */
+export function createFacilityPinIcon(): L.DivIcon {
+  return L.divIcon({
+    html: FACILITY_PIN_HTML,
+    className: "facility-pin",
+    iconSize: [PIN_BOX, PIN_BOX],
+    iconAnchor: [PIN_BOX / 2, PIN_BOX],
+  });
+}
+
 /** The visitor's own position: a round dot, a different shape from the pins. It says nothing to screen readers; the line
  * "Your position" under the map does.
  */

@@ -4,8 +4,10 @@
  * Spec: specs/2026-10-13-listing-page/requirements.md; UI spec 2.4. The free API can take a minute to wake and the hosting gives up on a
  * server page after about 30 seconds, so the page shows a skeleton, then "The service is waking up", then Retry (hooks/useListing.ts).
  * Order: the reported notice, the name and badges, the contact buttons, the address and photo, the other numbers, the hours, the services
- * and fees, share and report, the disclaimer. No map, no position, no chart: this page stays small.
+ * and fees, share and report, the disclaimer. A small map with one red pin at the facility's coordinates follows the address (it is loaded
+ * only here, in the browser); the visitor's position is never read; no chart: this page stays small.
  */
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -24,6 +26,11 @@ import { VerifiedDate } from "@/components/listings/VerifiedDate";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { brand } from "@/config/brand";
 import { useListing } from "@/hooks/useListing";
+import { hasRealCoordinates } from "@/lib/map/coordinates";
+
+// The map library needs the browser (window), and the page should stay small (NFR-01): no server rendering, and the map code is
+// fetched only when the page has loaded the listing and shows the map.
+const FacilityMap = dynamic(() => import("@/components/map/FacilityMap").then((module) => module.FacilityMap), { ssr: false });
 
 type ListingDetailViewProps = { slug: string };
 
@@ -99,6 +106,15 @@ export function ListingDetailView({ slug }: ListingDetailViewProps) {
         <p className="mt-2 text-base text-ink">{listing.address}</p>
         {listing.landmark && <p className="text-base text-ink-soft">Landmark: {listing.landmark}</p>}
       </section>
+
+      {hasRealCoordinates(listing) && (
+        <section aria-labelledby="map-heading" className="flex flex-col gap-2">
+          <h2 id="map-heading" className="text-xl font-bold text-forest">
+            Map
+          </h2>
+          <FacilityMap name={listing.name} latitude={listing.latitude} longitude={listing.longitude} />
+        </section>
+      )}
 
       <EntrancePhoto url={listing.entrance_photo_url} facilityName={listing.name} />
       <OtherPhones phones={otherPhones} facilityName={listing.name} />
