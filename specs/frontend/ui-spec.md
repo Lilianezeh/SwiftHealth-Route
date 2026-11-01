@@ -100,7 +100,7 @@ for small text on both (the old `pine` did not on `paper`).
   code; the site uses the system font stack, so no font blocks the text.
 - A visitor's position is kept **in memory only** (a variable of the page, rounded to 3 decimals; owner, 2026-11-01), so a reload
   forgets it. It is never in a page address, a cookie, `localStorage`, `sessionStorage` or a log. It is sent to the API only in the
-  **body of `POST /search`** (never in a URL). The chosen area and the "refused" note stay in `sessionStorage`. A position left by an
+  **body of a POST** (`POST /search`, `POST /blood/banks`, `POST /blood/donation-centres`, `POST /emergency`; never in a URL). The chosen area and the "refused" note stay in `sessionStorage`. A position left by an
   older version under `swifthealth.position` is deleted when the page loads.
 - Images compressed; no large libraries on public pages except Leaflet on the map view.
 

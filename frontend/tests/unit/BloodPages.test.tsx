@@ -12,19 +12,23 @@ import { DONOR_GUIDANCE } from "@/config/donorGuidance";
 import { BLOOD_COPY_KEY, readBloodCopy, saveBloodCopy } from "@/lib/blood/offlineCopy";
 import { savePosition } from "@/lib/location/locationStore";
 
-import { json, neverAnswers, stubGeolocation } from "../helpers/api";
+import { askedSearch, json, neverAnswers, stubGeolocation } from "../helpers/api";
 import { bloodBank, donationCentre } from "../helpers/blood";
 import { readSource } from "../helpers/source";
 
 type Handler = (parameters: URLSearchParams, signal?: AbortSignal) => Response | Promise<Response>;
 
+/** `requests` has what each call asked for: the fields of its address, plus the fields of its JSON body (a call with the visitor's
+ * position is a POST, which is how it travels since 2026-11-01). `addresses` has the real addresses, which must hold no position. */
 function stubBlood(handlers: { banks?: Handler; centres?: Handler } = {}) {
   const requests: URL[] = [];
+  const addresses: URL[] = [];
   const empty: Handler = () => json({ items: [], total: 0 });
   vi.stubGlobal(
     "fetch",
     vi.fn(async (address: string, init?: RequestInit) => {
-      const url = new URL(address);
+      addresses.push(new URL(address));
+      const url = askedSearch(new URL(address), init);
       requests.push(url);
       const signal = init?.signal ?? undefined;
       if (url.pathname === "/blood/banks") return (handlers.banks ?? empty)(url.searchParams, signal);
@@ -32,7 +36,12 @@ function stubBlood(handlers: { banks?: Handler; centres?: Handler } = {}) {
       return json({ detail: "Not found" }, 404);
     }),
   );
-  return { requests, banks: () => requests.filter((url) => url.pathname === "/blood/banks"), centres: () => requests.filter((url) => url.pathname === "/blood/donation-centres") };
+  return {
+    requests,
+    addresses,
+    banks: () => requests.filter((url) => url.pathname === "/blood/banks"),
+    centres: () => requests.filter((url) => url.pathname === "/blood/donation-centres"),
+  };
 }
 
 beforeEach(() => {
@@ -140,10 +149,12 @@ describe("Find blood", () => {
 
   it("with a position already allowed on another page sends it once, shows distances, and says nearest first", async () => {
     savePosition({ latitude: 6.452, longitude: 7.51 });
-    const { banks } = stubBlood({ banks: () => json({ items: [bloodBank({ distance_km: 1.4 })], total: 1 }) });
+    const { banks, addresses } = stubBlood({ banks: () => json({ items: [bloodBank({ distance_km: 1.4 })], total: 1 }) });
     render(<BloodPage />);
 
     const card = await screen.findByRole("article");
+    // The position travels in the body of a POST: no address the browser asked for holds it (NFR-07).
+    expect(addresses.some((address) => /lat|lng|6\.452|7\.51/.test(address.search))).toBe(false);
 
     // The list on screen asks with the position, once (the copy for offline use is a separate quiet request without it).
     const withPosition = banks().filter((request) => request.searchParams.has("lat"));
@@ -304,7 +315,7 @@ describe("Donate blood", () => {
 
   it("uses the position the same way: only after a tap, and never in the address", async () => {
     const getCurrentPosition = stubGeolocation({ latitude: 6.452, longitude: 7.51 });
-    const { centres } = stubBlood({ centres: () => json({ items: [donationCentre({ distance_km: 2.1 })], total: 1 }) });
+    const { centres, addresses } = stubBlood({ centres: () => json({ items: [donationCentre({ distance_km: 2.1 })], total: 1 }) });
     render(<DonateBloodPage />);
     const button = await screen.findByRole("button", { name: "Show donation centres near me" });
     expect(getCurrentPosition).not.toHaveBeenCalled();
@@ -312,6 +323,7 @@ describe("Donate blood", () => {
     await userEvent.click(button);
 
     await waitFor(() => expect(centres().at(-1)?.searchParams.get("lat")).toBe("6.452"));
+    expect(addresses.some((address) => /lat|lng|6\.452|7\.51/.test(address.search))).toBe(false); // it is in a POST body (NFR-07)
     expect(await screen.findByText(/Abakpa Nike · 2\.1 km/)).toBeInTheDocument();
     expect(window.location.search).toBe("");
   });

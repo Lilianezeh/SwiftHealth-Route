@@ -30,12 +30,16 @@ describe("getEmergency", () => {
     expect(requests[0].search).toBe("");
   });
 
-  it("sends lat and lng together when there is a position", async () => {
-    const { requests } = stubApi({});
+  it("sends lat and lng together, in the body of a POST and not in the address, when there is a position", async () => {
+    const { requests, fetchStub, emergencies } = stubApi({});
 
     await getEmergency(POSITION);
 
-    expect(Object.fromEntries(requests[0].searchParams)).toEqual({ lat: "6.452", lng: "7.51" });
+    expect(Object.fromEntries(emergencies()[0].searchParams)).toEqual({ lat: "6.452", lng: "7.51" });
+    expect(requests[0].pathname).toBe("/emergency");
+    expect(requests[0].search).toBe(""); // nothing in the address (NFR-07)
+    expect(fetchStub.mock.calls[0][1]).toMatchObject({ method: "POST" });
+    expect(JSON.parse(String(fetchStub.mock.calls[0][1]?.body))).toEqual({ lat: 6.452, lng: 7.51 });
   });
 });
 
@@ -65,14 +69,14 @@ describe("useEmergency", () => {
   it("with a position makes a first request without it (the one that is saved) and a second with it", async () => {
     const withDistance = emergencyResponse();
     withDistance.groups[0].contacts[0].distance_km = 1.4;
-    const { requests } = stubApi({
+    const { emergencies } = stubApi({
       emergency: (parameters) => json(parameters.has("lat") ? withDistance : emergencyResponse()),
     });
     const { result } = renderHook(() => useEmergency(POSITION, true));
 
     await waitFor(() => expect(result.current.response?.groups[0].contacts[0].distance_km).toBe(1.4));
 
-    expect(requests.map((url) => url.searchParams.has("lat"))).toEqual([false, true]);
+    expect(emergencies().map((url) => url.searchParams.has("lat"))).toEqual([false, true]);
     expect(window.localStorage.getItem(OFFLINE_COPY_KEY)).not.toContain("1.4");
     expect(result.current.status).toBe("ready");
   });

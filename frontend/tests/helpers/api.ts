@@ -80,7 +80,7 @@ type SearchHandler = (parameters: URLSearchParams, signal?: AbortSignal) => Resp
 /** The search a request asked for, as an address with the filters AND the position: a plain GET has them in its address, a POST (which
  * is how the position travels since 2026-11-01, api-spec "POST /search") has them in its JSON body. `searches()` gives these, so a test
  * reads `searchParams.get("lat")` either way; `searchAddresses()` gives the real addresses, which must never hold a position. */
-function askedSearch(url: URL, init?: RequestInit): URL {
+export function askedSearch(url: URL, init?: RequestInit): URL {
   if (!init?.body) return url;
   const asked = new URL(url);
   for (const [name, value] of Object.entries(JSON.parse(String(init.body)) as Record<string, unknown>)) {
@@ -97,12 +97,15 @@ export function stubApi(handlers: {
 }) {
   const requests: URL[] = [];
   const asked: URL[] = [];
+  const askedEmergency: URL[] = [];
   const fetchStub = vi.fn(async (address: string, init?: RequestInit) => {
     const url = new URL(address);
     requests.push(url);
     if (url.pathname === "/meta") return (handlers.meta ?? (() => json(META)))();
     if (url.pathname === "/emergency") {
-      return (handlers.emergency ?? (() => json(emergencyResponse())))(url.searchParams, init?.signal ?? undefined);
+      const emergency = askedSearch(url, init); // the position is in the body of a POST (2026-11-01)
+      askedEmergency.push(emergency);
+      return (handlers.emergency ?? (() => json(emergencyResponse())))(emergency.searchParams, init?.signal ?? undefined);
     }
     if (url.pathname === "/search") {
       const search = askedSearch(url, init);
@@ -117,6 +120,8 @@ export function stubApi(handlers: {
     fetchStub,
     searches: () => asked,
     searchAddresses: () => requests.filter((url) => url.pathname === "/search"),
+    /** The emergency calls with their position (from the body of a POST); `requests` has the real addresses, which hold none. */
+    emergencies: () => askedEmergency,
   };
 }
 
