@@ -28,7 +28,7 @@ async def run_job(factory: async_sessionmaker[AsyncSession], moment: datetime) -
         result = await run_on(session, moment)
     print(
         f"{result.lapsed} lapsed, {result.ended} ended, {result.reminders} reminders sent, "
-        f"{result.refunds_done} refunds done."
+        f"{result.refunds_done} refunds done, {result.unpaid_closed} unpaid requests closed."
     )
 
 

@@ -10,13 +10,15 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Listing, VerificationCheck
 from app.models.base import CheckResult, ListingStatus
-from app.repositories.listing_repository import RECHECK_STATUSES
+from app.repositories.listing_repository import RECHECK_STATUSES, not_an_unpaid_request
 
 LAGOS_ZONE = "Africa/Lagos"
 
 
 async def count_by_status(session: AsyncSession) -> dict[ListingStatus, int]:
-    rows = await session.exec(select(Listing.status, func.count()).group_by(Listing.status))
+    rows = await session.exec(
+        select(Listing.status, func.count()).where(not_an_unpaid_request()).group_by(Listing.status)
+    )
     return {status: count for status, count in rows}
 
 

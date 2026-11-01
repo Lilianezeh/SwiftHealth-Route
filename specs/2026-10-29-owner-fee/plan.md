@@ -28,5 +28,9 @@ Requirements: [requirements.md](requirements.md). Contracts: `api-spec.md` secti
 - [x] `PayOwnerFee`, `FeeComplete` (+ page `/provider/fee-complete`), `MyFacilities`, `MyPayments`, register/claim success, `OwnerRequests` refund words.
 - [ ] Playwright at 360 and 1280 px, Light and Dark, Lighthouse accessibility on the changed pages: **not run** (memory); see validation.md.
 
+## Phase 6: clean-up of unpaid requests (owner's request, 2026-11-01)
+- [x] Tests first: `test_owner_fee_unpaid.py` (15): 14 days (older than, not equal; a setting), only `awaiting_payment` links, a claim on a published listing only ends the request, a draft with another live link or made by staff is not closed, safe to run twice, staff never see it (list, dashboard, export, queue), the row is never deleted, the same person can register again.
+- [x] `core/config.py` (`OWNER_FEE_UNPAID_DAYS`), `models/base.py` (`UNPAID_CLOSE_REASON`), `repositories/listing_repository.py` (`not_an_unpaid_request`), `dashboard_repository.py`, `facility_owner_repository.py`, `services/owner_fee_upkeep_service.py` (`close_unpaid_requests`), `jobs/owner_fee.py`.
+
 ## Not in scope
-Live payments, real money, tax handling, a Paystack subscription, bundles with Featured, charging staff, new page wording about the fee (lawyer first), cleaning up draft listings of requests that are never paid.
+Live payments, real money, tax handling, a Paystack subscription, bundles with Featured, charging staff, new page wording about the fee (lawyer first). Staff still see the old audit entries of an unpaid request in the activity log.

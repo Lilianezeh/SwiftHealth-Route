@@ -138,6 +138,25 @@ async def list_approved_not_paid_since(session: AsyncSession, cutoff: datetime) 
     return list((await session.exec(query)).all())
 
 
+async def list_unpaid_requested_before(session: AsyncSession, cutoff: datetime) -> list[FacilityOwner]:
+    """The links still waiting for the first payment, asked for before `cutoff` (the nightly clean-up)."""
+    query = select(FacilityOwner).where(
+        col(FacilityOwner.status) == LinkStatus.awaiting_payment.value,
+        col(FacilityOwner.requested_at) < cutoff,
+    )
+    return list((await session.exec(query)).all())
+
+
+async def count_other_live_links(session: AsyncSession, listing_id: int, link_id: int) -> int:
+    """How many links on this listing, other than `link_id`, are not removed (someone else still wants it)."""
+    query = select(func.count()).select_from(FacilityOwner).where(
+        col(FacilityOwner.listing_id) == listing_id,
+        col(FacilityOwner.id) != link_id,
+        col(FacilityOwner.status) != LinkStatus.removed.value,
+    )
+    return (await session.exec(query)).one()
+
+
 async def list_ending_over(session: AsyncSession, moment: datetime) -> list[FacilityOwner]:
     """The cancelled links whose paid month has ended: the nightly job removes them."""
     query = select(FacilityOwner).where(

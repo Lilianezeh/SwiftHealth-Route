@@ -25,6 +25,6 @@ Check every line before the pull request leaves draft. Paystack **test mode only
 
 ## Known limits
 
-- A request that is never paid leaves a `draft` listing behind (not public). A clean-up is not built.
+- A request never paid within 14 days is ended and its draft closed as "unpaid" by the nightly job (never deleted, never shown to staff in lists, numbers or the export; the activity log still holds its entries).
 - Reminders are counted in whole UTC days and sent by the nightly job (a missed night skips that day's reminder; the grace period still protects the owner).
 - Q6: each person who edits pays their own fee (no shared fee per facility).

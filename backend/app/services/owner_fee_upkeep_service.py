@@ -19,7 +19,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.config import settings
 from app.integrations import paystack
 from app.models import FacilityOwner
-from app.models.base import LinkStatus
+from app.models.base import UNPAID_CLOSE_REASON, LinkStatus, ListingStatus
 from app.repositories import audit_repository, facility_owner_repository, listing_repository, user_repository
 from app.services import owner_fee_mail
 
@@ -32,6 +32,7 @@ class UpkeepResult:
     ended: int = 0
     reminders: int = 0
     refunds_done: int = 0
+    unpaid_closed: int = 0
 
 
 async def _status_entry(
@@ -150,10 +151,49 @@ async def retry_refunds(session: AsyncSession, moment: datetime) -> int:
     return done
 
 
+async def close_unpaid_requests(session: AsyncSession, moment: datetime) -> int:
+    """Ends every request whose first month was not paid within OWNER_FEE_UNPAID_DAYS (14). Returns how many.
+
+    The link is removed (an audit entry, no person: the system did it). A draft listing that only
+    that request made (nobody created it, no other link on it that is not removed) is closed:
+    hidden, `closed_at`, `closed_reason` "unpaid". A listing someone only asked to claim, or that
+    staff made, is never touched. Nothing is deleted, and staff never see any of it
+    (listing_repository.not_an_unpaid_request)."""
+    cutoff = moment - timedelta(days=settings.owner_fee_unpaid_days)
+    links = await facility_owner_repository.list_unpaid_requested_before(session, cutoff)
+    for link in links:
+        link.status, link.removed_at, link.removed_by = LinkStatus.removed.value, moment, None
+        await facility_owner_repository.save(session, link)
+        await _status_entry(
+            session, link, "owner_unpaid", LinkStatus.awaiting_payment.value, LinkStatus.removed.value, moment
+        )
+        listing = await listing_repository.get_by_id(session, link.listing_id)
+        others = await facility_owner_repository.count_other_live_links(session, link.listing_id, link.id)  # type: ignore[arg-type]
+        made_by_this_request = (
+            listing is not None
+            and listing.status == ListingStatus.draft
+            and listing.created_by is None
+            and listing.closed_at is None
+            and others == 0
+        )
+        if listing is not None and made_by_this_request:
+            listing.status = ListingStatus.hidden
+            listing.closed_at, listing.closed_reason, listing.updated_at = moment, UNPAID_CLOSE_REASON, moment
+            session.add(listing)
+            await audit_repository.add_entry(
+                session, user_id=None, listing_id=listing.id, action="close", field_changed="status",
+                old_value=ListingStatus.draft.value, new_value=ListingStatus.hidden.value,
+                reference=UNPAID_CLOSE_REASON, changed_at=moment,
+            )
+    await session.commit()
+    return len(links)
+
+
 async def run_all(session: AsyncSession, moment: datetime) -> UpkeepResult:
     return UpkeepResult(
         lapsed=await lapse_overdue(session, moment),
         ended=await end_cancelled(session, moment),
         reminders=await send_reminders(session, moment),
         refunds_done=await retry_refunds(session, moment),
+        unpaid_closed=await close_unpaid_requests(session, moment),
     )

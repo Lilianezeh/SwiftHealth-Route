@@ -84,6 +84,9 @@ class Settings(BaseSettings):
     # Days after the paid month ends in which editing still works; then the link lapses (the
     # listing stays public).
     owner_fee_grace_days: int = Field(default=7, ge=0)
+    # A register or claim request never paid after this many days is ended by the nightly job; a draft listing
+    # that only that request made is closed (reason "unpaid"). Nothing is deleted.
+    owner_fee_unpaid_days: int = Field(default=14, ge=1)
     # Days before the end of the paid month on which the owner gets a reminder email, comma separated.
     owner_fee_reminder_days: str = "7,3,1"
 

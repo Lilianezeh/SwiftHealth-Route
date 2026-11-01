@@ -28,6 +28,10 @@ class OwnerRole(str, Enum):
     manager = "manager"  # edit the listing only
 
 
+# `Listing.closed_reason` of a draft closed because the request that made it was never paid (owner fee).
+UNPAID_CLOSE_REASON = "unpaid"
+
+
 class LinkStatus(str, Enum):
     """Where a facility link is. Plain text in `facility_owners.status`."""
 

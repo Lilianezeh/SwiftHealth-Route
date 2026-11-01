@@ -300,5 +300,5 @@ async def test_the_job_prints_one_line_with_counts_and_no_names_or_addresses(ses
         await engine.dispose()
 
     printed = capsys.readouterr().out.strip().splitlines()
-    assert printed == ["1 lapsed, 0 ended, 0 reminders sent, 0 refunds done."]
+    assert printed == ["1 lapsed, 0 ended, 0 reminders sent, 0 refunds done, 0 unpaid requests closed."]
     assert provider.email not in "".join(printed)
