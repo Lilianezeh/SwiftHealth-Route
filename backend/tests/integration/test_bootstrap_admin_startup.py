@@ -177,7 +177,8 @@ async def test_a_database_failure_never_raises_and_the_log_holds_neither_passwor
 
 
 def start_command() -> str:
-    return (Path(__file__).parents[2] / "Dockerfile").read_text()
+    """What the container runs at start: backend/start.sh (the Dockerfile's CMD runs it since 2026-11-02)."""
+    return (Path(__file__).parents[2] / "start.sh").read_text()
 
 
 def test_the_dockerfile_runs_it_between_the_migrations_and_the_api_and_a_failure_cannot_stop_it() -> None:
@@ -187,12 +188,15 @@ def test_the_dockerfile_runs_it_between_the_migrations_and_the_api_and_a_failure
     bootstrap = text.index("python -m app.bootstrap_admin --at-startup")
     api = text.index("uvicorn app.main:app")
     assert migrate < bootstrap < api
-    step = text[bootstrap : text.index("&&", bootstrap)]
-    assert "||" in step  # a failure is shrugged off, like the demo listings step
+    line = text[text.rindex("\n", 0, bootstrap) + 1 : text.index("\n", bootstrap)]
+    # Run through run_step: a failure or a wait is reported and the script goes on
+    # (tests/unit/test_start_script.py).
+    assert line.startswith("run_step ")
 
 
 def test_no_password_or_admin_variable_value_is_written_in_the_dockerfile_or_the_blueprint() -> None:
     root = Path(__file__).parents[3]
-    for path in [Path(__file__).parents[2] / "Dockerfile", root / "render.yaml"]:
+    backend = Path(__file__).parents[2]
+    for path in [backend / "Dockerfile", backend / "start.sh", root / "render.yaml"]:
         if path.exists():
             assert "BOOTSTRAP_ADMIN_PASSWORD" not in path.read_text(), path

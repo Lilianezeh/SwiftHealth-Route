@@ -177,8 +177,10 @@ async def test_a_failure_is_logged_without_details_and_never_raised(
 def test_the_dockerfile_runs_the_step_before_the_api_and_a_failure_does_not_stop_the_start() -> None:
     from pathlib import Path
 
-    dockerfile = (Path(__file__).resolve().parents[2] / "Dockerfile").read_text()
+    script = (Path(__file__).resolve().parents[2] / "start.sh").read_text()  # the Dockerfile's CMD runs it
 
-    assert "python -m app.reset_two_factor --at-startup || echo" in dockerfile
-    assert dockerfile.index("app.reset_two_factor") < dockerfile.index("uvicorn")
-    assert dockerfile.index("app.bootstrap_admin") < dockerfile.index("app.reset_two_factor")
+    # Run through run_step: a failure or a wait is reported and the script goes on
+    # (tests/unit/test_start_script.py).
+    assert 'run_step "Two-factor reset" "$STEP_TIMEOUT" python -m app.reset_two_factor --at-startup' in script
+    assert script.index("app.reset_two_factor") < script.index("exec uvicorn")
+    assert script.index("app.bootstrap_admin") < script.index("app.reset_two_factor")
