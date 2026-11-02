@@ -47,7 +47,7 @@ describe("the name on screen and in the metadata", () => {
     expect(metadata.title).toEqual({ default: "SwiftHealth Route", template: "%s | SwiftHealth Route" });
     expect(String(metadata.description)).toContain("SwiftHealth Route");
     expect(manifest().name).toBe("SwiftHealth Route");
-    expect(manifest().short_name).toBe("SwiftHealth Route");
+    expect(manifest().short_name).toBe("SwiftHealth"); // the name under the icon on a phone (owner, 2026-11-02): brand.main
   });
 
   it("says the new name in the Overview text, and the old name SwiftHealth alone nowhere in the words of the home page", () => {

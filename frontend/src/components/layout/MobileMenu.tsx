@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { InstallMenuItem } from "@/components/pwa/InstallMenuItem";
 import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { siteConfig } from "@/config/site";
 import { useSignupOpen } from "@/hooks/useSignupOpen";
@@ -76,6 +77,8 @@ export function MobileMenu({ links }: MobileMenuProps) {
                 </Link>
               </li>
             ))}
+            {/* "Install app" (or, on iPhone Safari, how to add the site to the Home Screen): only when the site can be installed. */}
+            <InstallMenuItem onDone={() => setIsOpen(false)} />
             {/* The Theme button (Light, Dark, System) is the last row of the panel; in the bar it is an icon from tablet width. */}
             <li>
               <ThemeToggle variant="menu" />

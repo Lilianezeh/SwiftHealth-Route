@@ -30,3 +30,15 @@
   for = "/sw.js"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# The offline page and the manifest are also checked for a new version every time, so an installed app never keeps old words or icons
+# (specs/2026-11-02-installable-pwa/).
+[[headers]]
+  for = "/offline.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

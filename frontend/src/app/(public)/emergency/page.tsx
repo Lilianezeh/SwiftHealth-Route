@@ -6,7 +6,6 @@ import type { Metadata } from "next";
 
 import { EmergencyContent } from "@/components/emergency/EmergencyContent";
 import { NationalLineCard } from "@/components/emergency/NationalLineCard";
-import { RegisterServiceWorker } from "@/components/offline/RegisterServiceWorker";
 
 export const metadata: Metadata = {
   title: "SwiftRescue",
@@ -19,7 +18,6 @@ export default function EmergencyPage() {
       <h1 className="text-3xl font-bold text-forest">SwiftRescue</h1>
       <NationalLineCard />
       <EmergencyContent />
-      <RegisterServiceWorker />
     </section>
   );
 }
