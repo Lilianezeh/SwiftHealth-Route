@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 
 import { IdleSignOut } from "@/components/layout/IdleSignOut";
+import { brand } from "@/config/brand";
 import { siteConfig } from "@/config/site";
 import { THEME_SCRIPT } from "@/lib/theme/themeScript";
 import "@/styles/globals.css";
@@ -9,6 +10,9 @@ export const metadata: Metadata = {
   // "Page | SwiftHealth Route" for every page that has its own title; the home page keeps the plain name (decision D6).
   title: { default: siteConfig.name, template: `%s | ${siteConfig.name}` },
   description: `${siteConfig.name}: ${siteConfig.tagline}. Verified listings and one-tap calling.`,
+  // iPhone: "Add to Home Screen" opens the site as an app, with the short name under the icon. The Apple touch icon itself is the file
+  // src/app/apple-icon.png, which Next.js links in every page (specs/2026-11-02-installable-pwa/).
+  appleWebApp: { capable: true, title: brand.main, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1b6f93" };

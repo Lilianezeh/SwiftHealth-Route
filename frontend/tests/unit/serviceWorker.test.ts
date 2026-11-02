@@ -1,6 +1,8 @@
 /** The service worker of SwiftRescue (public/sw.js). Requirements: FR-17, NFR-03, NFR-07, NFR-05.
- * Decision A6 in specs/2026-10-17-swiftrescue/requirements.md. The file is plain JavaScript that runs in the browser's worker;
- * these tests run its source against a fake worker scope, a fake cache and a fake fetch.
+ * Decision A6 in specs/2026-10-17-swiftrescue/requirements.md; specs/2026-11-02-installable-pwa/ (the site is installable: an offline
+ * page for every other page, never a private page or an answer with personal data, and an update that waits for the visitor).
+ * The file is plain JavaScript that runs in the browser's worker; these tests run its source against a fake worker scope, a fake
+ * cache and a fake fetch.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -9,6 +11,26 @@ import { describe, expect, it, vi } from "vitest";
 
 const SOURCE = readFileSync(join(process.cwd(), "public", "sw.js"), "utf8");
 const ORIGIN = "https://swifthealth-ng.netlify.app";
+const CACHE = "swiftrescue-v2";
+const OFFLINE_PAGE = "/offline.html";
+// The pages of people who are logged in, and the payment pages: never kept, whatever the network does.
+const PRIVATE_PAGES = [
+  "/admin",
+  "/admin/listings",
+  "/admin/owner-requests",
+  "/provider",
+  "/provider/edit",
+  "/provider/featured",
+  "/provider/payment-complete",
+  "/provider/fee-complete",
+  "/account",
+  "/log-in",
+  "/sign-up",
+  "/sign-up/confirm",
+  "/forgot-password",
+  "/staff-portal",
+  "/list-your-facility",
+];
 
 type Handler = (event: Record<string, unknown>) => void;
 
@@ -37,7 +59,7 @@ function fakeCaches() {
 
 let fakeFetch: (input: Request | string) => Promise<Response> = async () => new Response("network", { status: 200 });
 
-function loadWorker(initial?: { cachedUrls?: Record<string, string>; networkWorks?: boolean }) {
+function loadWorker(initial?: { cachedUrls?: Record<string, string>; networkWorks?: boolean; withOfflinePage?: boolean }) {
   const handlers: Record<string, Handler> = {};
   const { stores, caches } = fakeCaches();
   const fetchCalls: string[] = [];
@@ -49,8 +71,13 @@ function loadWorker(initial?: { cachedUrls?: Record<string, string>; networkWork
     return new Response(`network:${address}`, { status: 200 });
   };
   for (const [address, body] of Object.entries(initial?.cachedUrls ?? {})) {
-    if (!stores.has("swiftrescue-v1")) stores.set("swiftrescue-v1", new Map());
-    stores.get("swiftrescue-v1")?.set(address, new Response(body));
+    if (!stores.has(CACHE)) stores.set(CACHE, new Map());
+    stores.get(CACHE)?.set(address, new Response(body));
+  }
+  if (initial?.withOfflinePage !== false) {
+    // What the install step keeps: the offline page. (Tests of the install step itself pass withOfflinePage: false.)
+    if (!stores.has(CACHE)) stores.set(CACHE, new Map());
+    stores.get(CACHE)?.set(OFFLINE_PAGE, new Response("the offline page"));
   }
   const scope = {
     location: { origin: ORIGIN },
@@ -62,10 +89,19 @@ function loadWorker(initial?: { cachedUrls?: Record<string, string>; networkWork
   };
   // The worker's own file, run in a separate context that has only what a worker scope offers (node:vm).
   const sandbox = { self: scope, caches, fetch: (input: Request | string) => fakeFetch(input), URL, Response };
-  const exported = runInNewContext(`${SOURCE}\n({ isKeepableUrl })`, sandbox) as {
+  const exported = runInNewContext(`${SOURCE}\n({ isKeepableUrl, isPrivatePath })`, sandbox) as {
     isKeepableUrl: (address: string) => boolean;
+    isPrivatePath: (path: string) => boolean;
   };
-  return { handlers, stores, caches, scope, fetchCalls, isKeepableUrl: exported.isKeepableUrl };
+  return {
+    handlers,
+    stores,
+    caches,
+    scope,
+    fetchCalls,
+    isKeepableUrl: exported.isKeepableUrl,
+    isPrivatePath: exported.isPrivatePath,
+  };
 }
 
 /** Runs the fetch handler. Returns the response if the worker answered, or null if it left the request alone. */
@@ -90,9 +126,32 @@ describe("what the worker may keep", () => {
     `${ORIGIN}/_next/static/css/app.css`,
     `${ORIGIN}/images/emergency/ambulance.webp`, // the two SwiftRescue photos (home-photos feature, part 6)
     `${ORIGIN}/images/emergency/fire.webp`,
+    `${ORIGIN}${OFFLINE_PAGE}`, // the offline page, kept when the worker is installed
   ])("keeps %s", (address) => {
     expect(isKeepableUrl(address)).toBe(true);
   });
+
+  it.each(PRIVATE_PAGES)("never keeps the private page %s, nor anything under it", (path) => {
+    expect(isKeepableUrl(`${ORIGIN}${path}`)).toBe(false);
+    expect(isKeepableUrl(`${ORIGIN}${path}/something`)).toBe(false);
+    expect(isKeepableUrl(`${ORIGIN}${path}?next=/provider`)).toBe(false);
+  });
+
+  it.each(PRIVATE_PAGES)("names %s as a private path", (path) => {
+    const { isPrivatePath } = loadWorker();
+
+    expect(isPrivatePath(path)).toBe(true);
+    expect(isPrivatePath(`${path}/deeper/page`)).toBe(true);
+  });
+
+  it.each(["/", "/find", "/search", "/emergency", "/blood", "/for-facilities", "/listing/night-pharmacy", "/administration-of-care"])(
+    "does not name the public page %s as private (a path counts whole: /admin is private, /administration-of-care is not)",
+    (path) => {
+      const { isPrivatePath } = loadWorker();
+
+      expect(isPrivatePath(path)).toBe(false);
+    },
+  );
 
   it.each([
     [`${ORIGIN}/search?category=pharmacy`, "another page"],
@@ -127,9 +186,12 @@ describe("the fetch handler", () => {
   it("leaves requests it may not keep to the browser: other pages, the API, and every non-GET", async () => {
     const worker = loadWorker();
 
+    // None of these is a page load (mode "navigate"): a file or a call of the page. The browser handles them as usual.
     expect(await sendRequest(worker, `${ORIGIN}/search?category=pharmacy`)).toBeNull();
     expect(await sendRequest(worker, "https://swifthealth-api.onrender.com/emergency?lat=6.4&lng=7.5")).toBeNull();
+    expect(await sendRequest(worker, "https://swifthealth-api.onrender.com/provider/listings")).toBeNull();
     expect(await sendRequest(worker, `${ORIGIN}/emergency`, { method: "POST" })).toBeNull();
+    expect(await sendRequest(worker, `${ORIGIN}/admin`, { method: "POST", mode: "navigate" })).toBeNull();
     expect(worker.fetchCalls).toEqual([]);
     expect(worker.caches.open).not.toHaveBeenCalled();
   });
@@ -140,7 +202,7 @@ describe("the fetch handler", () => {
     const response = await sendRequest(worker, `${ORIGIN}/emergency`, { mode: "navigate" });
 
     expect(await response?.text()).toBe(`network:${ORIGIN}/emergency`);
-    expect(worker.stores.get("swiftrescue-v1")?.has(`${ORIGIN}/emergency`)).toBe(true);
+    expect(worker.stores.get(CACHE)?.has(`${ORIGIN}/emergency`)).toBe(true);
   });
 
   it("serves the emergency page from the kept copy when the network fails", async () => {
@@ -155,25 +217,11 @@ describe("the fetch handler", () => {
     const online = loadWorker();
     const first = await sendRequest(online, `${ORIGIN}/blood`, { mode: "navigate" });
     expect(await first?.text()).toBe(`network:${ORIGIN}/blood`);
-    expect(online.stores.get("swiftrescue-v1")?.has(`${ORIGIN}/blood`)).toBe(true);
+    expect(online.stores.get(CACHE)?.has(`${ORIGIN}/blood`)).toBe(true);
 
     const offline = loadWorker({ cachedUrls: { [`${ORIGIN}/blood`]: "saved blood page" }, networkWorks: false });
     const second = await sendRequest(offline, `${ORIGIN}/blood`, { mode: "navigate" });
     expect(await second?.text()).toBe("saved blood page");
-  });
-
-  it("leaves Donate blood and a Find blood address with a query to the browser", async () => {
-    const worker = loadWorker();
-
-    expect(await sendRequest(worker, `${ORIGIN}/blood/donate`, { mode: "navigate" })).toBeNull();
-    expect(await sendRequest(worker, `${ORIGIN}/blood?lat=6.45&lng=7.5`, { mode: "navigate" })).toBeNull();
-    expect(worker.fetchCalls).toEqual([]);
-  });
-
-  it("with no network and nothing kept, lets the failure through", async () => {
-    const worker = loadWorker({ networkWorks: false });
-
-    await expect(sendRequest(worker, `${ORIGIN}/emergency`, { mode: "navigate" })).rejects.toThrow();
   });
 
   it("does not keep a failed answer of the page", async () => {
@@ -182,9 +230,109 @@ describe("the fetch handler", () => {
 
     await sendRequest(worker, `${ORIGIN}/emergency`, { mode: "navigate" });
 
-    expect(worker.stores.get("swiftrescue-v1")?.has(`${ORIGIN}/emergency`) ?? false).toBe(false);
+    expect(worker.stores.get(CACHE)?.has(`${ORIGIN}/emergency`) ?? false).toBe(false);
   });
 
+  it("does not keep an answer that says it is private or not to be stored, or one that came by a redirect", async () => {
+    for (const headers of [{ "cache-control": "no-store" }, { "cache-control": "private, max-age=0" }]) {
+      const worker = loadWorker();
+      fakeFetch = async () => new Response("page", { status: 200, headers });
+
+      await sendRequest(worker, `${ORIGIN}/emergency`, { mode: "navigate" });
+
+      expect(worker.stores.get(CACHE)?.has(`${ORIGIN}/emergency`) ?? false).toBe(false);
+    }
+    const redirected = loadWorker();
+    const answer = new Response("page", { status: 200 });
+    Object.defineProperty(answer, "redirected", { value: true });
+    fakeFetch = async () => answer;
+
+    await sendRequest(redirected, `${ORIGIN}/emergency`, { mode: "navigate" });
+
+    expect(redirected.stores.get(CACHE)?.has(`${ORIGIN}/emergency`) ?? false).toBe(false);
+  });
+});
+
+describe("the other pages and the offline page", () => {
+  it("opens another page from the network as usual, and keeps nothing of it", async () => {
+    const worker = loadWorker();
+
+    const response = await sendRequest(worker, `${ORIGIN}/for-facilities`, { mode: "navigate" });
+
+    expect(await response?.text()).toBe(`network:${ORIGIN}/for-facilities`);
+    expect([...(worker.stores.get(CACHE)?.keys() ?? [])]).toEqual([OFFLINE_PAGE]); // only the offline page is in the cache
+  });
+
+  it("shows the offline page when another page cannot be reached", async () => {
+    const worker = loadWorker({ networkWorks: false });
+
+    for (const address of [`${ORIGIN}/`, `${ORIGIN}/find`, `${ORIGIN}/search?category=pharmacy`, `${ORIGIN}/listing/night-pharmacy`]) {
+      const response = await sendRequest(worker, address, { mode: "navigate" });
+
+      expect(await response?.text(), address).toBe("the offline page");
+    }
+  });
+
+  it("shows the offline page, not a browser error, for Donate blood and for Find blood with a query", async () => {
+    const worker = loadWorker({ networkWorks: false });
+
+    expect(await (await sendRequest(worker, `${ORIGIN}/blood/donate`, { mode: "navigate" }))?.text()).toBe("the offline page");
+    expect(await (await sendRequest(worker, `${ORIGIN}/blood?lat=6.45&lng=7.5`, { mode: "navigate" }))?.text()).toBe(
+      "the offline page",
+    );
+  });
+
+  it("shows the offline page, and not a kept copy, for SwiftRescue when nothing was kept yet", async () => {
+    const worker = loadWorker({ networkWorks: false });
+
+    const response = await sendRequest(worker, `${ORIGIN}/emergency`, { mode: "navigate" });
+
+    expect(await response?.text()).toBe("the offline page");
+  });
+
+  it.each(PRIVATE_PAGES)("passes the private page %s to the network and keeps nothing of it, online or not", async (path) => {
+    const online = loadWorker();
+    const answer = await sendRequest(online, `${ORIGIN}${path}`, { mode: "navigate" });
+    expect(await answer?.text()).toBe(`network:${ORIGIN}${path}`);
+    expect([...(online.stores.get(CACHE)?.keys() ?? [])]).toEqual([OFFLINE_PAGE]);
+
+    const offline = loadWorker({ networkWorks: false });
+    const none = await sendRequest(offline, `${ORIGIN}${path}`, { mode: "navigate" });
+    expect(await none?.text()).toBe("the offline page"); // a page for people who are logged in is never served from a copy
+    expect([...(offline.stores.get(CACHE)?.keys() ?? [])]).toEqual([OFFLINE_PAGE]);
+  });
+
+  it("does not serve a private page from the cache even if a copy of it somehow is there", async () => {
+    const worker = loadWorker({ cachedUrls: { [`${ORIGIN}/admin`]: "a copy that must not exist" }, networkWorks: false });
+
+    const response = await sendRequest(worker, `${ORIGIN}/admin`, { mode: "navigate" });
+
+    expect(await response?.text()).toBe("the offline page");
+  });
+
+  it("lets the failure through when there is no network and the offline page was never kept", async () => {
+    const worker = loadWorker({ networkWorks: false, withOfflinePage: false });
+
+    await expect(sendRequest(worker, `${ORIGIN}/find`, { mode: "navigate" })).rejects.toThrow();
+  });
+
+  it("never keeps, serves or asks the network for the API, whatever the page does", async () => {
+    const worker = loadWorker({ networkWorks: false });
+
+    for (const address of [
+      "https://swifthealth-api.onrender.com/auth/me",
+      "https://swifthealth-api.onrender.com/provider/listings",
+      "https://swifthealth-api.onrender.com/payments/owner-fee",
+      "https://swifthealth-api.onrender.com/search",
+    ]) {
+      expect(await sendRequest(worker, address)).toBeNull();
+      expect(await sendRequest(worker, address, { mode: "cors" })).toBeNull();
+    }
+    expect(worker.fetchCalls).toEqual([]);
+  });
+});
+
+describe("the files it keeps first", () => {
   it("serves a static file from the kept copy first, without going to the network", async () => {
     const address = `${ORIGIN}/_next/static/chunks/main-abc123.js`;
     const worker = loadWorker({ cachedUrls: { [address]: "kept script" } });
@@ -206,7 +354,7 @@ describe("the fetch handler", () => {
 
     const fromNetwork = await sendRequest(worker, fresh);
     expect(await fromNetwork?.text()).toBe(`network:${fresh}`);
-    expect(worker.stores.get("swiftrescue-v1")?.has(fresh)).toBe(true);
+    expect(worker.stores.get(CACHE)?.has(fresh)).toBe(true);
   });
 
   it("fetches a static file it does not have yet, and keeps it", async () => {
@@ -216,7 +364,7 @@ describe("the fetch handler", () => {
     const response = await sendRequest(worker, address);
 
     expect(await response?.text()).toBe(`network:${address}`);
-    expect(worker.stores.get("swiftrescue-v1")?.has(address)).toBe(true);
+    expect(worker.stores.get(CACHE)?.has(address)).toBe(true);
   });
 });
 
@@ -244,7 +392,8 @@ describe("the message from the page: keep what you loaded on the first visit", (
     });
     await finished;
 
-    expect([...(worker.stores.get("swiftrescue-v1")?.keys() ?? [])].sort()).toEqual([
+    expect([...(worker.stores.get(CACHE)?.keys() ?? [])].sort()).toEqual([
+      OFFLINE_PAGE, // kept when the worker was installed
       `${ORIGIN}/_next/static/chunks/main-abc123.js`,
       `${ORIGIN}/blood`,
       `${ORIGIN}/emergency`,
@@ -262,30 +411,88 @@ describe("the message from the page: keep what you loaded on the first visit", (
 
     expect(waitUntil).not.toHaveBeenCalled();
     expect(worker.caches.open).not.toHaveBeenCalled();
+    expect(worker.scope.skipWaiting).not.toHaveBeenCalled();
+  });
+
+  it("never keeps a private page it is asked to keep", async () => {
+    const worker = loadWorker();
+    let finished: Promise<unknown> = Promise.resolve();
+
+    worker.handlers.message({
+      data: { type: "keep-urls", urls: PRIVATE_PAGES.map((path) => `${ORIGIN}${path}`) },
+      waitUntil: (promise: Promise<unknown>) => (finished = promise),
+    });
+    await finished;
+
+    expect([...(worker.stores.get(CACHE)?.keys() ?? [])]).toEqual([OFFLINE_PAGE]);
   });
 });
 
-describe("install and activate", () => {
-  it("takes over at once, and removes older copies of its own cache only", async () => {
+describe("install, update and activate", () => {
+  it("keeps the offline page when it is installed, and waits for the visitor before it takes over (no skipWaiting of its own)", async () => {
+    const worker = loadWorker({ withOfflinePage: false });
+    let finished: Promise<unknown> = Promise.resolve();
+
+    worker.handlers.install({ waitUntil: (promise: Promise<unknown>) => (finished = promise) });
+    await finished;
+
+    expect([...(worker.stores.get(CACHE)?.keys() ?? [])]).toEqual([OFFLINE_PAGE]);
+    expect(worker.scope.skipWaiting).not.toHaveBeenCalled(); // a new version waits until the visitor taps Refresh
+  });
+
+  it("does not finish installing when the offline page cannot be kept, so a worker without it never takes over", async () => {
+    const worker = loadWorker({ withOfflinePage: false, networkWorks: false });
+    let finished: Promise<unknown> = Promise.resolve();
+
+    worker.handlers.install({ waitUntil: (promise: Promise<unknown>) => (finished = promise) });
+
+    await expect(finished).rejects.toThrow();
+  });
+
+  it("takes over when the page tells it to (the visitor tapped Refresh), and only then", async () => {
+    const worker = loadWorker();
+
+    worker.handlers.message({ data: { type: "skip-waiting" }, waitUntil: vi.fn() });
+
+    expect(worker.scope.skipWaiting).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores a skip-waiting that is not exactly that message", () => {
+    const worker = loadWorker();
+
+    worker.handlers.message({ data: { type: "skip-waiting-please" }, waitUntil: vi.fn() });
+    worker.handlers.message({ data: "skip-waiting", waitUntil: vi.fn() });
+
+    expect(worker.scope.skipWaiting).not.toHaveBeenCalled();
+  });
+
+  it("claims the open pages when it activates, and removes older copies of its own cache only", async () => {
     const worker = loadWorker();
     worker.stores.set("swiftrescue-v0", new Map());
-    worker.stores.set("swiftrescue-v1", new Map());
+    worker.stores.set("swiftrescue-v1", new Map()); // the cache of the old worker: its pages and files go with it
     worker.stores.set("another-app-cache", new Map());
     let finished: Promise<unknown> = Promise.resolve();
 
-    worker.handlers.install({ waitUntil: () => undefined });
     worker.handlers.activate({ waitUntil: (promise: Promise<unknown>) => (finished = promise) });
     await finished;
 
-    expect(worker.scope.skipWaiting).toHaveBeenCalled();
     expect(worker.scope.clients.claim).toHaveBeenCalled();
-    expect([...worker.stores.keys()].sort()).toEqual(["another-app-cache", "swiftrescue-v1"]);
+    expect([...worker.stores.keys()].sort()).toEqual(["another-app-cache", CACHE]);
+  });
+
+  it("uses a cache name that changes with the version, so that old files do not stay for ever", () => {
+    expect(SOURCE).toMatch(/const CACHE_NAME = "swiftrescue-v2"/);
+    expect(SOURCE).toMatch(/const CACHE_PREFIX = "swiftrescue-"/);
   });
 });
 
 describe("the file", () => {
   it("never asks for, reads or stores the visitor's position", () => {
     expect(SOURCE).not.toMatch(/geolocation|getCurrentPosition|navigator\.|localStorage|sessionStorage/);
+  });
+
+  it("does not look at, keep or send a cookie, a token or an Authorization header", () => {
+    expect(SOURCE).not.toMatch(/cookie|authorization|token|credentials/i);
   });
 
   it("does not write to the console", () => {

@@ -6,7 +6,6 @@ import type { Metadata } from "next";
 
 import { BloodFinder } from "@/components/blood/BloodFinder";
 import { BloodTabs } from "@/components/blood/BloodTabs";
-import { RegisterServiceWorker } from "@/components/offline/RegisterServiceWorker";
 
 export const metadata: Metadata = {
   title: "Find blood",
@@ -22,7 +21,6 @@ export default function BloodPage() {
         Blood banks we have verified, with the blood groups they list. In an emergency, call 112 first.
       </p>
       <BloodFinder />
-      <RegisterServiceWorker pagePath="/blood" />
     </section>
   );
 }

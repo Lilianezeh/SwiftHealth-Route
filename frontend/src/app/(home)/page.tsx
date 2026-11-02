@@ -10,6 +10,7 @@ import { FindByType } from "@/components/home/FindByType";
 import { HomeHero } from "@/components/home/HomeHero";
 import { Overview } from "@/components/home/Overview";
 import { WhySwiftHealth } from "@/components/home/WhySwiftHealth";
+import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { HOME_WORDS } from "@/config/home";
 
 // Only the description is the home page's own; the title and the rest come from the root layout. It names no city.
@@ -23,6 +24,7 @@ export default function Home() {
       <WhySwiftHealth />
       <FindByType />
       <FacilityOwners />
+      <InstallBanner />
     </>
   );
 }
