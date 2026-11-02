@@ -67,17 +67,27 @@ describe("useEmergency", () => {
   });
 
   it("with a position makes a first request without it (the one that is saved) and a second with it", async () => {
+    // The clock is frozen (only Date, so waitFor still works) and the numbers are distinctive: the saved copy holds a timestamp, and a
+    // short number such as 1.4 can sit inside it by chance ("…18:39:01.447Z"). Here no timestamp can hold any of the three values.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-02T12:00:00.000Z"));
+    const distinctivePosition = { latitude: 9.87654321, longitude: 3.21987654 };
+    const distinctiveDistance = 87.654321;
     const withDistance = emergencyResponse();
-    withDistance.groups[0].contacts[0].distance_km = 1.4;
+    withDistance.groups[0].contacts[0].distance_km = distinctiveDistance;
     const { emergencies } = stubApi({
       emergency: (parameters) => json(parameters.has("lat") ? withDistance : emergencyResponse()),
     });
-    const { result } = renderHook(() => useEmergency(POSITION, true));
+    const { result } = renderHook(() => useEmergency(distinctivePosition, true));
 
-    await waitFor(() => expect(result.current.response?.groups[0].contacts[0].distance_km).toBe(1.4));
+    await waitFor(() => expect(result.current.response?.groups[0].contacts[0].distance_km).toBe(distinctiveDistance));
 
     expect(emergencies().map((url) => url.searchParams.has("lat"))).toEqual([false, true]);
-    expect(window.localStorage.getItem(OFFLINE_COPY_KEY)).not.toContain("1.4");
+    const savedCopy = window.localStorage.getItem(OFFLINE_COPY_KEY) ?? "";
+    expect(savedCopy).toContain("2026-11-02T12:00:00.000Z"); // the copy was saved, with the frozen clock
+    expect(savedCopy).not.toContain("9.87654321");
+    expect(savedCopy).not.toContain("3.21987654");
+    expect(savedCopy).not.toContain("87.654321");
     expect(result.current.status).toBe("ready");
   });
 

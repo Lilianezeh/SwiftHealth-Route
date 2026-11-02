@@ -369,7 +369,11 @@ describe("saving the list for offline use (decision N2)", () => {
   });
 
   it("with a position asks once more, quietly, with no position and no group and the most banks, and saves that: no distance in it", async () => {
-    savePosition({ latitude: 6.432, longitude: 7.499 }); // not the place of the blood bank, so a leak of the position would show
+    // The clock is frozen (only Date, so waitFor still works): the saved copy holds a timestamp, and a short number such as 6.432
+    // could sit inside it by chance ("…:06.432Z"). The position is not the place of the blood bank, so a leak would show.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-02T12:00:00.000Z"));
+    savePosition({ latitude: 9.876, longitude: 3.219 });
     const { banks } = stubBlood({
       banks: (parameters) => json({ items: [bloodBank({ distance_km: parameters.has("lat") ? 1.4 : null })], total: 1 }),
     });
@@ -379,15 +383,16 @@ describe("saving the list for offline use (decision N2)", () => {
     await waitFor(() => expect(readBloodCopy()).not.toBeNull());
 
     const [shown, quiet] = banks();
-    expect(shown.searchParams.get("lat")).toBe("6.432");
+    expect(shown.searchParams.get("lat")).toBe("9.876");
     expect(quiet.searchParams.has("lat")).toBe(false);
     expect(quiet.searchParams.has("lng")).toBe(false);
     expect(quiet.searchParams.has("blood_group")).toBe(false);
     expect(quiet.searchParams.get("limit")).toBe("100");
     const stored = window.localStorage.getItem(BLOOD_COPY_KEY) ?? "";
     expect(stored).not.toContain("distance_km");
-    expect(stored).not.toContain("6.432");
-    expect(stored).not.toContain("7.499");
+    expect(stored).toContain("2026-11-02T12:00:00.000Z"); // the copy was saved, with the frozen clock
+    expect(stored).not.toContain("9.876");
+    expect(stored).not.toContain("3.219");
     expect(window.location.search).toBe(""); // and the position is still in no address
   });
 

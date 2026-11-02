@@ -166,7 +166,8 @@ test.describe("what the type pages send", () => {
     expect(JSON.parse(searches[0].postData() ?? "{}")).toMatchObject({ category: "pharmacy", lat: 6.452, lng: 7.51 }); // rounded to 3 decimals
     expect(addresses.filter((address) => /lat=|lng=|6\.45|7\.50|7\.51/.test(address))).toEqual([]); // not in the page address, not in any call
     const stored = await page.evaluate(() => JSON.stringify({ ...localStorage }) + JSON.stringify({ ...sessionStorage }) + document.cookie);
-    expect(stored).not.toMatch(/6\.45|7\.50|7\.51/);
+    // (?<!\d): a number only counts when no digit comes before it, so the seconds of a saved timestamp ("…:06.452Z") cannot match by chance.
+    expect(stored).not.toMatch(/(?<!\d)(6\.45|7\.50|7\.51)/);
     await expect(page.getByRole("region", { name: "Map of the search results" })).toBeVisible({ timeout: 60_000 }); // the map ...
     await expect(page.getByRole("article").first()).toBeVisible(); // ... and the list under it
   });

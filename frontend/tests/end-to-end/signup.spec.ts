@@ -24,6 +24,7 @@ function signUpIs(open: boolean) {
       ? {
           body: {
             areas: ["GRA"], categories: [], services: [], blood_groups: [], report_reasons: [], service_catalogue: [],
+            featured_price_naira: "5000.00", // For facilities shows the price
             signup_open: open,
           },
         }
@@ -110,61 +111,29 @@ for (const { width, height } of WIDTHS) {
       await targetsAndTextAreBigEnough(page);
     });
 
-    test("the header: Log in and Sign up in the bar from tablet width, in the Menu on a phone; SwiftRescue stays red and outside it", async ({ page }) => {
-      await fakeApi(page, signUpIs(true));
-      await page.goto("/find", { waitUntil: "load" });
-      const rescue = page.getByRole("banner").getByRole("link", { name: "SwiftRescue" });
-      await expect(rescue).toBeVisible({ timeout: 60_000 });
-
-      if (width >= FROM_TABLET) {
-        const bar = page.getByRole("banner");
-        await expect(bar.getByRole("link", { name: "Log in" })).toBeVisible();
-        await expect(bar.getByRole("link", { name: "Sign up" })).toBeVisible();
-        for (const name of ["Log in", "Sign up"]) {
-          const box = await bar.getByRole("link", { name }).boundingBox();
-          expect(box?.height ?? 0).toBeGreaterThanOrEqual(47.5);
-        }
-      } else {
-        await expect(page.getByRole("banner").getByRole("link", { name: "Log in" })).toBeHidden();
-        await page.getByRole("button", { name: "Menu" }).click();
-        const menu = page.getByRole("navigation", { name: "Menu links" });
-        await expect(menu.getByRole("link", { name: "Log in" })).toBeVisible();
-        await expect(menu.getByRole("link", { name: "Sign up" })).toBeVisible();
-        await expect(menu.getByRole("link", { name: "SwiftRescue" })).toHaveCount(0);
-      }
-      await expect(rescue).toHaveCSS("background-color", /^rgb\((2[0-9][0-9]|1[5-9][0-9]), ?\d+, ?\d+\)$/); // the red, and only SwiftRescue
-    });
-
-    test("the header: while sign-up is closed there is Log in and no Sign up, in the bar and in the Menu, and nothing is wider than the screen", async ({ page }) => {
-      await fakeApi(page, signUpIs(false));
-      await page.goto("/find", { waitUntil: "load" });
-      const bar = page.getByRole("banner");
-      await expect(bar.getByRole("link", { name: "SwiftRescue" })).toBeVisible({ timeout: 60_000 });
-      await page.waitForResponse((response) => response.url().endsWith("/meta"));
-
-      await expect(bar.getByRole("link", { name: "Sign up" })).toHaveCount(0);
-      if (width >= FROM_TABLET) {
-        await expect(bar.getByRole("link", { name: "Log in" })).toBeVisible();
-      } else {
-        await page.getByRole("button", { name: "Menu" }).click();
-        const menu = page.getByRole("navigation", { name: "Menu links" });
-        await expect(menu.getByRole("link", { name: "Log in" })).toBeVisible();
-        await expect(menu.getByRole("link", { name: "Sign up" })).toHaveCount(0);
-      }
-      await page.goto("/log-in", { waitUntil: "load" });
-      await expect(page.getByRole("heading", { level: 1, name: "Log in" })).toBeVisible({ timeout: 60_000 });
-      await expect(page.getByRole("link", { name: "Sign up" })).toHaveCount(0);
-    });
-
-    test("the header: a session turns Log in and Sign up into My account, and nothing in the bar moves", async ({ page }) => {
+    test("the header has no Log in and no Sign up (owner, 2026-11-02), in the bar or in the Menu; SwiftRescue stays red and outside the Menu", async ({ page }) => {
       await fakeApi(page, signUpIs(true));
       await page.goto("/find", { waitUntil: "load" });
       const bar = page.getByRole("banner");
       const rescue = bar.getByRole("link", { name: "SwiftRescue" });
       await expect(rescue).toBeVisible({ timeout: 60_000 });
-      // On a phone only SwiftRescue is in the bar (For facilities is in the Menu); from tablet width both are.
-      const watched = width >= FROM_TABLET ? ["SwiftRescue", "For facilities"] : ["SwiftRescue"];
-      const before = await Promise.all(watched.map((name) => bar.getByRole("link", { name }).boundingBox()));
+
+      await expect(bar.getByRole("link", { name: /log in|sign up|my account/i })).toHaveCount(0);
+      if (width < FROM_TABLET) {
+        await page.getByRole("button", { name: "Menu" }).click();
+        const menu = page.getByRole("navigation", { name: "Menu links" });
+        await expect(menu.getByRole("link")).toHaveText(["Find care", "For facilities"]);
+        await expect(menu.getByRole("link", { name: "SwiftRescue" })).toHaveCount(0);
+      }
+      await expect(rescue).toHaveCSS("background-color", /^rgb\((2[0-9][0-9]|1[5-9][0-9]), ?\d+, ?\d+\)$/); // the red, and only SwiftRescue
+      await allIsInsideTheScreen(page, width);
+    });
+
+    test("the header: a session shows My account, in the bar from tablet width and in the Menu on a phone", async ({ page }) => {
+      await fakeApi(page, signUpIs(true));
+      await page.goto("/find", { waitUntil: "load" });
+      const bar = page.getByRole("banner");
+      await expect(bar.getByRole("link", { name: "SwiftRescue" })).toBeVisible({ timeout: 60_000 });
 
       await page.evaluate(() => {
         const user = { id: 3, name: "Ada Staff", email: "ada@example.com", phone: "+2340000000001", role: "provider", is_active: true };
@@ -174,16 +143,61 @@ for (const { width, height } of WIDTHS) {
 
       if (width >= FROM_TABLET) {
         await expect(bar.getByRole("link", { name: "My account" })).toHaveAttribute("href", "/provider");
-        await expect(bar.getByRole("link", { name: "Log in" })).toHaveCount(0); // hidden from the accessibility tree
-      }
-      // Measured before the Menu is opened: opening it moves the bar a little on its own (a known width quirk of this machine's
-      // fallback font between 344 and 370 px, see LOG.md), which has nothing to do with the swap.
-      const after = await Promise.all(watched.map((name) => bar.getByRole("link", { name }).boundingBox()));
-      expect(after).toEqual(before); // the swap moved nothing
-      if (width < FROM_TABLET) {
+      } else {
         await page.getByRole("button", { name: "Menu" }).click();
         await expect(page.getByRole("navigation", { name: "Menu links" }).getByRole("link", { name: "My account" })).toBeVisible();
       }
+    });
+
+    test("For facilities has Sign up as a facility owner and Log in at the top and at the end, and Sign up opens with Facility owner chosen", async ({ page }) => {
+      await fakeApi(page, signUpIs(true));
+      await page.goto("/for-facilities", { waitUntil: "load" });
+
+      const signUps = page.getByRole("link", { name: "Sign up as a facility owner" });
+      await expect(signUps).toHaveCount(2, { timeout: 60_000 });
+      await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveCount(2);
+      await allIsInsideTheScreen(page, width);
+      await targetsAndTextAreBigEnough(page);
+      await signUps.first().click();
+
+      await expect(page).toHaveURL(/\/sign-up\?as=owner$/);
+      await expect(page.getByText("Signing up as: Facility owner")).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByText("What do you want to sign up as?")).toHaveCount(0);
+    });
+
+    test("For facilities shows no sign-up button while sign-up is closed, and keeps Log in", async ({ page }) => {
+      await fakeApi(page, signUpIs(false));
+      await page.goto("/for-facilities", { waitUntil: "load" });
+
+      await expect(page.getByText("Sign-up is not open yet.")).toHaveCount(2, { timeout: 60_000 });
+      await expect(page.getByRole("link", { name: "Sign up as a facility owner" })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveCount(2);
+      await allIsInsideTheScreen(page, width);
+    });
+
+    test("the footer's Staff portal link leads to Log in and Sign up as staff, and Sign up opens with Staff chosen and the admin note", async ({ page }) => {
+      await fakeApi(page, signUpIs(true));
+      await page.goto("/find", { waitUntil: "load" });
+
+      await page.getByRole("navigation", { name: "Footer" }).getByRole("link", { name: "Staff portal" }).click();
+      await expect(page).toHaveURL(/\/staff-portal$/);
+      await expect(page.getByRole("heading", { level: 1, name: "Staff portal" })).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/log-in");
+      await allIsInsideTheScreen(page, width);
+      await targetsAndTextAreBigEnough(page);
+      await page.getByRole("link", { name: "Sign up as staff" }).click();
+
+      await expect(page).toHaveURL(/\/sign-up\?as=staff$/);
+      await expect(page.getByText("Signing up as: Staff")).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByText("An admin must approve your staff sign-up before you can use it.")).toBeVisible();
+    });
+
+    test("/log-in keeps its address and still opens the login form", async ({ page }) => {
+      await fakeApi(page, signUpIs(true));
+      await page.goto("/log-in", { waitUntil: "load" });
+
+      await expect(page.getByRole("heading", { level: 1, name: "Log in" })).toBeVisible({ timeout: 60_000 });
+      await expect(page).toHaveURL(/\/log-in$/);
     });
   });
 }

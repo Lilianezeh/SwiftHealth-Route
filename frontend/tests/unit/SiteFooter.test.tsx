@@ -56,7 +56,7 @@ describe("SiteFooter", () => {
     }
   });
 
-  it("keeps its six links, in the same order", () => {
+  it("keeps its six links, in the same order, and ends with the small Staff portal link (owner, 2026-11-02)", () => {
     render(<FooterOnPage />);
 
     const links = within(screen.getByRole("navigation", { name: "Footer" })).getAllByRole("link");
@@ -68,7 +68,27 @@ describe("SiteFooter", () => {
       ["Terms", "/terms"],
       ["Contact", "/contact"],
       ["List your facility", "/list-your-facility"],
+      ["Staff portal", "/staff-portal"],
     ]);
+  });
+
+  it("has the Staff portal link on every page, the home page too, and it is as readable as the others (16 px, 48 px high)", () => {
+    for (const pathname of ["/", "/find", "/privacy"]) {
+      address.pathname = pathname;
+      const { unmount } = render(<FooterOnPage />);
+
+      const link = screen.getByRole("link", { name: "Staff portal" });
+      expect(link, pathname).toHaveAttribute("href", "/staff-portal");
+      expect(link.className, pathname).toMatch(/min-h-12/);
+      expect(link.className, pathname).not.toMatch(/text-sm|text-xs/);
+      unmount();
+    }
+  });
+
+  it("has no Log in or Sign up link: the footer leads to the Staff portal page, which has them", () => {
+    render(<FooterOnPage />);
+
+    expect(screen.queryByRole("link", { name: /^(log in|sign up)/i })).not.toBeInTheDocument();
   });
 
   it("makes the footer links at least 48 px high", () => {

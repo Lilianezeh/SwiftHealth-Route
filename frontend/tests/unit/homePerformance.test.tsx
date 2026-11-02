@@ -76,13 +76,14 @@ describe("the header and the footer are server components (R44)", () => {
       expect(source, file).not.toMatch(/["']use client["']/);
       expect(source, file).not.toMatch(/usePathname|useEffect|useState|next\/navigation/);
     }
-    // The two client parts of the header: the Menu button, and (accounts phase 3b) the Log in / Sign up / My account links,
-    // which read the tab's own session and ask GET /meta once (through hooks) whether to show Sign up; the component itself
-    // imports no API code and calls nothing.
+    // The two client parts of the header: the Menu button, and the My account link, which reads the tab's own session (since
+    // 2026-11-02 it is the only account link: Log in and Sign up moved to For facilities and the Staff portal, so the header
+    // asks GET /meta for nothing); the component itself imports no API code and calls nothing.
     expect(readSource("components/layout/MobileMenu.tsx")).toMatch(/^"use client";/);
     const accountLinks = readSource("components/layout/AccountLinks.tsx");
     expect(accountLinks).toMatch(/^"use client";/);
-    expect(accountLinks).not.toMatch(/lib\/api|fetch\(/);
+    expect(accountLinks).not.toMatch(/lib\/api|fetch\(|useSignupOpen|useMeta/);
+    expect(readSource("components/layout/MobileMenu.tsx")).not.toMatch(/useSignupOpen|useMeta|lib\/api|fetch\(/);
     // And the Theme button (Light, Dark, System; dark mode, 2026-10-27): it keeps one word in the browser's storage and calls nothing.
     const themeToggle = readSource("components/layout/ThemeToggle.tsx");
     expect(themeToggle).toMatch(/^"use client";/);
@@ -143,6 +144,7 @@ describe("the route groups choose the header and the footer, and no address chan
         "/sign-up", // accounts phase 3b, the choice and the form
         "/sign-up/confirm", // the email code, then the phone code when Termii is live
         "/sign-up/waiting", // staff wait for an admin
+        "/staff-portal", // 2026-11-02, Log in and Sign up as staff, linked from the footer only
         "/terms",
       ].sort(),
     );

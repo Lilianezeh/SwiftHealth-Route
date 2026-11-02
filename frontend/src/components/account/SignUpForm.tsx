@@ -38,9 +38,10 @@ function messageForSignUp(error: unknown): string {
   return "We couldn't sign you up. Check your connection and try again.";
 }
 
-export function SignUpForm() {
+/** `initialKind` is the kind a link already chose (`/sign-up?as=owner`, `?as=staff`); null asks the question first. */
+export function SignUpForm({ initialKind = null }: { initialKind?: AccountType | null }) {
   const router = useRouter();
-  const [kind, setKind] = useState<AccountType | null>(null);
+  const [kind, setKind] = useState<AccountType | null>(initialKind);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -105,6 +106,11 @@ export function SignUpForm() {
               Change
             </button>
           </div>
+          {kind === "staff" && (
+            <p className="rounded-2xl border border-line bg-pine-50 p-4 text-base text-ink">
+              An admin must approve your staff sign-up before you can use it.
+            </p>
+          )}
           <div className="flex flex-col gap-1">
             <label htmlFor="signup-name" className="text-base font-semibold text-ink">
               Name
