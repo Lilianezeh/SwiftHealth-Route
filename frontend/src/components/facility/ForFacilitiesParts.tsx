@@ -3,14 +3,19 @@
 /** The two small client parts of the "For facilities" page. Requirements: FR-44, FR-48, NFR-01. UI spec 2.9b.
  * Both read GET /meta, which `getMeta` keeps, so the page costs one request: the price of 30 days as featured
  * (`featured_price_naira`, a string, formatted as text and never turned into a number) and whether sign-up is open.
- * The price is left out until the answer is in and when it fails; Sign up is a link only while sign-up is open (a link to a page
- * that cannot work is worse than none, as in the header). Nothing is stored in the browser.
+ * The price is left out until the answer is in and when it fails. The buttons are "Sign up as a facility owner" (a link only while
+ * sign-up is open; it opens the sign-up page with Facility owner already chosen) and "Log in", near the top of the page and again at
+ * the end, where "List your facility" follows them (owner, 2026-11-02: Log in and Sign up are here, not in the header). Nothing is
+ * stored in the browser.
  */
 import Link from "next/link";
 
+import { AccountButtons } from "@/components/account/AccountButtons";
 import { buttonClasses } from "@/components/ui/buttonStyles";
 import { useMeta } from "@/hooks/useMeta";
 import { formatNaira } from "@/lib/formatters/fees";
+
+const SIGN_UP_AS_OWNER = { label: "Sign up as a facility owner", href: "/sign-up?as=owner" };
 
 export function FeaturedPrice() {
   const { meta } = useMeta();
@@ -19,21 +24,18 @@ export function FeaturedPrice() {
   return <p className="text-lg font-bold text-forest">{`Price: ${price} for 30 days`}</p>;
 }
 
-export function ForFacilitiesButtons() {
-  const { meta } = useMeta();
-  const signupOpen = meta?.signup_open === true;
+/** The buttons. At the end of the page (`atEnd`) "List your facility" follows them. */
+export function ForFacilitiesButtons({ atEnd = false }: { atEnd?: boolean }) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {signupOpen ? (
-        <Link href="/sign-up" prefetch={false} className={buttonClasses("primary")}>
-          Sign up
-        </Link>
-      ) : (
-        <p className="flex min-h-[50px] items-center text-base text-ink">Sign-up is not open yet.</p>
-      )}
-      <Link href="/list-your-facility" prefetch={false} className={buttonClasses("secondary")}>
-        List your facility
-      </Link>
-    </div>
+    <AccountButtons
+      signUp={SIGN_UP_AS_OWNER}
+      extra={
+        atEnd ? (
+          <Link href="/list-your-facility" prefetch={false} className={`${buttonClasses("secondary")} sm:col-span-2`}>
+            List your facility
+          </Link>
+        ) : undefined
+      }
+    />
   );
 }

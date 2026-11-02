@@ -1,7 +1,8 @@
 /** For facilities `/for-facilities`. Requirements: FR-23, FR-44, FR-45, FR-50, FR-51, NFR-12. UI spec 2.9b; api-spec section 3
  * (`featured_price_naira` of GET /meta) and section 8 ("Sponsored rules"). A page for owners who have not decided yet: listing is
- * free, how verification works, Featured and its price, how to claim a facility, and the two buttons. A server page; the price and
- * the Sign up button are the only client parts. It names no city, and the price is never written here: it comes from the API
+ * free, how verification works, Featured and its price, how to claim a facility, and the buttons "Sign up as a facility owner" and
+ * "Log in" (near the top and again at the end; Log in and Sign up are not in the header since 2026-11-02). A server page; the price
+ * and the buttons are the only client parts. It names no city, and the price is never written here: it comes from the API
  * (the setting FEATURED_PRICE_NAIRA), so the page cannot disagree with what a provider pays.
  */
 import type { Metadata } from "next";
@@ -22,6 +23,7 @@ export default function ForFacilitiesPage() {
       <p className="text-base leading-relaxed text-ink">
         {brand.name} helps people find verified healthcare facilities. Here is what listing costs, how we verify, and how to claim yours.
       </p>
+      <ForFacilitiesButtons />
       <InfoSection heading="Listing is free">
         <p>Listing is free during our launch. Our team checks every listing before it goes live.</p>
       </InfoSection>
@@ -47,7 +49,7 @@ export default function ForFacilitiesPage() {
           <li>Once approved, you can edit it, move or close it, add branches and, as an owner, get it featured.</li>
         </ol>
       </InfoSection>
-      <ForFacilitiesButtons />
+      <ForFacilitiesButtons atEnd />
     </InfoPage>
   );
 }

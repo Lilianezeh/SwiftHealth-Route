@@ -55,7 +55,7 @@ describe("/log-in", () => {
 
 describe("/sign-up and /sign-up/confirm", () => {
   it("hold their component", async () => {
-    render(<SignUpPage />);
+    render(await SignUpPage({})); // an async server page since 2026-11-02 (it reads ?as=owner and ?as=staff)
     expect(screen.getByRole("heading", { level: 1, name: "Sign up" })).toBeInTheDocument();
   });
 

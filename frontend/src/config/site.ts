@@ -21,13 +21,12 @@ export const siteConfig = {
   findCareLink: { label: "Find care", href: "/find" },
   emergencyLink: { label: brand.emergencyName, href: "/emergency" },
   facilitiesLink: { label: "For facilities", href: "/for-facilities" },
-  // After For facilities (accounts phase 3b, decision D16): Log in and Sign up, or My account when a session exists in the tab.
-  // The footer does not get them.
-  logInLink: { label: "Log in", href: "/log-in" },
-  signUpLink: { label: "Sign up", href: "/sign-up" },
+  // After For facilities: My account, only when a session exists in the tab. Log in and Sign up are NOT in the header or the Menu
+  // (owner, 2026-11-02), so visitors do not think they need an account: they are on For facilities (owners) and on the Staff portal
+  // page (staff), which the footer links to. `/log-in` keeps its address, so bookmarks still work.
   myAccountLabel: "My account",
   // On a phone the red SwiftRescue button stays in the bar (FR-02); the Menu panel holds the other two, then (MobileMenu itself)
-  // Log in and Sign up, or My account.
+  // My account when a session exists.
   menuLinks: [
     { label: "Find care", href: "/find" },
     { label: "For facilities", href: "/for-facilities" },
@@ -39,5 +38,7 @@ export const siteConfig = {
     { label: "Terms", href: "/terms" },
     { label: "Contact", href: "/contact" },
     { label: "List your facility", href: "/list-your-facility" },
+    // The small last link: the way to Log in and Sign up as staff (owner, 2026-11-02). Not in the header.
+    { label: "Staff portal", href: "/staff-portal" },
   ],
 };

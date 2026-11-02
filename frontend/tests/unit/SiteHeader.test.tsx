@@ -43,77 +43,45 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "For facilities" })).toHaveAttribute("href", "/for-facilities");
   });
 
-  it("puts the links in the order Find care, SwiftRescue, For facilities, Log in, Sign up (sign-up open)", async () => {
-    await stubSignupOpen(true);
+  it("puts the links, logged out, in the order Find care, SwiftRescue, For facilities and nothing else (owner, 2026-11-02)", () => {
     render(<HeaderOnPage />);
-    await screen.findByRole("link", { name: "Sign up" });
 
     const names = screen.getAllByRole("link").map(nameOf);
 
-    expect(names).toEqual(["SwiftHealth Route", "Find care", "SwiftRescue", "For facilities", "Log in", "Sign up"]);
+    expect(names).toEqual(["SwiftHealth Route", "Find care", "SwiftRescue", "For facilities"]);
   });
 
-  it("has Log in to /log-in always, and Sign up to /sign-up while sign-up is open (Phase 3b, D16)", async () => {
-    await stubSignupOpen(true);
-    render(<HeaderOnPage />);
-
-    expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/log-in");
-    expect(await screen.findByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
-  });
-
-  it("shows Log in and Sign up in the bar from tablet width and leaves them to the menu on a phone", async () => {
-    await stubSignupOpen(true);
-    render(<HeaderOnPage />);
-    await screen.findByRole("link", { name: "Sign up" });
-
-    for (const name of ["Log in", "Sign up"]) {
-      expect(screen.getByRole("link", { name }).className, name).toMatch(/\bhidden\b.*\bmd:inline-flex\b/);
-    }
-  });
-
-  it("puts Log in and Sign up in the phone menu after For facilities, and SwiftRescue still outside it", async () => {
-    await stubSignupOpen(true);
-    render(<HeaderOnPage />);
-    await screen.findByRole("link", { name: "Sign up" });
-
-    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
-    const menu = screen.getByRole("navigation", { name: "Menu links" });
-
-    expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual([
-      "Find care",
-      "For facilities",
-      "Log in",
-      "Sign up",
-    ]);
-    expect(within(menu).getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/log-in");
-    expect(within(menu).getByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
-    expect(within(menu).queryByRole("link", { name: "SwiftRescue" })).not.toBeInTheDocument();
-  });
-
-  it.each([false, "fails"] as const)(
-    "shows no Sign up link while sign-up is closed (%s), in the bar or in the menu, and keeps Log in",
+  it.each([true, false, "fails"] as const)(
+    "has no Log in and no Sign up link, in the bar or in the phone menu, whether sign-up is open (%s) or not",
     async (state) => {
       await stubSignupOpen(state);
       render(<HeaderOnPage />);
-      await waitFor(() => expect(fetch).toHaveBeenCalled());
-
-      expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/log-in");
-      expect(screen.queryByRole("link", { name: "Sign up" })).not.toBeInTheDocument();
       await userEvent.click(screen.getByRole("button", { name: "Menu" }));
       const menu = screen.getByRole("navigation", { name: "Menu links" });
-      expect(within(menu).getByRole("link", { name: "Log in" })).toBeInTheDocument();
-      expect(within(menu).queryByRole("link", { name: "Sign up" })).not.toBeInTheDocument();
+
+      for (const name of [/log in/i, /sign up/i, /my account/i]) {
+        expect(screen.queryByRole("link", { name })).not.toBeInTheDocument();
+        expect(within(menu).queryByRole("link", { name })).not.toBeInTheDocument();
+      }
+      expect(within(menu).getAllByRole("link").map((link) => link.textContent)).toEqual(["Find care", "For facilities"]);
     },
   );
 
-  it("does not make Log in or Sign up red: red is for SwiftRescue only", async () => {
+  it("does not ask GET /meta: sign-up is no longer the header's business", async () => {
     await stubSignupOpen(true);
     render(<HeaderOnPage />);
-    await screen.findByRole("link", { name: "Sign up" });
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
 
-    for (const name of ["Log in", "Sign up"]) {
-      expect(screen.getByRole("link", { name }).className, name).not.toMatch(/emergency|red/);
-    }
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
+  it("has no link to /log-in or /sign-up anywhere in the header", async () => {
+    await stubSignupOpen(true);
+    const { container } = render(<HeaderOnPage />);
+    await userEvent.click(screen.getByRole("button", { name: "Menu" }));
+
+    const addresses = [...container.querySelectorAll("a")].map((link) => link.getAttribute("href"));
+    expect(addresses.filter((address) => /log-in|sign-up|staff-portal/.test(address ?? ""))).toEqual([]);
   });
 
   it("makes SwiftRescue red (the emergency colour, white text), and no other link is red (FR-02)", () => {
@@ -155,7 +123,6 @@ describe("SiteHeader", () => {
     for (const name of ["Find care", "For facilities"]) {
       expect(screen.getByRole("link", { name }).className, name).toMatch(/\bpx-2\b.*\blg:px-3\b/);
     }
-    expect((await screen.findByRole("link", { name: "Log in" })).className).toMatch(/\bpx-2\b.*\blg:px-3\b/);
     expect(screen.getByRole("link", { name: "Find care" }).className).not.toMatch(/(^|\s)px-3\b/);
   });
 
@@ -219,12 +186,9 @@ describe("SiteHeader", () => {
     render(<HeaderOnPage />);
 
     expect(screen.queryByRole("link", { name: "Find care" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("link").map(nameOf)).toEqual([
-      "SwiftHealth Route",
-      "SwiftRescue",
-      "For facilities",
-      "Log in",
-    ]); // sign-up is closed in these tests unless one says otherwise, so no Sign up
+    // Logged out, on the home page: the logo, SwiftRescue, For facilities (and the Theme button, which is a button, not a link).
+    expect(screen.getAllByRole("link").map(nameOf)).toEqual(["SwiftHealth Route", "SwiftRescue", "For facilities"]);
+    expect(screen.getByRole("button", { name: /theme|light|dark/i })).toBeInTheDocument();
   });
 
   it("hides Find care on the home page in the phone menu too, and keeps For facilities there", async () => {

@@ -12,7 +12,7 @@ import { siteConfig } from "@/config/site";
 
 import { stubSignupOpen } from "../helpers/api";
 
-beforeEach(async () => stubSignupOpen(false)); // the menu asks GET /meta whether to show Sign up (AccountLinks.test.tsx has that)
+beforeEach(async () => stubSignupOpen(false)); // the menu asks GET /meta for nothing since 2026-11-02 (AccountLinks.test.tsx has that)
 afterEach(() => vi.unstubAllGlobals());
 
 function renderMenu() {

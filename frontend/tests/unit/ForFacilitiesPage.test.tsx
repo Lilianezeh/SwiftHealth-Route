@@ -110,40 +110,83 @@ describe("the price", () => {
   });
 });
 
-describe("the two buttons", () => {
-  it("shows Sign up to /sign-up and List your facility to /list-your-facility while sign-up is open", async () => {
+describe("the buttons (owner, 2026-11-02: Log in and Sign up are here, not in the header)", () => {
+  const SIGN_UP = "Sign up as a facility owner";
+
+  it("shows Sign up as a facility owner (to /sign-up with Facility owner chosen) and Log in (to /log-in), near the top and again at the end", async () => {
+    stubMeta({ signup_open: true });
+    const { container } = render(<ForFacilitiesPage />);
+
+    const signUps = await screen.findAllByRole("link", { name: SIGN_UP });
+    const logIns = screen.getAllByRole("link", { name: "Log in" });
+
+    expect(signUps).toHaveLength(2);
+    expect(logIns).toHaveLength(2);
+    for (const link of signUps) expect(link).toHaveAttribute("href", "/sign-up?as=owner");
+    for (const link of logIns) expect(link).toHaveAttribute("href", "/log-in");
+    const everything = [...container.querySelectorAll("a, h2")];
+    const firstHeading = everything.findIndex((node) => node.tagName === "H2");
+    const lastHeading = everything.map((node) => node.tagName).lastIndexOf("H2");
+    expect(everything.indexOf(signUps[0])).toBeLessThan(firstHeading); // near the top: before the first section
+    expect(everything.indexOf(signUps[1])).toBeGreaterThan(lastHeading); // and again after the last one
+    expect(everything.indexOf(logIns[1])).toBeGreaterThan(lastHeading);
+  });
+
+  it("keeps List your facility at the end, to /list-your-facility", async () => {
     stubMeta({ signup_open: true });
     render(<ForFacilitiesPage />);
 
-    expect(await screen.findByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/sign-up");
-    expect(screen.getByRole("link", { name: "List your facility" })).toHaveAttribute("href", "/list-your-facility");
-    expect(screen.queryByText("Sign-up is not open yet.")).toBeNull();
+    expect(await screen.findByRole("link", { name: "List your facility" })).toHaveAttribute("href", "/list-your-facility");
   });
 
-  it("shows no Sign up link while sign-up is closed, says so, and keeps List your facility", async () => {
+  it("shows no sign-up button while sign-up is closed, says so (top and end), keeps Log in and List your facility", async () => {
     stubMeta({ signup_open: false });
     render(<ForFacilitiesPage />);
 
-    expect(await screen.findByText("Sign-up is not open yet.")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Sign up" })).toBeNull();
+    expect(await screen.findAllByText("Sign-up is not open yet.")).toHaveLength(2);
+    expect(screen.queryByRole("link", { name: SIGN_UP })).toBeNull();
+    expect(screen.getAllByRole("link", { name: "Log in" })).toHaveLength(2);
     expect(screen.getByRole("link", { name: "List your facility" })).toHaveAttribute("href", "/list-your-facility");
   });
 
-  it("shows no Sign up link when the API cannot be reached (a link to a page that cannot work is worse than none)", async () => {
+  it("shows no sign-up button when the API cannot be reached (a link to a page that cannot work is worse than none)", async () => {
     stubMeta("fails");
     render(<ForFacilitiesPage />);
 
-    expect(await screen.findByText("Sign-up is not open yet.")).toBeInTheDocument();
+    expect(await screen.findAllByText("Sign-up is not open yet.")).toHaveLength(2);
+    expect(screen.queryByRole("link", { name: SIGN_UP })).toBeNull();
+    expect(screen.getAllByRole("link", { name: "Log in" })).toHaveLength(2);
+  });
+
+  it("shows no plain 'Sign up' link: the button says who it is for", async () => {
+    stubMeta({ signup_open: true });
+    render(<ForFacilitiesPage />);
+    await screen.findAllByRole("link", { name: SIGN_UP });
+
     expect(screen.queryByRole("link", { name: "Sign up" })).toBeNull();
   });
 
-  it("makes both buttons at least 50 px high", async () => {
+  it("makes the buttons at least 50 px high, full width on a phone, 16 px text", async () => {
     stubMeta({ signup_open: true });
     render(<ForFacilitiesPage />);
 
-    for (const name of ["Sign up", "List your facility"]) {
-      expect((await screen.findByRole("link", { name })).className).toMatch(/min-h-\[50px\]/);
+    for (const name of [SIGN_UP, "Log in", "List your facility"]) {
+      for (const link of await screen.findAllByRole("link", { name })) {
+        expect(link.className, name).toMatch(/min-h-\[50px\]/);
+        expect(link.className, name).not.toMatch(/text-sm|text-xs/);
+      }
     }
+    for (const group of document.querySelectorAll("[data-account-buttons]")) {
+      expect(group.className).toMatch(/\bgrid-cols-1\b/); // one column at 320 px
+    }
+  });
+
+  it("asks GET /meta once for both groups of buttons and the price", async () => {
+    stubMeta({ signup_open: true });
+    render(<ForFacilitiesPage />);
+    await screen.findAllByRole("link", { name: SIGN_UP });
+
+    expect(vi.mocked(fetch).mock.calls.filter(([address]) => String(address).endsWith("/meta"))).toHaveLength(1);
   });
 });
 
@@ -183,7 +226,7 @@ describe("the page as a whole", () => {
   it("makes every link at least 48 px high", async () => {
     stubMeta({ signup_open: true });
     const { container } = render(<ForFacilitiesPage />);
-    await screen.findByRole("link", { name: "Sign up" });
+    await screen.findAllByRole("link", { name: "Sign up as a facility owner" });
 
     for (const link of container.querySelectorAll("a")) expect(link.className).toMatch(/min-h-12|min-h-\[50px\]/);
   });

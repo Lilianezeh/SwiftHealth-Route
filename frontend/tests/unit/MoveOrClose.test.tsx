@@ -79,7 +79,8 @@ describe("moving", () => {
     show();
 
     expect(await screen.findByLabelText("New address")).toHaveValue("1 Example Road");
-    expect(screen.getByLabelText("New area")).toHaveValue("Ogui");
+    // The area list comes with GET /meta, so the select has its value a moment after the address field shows.
+    await waitFor(() => expect(screen.getByLabelText("New area")).toHaveValue("Ogui"));
     expect(screen.getByRole("button", { name: "Save the new address" })).toBeDisabled();
     expect(screen.getByText("Change the address, area or landmark first.")).toBeInTheDocument();
 

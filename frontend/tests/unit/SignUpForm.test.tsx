@@ -45,6 +45,63 @@ async function chooseAndFill(kind: "Staff" | "Facility owner", password = "river
   await userEvent.type(screen.getByLabelText("Password", { exact: true }), password);
 }
 
+describe("opened with the kind already chosen (from For facilities and from the Staff portal, 2026-11-02)", () => {
+  it("starts on the form with Facility owner chosen, with no question and no staff note", () => {
+    stubApi();
+    render(<SignUpForm initialKind="provider" />);
+
+    expect(screen.getByText("Signing up as: Facility owner")).toBeInTheDocument();
+    expect(screen.queryByText("What do you want to sign up as?")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Who are you, and who can say so?")).not.toBeInTheDocument();
+    expect(screen.queryByText(/admin must approve/i)).not.toBeInTheDocument();
+  });
+
+  it("starts on the form with Staff chosen, and says that an admin must approve it", () => {
+    stubApi();
+    render(<SignUpForm initialKind="staff" />);
+
+    expect(screen.getByText("Signing up as: Staff")).toBeInTheDocument();
+    expect(screen.queryByText("What do you want to sign up as?")).not.toBeInTheDocument();
+    expect(screen.getByText("An admin must approve your staff sign-up before you can use it.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Who are you, and who can say so?")).toBeInTheDocument();
+  });
+
+  it("says the admin must approve it when Staff is chosen from the question too", async () => {
+    stubApi();
+    render(<SignUpForm />);
+
+    await userEvent.click(screen.getByRole("button", { name: /^Staff/ }));
+
+    expect(screen.getByText("An admin must approve your staff sign-up before you can use it.")).toBeInTheDocument();
+  });
+
+  it("lets the person go back to the question with Change, and choose the other kind", async () => {
+    stubApi();
+    render(<SignUpForm initialKind="provider" />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Change" }));
+    expect(screen.getByText("What do you want to sign up as?")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /^Staff/ }));
+
+    expect(screen.getByText("Signing up as: Staff")).toBeInTheDocument();
+  });
+
+  it("sends the chosen kind to the API as it does after the question", async () => {
+    const calls = stubApi();
+    render(<SignUpForm initialKind="provider" />);
+    await userEvent.type(screen.getByLabelText("Name"), "Ada Owner");
+    await userEvent.type(screen.getByLabelText("Email"), "ada.owner@example.com");
+    await userEvent.type(screen.getByLabelText("Phone number"), "0803 000 0123");
+    await userEvent.type(screen.getByLabelText("Password", { exact: true }), "river78!");
+
+    await userEvent.click(screen.getByRole("button", { name: "Send me a code" }));
+
+    await waitFor(() => expect(calls).toHaveLength(1));
+    expect(calls[0].body).toMatchObject({ account_type: "provider" });
+  });
+});
+
 describe("step 1: what do you want to sign up as?", () => {
   it("asks the question with two large buttons, Staff and Facility owner, and shows no form yet", () => {
     stubApi();
