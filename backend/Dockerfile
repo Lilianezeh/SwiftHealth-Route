@@ -11,5 +11,6 @@ COPY . .
 #   the first admin step: does nothing unless all four BOOTSTRAP_ADMIN_* variables are set, never prints the password (app/bootstrap_admin.py);
 #   the two-factor reset step: does nothing unless RESET_TWO_FACTOR_FOR_EMAIL is set, for the only admin who lost the phone and
 #   the backup codes: set it, let the API start once, delete it (app/reset_two_factor.py).
-# A step that fails or is stopped is logged by name and the API still starts.
+# If the migrations fail or are stopped, start.sh stops with an error and the API is not started (the host keeps the previous
+# deploy live). Any other step that fails or is stopped is logged by name and skipped, and the API starts.
 CMD ["sh", "/app/start.sh"]

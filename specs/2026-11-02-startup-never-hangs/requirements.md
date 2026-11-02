@@ -1,4 +1,4 @@
-# Requirements: No start-up step can hang; the API always starts
+# Requirements: No start-up step can hang; the API starts unless the migrations fail
 
 Branch `fix/startup-steps-never-hang`. Status: **built (2026-11-02); draft pull request.** The owner's report of 2026-11-02: Render deploys time
 out. The log shows the migration lines, then "Demo listings: no flag set, nothing to do.", then nothing until "Port scan timeout reached, no
@@ -36,19 +36,27 @@ The container ran `alembic upgrade head`, the demo listings step, the first admi
 
 - `backend/start.sh` replaces the `CMD` chain. Each of the four steps runs through `run_step`: under `timeout` (45 s; 120 s for the
   migrations; then `kill` 5 s later if the step ignores the stop), with **stdin from `/dev/null`** (nothing can wait for input), and a step
-  that fails or is stopped is **logged by name** ("First admin stopped after 45s…", "Migrations failed (exit 1)…") and the script goes on.
-  The last line is `exec uvicorn …`, so the API always starts and receives the host's signals.
+  that does not work is **logged by name** ("First admin stopped after 45s…", "Migrations failed (exit 1)…"). What happens next depends on
+  the step (the owner's rule of 2026-11-02):
+  - **The migrations must succeed.** If they fail or are stopped, the script prints "The API is NOT started because the migrations did not
+    work, so the previous deploy stays live." and **exits with an error (1)**, so Render sees a failed start and keeps the previous deploy
+    live. Nothing after it runs, and the API is not started on the old schema.
+  - **The other steps (demo listings, first admin, two-factor reset) are logged by name and skipped** ("That step is skipped. The API starts
+    without it."), and the script goes on.
+  - The last line is `exec uvicorn …`, so when the migrations worked the API always starts, whatever the other steps did, and it receives the
+    host's signals.
 - The limits are settings of the environment (`STARTUP_STEP_TIMEOUT_SECONDS`, `MIGRATION_TIMEOUT_SECONDS`, `STARTUP_KILL_AFTER_SECONDS`).
   At the very worst the whole start-up is about 4 minutes before the API starts.
 - `PYTHONUNBUFFERED=1` in the image, so every line a step prints shows at once in the host's log, even from a step that is later stopped.
 - No message holds an environment value: only the name of the step and a number.
 
-## Trade-off (for the owner)
+## Decision (owner, 2026-11-02): the migrations are the one step that stops the start
 
-The migrations are a step too, so **a migration that fails or runs past 120 s no longer stops the deploy: the API starts anyway**, on the old
-schema, and the log says "Migrations failed/stopped". That is what "the API always starts" asks for, but code that needs a new column will
-fail on the pages that use it until the migration is run again (the next start runs it again; an Alembic migration is one transaction, so a
-stopped one leaves the schema as it was). Say if you would rather have a failed migration keep the old deploy live.
+My first version let the API start even when the migrations failed or were stopped. The owner chose the opposite: **a migration that fails or
+times out stops the start with an error, so Render keeps the previous deploy live** (new code is never run on the old schema). The cost is
+that a migration that waits for ever (for instance on a lock) now fails the deploy after 120 s instead of leaving the service half up; the
+log then says "Migrations stopped after 120s" and "the previous deploy stays live". An Alembic migration is one transaction, so a stopped one
+leaves the schema as it was, and the next deploy runs it again.
 
 ## Out of scope
 

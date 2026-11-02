@@ -43,6 +43,10 @@ STEPS = {
     ),
 }
 API = "uvicorn app.main:app --host 0.0.0.0 --port"
+# The steps that are logged by name and skipped when they fail or are stopped. The migrations are not one of
+# them: if they fail or are stopped, the script stops with an error and the API is not started (the owner's
+# rule of 2026-11-02), so the host keeps the previous deploy live, not new code on the old schema.
+OPTIONAL = [name for name in STEPS if name != "migrations"]
 
 # One fake command. It writes a line to $CALLS_LOG, then behaves as $FAKE_BEHAVIOUR says if its arguments
 # hold $FAKE_STEP, and succeeds for every other step.
@@ -138,6 +142,11 @@ def test_every_step_goes_through_run_step_and_the_api_is_the_last_line_and_repla
     assert len(steps) == len(STEPS)
     for step in STEPS.values():
         assert any(step.command in line for line in steps), step.command
+    migration_call = next(line for line in steps if STEPS["migrations"].command in line)
+    assert migration_call.endswith("|| refuse_to_start")  # the migrations must succeed
+    for name in OPTIONAL:
+        call = next(line for line in steps if STEPS[name].command in line)
+        assert call.endswith("|| skipped"), name  # the others are skipped when they fail
     assert lines[-1].startswith("exec uvicorn app.main:app --host 0.0.0.0 --port")
     assert '"${PORT:-8000}"' in lines[-1]
     outside = [line for line in lines if re.match(r"(alembic|python|uvicorn)\b", line)]
@@ -153,11 +162,16 @@ def test_run_step_has_a_time_limit_a_kill_after_it_and_no_input() -> None:
     assert not re.search(r"^\s*read\b", text, re.MULTILINE), "the script must never read input"
 
 
-def test_the_script_is_posix_sh_and_a_failed_step_does_not_stop_it() -> None:
+def test_the_script_is_posix_sh_and_it_stops_only_where_it_says_so() -> None:
     text = SCRIPT.read_text()
 
     assert text.startswith("#!/bin/sh")
-    assert not re.search(r"^\s*set\s+-\w*e", text, re.MULTILINE)
+    assert not re.search(r"^\s*set\s+-\w*e", text, re.MULTILINE)  # no step stops the script by accident
+    assert (
+        len(re.findall(r"^\s*exit\b", text, re.MULTILINE)) == 1
+    )  # one place: refusing to start after the migrations
+    body = text[text.index("refuse_to_start()") :]
+    assert re.search(r"^\s*exit 1\b", body.split("}")[0], re.MULTILINE)  # a failure the host can see
 
 
 def test_the_image_prints_each_line_at_once_so_a_stuck_step_shows_what_it_did() -> None:
@@ -193,7 +207,7 @@ def test_the_api_port_is_8000_when_the_host_names_none(fakes: Path, tmp_path: Pa
     assert run.steps_and_api[-1] == f"{API} 8000"
 
 
-@pytest.mark.parametrize("name", list(STEPS))
+@pytest.mark.parametrize("name", OPTIONAL)
 def test_a_step_that_waits_for_a_long_time_is_stopped_and_the_api_still_starts(
     fakes: Path, tmp_path: Path, name: str
 ) -> None:
@@ -203,10 +217,11 @@ def test_a_step_that_waits_for_a_long_time_is_stopped_and_the_api_still_starts(
     assert len(run.steps_and_api) == 5  # the steps after the stuck one ran too
     assert run.seconds < 15  # about a second for the stuck step, not a minute
     assert f"{STEPS[name].label} stopped after 1s" in run.out.lower()
+    assert "that step is skipped" in run.out.lower()  # said by name above, then skipped
     assert run.code == 0
 
 
-@pytest.mark.parametrize("name", list(STEPS))
+@pytest.mark.parametrize("name", OPTIONAL)
 def test_a_step_that_ignores_the_polite_stop_is_killed_and_the_api_still_starts(
     fakes: Path, tmp_path: Path, name: str
 ) -> None:
@@ -217,7 +232,7 @@ def test_a_step_that_ignores_the_polite_stop_is_killed_and_the_api_still_starts(
     assert f"{STEPS[name].label} stopped after 1s" in run.out.lower()
 
 
-@pytest.mark.parametrize("name", list(STEPS))
+@pytest.mark.parametrize("name", OPTIONAL)
 def test_a_step_that_fails_is_reported_and_the_api_still_starts(
     fakes: Path, tmp_path: Path, name: str
 ) -> None:
@@ -226,6 +241,7 @@ def test_a_step_that_fails_is_reported_and_the_api_still_starts(
     assert run.steps_and_api[-1].startswith(API)
     assert len(run.steps_and_api) == 5
     assert f"{STEPS[name].label} failed (exit 3)" in run.out.lower()
+    assert "that step is skipped" in run.out.lower()
     assert run.code == 0
 
 
@@ -250,12 +266,66 @@ def test_several_steps_stuck_at_once_still_end_with_the_api(fakes: Path, tmp_pat
     assert run.out.lower().count("stopped after") == 2
 
 
-def test_every_step_stuck_at_once_still_ends_with_the_api(fakes: Path, tmp_path: Path) -> None:
-    run = run_script(fakes, tmp_path, step=" ", behaviour="hang")  # every fake has a space in its arguments
+# ---------- the migrations must succeed (the owner's rule of 2026-11-02) ----------
 
-    assert run.steps_and_api[-1].startswith(API)
-    assert run.out.lower().count("stopped after") == 4
-    assert run.seconds < 25
+NOT_STARTED = "the api is not started"
+KEPT = "previous deploy stays live"
+
+
+def test_a_migration_that_fails_stops_the_script_with_an_error_and_the_api_is_not_started(
+    fakes: Path, tmp_path: Path
+) -> None:
+    run = run_script(fakes, tmp_path, step=STEPS["migrations"].marker, behaviour="fail")
+
+    assert run.code == 1  # the host sees a failed start and keeps the previous deploy
+    assert run.steps_and_api == ["alembic upgrade head"]  # nothing after it ran, and no API
+    assert "migrations failed (exit 3)" in run.out.lower()
+    assert NOT_STARTED in run.out.lower() and KEPT in run.out.lower()
+    assert "skipped" not in run.out.lower()  # the migrations are never skipped
+
+
+def test_a_migration_that_waits_for_a_long_time_is_stopped_with_an_error_and_the_api_is_not_started(
+    fakes: Path, tmp_path: Path
+) -> None:
+    run = run_script(fakes, tmp_path, step=STEPS["migrations"].marker, behaviour="hang")
+
+    assert run.code == 1
+    assert run.steps_and_api == ["alembic upgrade head"]
+    assert "migrations stopped after 1s" in run.out.lower()
+    assert NOT_STARTED in run.out.lower() and KEPT in run.out.lower()
+    assert run.seconds < 15  # one second, not a minute
+
+
+def test_a_migration_that_ignores_the_polite_stop_is_killed_and_the_api_is_not_started(
+    fakes: Path, tmp_path: Path
+) -> None:
+    run = run_script(fakes, tmp_path, step=STEPS["migrations"].marker, behaviour="stubborn")
+
+    assert run.code == 1
+    assert run.steps_and_api == ["alembic upgrade head"]
+    assert "migrations stopped after 1s" in run.out.lower()
+    assert run.seconds < 20
+
+
+def test_when_the_migrations_work_every_other_step_can_fail_or_hang_and_the_api_still_starts(
+    fakes: Path, tmp_path: Path
+) -> None:
+    run = run_script(
+        fakes, tmp_path, step="--at-startup", behaviour="fail"
+    )  # the first admin and the reset fail
+
+    assert run.code == 0 and len(run.steps_and_api) == 5 and run.steps_and_api[-1].startswith(API)
+
+
+def test_a_migration_error_message_holds_no_secret_of_the_environment(fakes: Path, tmp_path: Path) -> None:
+    env = {
+        "DATABASE_URL": f"postgresql://user:{SECRET}@host/db",
+        "DATABASE_URL_DIRECT": f"postgresql://user:{SECRET}@direct/db",
+    }
+
+    run = run_script(fakes, tmp_path, step=STEPS["migrations"].marker, behaviour="fail", env=env)
+
+    assert SECRET not in run.out and "postgresql://" not in run.out
 
 
 def test_the_api_replaces_the_shell_so_the_host_signals_reach_it(fakes: Path, tmp_path: Path) -> None:
