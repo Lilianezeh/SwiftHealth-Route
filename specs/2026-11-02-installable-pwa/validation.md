@@ -10,6 +10,9 @@ Check these before saying the feature is done. The merge checklist is complete o
   redirects, opaque or `no-store`/`private` responses; keeps `/emergency`, `/blood`, their files and `/offline.html`; offline fallback for other pages;
   no `skipWaiting` at install; deletes old `swiftrescue-*` caches.
 - [ ] Install tests: Menu row, iPhone sentence, hidden when installed, home card, "Not now" saved in a try/catch.
+- [ ] Browser spec `tests/end-to-end/pwa.spec.ts` (11 checks, Light and Dark, 320 and 375 px, iPhone Safari): manifest and icons served, offline page, the Menu
+  row before the Theme row beside the header without Log in or Sign up and the footer with Staff portal, the home card and "Not now" after a reload.
+  The service worker itself registers only in a production build, so it is checked by hand below.
 
 ## On the computer (Chrome DevTools, production build or the deployed preview; the worker does not register on `next dev`)
 
