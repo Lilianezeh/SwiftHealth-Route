@@ -206,7 +206,8 @@ for (const mode of MODES) {
 
 for (const mode of MODES) {
   for (const { width, height } of [WIDTHS[0], WIDTHS[2]]) {
-    test.describe(`the slideshow controls in the ${mode} mode at ${width} px, over every hero photo`, () => {
+    // Since 2026-11-03 the controls are on a bar below the photo under 1024 px (the white edge against the bar) and over the photo from 1024 px.
+    test.describe(`the slideshow controls in the ${mode} mode at ${width} px, with every hero photo on show`, () => {
       test.use({ viewport: { width, height } });
 
       ["the stethoscope", ...HERO_SLIDES.map((photo) => photo.src.split("/").pop() ?? "")].forEach((name, index) => {

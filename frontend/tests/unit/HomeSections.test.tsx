@@ -213,27 +213,50 @@ describe("the hero", () => {
     expect(frame.querySelector("img")?.className).not.toMatch(/\brounded/);
   });
 
-  it("is a band at the top of the hero on a phone and a tablet (up to 1023 px), the full width, with a slanted bottom edge, above the text", () => {
+  it("is a band at the top of the hero on a phone and a tablet (up to 1023 px), the full width, with a straight bottom edge, above the text (owner, 2026-11-03: option A)", () => {
     const { container } = render(<HomeHero />);
 
     const photoBox = photoBoxOf(container);
+    const photo = photoBox.querySelector("[data-hero-photo]") as HTMLElement;
     const heading = screen.getByRole("heading", { level: 1 });
     expect(photoBox.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy(); // the text is below
-    expect(photoBox.className).toMatch(/(^|\s)relative\b/);
-    expect(photoBox.className).toMatch(/(^|\s)h-64\b/); // 16 rem on a phone: a band, not the whole screen (R33)
-    expect(photoBox.className).toMatch(/\bmd:h-72\b/); // 18 rem from 768 px: the heading and the button stay on the first screen
-    expect(photoBox.className).not.toMatch(/\bh-96\b|(^|\s)h-72\b/); // the old 18 rem phone band and 24 rem tablet band
-    expect(photoBox.className).toMatch(/\blg:h-auto\b/); // from 1024 px the box follows the height of the hero
-    expect(frameOf(container).className).toMatch(/(^|\s)\[clip-path:polygon\(0_0,100%_0,100%_85%,0_100%\)\]/); // the slanted bottom edge
+    // Taller than before (it was 16 rem, 18 rem from 768 px) so each photo shows clearly: 85% of the width, at most 32 rem (306 px at 360,
+    // 332 px at 390, the whole 3:2 photo at 768); under 380 px 75% of the width, so "Find care near me" is on the first screen at 360 x 740.
+    expect(photo.className).toContain("h-[75vw]");
+    expect(photo.className).toContain("min-[380px]:h-[min(85vw,32rem)]");
+    expect(photo.className).toContain("lg:h-full"); // from 1024 px the box follows the height of the hero
+    expect(photo.className).not.toMatch(/(^|\s)(h-64|md:h-72|h-96)(\s|$)/); // the old bands
+    expect(frameOf(container).className).not.toMatch(/(^|\s)\[clip-path:/); // a straight bottom edge: the photo is not cut
     expect(photoBox.className).not.toMatch(/(^|\s)(px|mx)-/); // the full width: no side margin
     expect(photoBox.querySelector("img")?.className).not.toMatch(/(^|\s)(px|mx)-/);
   });
 
-  it("has a short, soft dark veil over the top of the photo: 6 rem, 85%, solid for 4.5 rem, then a fade (R21, R27; measured again on 2026-10-28)", () => {
+  it("has the text close under the controls under 380 px (smaller heading and spacing) and as before from 380 px, so Find care shows on a 360 x 740 screen", () => {
+    render(<HomeHero />);
+
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading.className).toContain("text-3xl"); // 30 px under 380 px ...
+    expect(heading.className).toContain("min-[380px]:text-4xl"); // ... 36 px from 380 px, as before
+    expect(heading.className).toContain("md:text-5xl");
+    expect(heading.className).toContain("lg:text-6xl");
+    const paragraph = heading.nextElementSibling as HTMLElement;
+    expect(paragraph.className).toContain("text-lg"); // 18 px: still above the 16 px floor
+    expect(paragraph.className).toContain("min-[380px]:text-xl");
+    expect(paragraph.className).toContain("lg:text-2xl");
+    const textBox = heading.parentElement?.parentElement as HTMLElement;
+    expect(textBox.className).toContain("pt-3");
+    expect(textBox.className).toContain("min-[380px]:pt-6");
+    expect(textBox.className).toContain("lg:pt-28"); // from 1024 px exactly as before
+    for (const element of [heading, paragraph]) expect(element.className).not.toMatch(/\btext-(xs|sm|base)\b/);
+  });
+
+  it("has a short, soft dark veil over the top of the photo from 1024 px only: 6 rem, 85%, solid for 4.5 rem, then a fade (R21, R27; owner, 2026-11-03: none under 1024 px)", () => {
     const { container } = render(<HomeHero />);
 
     const veil = veilOf(container);
     expect(veil).not.toBeNull();
+    expect(veil.className).toMatch(/(^|\s)hidden(\s|$)/); // nothing is laid over the photo on a phone or a tablet: the header is a bar above it
+    expect(veil.className).toMatch(/(^|\s)lg:block(\s|$)/);
     // the veil is the only thing laid over the photos: the frame holds the slides (the photos) and the veil, nothing else (the controls are beside it)
     expect([...frameOf(container).children].filter((child) => !child.hasAttribute("data-hero-slide"))).toEqual([veil]);
     expect(photoBoxOf(container).querySelector("img")?.className).toBe("h-full w-full object-cover"); // the photo itself: no filter, in either mode

@@ -143,17 +143,27 @@ describe("SiteHeader", () => {
     expect(header.className).not.toMatch(/\bbg-accent\b/);
   });
 
-  it("is transparent on the home page, on top of the hero: no background, no line under it, above the photo (R18)", () => {
+  it("is a solid brand-colour bar ABOVE the photo on a phone and a tablet (under 1024 px), in the normal flow, with the accent line (owner, 2026-11-03)", () => {
     address.pathname = "/";
     render(<HeaderOnPage />);
 
     const header = screen.getByRole("banner");
-    expect(header.className).toMatch(/\babsolute\b/);
-    expect(header.className).toMatch(/\binset-x-0\b/);
-    expect(header.className).toMatch(/\btop-0\b/);
-    expect(header.className).toMatch(/\bz-20\b/); // above the hero photo
+    expect(header.className).toMatch(/(^|\s)relative\b/); // in the flow: the photo starts under it, so nothing is laid over the photo
+    expect(header.className).toMatch(/(^|\s)bg-bar\b/);
+    expect(header.className).toMatch(/(^|\s)border-b-4\b/);
+    expect(header.className).toMatch(/(^|\s)border-accent\b/);
     expect(header.className).toMatch(/\bon-dark\b/); // the light focus ring
-    expect(header.className).not.toMatch(/\bbg-|\bborder-b|\bborder-accent\b/);
+    expect(header.className).not.toMatch(/(^|\s)(absolute|top-0|inset-x-0|z-20)\b/); // these are only from 1024 px (lg:)
+  });
+
+  it("stays transparent on top of the hero from 1024 px, exactly as before: no background, no line under it, above the photo (R18)", () => {
+    address.pathname = "/";
+    render(<HeaderOnPage />);
+
+    const header = screen.getByRole("banner");
+    for (const name of ["lg:absolute", "lg:inset-x-0", "lg:top-0", "lg:z-20", "lg:bg-transparent", "lg:border-b-0"]) {
+      expect(header.className, name).toMatch(new RegExp(`(^|\\s)${name.replace(/[/:]/g, "\\$&")}(\\s|$)`));
+    }
   });
 
   it("writes its logo word and its links in white on the home page", () => {

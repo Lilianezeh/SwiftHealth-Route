@@ -1,7 +1,8 @@
 "use client";
 
 /** The photo band of the home page hero: the stethoscope first, then five photos that change by themselves and by hand. Requirements: US-13,
- * NFR-01, NFR-10, NFR-13, WCAG 2.2.2 (a way to pause). Spec: specs/2026-10-28-hero-slideshow/requirements.md; tested by
+ * NFR-01, NFR-10, NFR-13, WCAG 2.2.2 (a way to pause). Spec: specs/2026-10-28-hero-slideshow/requirements.md and, for the layout under
+ * 1024 px (a taller photo, a straight edge, the controls in a row below the photo), specs/2026-11-03-hero-phone-tablet/; tested by
  * tests/unit/HeroSlideshow.test.tsx and tests/end-to-end/hero-slideshow.spec.ts.
  *
  * The first slide is the stethoscope exactly as the server draws it (`children`: its <picture>, eager, high priority, the phone file for phones), so the
@@ -130,57 +131,64 @@ export function HeroSlideshow({ children, shade }: HeroSlideshowProps) {
       role="group"
       aria-roledescription="carousel"
       aria-label="Photos"
-      className="relative h-64 shrink-0 md:h-72 lg:absolute lg:inset-y-0 lg:right-0 lg:h-auto lg:w-1/2"
+      className="shrink-0 lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2"
     >
-      {/* The frame: the same box and the same slanted edge as the stethoscope's band had. Under 1024 px the bottom edge slants, from 1024 px the left edge. */}
-      <div
-        data-hero-frame=""
-        className="absolute inset-0 [clip-path:polygon(0_0,100%_0,100%_85%,0_100%)] lg:[clip-path:polygon(15%_0,100%_0,100%_100%,0_100%)]"
-      >
-        {photosInPage.map((index) => (
-          <div
-            key={index}
-            data-hero-slide=""
-            data-index={index}
-            aria-hidden={index !== shown}
-            className={`absolute inset-0 transition-opacity duration-[1200ms] motion-reduce:transition-none ${index === shown ? "opacity-100" : "opacity-0"}`}
-          >
-            {index === 0 ? (
-              children
-            ) : (
-              /* A plain <img> on purpose: files of ours with a fixed size, so nothing moves when one loads. A phone (under 768 px) always takes the
-                 800 px file, whatever its pixel density; a wider screen chooses between the 800 px and the 1600 px file by its width and density
-                 (the band is half the screen from 1024 px). */
-              <picture className="block h-full">
-                <source media="(max-width: 767px)" srcSet={HERO_SLIDES[index - 1].src} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  ref={(image) => {
-                    if (image?.complete && image.naturalWidth > 0) markLoaded(index);
-                  }}
-                  src={HERO_SLIDES[index - 1].src}
-                  srcSet={`${HERO_SLIDES[index - 1].src} ${HERO_SLIDES[index - 1].width}w, ${HERO_SLIDES[index - 1].srcLarge} ${HERO_SLIDES[index - 1].widthLarge}w`}
-                  sizes="(min-width: 1024px) 50vw, 100vw"
-                  alt={HERO_SLIDES[index - 1].alt}
-                  width={HERO_SLIDES[index - 1].width}
-                  height={HERO_SLIDES[index - 1].height}
-                  decoding="async"
-                  onLoad={() => markLoaded(index)}
-                  style={{ "--focus": HERO_SLIDES[index - 1].focus, "--focus-wide": HERO_SLIDES[index - 1].focusWide } as CSSProperties}
-                  className="h-full w-full object-cover [object-position:var(--focus)] lg:[object-position:var(--focus-wide)]"
-                />
-              </picture>
-            )}
-          </div>
-        ))}
-        {shade}
+      {/* The photo box (owner, 2026-11-03, option A). Under 1024 px: 75% of the width high under 380 px (so "Find care near me" is on the first
+          screen of a 360 x 740 phone), 85% of the width, at most 32 rem, from 380 px (306 px at 360 wide, the whole 3:2 photo at 768). From 1024 px it
+          fills the band, the right half of the hero, as before. */}
+      <div data-hero-photo="" className="relative h-[75vw] min-[380px]:h-[min(85vw,32rem)] lg:h-full">
+        {/* The frame: under 1024 px a plain rectangle, a straight bottom edge, so no part of the photo is cut; from 1024 px the left edge slants, as before. */}
+        <div
+          data-hero-frame=""
+          className="absolute inset-0 lg:[clip-path:polygon(15%_0,100%_0,100%_100%,0_100%)]"
+        >
+          {photosInPage.map((index) => (
+            <div
+              key={index}
+              data-hero-slide=""
+              data-index={index}
+              aria-hidden={index !== shown}
+              className={`absolute inset-0 transition-opacity duration-[1200ms] motion-reduce:transition-none ${index === shown ? "opacity-100" : "opacity-0"}`}
+            >
+              {index === 0 ? (
+                children
+              ) : (
+                /* A plain <img> on purpose: files of ours with a fixed size, so nothing moves when one loads. A phone (under 768 px) always takes the
+                   800 px file, whatever its pixel density; a wider screen chooses between the 800 px and the 1600 px file by its width and density
+                   (the band is half the screen from 1024 px). */
+                <picture className="block h-full">
+                  <source media="(max-width: 767px)" srcSet={HERO_SLIDES[index - 1].src} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    ref={(image) => {
+                      if (image?.complete && image.naturalWidth > 0) markLoaded(index);
+                    }}
+                    src={HERO_SLIDES[index - 1].src}
+                    srcSet={`${HERO_SLIDES[index - 1].src} ${HERO_SLIDES[index - 1].width}w, ${HERO_SLIDES[index - 1].srcLarge} ${HERO_SLIDES[index - 1].widthLarge}w`}
+                    sizes="(min-width: 1024px) 50vw, 100vw"
+                    alt={HERO_SLIDES[index - 1].alt}
+                    width={HERO_SLIDES[index - 1].width}
+                    height={HERO_SLIDES[index - 1].height}
+                    decoding="async"
+                    onLoad={() => markLoaded(index)}
+                    style={{ "--focus": HERO_SLIDES[index - 1].focus, "--focus-wide": HERO_SLIDES[index - 1].focusWide } as CSSProperties}
+                    className="h-full w-full object-cover [object-position:var(--focus)] lg:[object-position:var(--focus-wide)]"
+                  />
+                </picture>
+              )}
+            </div>
+          ))}
+          {shade}
+        </div>
       </div>
 
-      {/* The controls: over the photo, at the bottom of the band, outside the clipped frame so the slanted edge never cuts them. Up to 479 px two
-          rows (the dots, then Previous, Next and Pause), hanging 16 px below the band; from 480 px one row at the bottom left. */}
+      {/* The controls (owner, 2026-11-03): under 1024 px they are NOT on the photo but a centred row right below it, on a bar of the header's colour,
+          every button 48 px. Under 480 px two rows (the dots, then Previous, Next and Pause: 104 px high under 380 px, 120 px from 380 px), from
+          480 px one row of 64 px. From 1024 px they are over the photo again, low at the left, as before (outside the clipped frame, so the
+          slanted edge never cuts them). */}
       <div
         data-hero-controls=""
-        className="absolute inset-x-0 -bottom-4 z-10 flex flex-wrap items-center justify-center gap-2 px-4 min-[480px]:bottom-0 min-[480px]:justify-start lg:bottom-6 lg:left-14 lg:right-auto lg:px-0"
+        className="z-10 flex flex-wrap items-center justify-center gap-x-2 gap-y-0 bg-bar px-2 py-1 min-[380px]:gap-y-2 min-[380px]:py-2 lg:absolute lg:bottom-6 lg:left-14 lg:justify-start lg:gap-2 lg:bg-transparent lg:p-0"
       >
         <button type="button" aria-label="Previous photo" onClick={() => go(shown - 1)} className={CONTROL}>
           <DecorativeIcon icon={ChevronLeft} className="h-6 w-6" />

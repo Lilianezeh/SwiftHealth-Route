@@ -71,19 +71,12 @@ describe("the focus points: no face is cut at 320, 360, 768 and 1280 px (and at 
   };
   const PHOTO = { width: 800, height: 533 };
 
-  /** The hero's band: under 1024 px it is as wide as the screen and 16 rem (256 px) high, 18 rem (288 px) from 768 px, with the controls at its
-   * bottom; from 1024 px it is the right half of the screen and as high as the section (85% of the screen's height). */
+  /** The hero's photo box (owner, 2026-11-03, option A): under 1024 px it is as wide as the screen and 75% of the width high under 380 px, 85% of
+   * the width (at most 32 rem = 512 px) high from 380 px, with a straight bottom edge and the controls BELOW it, not on it; from 1024 px it is the
+   * right half of the screen and as high as the section (85% of the screen's height). */
   function bandAt(viewport: number, screenHeight: number) {
     if (viewport >= 1024) return { width: viewport / 2, height: Math.round(0.85 * screenHeight), wide: true };
-    return { width: viewport, height: viewport < 768 ? 256 : 288, wide: false };
-  }
-
-  /** Where the controls are, in the band: up to 479 px two rows (the dots, then the buttons), hanging 16 px below the band; from 480 px one
-   * row of 464 px at the bottom left. From 1024 px they are low in a tall band, clear of the faces. */
-  function controlsAt(viewport: number, band: ReturnType<typeof bandAt>) {
-    if (band.wide) return null;
-    if (viewport < 480) return { left: 0, top: band.height + 16 - 104, right: band.width, bottom: band.height + 16 };
-    return { left: 16, top: band.height - 48, right: 16 + 464, bottom: band.height };
+    return { width: viewport, height: viewport < 380 ? Math.round(0.75 * viewport) : Math.min(Math.round(0.85 * viewport), 512), wide: false };
   }
 
   /** The face in the band's own pixels, when the photo is scaled to fill the band (object-fit: cover) and placed by `focus` ("x% y%"). */
@@ -96,24 +89,24 @@ describe("the focus points: no face is cut at 320, 360, 768 and 1280 px (and at 
     return { left: left * scale - offsetX, top: top * scale - offsetY, right: right * scale - offsetX, bottom: bottom * scale - offsetY };
   }
 
-  const NARROW = [[320, 568], [360, 740], [375, 667], [390, 844], [414, 896], [430, 932], [600, 900], [767, 1024], [768, 1024]] as const;
+  // Includes both sides of the 380 px step, and the tablet widths up to 1023 px (the old 288 px band cut two faces there).
+  const NARROW = [
+    [320, 568], [360, 740], [375, 667], [379, 740], [380, 740], [390, 844], [414, 896], [430, 932], [600, 900], [767, 1024], [768, 1024], [900, 700], [1023, 768],
+  ] as const;
   const WIDE = [[1024, 768], [1100, 800], [1280, 800], [1440, 900], [1600, 900], [1920, 1080]] as const;
 
   for (const photo of HERO_SLIDES) {
     const name = photo.src.split("/").pop()!.replace("-800.webp", "");
 
-    it(`${name}: the whole face is inside the band and clear of the controls, from 320 to 768 px`, () => {
+    it(`${name}: the whole face is inside the photo box, at least 8 px from every edge, from 320 to 1023 px (the controls are below the photo)`, () => {
       for (const [viewport, screenHeight] of NARROW) {
         const band = bandAt(viewport, screenHeight);
         const face = faceInBand(name, band, photo.focus);
         const label = `${name} at ${viewport} px: face ${JSON.stringify(face)} in a band of ${band.width} x ${band.height}`;
-        expect(face.left, label).toBeGreaterThanOrEqual(4);
-        expect(face.top, label).toBeGreaterThanOrEqual(4);
-        expect(face.right, label).toBeLessThanOrEqual(band.width - 4);
-        expect(face.bottom, label).toBeLessThanOrEqual(band.height - 4);
-        const controls = controlsAt(viewport, band)!;
-        const overlaps = face.left < controls.right && face.right > controls.left && face.bottom > controls.top - 4 && face.top < controls.bottom;
-        expect(overlaps, `${label}: the controls are at ${JSON.stringify(controls)}`).toBe(false);
+        expect(face.left, label).toBeGreaterThanOrEqual(8);
+        expect(face.top, label).toBeGreaterThanOrEqual(8);
+        expect(face.right, label).toBeLessThanOrEqual(band.width - 8);
+        expect(face.bottom, label).toBeLessThanOrEqual(band.height - 8);
       }
     });
 

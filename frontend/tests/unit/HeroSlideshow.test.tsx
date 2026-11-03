@@ -123,16 +123,76 @@ describe("the first photo and the frame", () => {
     const group = screen.getByRole("group", { name: "Photos" });
     expect(group).toHaveAttribute("aria-roledescription", "carousel");
     expect(group.querySelector("[data-test-shade]")).not.toBeNull();
-    expect(container.querySelector("[data-hero-frame]")?.className).toMatch(/\[clip-path:polygon\(0_0,100%_0,100%_85%,0_100%\)\]/); // the same slanted edge as the stethoscope's band had
+    // The slanted edge is only from 1024 px, on the left (as before). Under 1024 px the bottom edge is straight (owner, 2026-11-03: option A):
+    // no clip-path without the lg: prefix, so the photo is never cut.
     expect(container.querySelector("[data-hero-frame]")?.className).toMatch(/lg:\[clip-path:polygon\(15%_0,100%_0,100%_100%,0_100%\)\]/);
+    expect(container.querySelector("[data-hero-frame]")?.className).not.toMatch(/(^|\s)\[clip-path:/);
   });
 
-  it("has the band's size classes unchanged: 16 rem, 18 rem from 768 px, and from 1024 px the right half of the section (no layout change)", () => {
+  it("has the band's place unchanged from 1024 px (the right half of the section), and no height of its own under 1024 px: the photo box and the controls give it", () => {
     const { container } = renderHero();
 
     const band = container.querySelector("[data-hero-band]") as HTMLElement;
-    for (const name of ["relative", "h-64", "shrink-0", "md:h-72", "lg:absolute", "lg:inset-y-0", "lg:right-0", "lg:h-auto", "lg:w-1/2"]) {
+    for (const name of ["shrink-0", "lg:absolute", "lg:inset-y-0", "lg:right-0", "lg:w-1/2"]) {
       expect(band.className, name).toMatch(new RegExp(`(^|\\s)${name.replace(/[/:]/g, "\\$&")}(\\s|$)`));
+    }
+    expect(band.className).not.toMatch(/(^|\s)(h-64|md:h-72|lg:h-auto)(\s|$)/); // the old fixed heights
+  });
+
+  it("has a photo box of 75% of the width under 380 px, 85% of the width (at most 32 rem) from 380 px, and the full height of the band from 1024 px (owner, 2026-11-03)", () => {
+    const { container } = renderHero();
+
+    const photoBox = container.querySelector("[data-hero-photo]") as HTMLElement;
+    expect(photoBox.parentElement).toBe(container.querySelector("[data-hero-band]"));
+    for (const name of ["relative", "h-[75vw]", "min-[380px]:h-[min(85vw,32rem)]", "lg:h-full"]) {
+      expect(photoBox.className, name).toContain(name);
+    }
+    expect(photoBox.contains(container.querySelector("[data-hero-frame]"))).toBe(true);
+    expect(photoBox.contains(container.querySelector("[data-hero-controls]"))).toBe(false); // the controls are NOT on the photo
+  });
+});
+
+describe("the controls are off the photo (owner, 2026-11-03)", () => {
+  it("come right after the photo box, in the flow, under 1024 px, centred, on a bar of the header's colour", () => {
+    const { container } = renderHero();
+
+    const photoBox = container.querySelector("[data-hero-photo]") as HTMLElement;
+    const controls = container.querySelector("[data-hero-controls]") as HTMLElement;
+    expect(photoBox.nextElementSibling).toBe(controls);
+    expect(controls.className).toMatch(/(^|\s)bg-bar(\s|$)/);
+    expect(controls.className).toMatch(/(^|\s)justify-center(\s|$)/);
+    expect(controls.className).toMatch(/(^|\s)flex-wrap(\s|$)/);
+    expect(controls.className).not.toMatch(/(^|\s)(absolute|fixed|sticky|-bottom-\d+|bottom-\d+)(\s|$)/); // not over the photo
+    expect(controls.className).not.toMatch(/(^|\s)(min-\[480px\]|md):justify-start/);
+  });
+
+  it("go back over the photo, low and at the left, from 1024 px, exactly as before", () => {
+    const { container } = renderHero();
+
+    const controls = container.querySelector("[data-hero-controls]") as HTMLElement;
+    for (const name of ["lg:absolute", "lg:bottom-6", "lg:left-14", "lg:justify-start", "lg:bg-transparent", "lg:p-0"]) {
+      expect(controls.className, name).toMatch(new RegExp(`(^|\\s)${name.replace(/[/:]/g, "\\$&")}(\\s|$)`));
+    }
+  });
+
+  it("keep their rows tight under 380 px (dots, then three buttons: 104 px) so the heading and Find care stay high, and roomier from 380 px", () => {
+    const { container } = renderHero();
+
+    const controls = container.querySelector("[data-hero-controls]") as HTMLElement;
+    for (const name of ["gap-y-0", "py-1", "min-[380px]:gap-y-2", "min-[380px]:py-2"]) {
+      expect(controls.className, name).toContain(name);
+    }
+  });
+
+  it("are still 48 px: Previous, Next, Pause and every dot", () => {
+    const { container } = renderHero();
+
+    const controls = container.querySelector("[data-hero-controls]") as HTMLElement;
+    const buttons = [...controls.querySelectorAll("button")];
+    expect(buttons).toHaveLength(3 + COUNT);
+    for (const button of buttons) {
+      expect(button.className, button.getAttribute("aria-label") ?? "").toMatch(/\bmin-h-12\b/);
+      expect(button.className, button.getAttribute("aria-label") ?? "").toMatch(/\bmin-w-12\b/);
     }
   });
 });
