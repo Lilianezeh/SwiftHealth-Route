@@ -21,25 +21,21 @@ export function ShareEmergencyList({ response }: ShareEmergencyListProps) {
   const text = buildEmergencyListText(response, pageAddress);
 
   return (
-    <section aria-labelledby="share-list-heading" className="flex flex-col gap-3">
-      <h2 id="share-list-heading" className="text-xl font-bold text-forest">
-        Share emergency list
-      </h2>
-      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
-        <a
-          href={whatsappShareLink(text)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonClasses("secondary")}
-        >
-          <DecorativeIcon icon={MessageCircle} />
-          Share on WhatsApp
-        </a>
-        <a href={smsShareLink(text)} className={buttonClasses("secondary")}>
-          <DecorativeIcon icon={MessageSquareText} />
-          Share by SMS
-        </a>
-      </div>
-    </section>
+    // No heading (owner, 2026-11-03); the group is named for a screen reader.
+    <div role="group" aria-label="Share emergency list" className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
+      <a
+        href={whatsappShareLink(text)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={buttonClasses("secondary")}
+      >
+        <DecorativeIcon icon={MessageCircle} />
+        Share on WhatsApp
+      </a>
+      <a href={smsShareLink(text)} className={buttonClasses("secondary")}>
+        <DecorativeIcon icon={MessageSquareText} />
+        Share by SMS
+      </a>
+    </div>
   );
 }

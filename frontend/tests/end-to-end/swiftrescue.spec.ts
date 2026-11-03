@@ -173,6 +173,72 @@ for (const { width, height } of WIDTHS) {
       await allIsInsideTheScreen(page, width);
     });
 
+    test("the ambulance and fire photos are one banner directly below the 112 card: side by side, a fixed box, whole, and CLS 0 (owner, 2026-11-03)", async ({ page }) => {
+      await page.addInitScript(() => {
+        (window as unknown as { shift: number }).shift = 0;
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) {
+            if (!entry.hadRecentInput) (window as unknown as { shift: number }).shift += entry.value;
+          }
+        }).observe({ type: "layout-shift", buffered: true });
+      });
+      await open(page);
+      const card = (await page.getByRole("region", { name: "National emergency number — 112" }).boundingBox())!;
+      const banner = page.locator("[data-emergency-banner]");
+      const bannerBox = (await banner.boundingBox())!;
+
+      expect(bannerBox.y).toBeGreaterThanOrEqual(card.y + card.height); // below the 112 card ...
+      expect(bannerBox.y - (card.y + card.height)).toBeLessThanOrEqual(32); // ... directly
+      const photos = await banner.locator("[data-emergency-photo]").all();
+      expect(photos).toHaveLength(2);
+      const [first, second] = [(await photos[0].boundingBox())!, (await photos[1].boundingBox())!];
+      expect(first.y).toBeCloseTo(second.y, 0); // side by side
+      expect(second.x).toBeGreaterThan(first.x + first.width - 0.5);
+      expect(first.width).toBeCloseTo(second.width, 0);
+      const ratio = first.width / first.height;
+      expect(ratio).toBeCloseTo(width < 640 ? 5 / 3 : 8 / 3, 1); // 5:3 on a phone (about 96 px high at 360 px), the whole 8:3 photo from 640 px
+      if (width === 360) expect(first.height).toBeGreaterThan(90);
+      if (width === 360) expect(first.height).toBeLessThan(100);
+      for (const image of await banner.locator("img").all()) {
+        await image.scrollIntoViewIfNeeded();
+        await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
+      }
+      await page.waitForTimeout(500);
+      expect(await page.evaluate(() => (window as unknown as { shift: number }).shift)).toBe(0);
+      expect(await page.locator('section[aria-labelledby="group-ambulance"] img').count()).toBe(0); // the groups have contacts only
+      expect(await page.locator('section[aria-labelledby="group-fire"] img').count()).toBe(0);
+      await allIsInsideTheScreen(page, width);
+    });
+
+    test("the header's SwiftRescue button is the current page here: not a link, aria-current='page', and still red", async ({ page }) => {
+      await open(page);
+
+      const header = page.locator("header");
+      await expect(header.getByRole("link", { name: "SwiftRescue" })).toHaveCount(0);
+      const current = header.locator('[aria-current="page"]');
+      await expect(current).toHaveText("SwiftRescue");
+      expect(await current.evaluate((element) => element.tagName)).toBe("SPAN");
+      expect(await current.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe(
+        await page.locator("main").getByRole("link", { name: "Call 112" }).evaluate((element) => getComputedStyle(element).backgroundColor),
+      ); // the same red as Call 112
+      expect(((await current.boundingBox())?.height ?? 0)).toBeGreaterThanOrEqual(47.5);
+      await page.goto("/find", { waitUntil: "load" });
+      await expect(page.locator("header").getByRole("link", { name: "SwiftRescue" })).toHaveAttribute("href", "/emergency");
+    });
+
+    test("there are no headings 'Share my location' or 'Share emergency list', and the two location buttons are named differently", async ({ page }) => {
+      await open(page);
+      await expect(page.getByRole("heading", { level: 2, name: "Ambulance" })).toBeVisible({ timeout: 60_000 });
+
+      await expect(page.getByRole("heading", { name: /^Share (my location|emergency list)$/ })).toHaveCount(0);
+      const send = page.getByRole("button", { name: "Send my location to someone" });
+      const sort = page.getByRole("button", { name: "Sort by distance from me" });
+      await expect(send).toBeVisible();
+      await expect(sort).toBeVisible();
+      const [sendBox, sortBox] = [(await send.boundingBox())!, (await sort.boundingBox())!];
+      expect(sortBox.y - (sendBox.y + sendBox.height)).toBeGreaterThanOrEqual(48); // clearly apart: the share buttons are between them
+    });
+
     test("Share emergency list: WhatsApp and SMS links with the list, 112 first", async ({ page }) => {
       await open(page);
       await expect(page.getByRole("heading", { level: 2, name: "Ambulance" })).toBeVisible({ timeout: 60_000 });
@@ -188,7 +254,7 @@ for (const { width, height } of WIDTHS) {
       await allIsInsideTheScreen(page, width);
     });
 
-    test("Share my location: asks after the tap, offers WhatsApp and SMS, and keeps the position out of storage, addresses and our API", async ({
+    test("Send my location to someone: asks after the tap, offers WhatsApp and SMS, and keeps the position out of storage, addresses and our API", async ({
       browser,
     }) => {
       const context = await browser.newContext({
@@ -201,7 +267,7 @@ for (const { width, height } of WIDTHS) {
       page.on("request", (request) => requests.push(request));
       await open(page);
 
-      await page.getByRole("button", { name: "Share my location" }).click();
+      await page.getByRole("button", { name: "Send my location to someone" }).click();
 
       const whatsapp = page.getByRole("link", { name: "Send on WhatsApp" });
       await expect(whatsapp).toBeVisible({ timeout: 20_000 });
@@ -221,13 +287,13 @@ for (const { width, height } of WIDTHS) {
       await context.close();
     });
 
-    test("with the position blocked, Share my location says to call 112", async ({ browser }) => {
+    test("with the position blocked, Send my location to someone says to call 112", async ({ browser }) => {
       const context = await browser.newContext({ viewport: { width, height }, permissions: [] });
       const page = await context.newPage();
       await open(page);
       await context.clearPermissions();
 
-      await page.getByRole("button", { name: "Share my location" }).click();
+      await page.getByRole("button", { name: "Send my location to someone" }).click();
 
       await expect(page.getByText("We could not get your location. Call 112 and say where you are.")).toBeVisible({ timeout: 20_000 });
       await context.close();

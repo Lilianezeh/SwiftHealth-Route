@@ -42,18 +42,24 @@ export const HERO_SLIDES: readonly HeroSlide[] = [
   slide("pharmacist-customer", "A pharmacist in a white coat serves a customer in front of shelves of medicines.", "50% 29%", "50% 50%"),
 ];
 
-/** The two small header images of the Ambulance and the Fire service groups on /emergency (and nowhere else). */
+/** The two photos of the banner on /emergency, directly below the 112 card (and nowhere else; since 2026-11-03 they are no longer under the headings
+ * of the Ambulance and Fire service groups). Each is 640 x 240 (8:3). On a phone the banner shows each in a 5:3 box (400 x 240 of the photo), and
+ * `focus` is the CSS object-position that keeps the face whole there (checked by tests/unit/EmergencyBanner.test.tsx); from 640 px the whole photo shows. */
+export type EmergencyPhoto = SitePhoto & { focus: string };
+
 export const EMERGENCY_PHOTOS = {
   ambulance: {
     src: "/images/emergency/ambulance.webp",
     width: 640,
     height: 240,
     alt: "A health worker in a white coat and a face mask stands in front of an ambulance with its rear doors open.",
+    focus: "70% 50%",
   },
   fire: {
     src: "/images/emergency/fire.webp",
     width: 640,
     height: 240,
     alt: "A firefighter in a red helmet stands by a fire engine with hoses, with smoke in the air.",
+    focus: "0% 50%",
   },
-} as const satisfies Record<string, SitePhoto>;
+} as const satisfies Record<string, EmergencyPhoto>;

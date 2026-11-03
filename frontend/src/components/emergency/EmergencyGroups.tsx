@@ -3,13 +3,12 @@
  * FR-25 was removed on 2026-10-22).
  * Ambulance, Fire service, Police, Hospital emergency (24 hours) and Road accidents are always drawn first, even with no contact, and then
  * say "No contacts added yet. In danger, call 112." Every other group (Security and the three of 2026-10-22) is not drawn when it has no
- * contact. The groups, their headings and their order are in lib/emergency/groups.ts (specs/2026-10-22-swiftrescue-groups/). Ambulance and
- * Fire service each have a small lazy photo under the heading (GroupPhoto; specs/2026-10-22-home-photos/, part 6). Every card
+ * contact. The groups, their headings and their order are in lib/emergency/groups.ts (specs/2026-10-22-swiftrescue-groups/). The groups show
+ * contacts only: the ambulance and fire photos are one banner under the 112 card since 2026-11-03 (EmergencyBanner). Every card
  * gets `sponsored: false` here, so the page can never show a sponsored tag (FR-19), whatever an answer holds.
  */
 import { BloodLinkCard } from "@/components/emergency/BloodLinkCard";
 import { EmergencyContactCard } from "@/components/emergency/EmergencyContactCard";
-import { GroupPhoto } from "@/components/emergency/GroupPhoto";
 import { groupsToDraw, usedGroups } from "@/lib/emergency/groups";
 import type { EmergencyResponse, ListingSummary } from "@/types/api";
 
@@ -37,7 +36,6 @@ export function EmergencyGroups({ response, now }: EmergencyGroupsProps) {
           <h2 id={`group-${group.category.slug}`} className="text-2xl font-bold text-forest">
             {group.category.name}
           </h2>
-          <GroupPhoto slug={group.category.slug} />
           {group.contacts.length === 0 ? (
             <p className="rounded-2xl border border-line bg-surface p-4 text-base text-ink">{NO_CONTACTS}</p>
           ) : (

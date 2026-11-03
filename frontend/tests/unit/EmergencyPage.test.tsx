@@ -483,16 +483,35 @@ describe("the standard states", () => {
 });
 
 describe("asking for distances", () => {
-  it("offers 'Show distances from my location' when there is no position, and a tap asks the browser", async () => {
+  it("offers 'Sort by distance from me' when there is no position, and a tap asks the browser", async () => {
     const getCurrentPosition = vi.fn();
     Object.defineProperty(navigator, "geolocation", { value: { getCurrentPosition }, configurable: true });
     stubApi({});
     render(<EmergencyPage />);
 
-    const button = await screen.findByRole("button", { name: "Show distances from my location" });
+    const button = await screen.findByRole("button", { name: "Sort by distance from me" });
     expect(getCurrentPosition).not.toHaveBeenCalled(); // the prompt appears only after a tap
     await userEvent.click(button);
 
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+  });
+
+  it("names the two location actions so they are clearly different, with space between them (owner, 2026-11-03)", async () => {
+    stubApi({});
+    const { container } = render(<EmergencyPage />);
+
+    const send = await screen.findByRole("button", { name: "Send my location to someone" });
+    const sort = screen.getByRole("button", { name: "Sort by distance from me" });
+    expect(screen.queryByRole("button", { name: "Share my location" })).toBeNull(); // the old names
+    expect(screen.queryByRole("button", { name: "Show distances from my location" })).toBeNull();
+    expect(send).not.toBe(sort);
+    // The sort button is not next to the send button: the share-the-list group is between them, and the column has 2 rem (gap-8) between its parts.
+    const column = sort.parentElement as HTMLElement;
+    expect(column.className).toMatch(/\bgap-8\b/);
+    expect(column.contains(send.closest('[role="group"]'))).toBe(true);
+    const parts = [...column.children];
+    const gap = parts.indexOf(sort) - parts.indexOf(send.closest('[role="group"]') as HTMLElement);
+    expect(gap).toBeGreaterThanOrEqual(2);
+    expect(container.textContent).not.toMatch(/Show distances from my location|Share my location/);
   });
 });

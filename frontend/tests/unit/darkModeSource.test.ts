@@ -126,7 +126,8 @@ describe("the navy bars, the hero and the home sections (Option A, 2026-10-28)",
   });
 
   it("draws the SwiftRescue button with a white edge (2 px) in the bar and over the hero, so its edge shows against the dark bar and the veil (3:1)", () => {
-    const rescue = code(join(SRC, "components/layout/HeaderNavigation.tsx")).match(/className="([^"]*\bbg-emergency\b[^"]*)"/)?.[1] ?? "";
+    // The button moved to EmergencyButton.tsx on 2026-11-03 (a link everywhere, the current page on /emergency): its look is one constant (LOOK).
+    const rescue = code(join(SRC, "components/layout/EmergencyButton.tsx")).match(/"([^"]*\bbg-emergency\b[^"]*)"/)?.[1] ?? "";
     expect(rescue).toMatch(/\bborder-2\b/);
     expect(rescue).toMatch(/\bborder-white\b/);
     expect(rescue).toMatch(/\bmin-h-12\b/);
@@ -163,7 +164,7 @@ describe("the 112 card, the logo, the QR code, the map and the chart", () => {
   });
 
   it("keeps the red SwiftRescue button of the header the same red in both modes", () => {
-    expect(read("components/layout/HeaderNavigation.tsx")).toMatch(/bg-emergency[^"]*text-white/);
+    expect(read("components/layout/EmergencyButton.tsx")).toMatch(/bg-emergency[^"]*text-white/); // the look of the button, one constant for the link and the current page
   });
 
   it("draws the logo with constant colours only, so it reads the same on the blue bar in both modes", () => {

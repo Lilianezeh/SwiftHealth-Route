@@ -172,7 +172,7 @@ describe("the photo credit (owner, 2026-10-28: one line in the footer instead of
   });
 
   it("has no photo credit in any other component (the hero, the emergency photos, the slideshow): the one place is the footer", () => {
-    for (const file of ["components/home/HeroSlideshow.tsx", "components/home/HomeHero.tsx", "components/home/FindByType.tsx", "components/emergency/GroupPhoto.tsx"]) {
+    for (const file of ["components/home/HeroSlideshow.tsx", "components/home/HomeHero.tsx", "components/home/FindByType.tsx", "components/emergency/EmergencyBanner.tsx"]) {
       expect(readSource(file), file).not.toMatch(/Magnific|MAGNIFIC_CREDIT/);
     }
     expect(readSource("components/layout/SiteFooter.tsx")).toMatch(/MAGNIFIC_CREDIT/);

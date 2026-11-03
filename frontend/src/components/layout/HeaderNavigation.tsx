@@ -3,13 +3,12 @@
  * On the home page "Find care" is left out, because the hero button does the same; on every other page it is there.
  * SwiftRescue is never left out (FR-02). The header (a server component, like this one) tells it whether this is the home page.
  */
-import { Siren } from "lucide-react";
 import Link from "next/link";
 
 import { AccountLinks } from "@/components/layout/AccountLinks";
 import { MobileMenu } from "@/components/layout/MobileMenu";
+import { EmergencyButton } from "@/components/layout/EmergencyButton";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
-import { DecorativeIcon } from "@/components/ui/DecorativeIcon";
 import { siteConfig } from "@/config/site";
 
 // px-2 at tablet width, px-3 from desktop: with For facilities and the Theme button the bar is 3 px too wide in 768 px with px-3.
@@ -31,15 +30,8 @@ export function HeaderNavigation({ isHomePage }: HeaderNavigationProps) {
             {siteConfig.findCareLink.label}
           </Link>
         )}
-        <Link
-          href={siteConfig.emergencyLink.href}
-          prefetch={prefetch}
-          className="inline-flex min-h-12 items-center gap-1.5 rounded-md border-2 border-white bg-emergency px-2 text-base font-semibold text-white sm:px-3.5"
-        >
-          {/* A small siren, white like the text (currentColor), hidden from screen readers; never a cross (R36). */}
-          <DecorativeIcon icon={Siren} className="h-4 w-4" />
-          {siteConfig.emergencyLink.label}
-        </Link>
+        {/* The red emergency button: a link everywhere, and the current page (not a link) on its own page, 2026-11-03. */}
+        <EmergencyButton prefetch={prefetch} />
         <Link href={siteConfig.facilitiesLink.href} prefetch={prefetch} className={BAR_LINK}>
           {siteConfig.facilitiesLink.label}
         </Link>

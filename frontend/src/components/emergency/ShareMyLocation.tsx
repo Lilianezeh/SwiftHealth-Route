@@ -1,7 +1,7 @@
 "use client";
 
-/** Share my location: the phone's exact position, sent by WhatsApp or SMS. Requirements: US-14, FR-24, NFR-07, NFR-10.
- * UI spec 2.5, point 3; decision A7 (specs/2026-10-17-swiftrescue/requirements.md).
+/** Send my location to someone (it was "Share my location" until 2026-11-03): the phone's exact position, sent by WhatsApp or SMS.
+ * Requirements: US-14, FR-24, NFR-07, NFR-10. UI spec 2.5, point 3; decision A7 (specs/2026-10-17-swiftrescue/requirements.md).
  *
  * The position is asked for only after a tap, is exact and fresh (a rescuer needs the real place), and lives in this
  * component's memory only: not in any storage, not in an address, not sent to our API, not logged. It goes only into the link the
@@ -39,14 +39,12 @@ export function ShareMyLocation() {
   const message = step.name === "ready" ? buildLocationMessage(step.position) : "";
 
   return (
-    <section aria-labelledby="share-location-heading" className="flex flex-col gap-3">
-      <h2 id="share-location-heading" className="text-xl font-bold text-forest">
-        Share my location
-      </h2>
+    // No heading (owner, 2026-11-03: it repeated the button's words); the group has the button's name, for a screen reader.
+    <div role="group" aria-label="Send my location to someone" className="flex flex-col gap-3">
       {step.name !== "ready" && (
         <button type="button" onClick={findMe} disabled={step.name === "asking"} className={buttonClasses("secondary")}>
           <DecorativeIcon icon={MapPin} />
-          Share my location
+          Send my location to someone
         </button>
       )}
       {step.name === "asking" && (
@@ -84,6 +82,6 @@ export function ShareMyLocation() {
           </button>
         </div>
       )}
-    </section>
+    </div>
   );
 }
