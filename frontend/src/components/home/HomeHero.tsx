@@ -4,14 +4,16 @@
  * A sky blue gradient (from `pine-dark` at the bottom left to `sky` at the top right; white text passes on every point: 8.92:1
  * to 4.64:1), with the white text in the lower left, one white button, and the photo band (since 2026-10-28 a slideshow, HeroSlideshow: the stethoscope is always the first photo and is drawn here, the others come after the page has loaded). It is tall (85% of the screen) only from
  * 1024 px, in the side-by-side layout; the stacked layout has no forced height, so there is no empty gap on a tablet (R30).
- * Phone and tablet (up to 1023 px, R28): the photo is a band at the top, the full width (16 rem high, 18 rem from 768 px: R33),
- * with a slanted bottom edge, and the text is below it at the full width of the page. There the text row is a plain block and the
+ * Phone and tablet (up to 1023 px, R28; changed 2026-11-03, specs/2026-11-03-hero-phone-tablet/, the owner's option A): the header is a
+ * solid bar ABOVE the photo (nothing is laid over the photo: no veil), the photo is a band the full width, 85% of the width high (at most
+ * 32 rem; 75% under 380 px, so the button is on the first screen of a 360 x 740 phone) with a straight bottom edge, the slideshow controls
+ * are a centred row on a bar right below it, and the text is below that at the full width of the page. There the text row is a plain block and the
  * column is `w-full min-w-0`, and the heading may break anywhere (`break-words`), so no engine can size the column by the width of
  * the heading on one line and push it past the screen edge (R31); the row is a flex row only from 1024 px.
  * From 1024 px: the photo box is absolute, so it fills the whole right half from top to bottom and to the right edge of the
  * screen, with a slanted left edge. It is a child of the section itself, not of the page-width container, so it can reach the
  * edge; the text stays inside the page width on the left half. Nothing goes below the hero, so there is no overlap.
- * The header is transparent on this page and sits over the photo (z-20), so the photo has a dark veil at its top: the white
+ * From 1024 px the header is transparent on this page and sits over the photo (z-20), so the photo has a dark veil at its top: the white
  * header links stay readable even over the white sheets of the photo (5.26:1 in the worst case). The veil is short and soft
  * (R27): 6 rem, solid for the 3 rem that cover the header's text, then a gentle fade.
  * The heading uses balanced line breaks (text-balance), so a tablet never shows a single word alone on the last line (R29).
@@ -60,7 +62,7 @@ export function HomeHero() {
              photos: they are as bright in the dark mode as in the light mode (owner, 2026-10-28), no filter on them and no tint. */
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-veil/85 via-veil/85 via-75% to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 hidden h-24 bg-linear-to-b from-veil/85 via-veil/85 via-75% to-transparent lg:block"
           />
         }
       >
@@ -72,16 +74,18 @@ export function HomeHero() {
         </picture>
       </HeroSlideshow>
 
-      <div className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 pt-6 lg:flex lg:items-end lg:pb-16 lg:pt-28">
+      {/* Under 380 px the text is a little tighter (30 px heading, 18 px line, less space) so "Find care near me" is on the first screen of a
+          360 x 740 phone (owner, 2026-11-03); from 380 px it is as before. */}
+      <div className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 pt-3 min-[380px]:pt-6 lg:flex lg:items-end lg:pb-16 lg:pt-28">
         <div className="w-full min-w-0 lg:w-1/2 lg:pr-8">
           <h1
             id="hero-heading"
-            className="text-balance break-words text-4xl font-bold leading-tight text-white md:text-5xl lg:text-6xl"
+            className="text-balance break-words text-3xl font-bold leading-tight text-white min-[380px]:text-4xl md:text-5xl lg:text-6xl"
           >
             {words.heading}
           </h1>
-          <p className="mt-4 text-xl text-white lg:text-2xl">{words.line}</p>
-          <div className="mt-6">
+          <p className="mt-3 text-lg text-white min-[380px]:mt-4 min-[380px]:text-xl lg:text-2xl">{words.line}</p>
+          <div className="mt-4 min-[380px]:mt-6">
             {/* prefetch={false}: the home page does not download the Find page's code before it is asked for (R43). */}
             <Link href="/find" prefetch={false} className={`${buttonClasses("onDark")} sm:w-auto sm:px-8`}>
               {words.findCare}

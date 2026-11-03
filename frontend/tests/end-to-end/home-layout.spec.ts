@@ -16,6 +16,7 @@ const VIEWPORTS = [
   { width: 320, height: 568 },
   { width: 360, height: 740 },
   { width: 375, height: 667 },
+  { width: 390, height: 844 },
   { width: 600, height: 800 },
   { width: 768, height: 700 },
   { width: 900, height: 700 },
@@ -23,7 +24,6 @@ const VIEWPORTS = [
 ];
 const STACKED_BELOW = 1024; // the side-by-side hero starts here
 const MENU_BUTTON_BELOW = 768; // the header links are in the bar from here, the Menu button below
-const SHORT_SCREEN_BELOW = 600; // a window shorter than this (320 x 568) shows the heading and the start of the button, not all of it
 const WORDMARK_FROM = 360; // the full wordmark ("SwiftHealth" and "Route") is visible from here (R40)
 
 type Measure = {
@@ -125,15 +125,20 @@ for (const { width, height } of VIEWPORTS) {
       expect(widest).toBeLessThanOrEqual(result.innerWidth - 16 + 0.5); // inside the 16 px of space at the sides
     });
 
-    test("shows the heading and Find care near me on the first screen", async ({ page }) => {
+    test("shows the heading on the first screen, and Find care near me too on a 360 x 740 and a 390 x 844 phone and from 1024 px", async ({ page }) => {
       const result = await measure(page);
 
-      expect(result.headingBottom).toBeLessThanOrEqual(height);
-      // The button too, on every phone of a normal height. The 320 x 568 screen (the first iPhone SE) is the exception since the owner's
-      // longer hero line (2026-10-17, D7: four lines at 20 px on 288 px): there the button starts on the first screen but ends about
-      // 50 px lower, one short scroll away. The text is the owner's, so the test says what is true instead of failing (owner told, 2026-10-26).
-      if (height >= SHORT_SCREEN_BELOW) expect(result.buttonBottom).toBeLessThanOrEqual(height);
-      else expect(result.buttonTop).toBeLessThan(height);
+      // Since 2026-11-03 (option A, specs/2026-11-03-hero-phone-tablet/) the photo is taller and the controls are a row below it, so under 1024 px the
+      // text starts lower. The heading always starts on the first screen; the owner asked that the button is completely on it at 360 x 740
+      // (the photo is 75% of the width under 380 px for that), and it also is at 390 x 844 and from 1024 px. On the other screens (a 375 x 667
+      // phone, a tablet) it is one short scroll away, which the owner accepted with the taller photo.
+      expect(result.headingLines[0].top).toBeLessThan(height);
+      if ((width === 360 && height === 740) || (width === 390 && height === 844) || width >= STACKED_BELOW) {
+        expect(result.headingBottom).toBeLessThanOrEqual(height);
+        expect(result.buttonBottom).toBeLessThanOrEqual(height);
+      } else {
+        expect(result.buttonTop).toBeGreaterThan(0);
+      }
     });
 
     // Find by type, D7 and D10 (2026-10-15): the new words (hero line, Overview, "Why SwiftHealth Route" cards, Find by type tiles, the owners

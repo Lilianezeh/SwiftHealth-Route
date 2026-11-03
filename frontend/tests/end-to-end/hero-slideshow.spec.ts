@@ -5,6 +5,8 @@
  */
 import { expect, test, type Page } from "@playwright/test";
 
+import { pinFont } from "../helpers/pinnedFont";
+
 const WIDTHS = [
   { width: 320, height: 640 },
   { width: 360, height: 740 },
@@ -112,19 +114,24 @@ for (const { width, height } of WIDTHS) {
       await openHome(page);
 
       const band = (await page.locator("[data-hero-band]").boundingBox())!;
+      const photo = (await page.locator("[data-hero-photo]").boundingBox())!;
       if (width >= 1024) {
         expect(band.x).toBeCloseTo(width / 2, 0); // the right half
         expect(band.width).toBeCloseTo(width / 2, 0);
         const section = (await page.locator('section[aria-labelledby="hero-heading"]').boundingBox())!;
         expect(band.height).toBeCloseTo(section.height, 0); // as high as the hero
         expect(band.y).toBeCloseTo(section.y, 0);
+        expect(photo.height).toBeCloseTo(band.height, 0); // the photo fills the band
       } else {
-        expect(band.x).toBe(0);
-        expect(band.width).toBe(width); // the full width
-        expect(band.height).toBe(width < 768 ? 256 : 288); // 16 rem, 18 rem from 768 px
+        expect(photo.x).toBe(0);
+        expect(photo.width).toBe(width); // the full width
+        // owner, 2026-11-03 (option A): 75% of the width under 380 px, 85% of the width (at most 32 rem) from 380 px
+        expect(photo.height).toBeCloseTo(width < 380 ? 0.75 * width : Math.min(0.85 * width, 512), 0);
+        expect(band.height).toBeGreaterThan(photo.height); // the band is the photo and the controls row below it
       }
       const clip = await page.locator("[data-hero-frame]").evaluate((element) => getComputedStyle(element).clipPath);
-      expect(clip).toContain("polygon"); // the slanted edge
+      if (width >= 1024) expect(clip).toContain("polygon"); // the slanted left edge, as before
+      else expect(clip).toBe("none"); // a straight bottom edge under 1024 px: no part of the photo is cut
       const first = page.locator('[data-hero-slide][data-index="0"] img');
       await expect(first).toHaveAttribute("fetchpriority", "high");
       await expect(first).toHaveAttribute("loading", "eager");
@@ -325,6 +332,86 @@ for (const { width, height } of WIDTHS) {
     });
   });
 }
+
+// The hero under 1024 px (owner, 2026-11-03, option A): a solid header bar above the photo, nothing over the photo, the controls in a centred
+// row below it, and "Find care near me" on the first screen of a 360 x 740 and a 390 x 844 phone. Spec: specs/2026-11-03-hero-phone-tablet/.
+for (const { width, height } of [{ width: 360, height: 740 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1023, height: 768 }]) {
+  test.describe(`the hero under 1024 px at ${width} px`, () => {
+    test.use({ viewport: { width, height } });
+
+    test("has the header as a solid bar above the photo, and nothing at all over the photo", async ({ page }) => {
+      await openHome(page);
+
+      const header = page.locator("header");
+      expect(await header.evaluate((element) => getComputedStyle(element).position)).toBe("relative");
+      const bar = (await header.boundingBox())!;
+      const photo = (await page.locator("[data-hero-photo]").boundingBox())!;
+      expect(photo.y).toBeGreaterThanOrEqual(bar.y + bar.height - 0.5); // the photo starts under the header
+      expect(await header.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)"); // solid
+      // what is on top at nine points of the photo: always a photo (a slide), never the header, the veil or a control
+      const tops = await page.evaluate((box) => {
+        const names: string[] = [];
+        for (const fx of [0.05, 0.5, 0.95]) {
+          for (const fy of [0.05, 0.5, 0.95]) {
+            const top = document.elementFromPoint(box.x + box.width * fx, box.y + box.height * fy);
+            names.push(top?.closest("[data-hero-slide]") ? "photo" : (top?.tagName ?? "nothing"));
+          }
+        }
+        return names;
+      }, photo);
+      expect(tops).toEqual(Array(9).fill("photo"));
+      const veil = page.locator('[data-hero-frame] > div[aria-hidden="true"]:not([data-hero-slide])');
+      expect(await veil.evaluate((element) => getComputedStyle(element).display)).toBe("none");
+    });
+
+    test("has the controls in one centred group right below the photo, all inside the screen", async ({ page }) => {
+      await openHome(page);
+
+      const photo = (await page.locator("[data-hero-photo]").boundingBox())!;
+      const controls = (await page.locator("[data-hero-controls]").boundingBox())!;
+      expect(controls.y).toBeGreaterThanOrEqual(photo.y + photo.height - 0.5); // below the photo
+      expect(controls.y).toBeLessThanOrEqual(photo.y + photo.height + 0.5); // right below it
+      expect(controls.x).toBeCloseTo(0, 0);
+      expect(controls.width).toBeCloseTo(width, 0);
+      const buttons = await page.locator("[data-hero-controls] button").all();
+      const boxes = await Promise.all(buttons.map((button) => button.boundingBox()));
+      const left = Math.min(...boxes.map((box) => box!.x));
+      const right = Math.max(...boxes.map((box) => box!.x + box!.width));
+      expect(left).toBeGreaterThanOrEqual(-0.5);
+      expect(right).toBeLessThanOrEqual(width + 0.5);
+      expect(Math.abs(left - (width - right))).toBeLessThanOrEqual(width < 480 ? 3 : 12); // centred (the dots group is centred, the rest follows)
+    });
+
+    if (width <= 390) {
+      test("has 'Find care near me' completely on the first screen", async ({ page }) => {
+        await pinFont(page); // a typical phone font, not the wide fallback font of this machine (helpers/pinnedFont.ts)
+        await openHome(page);
+
+        const button = (await page.getByRole("link", { name: "Find care near me" }).boundingBox())!;
+        expect(button.y + button.height).toBeLessThanOrEqual(height);
+      });
+    }
+  });
+}
+
+test.describe("the hero from 1024 px is exactly as before (owner, 2026-11-03)", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test("keeps the transparent header over the photo, the veil, the slanted edge and the controls on the photo", async ({ page }) => {
+    await openHome(page);
+
+    const header = page.locator("header");
+    expect(await header.evaluate((element) => getComputedStyle(element).position)).toBe("absolute");
+    expect(await header.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
+    const veil = page.locator('[data-hero-frame] > div[aria-hidden="true"]:not([data-hero-slide])');
+    expect(await veil.evaluate((element) => getComputedStyle(element).display)).toBe("block");
+    const band = (await page.locator("[data-hero-band]").boundingBox())!;
+    const controls = (await page.locator("[data-hero-controls]").boundingBox())!;
+    expect(controls.y + controls.height).toBeLessThanOrEqual(band.y + band.height); // on the photo
+    expect(controls.x).toBeCloseTo(band.x + 56, 0); // left-14
+    expect(await page.locator("[data-hero-controls]").evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
+  });
+});
 
 test.describe("the footer credit (one line, bottom right)", () => {
   for (const { width, height } of [WIDTHS[0], WIDTHS[3]]) {

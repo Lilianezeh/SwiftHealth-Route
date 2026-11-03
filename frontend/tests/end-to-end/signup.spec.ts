@@ -149,13 +149,14 @@ for (const { width, height } of WIDTHS) {
       }
     });
 
-    test("For facilities has Sign up as a facility owner and Log in at the top and at the end, and Sign up opens with Facility owner chosen", async ({ page }) => {
+    test("For facilities has Sign up as a facility owner and Log in once, near the top (owner, 2026-11-03), and Sign up opens with Facility owner chosen", async ({ page }) => {
       await fakeApi(page, signUpIs(true));
       await page.goto("/for-facilities", { waitUntil: "load" });
 
       const signUps = page.getByRole("link", { name: "Sign up as a facility owner" });
-      await expect(signUps).toHaveCount(2, { timeout: 60_000 });
-      await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveCount(2);
+      await expect(signUps).toHaveCount(1, { timeout: 60_000 });
+      await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveCount(1);
+      expect((await signUps.boundingBox())?.y ?? 99_999).toBeLessThan(page.viewportSize()!.height * 1.5); // near the top of the page
       await allIsInsideTheScreen(page, width);
       await targetsAndTextAreBigEnough(page);
       await signUps.first().click();
@@ -169,9 +170,9 @@ for (const { width, height } of WIDTHS) {
       await fakeApi(page, signUpIs(false));
       await page.goto("/for-facilities", { waitUntil: "load" });
 
-      await expect(page.getByText("Sign-up is not open yet.")).toHaveCount(2, { timeout: 60_000 });
+      await expect(page.getByText("Sign-up is not open yet.")).toHaveCount(1, { timeout: 60_000 });
       await expect(page.getByRole("link", { name: "Sign up as a facility owner" })).toHaveCount(0);
-      await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveCount(2);
+      await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveCount(1);
       await allIsInsideTheScreen(page, width);
     });
 

@@ -6,8 +6,9 @@
  * button is always visible. It carries `on-dark`: the focus ring inside it is the light one (globals.css).
  * It is a server component: the layout of the route group says whether this is the home page, so nothing is read in the browser and
  * no JavaScript is sent for it (only the Menu button is client code):
- * - on the home page it is transparent and sits on top of the hero (absolute, above the photo with z-20), with white text; the
- *   hero's photo has a dark veil behind it so the white links stay readable;
+ * - on the home page, under 1024 px, it is the same solid bar in the normal flow, ABOVE the photo (nothing over the photo, owner,
+ *   2026-11-03); from 1024 px it is transparent and sits on top of the hero (absolute, above the photo with z-20), with white
+ *   text; the hero's photo has a dark veil behind it there (from 1024 px) so the white links stay readable;
  * - on every other page it is the `forest` bar with the 4 px `accent` line, in the normal flow, with `paper` text.
  * It is `relative` or `absolute`, so the phone menu panel can sit right under the bar either way.
  */
@@ -16,7 +17,10 @@ import Link from "next/link";
 import { HeaderNavigation } from "@/components/layout/HeaderNavigation";
 import { Logo } from "@/components/layout/Logo";
 
-const HOME_HEADER = "on-dark absolute inset-x-0 top-0 z-20 text-white";
+// Home page: a solid bar in the flow above the photo on a phone and a tablet (owner, 2026-11-03: nothing laid over the photo);
+// from 1024 px transparent, on top of the hero, as before.
+const HOME_HEADER =
+  "on-dark relative border-b-4 border-accent bg-bar text-white lg:absolute lg:inset-x-0 lg:top-0 lg:z-20 lg:border-b-0 lg:bg-transparent";
 const BAR_HEADER = "on-dark relative border-b-4 border-accent bg-bar text-paper";
 
 type SiteHeaderProps = { isHomePage: boolean };
