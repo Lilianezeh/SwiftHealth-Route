@@ -13,7 +13,9 @@ import { stubSignupOpen } from "../helpers/api";
 
 // The header is a server component: the route group of the page tells it whether this is the home page (R44), and on the home page
 // it is transparent and hides "Find care" (R14, R18). Each test chooses the page it is on.
-const address = { pathname: "/find" };
+const address = vi.hoisted(() => ({ pathname: "/find" }));
+// The SwiftRescue button knows the current page (usePathname, a small client part): on /emergency it is the current page, not a link (owner, 2026-11-03).
+vi.mock("next/navigation", () => ({ usePathname: () => address.pathname }));
 
 function HeaderOnPage() {
   return <SiteHeader isHomePage={address.pathname === "/"} />;
@@ -93,6 +95,47 @@ describe("SiteHeader", () => {
     for (const link of screen.getAllByRole("link")) {
       if (link !== rescue) expect(link.className, link.textContent ?? "").not.toMatch(/emergency/);
     }
+  });
+
+  it("shows SwiftRescue as the current page on /emergency: aria-current='page', not a link, the same red look (owner, 2026-11-03)", () => {
+    address.pathname = "/find";
+    const { unmount } = render(<HeaderOnPage />);
+    const asLink = screen.getByRole("link", { name: "SwiftRescue" });
+    const linkClasses = asLink.className;
+    unmount();
+
+    address.pathname = "/emergency";
+    render(<HeaderOnPage />);
+
+    expect(screen.queryByRole("link", { name: "SwiftRescue" })).toBeNull();
+    const current = screen.getByText("SwiftRescue", { selector: "[aria-current]" });
+    expect(current).toHaveAttribute("aria-current", "page");
+    expect(current.tagName).toBe("SPAN");
+    expect(current).not.toHaveAttribute("href");
+    expect(current.className).toBe(linkClasses); // same look: the same red, border, size and text
+    expect(current.className).toMatch(/\bbg-emergency\b/);
+    expect(current.className).toMatch(/\bmin-h-12\b/);
+    expect(current.querySelector("svg")).toHaveAttribute("aria-hidden", "true"); // the same small siren
+    expect(screen.getAllByRole("link").map(nameOf)).toEqual(["SwiftHealth Route", "Find care", "For facilities"]);
+  });
+
+  it("keeps the SwiftRescue link on every other page, and for an address that only starts like it", () => {
+    for (const pathname of ["/find", "/search", "/blood", "/emergency-plan", "/listing/emergency"]) {
+      address.pathname = pathname;
+      const { unmount } = render(<HeaderOnPage />);
+
+      expect(screen.getByRole("link", { name: "SwiftRescue" }), pathname).toHaveAttribute("href", "/emergency");
+      expect(document.querySelector("[aria-current]"), pathname).toBeNull();
+      unmount();
+    }
+  });
+
+  it("keeps the current SwiftRescue on /emergency on the home-style header too (it is the same part)", () => {
+    address.pathname = "/emergency";
+    render(<SiteHeader isHomePage />);
+
+    expect(screen.queryByRole("link", { name: "SwiftRescue" })).toBeNull();
+    expect(screen.getByText("SwiftRescue", { selector: "[aria-current]" })).toHaveAttribute("aria-current", "page");
   });
 
   it("keeps SwiftRescue in the bar on a phone: it is not hidden and not inside the menu (FR-02)", async () => {

@@ -1,10 +1,10 @@
 /** One emergency contact, compact. Requirements: FR-16 (name, area, distance, Call, last-verified date), FR-19, NFR-10.
- * UI spec 2.5, point 5. All text is rendered as text. It never shows a "Sponsored" tag (FR-19).
+ * UI spec 2.5, point 5. All text is rendered as text. It never shows a "Sponsored" tag (FR-19). One verification line (VerificationLine).
  */
 import Link from "next/link";
 
 import { CallButton } from "@/components/listings/CallButton";
-import { VerifiedDate } from "@/components/listings/VerifiedDate";
+import { VerificationLine } from "@/components/emergency/VerificationLine";
 import { formatDistance } from "@/lib/formatters/distance";
 import type { ListingSummary } from "@/types/api";
 
@@ -22,7 +22,7 @@ export function EmergencyContactCard({ contact, now }: EmergencyContactCardProps
       </h3>
       <p className="text-base text-ink-soft">{distance ? `${contact.area} · ${distance}` : contact.area}</p>
       <div>
-        <VerifiedDate lastVerifiedAt={contact.last_verified_at} verificationDue={contact.verification_due} now={now} />
+        <VerificationLine lastVerifiedAt={contact.last_verified_at} verificationDue={contact.verification_due} now={now} />
       </div>
       {contact.primary_phone && <CallButton phone={contact.primary_phone} facilityName={contact.name} />}
       <Link

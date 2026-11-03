@@ -84,6 +84,12 @@ describe("the header and the footer are server components (R44)", () => {
     expect(accountLinks).toMatch(/^"use client";/);
     expect(accountLinks).not.toMatch(/lib\/api|fetch\(|useSignupOpen|useMeta/);
     expect(readSource("components/layout/MobileMenu.tsx")).not.toMatch(/useSignupOpen|useMeta|lib\/api|fetch\(/);
+    // The SwiftRescue button (2026-11-03): on /emergency it is the current page and not a link, so it reads the address with usePathname;
+    // it is the only part of the header that does, it calls nothing and keeps nothing.
+    const rescueLink = readSource("components/layout/EmergencyButton.tsx");
+    expect(rescueLink).toMatch(/^"use client";/);
+    expect(rescueLink).toMatch(/usePathname/);
+    expect(rescueLink).not.toMatch(/lib\/api|fetch\(|localStorage|sessionStorage|document\.cookie/);
     // And the Theme button (Light, Dark, System; dark mode, 2026-10-27): it keeps one word in the browser's storage and calls nothing.
     const themeToggle = readSource("components/layout/ThemeToggle.tsx");
     expect(themeToggle).toMatch(/^"use client";/);

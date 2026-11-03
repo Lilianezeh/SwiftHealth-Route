@@ -2,7 +2,7 @@
 /** Share emergency list and Share my location. Requirements: US-09, FR-18, US-14, FR-24, NFR-07, NFR-10.
  * UI spec 2.5, points 3 and 4. Decisions A7 and A8 in specs/2026-10-17-swiftrescue/requirements.md.
  */
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -70,7 +70,7 @@ describe("Share my location", () => {
     render(<ShareMyLocation />);
     expect(getCurrentPosition).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole("button", { name: "Share my location" }));
+    await userEvent.click(screen.getByRole("button", { name: "Send my location to someone" }));
 
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);
   });
@@ -79,7 +79,7 @@ describe("Share my location", () => {
     const getCurrentPosition = stubGeolocation({ latitude: 6.45, longitude: 7.51 });
     render(<ShareMyLocation />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Share my location" }));
+    await userEvent.click(screen.getByRole("button", { name: "Send my location to someone" }));
 
     const options = (getCurrentPosition.mock.calls[0] as unknown[])[2] as PositionOptions;
     expect(options.enableHighAccuracy).toBe(true);
@@ -90,7 +90,7 @@ describe("Share my location", () => {
     stubGeolocation({ latitude: 6.452123, longitude: 7.510987 });
     render(<ShareMyLocation />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Share my location" }));
+    await userEvent.click(screen.getByRole("button", { name: "Send my location to someone" }));
 
     const whatsapp = await screen.findByRole("link", { name: "Send on WhatsApp" });
     const sms = screen.getByRole("link", { name: "Send by SMS" });
@@ -106,7 +106,7 @@ describe("Share my location", () => {
     stubGeolocation({ latitude: 6.452123, longitude: 7.510987 });
     render(<ShareMyLocation />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Share my location" }));
+    await userEvent.click(screen.getByRole("button", { name: "Send my location to someone" }));
     await screen.findByRole("link", { name: "Send on WhatsApp" });
 
     expect(setItem).not.toHaveBeenCalled();
@@ -119,13 +119,13 @@ describe("Share my location", () => {
   it("forgets the position when the visitor taps Done", async () => {
     stubGeolocation({ latitude: 6.452123, longitude: 7.510987 });
     render(<ShareMyLocation />);
-    await userEvent.click(screen.getByRole("button", { name: "Share my location" }));
+    await userEvent.click(screen.getByRole("button", { name: "Send my location to someone" }));
     await screen.findByRole("link", { name: "Send on WhatsApp" });
 
     await userEvent.click(screen.getByRole("button", { name: "Done" }));
 
     expect(screen.queryByRole("link", { name: "Send on WhatsApp" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Share my location" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send my location to someone" })).toBeInTheDocument();
   });
 
   it.each([
@@ -136,7 +136,7 @@ describe("Share my location", () => {
     stubGeolocation({ errorCode });
     render(<ShareMyLocation />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Share my location" }));
+    await userEvent.click(screen.getByRole("button", { name: "Send my location to someone" }));
 
     expect(await screen.findByText("We could not get your location. Call 112 and say where you are.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Send/ })).toBeNull();
@@ -146,7 +146,7 @@ describe("Share my location", () => {
     Object.defineProperty(navigator, "geolocation", { value: undefined, configurable: true });
     render(<ShareMyLocation />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Share my location" }));
+    await userEvent.click(screen.getByRole("button", { name: "Send my location to someone" }));
 
     expect(await screen.findByText("We could not get your location. Call 112 and say where you are.")).toBeInTheDocument();
   });
@@ -168,8 +168,32 @@ describe("on the page", () => {
     await screen.findByRole("heading", { level: 2, name: "Ambulance" });
 
     const text = container.textContent ?? "";
-    expect(text.indexOf("Call 112")).toBeLessThan(text.indexOf("Share my location"));
-    expect(text.indexOf("Share my location")).toBeLessThan(text.indexOf("Share emergency list"));
-    expect(text.indexOf("Share emergency list")).toBeLessThan(text.indexOf("Ambulance"));
+    expect(text.indexOf("Call 112")).toBeLessThan(text.indexOf("Send my location to someone"));
+    expect(text.indexOf("Send my location to someone")).toBeLessThan(text.indexOf("Share on WhatsApp"));
+    expect(text.indexOf("Share on WhatsApp")).toBeLessThan(text.indexOf("Ambulance"));
+  });
+
+  it("have no heading of their own: the buttons say what they do (owner, 2026-11-03: the h2 headings repeated the button text)", async () => {
+    stubApi({});
+    render(<EmergencyPage />);
+    await screen.findByRole("heading", { level: 2, name: "Ambulance" });
+
+    for (const name of ["Share my location", "Share emergency list", "Send my location to someone"]) {
+      expect(screen.queryByRole("heading", { name }), name).toBeNull();
+    }
+    expect(screen.queryByText("Share my location")).toBeNull(); // the old words are gone from the page
+  });
+
+  it("are two named groups, so the buttons are grouped clearly for a screen reader and by space for the eye", async () => {
+    stubApi({});
+    render(<EmergencyPage />);
+    await screen.findByRole("heading", { level: 2, name: "Ambulance" });
+
+    const location = screen.getByRole("group", { name: "Send my location to someone" });
+    const list = screen.getByRole("group", { name: "Share emergency list" });
+    expect(within(location).getByRole("button", { name: "Send my location to someone" })).toBeInTheDocument();
+    expect(within(list).getByRole("link", { name: "Share on WhatsApp" })).toBeInTheDocument();
+    expect(within(list).getByRole("link", { name: "Share by SMS" })).toBeInTheDocument();
+    expect(location.contains(list)).toBe(false);
   });
 });

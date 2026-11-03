@@ -1,7 +1,9 @@
 "use client";
 
 /** Everything on SwiftRescue that comes from the API, with its states. Requirements: FR-14 to FR-17, NFR-03, NFR-07.
- * UI spec 2.5 and "Standard states". The 112 card above it is static and does not wait for this.
+ * UI spec 2.5 and "Standard states". The 112 card and the photo banner above it are static and do not wait for this. The two location actions are
+ * "Send my location to someone" (ShareMyLocation: the exact position goes into a message the visitor sends) and "Sort by distance from me" (below:
+ * the visitor's position sorts the contacts and is kept nowhere), named so they cannot be mistaken for each other (owner, 2026-11-03).
  * Distances need the position the visitor allowed on another page, or one they allow here by tapping the button; it is never
  * asked for when the page loads.
  */
@@ -22,14 +24,15 @@ export function EmergencyContent() {
   const { status, response, savedAt, retry } = useEmergency(position, true);
 
   return (
-    <div className="flex flex-col gap-6">
+    // 2 rem (gap-8) between the parts: "Send my location to someone", the share buttons and "Sort by distance from me" are clearly apart.
+    <div className="flex flex-col gap-8">
       <ShareMyLocation />
       <ShareEmergencyList response={response} />
 
       {!position && locationStatus === "idle" && (
         <button type="button" onClick={ask} className={buttonClasses("secondary")}>
           <DecorativeIcon icon={LocateFixed} />
-          Show distances from my location
+          Sort by distance from me
         </button>
       )}
       {locationStatus === "asking" && (
